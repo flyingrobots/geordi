@@ -1,13 +1,24 @@
 
+
 > @svjif/runtime-webgl@0.1.0 test /Users/james/git/SVJif/packages/runtime-webgl
-> vitest
+> vitest run
 
+[?25l
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.7 [39m[90m/Users/james/git/SVJif/packages/runtime-webgl[39m
 
- DEV  v1.6.1 /Users/james/git/SVJif/packages/runtime-webgl
+[?2026h
+[1m[33m ❯ [39m[22msrc/index.test.ts[2m [queued][22m
 
-include: **/*.{test,spec}.?(c|m)[jt]s?(x)
-exclude:  **/node_modules/**, **/dist/**, **/cypress/**, **/.{idea,git,cache,output,temp}/**, **/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*
-watch exclude:  **/node_modules/**, **/dist/**
+[2m Test Files [22m[1m[32m0 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m[1m[32m0 passed[39m[22m[90m (0)[39m
+[2m   Start at [22m10:46:26
+[2m   Duration [22m102ms
+[?2026l[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K [32m✓[39m src/index.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+   [32m✓[39m it works[32m 1[2mms[22m[39m
 
-No test files found, exiting with code 1
- ELIFECYCLE  Test failed. See above for more details.
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m   Start at [22m 10:46:26
+[2m   Duration [22m 188ms[2m (transform 22ms, setup 0ms, import 33ms, tests 2ms, environment 0ms)[22m
+
+[?25h

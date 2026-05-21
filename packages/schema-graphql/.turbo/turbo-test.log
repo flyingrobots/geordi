@@ -1,5 +1,36 @@
 
+
 > @svjif/schema-graphql@0.1.0 test /Users/james/git/SVJif/packages/schema-graphql
-> vitest
+> vitest run
 
- ELIFECYCLE  Test failed. See above for more details.
+[?25l
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.7 [39m[90m/Users/james/git/SVJif/packages/schema-graphql[39m
+
+[?2026h
+[1m[33m ❯ [39m[22mtest/extractNodes.test.ts[2m [queued][22m
+
+[2m Test Files [22m[1m[32m0 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m[1m[32m0 passed[39m[22m[90m (0)[39m
+[2m   Start at [22m10:46:27
+[2m   Duration [22m101ms
+[?2026l[?2026h[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K
+[1m[33m ❯ [39m[22mtest/e2e.terminal.test.ts[2m [queued][22m
+[1m[33m ❯ [39m[22mtest/extractNodes.test.ts[2m [queued][22m
+[1m[33m ❯ [39m[22mtest/extractScene.test.ts[2m 0/10[22m
+[1m[33m ❯ [39m[22mtest/toCanonicalAst.test.ts[2m [queued][22m
+
+[2m Test Files [22m[1m[32m0 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m[1m[32m0 passed[39m[22m[90m (10)[39m
+[2m   Start at [22m10:46:27
+[2m   Duration [22m303ms
+[?2026l[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K [32m✓[39m test/extractScene.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m test/extractNodes.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m test/toCanonicalAst.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m test/e2e.terminal.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[32m42 passed[39m[22m[90m (42)[39m
+[2m   Start at [22m 10:46:27
+[2m   Duration [22m 358ms[2m (transform 384ms, setup 0ms, import 745ms, tests 28ms, environment 0ms)[22m
+
+[?25h

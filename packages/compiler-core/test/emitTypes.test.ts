@@ -179,12 +179,26 @@ describe('TypeEmitter', () => {
     const dir = mkdtempSync(join(tmpdir(), 'svjif-types-'));
     const file = join(dir, 'types.ts');
     try {
+      const tsconfig = {
+        compilerOptions: {
+          noEmit: true,
+          strict: true,
+          target: 'ES2022',
+          skipLibCheck: true,
+          types: ['node'],
+          typeRoots: [join(__dirname, '..', 'node_modules', '@types')],
+        },
+        include: ['types.ts'],
+      };
+      writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify(tsconfig), 'utf8');
       writeFileSync(file, output, 'utf8');
-      // Run tsc against the generated file in isolation (no imports, no tsconfig needed)
-      execSync(
-        `node_modules/.bin/tsc --noEmit --strict --target ES2022 --skipLibCheck ${file}`,
-        { cwd: join(__dirname, '..'), encoding: 'utf8', stdio: 'pipe' },
-      );
+      // Run tsc in the temporary directory
+      const tscPath = require.resolve('typescript/bin/tsc');
+      execSync(tscPath, {
+        cwd: dir,
+        encoding: 'utf8',
+        stdio: 'pipe',
+      });
     } catch (e: any) {
       throw new Error(
         `Generated types failed tsc --noEmit:\n${e.stdout ?? ''}\n${e.stderr ?? ''}`,
