@@ -186,7 +186,11 @@ describe('TypeEmitter', () => {
           target: 'ES2022',
           skipLibCheck: true,
           types: ['node'],
-          typeRoots: [join(__dirname, '..', 'node_modules', '@types')],
+          typeRoots: [
+            // Try workspace node_modules first, then root node_modules
+            join(__dirname, '..', 'node_modules', '@types'),
+            join(__dirname, '..', '..', '..', 'node_modules', '@types'),
+          ],
         },
         include: ['types.ts'],
       };
