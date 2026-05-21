@@ -1,13 +1,13 @@
 /**
- * SVJif Scene Type Definitions
+ * Geordi Scene Type Definitions
  *
  * Root scene graph structure.
  */
 
-import type { Bounds, SVJifNode } from './SVJifNode.js';
+import type { Bounds, GeordiNode } from './GeordiNode.js';
 
 /** Scene version */
-export type SVJifVersion = '0.1.0';
+export type GeordiVersion = '0.1.0';
 
 /** Coordinate units */
 export type Units = 'px' | 'pt' | 'em';
@@ -16,7 +16,7 @@ export type Units = 'px' | 'pt' | 'em';
 export type Origin = 'top-left' | 'center' | 'bottom-left';
 
 /** Scene metadata */
-export interface SVJifMeta {
+export interface GeordiMeta {
   /** Tool that generated this scene */
   readonly generator: string;
 
@@ -31,7 +31,7 @@ export interface SVJifMeta {
 }
 
 /** Canvas definition */
-export interface SVJifCanvas {
+export interface GeordiCanvas {
   /** Canvas width */
   readonly width: number;
 
@@ -46,7 +46,7 @@ export interface SVJifCanvas {
 }
 
 /** Design token map */
-export interface SVJifTokens {
+export interface GeordiTokens {
   readonly [tokenName: string]: string;
 }
 
@@ -60,37 +60,37 @@ export interface HitRegion {
 }
 
 /** Interaction metadata */
-export interface SVJifInteraction {
+export interface GeordiInteraction {
   /** Hit regions for pointer events */
   readonly hitRegions: readonly HitRegion[];
 }
 
-/** Complete SVJif scene */
-export interface SVJifScene {
+/** Complete Geordi scene */
+export interface GeordiScene {
   /** Scene format version */
-  readonly version: SVJifVersion;
+  readonly version: GeordiVersion;
 
   /** Scene metadata */
-  readonly meta: SVJifMeta;
+  readonly meta: GeordiMeta;
 
   /** Canvas definition */
-  readonly canvas: SVJifCanvas;
+  readonly canvas: GeordiCanvas;
 
   /** Scene nodes */
-  readonly nodes: readonly SVJifNode[];
+  readonly nodes: readonly GeordiNode[];
 
   /** Design tokens */
-  readonly tokens: SVJifTokens;
+  readonly tokens: GeordiTokens;
 
   /** Interaction metadata (optional) */
-  readonly interaction?: SVJifInteraction;
+  readonly interaction?: GeordiInteraction;
 
   /** Diagnostics/warnings from compilation (optional) */
   readonly diagnostics?: readonly string[];
 }
 
-/** Type guard for SVJif scene */
-export function isSVJifScene(value: unknown): value is SVJifScene {
+/** Type guard for Geordi scene */
+export function isGeordiScene(value: unknown): value is GeordiScene {
   if (typeof value !== 'object' || value === null) {
     return false;
   }

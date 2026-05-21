@@ -1,7 +1,7 @@
 /**
- * @svjif/core
+ * @flyingrobots/geordi-core
  *
- * Core types, validation, and IR manipulation for SVJif.
+ * Core types, validation, and IR manipulation for Geordi.
  * Hexagonal architecture: domain models, application services, infrastructure adapters.
  */
 

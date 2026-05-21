@@ -1,8 +1,8 @@
 import { CompilerError, type CompilerErrorOptions } from './CompilerError';
-import type { SVJifErrorCodeValue } from './codes';
+import type { GeordiErrorCodeValue } from './codes';
 
 export class EmitError extends CompilerError {
-  constructor(code: SVJifErrorCodeValue, message: string, options: CompilerErrorOptions = {}) {
+  constructor(code: GeordiErrorCodeValue, message: string, options: CompilerErrorOptions = {}) {
     super(code, message, 'error', options);
     this.name = 'EmitError';
   }

@@ -1,5 +1,5 @@
-import type { CanonicalSceneAst, Diagnostic } from '@svjif/compiler-core';
-import type { GraphqlToCanonicalAst } from '@svjif/compiler-core';
+import type { CanonicalSceneAst, Diagnostic } from '@flyingrobots/geordi-compiler-core';
+import type { GraphqlToCanonicalAst } from '@flyingrobots/geordi-compiler-core';
 import { parseGraphql } from './parse/parseGraphql';
 import { extractScene } from './parse/extractScene';
 import { extractNodes } from './parse/extractNodes';
@@ -10,7 +10,7 @@ export type { GraphqlToCanonicalAst };
 
 /**
  * Converts a GraphQL SDL string into a CanonicalSceneAst.
- * This is the primary adapter between @svjif/schema-graphql and @svjif/compiler-core.
+ * This is the primary adapter between @geordi/schema-graphql and @flyingrobots/geordi-compiler-core.
  *
  * Throws on parse errors. Pushes semantic diagnostics to the provided array.
  */

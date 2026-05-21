@@ -1,5 +1,5 @@
 import type { CanonicalSceneAst, CompilerInput, Diagnostic } from '../types';
-import { ParseError, SVJifErrorCode } from '../errors';
+import { ParseError, GeordiErrorCode } from '../errors';
 
 /**
  * Optional adapter signature so compiler-core does not hard-couple to schema-graphql internals.
@@ -38,7 +38,7 @@ export async function parseInputToCanonicalAst(
     default: {
       diagnostics.push(
         new ParseError(
-          SVJifErrorCode.E_INTERNAL_INVARIANT,
+          GeordiErrorCode.E_INTERNAL_INVARIANT,
           `Unsupported input format: ${(input as { format?: string }).format ?? 'unknown'}`,
           {
             location: input.filename ? { file: input.filename, line: 1, column: 1 } : undefined,
@@ -57,7 +57,7 @@ async function parseGraphqlSdl(
 ): Promise<CanonicalSceneAst | undefined> {
   if (!input.source.trim()) {
     diagnostics.push(
-      new ParseError(SVJifErrorCode.E_INPUT_EMPTY, 'Input source is empty', {
+      new ParseError(GeordiErrorCode.E_INPUT_EMPTY, 'Input source is empty', {
         location: input.filename ? { file: input.filename, line: 1, column: 1 } : undefined,
       }).toDiagnostic(),
     );
@@ -67,10 +67,10 @@ async function parseGraphqlSdl(
   if (!deps.graphqlToCanonicalAst) {
     diagnostics.push(
       new ParseError(
-        SVJifErrorCode.E_INTERNAL_INVARIANT,
+        GeordiErrorCode.E_INTERNAL_INVARIANT,
         'GraphQL parser adapter is not configured (graphqlToCanonicalAst missing)',
         {
-          hint: 'Provide parseInput deps.graphqlToCanonicalAst from @svjif/schema-graphql.',
+          hint: 'Provide parseInput deps.graphqlToCanonicalAst from @geordi/schema-graphql.',
           location: input.filename ? { file: input.filename, line: 1, column: 1 } : undefined,
         },
       ).toDiagnostic(),
@@ -93,7 +93,7 @@ async function parseGraphqlSdl(
   } catch (cause) {
     diagnostics.push(
       new ParseError(
-        SVJifErrorCode.E_INTERNAL_INVARIANT,
+        GeordiErrorCode.E_INTERNAL_INVARIANT,
         'Failed to parse GraphQL SDL into canonical AST',
         {
           cause,
@@ -111,7 +111,7 @@ function parseCanonicalAstJson(
 ): CanonicalSceneAst | undefined {
   if (!input.source.trim()) {
     diagnostics.push(
-      new ParseError(SVJifErrorCode.E_INPUT_EMPTY, 'Input source is empty', {
+      new ParseError(GeordiErrorCode.E_INPUT_EMPTY, 'Input source is empty', {
         location: input.filename ? { file: input.filename, line: 1, column: 1 } : undefined,
       }).toDiagnostic(),
     );
@@ -123,7 +123,7 @@ function parseCanonicalAstJson(
     parsed = JSON.parse(input.source);
   } catch (cause) {
     diagnostics.push(
-      new ParseError(SVJifErrorCode.E_INPUT_INVALID_JSON, 'Invalid JSON for canonical AST input', {
+      new ParseError(GeordiErrorCode.E_INPUT_INVALID_JSON, 'Invalid JSON for canonical AST input', {
         cause,
         location: input.filename ? { file: input.filename, line: 1, column: 1 } : undefined,
         hint: 'Ensure the input is valid JSON. Check for syntax errors like trailing commas or unquoted keys.',
@@ -151,7 +151,7 @@ function validateCanonicalAstShape(
 
   if (!isRecord(value)) {
     out.push(
-      new ParseError(SVJifErrorCode.E_INTERNAL_INVARIANT, 'Canonical AST must be an object', {
+      new ParseError(GeordiErrorCode.E_INTERNAL_INVARIANT, 'Canonical AST must be an object', {
         location: loc,
       }).toDiagnostic(),
     );
@@ -160,7 +160,7 @@ function validateCanonicalAstShape(
 
   if (value.kind !== 'Scene') {
     out.push(
-      new ParseError(SVJifErrorCode.E_SCENE_MISSING, `Canonical AST kind must be "Scene"`, {
+      new ParseError(GeordiErrorCode.E_SCENE_MISSING, `Canonical AST kind must be "Scene"`, {
         location: loc,
       }).toDiagnostic(),
     );
@@ -169,7 +169,7 @@ function validateCanonicalAstShape(
   if (value.astVersion !== '1') {
     out.push(
       new ParseError(
-        SVJifErrorCode.E_VERSION_UNSUPPORTED,
+        GeordiErrorCode.E_VERSION_UNSUPPORTED,
         `Unsupported astVersion: ${String(value.astVersion)} (expected "1")`,
         { location: loc },
       ).toDiagnostic(),
@@ -178,7 +178,7 @@ function validateCanonicalAstShape(
 
   if (!isRecord(value.scene)) {
     out.push(
-      new ParseError(SVJifErrorCode.E_SCENE_MISSING, 'Canonical AST scene object is missing', {
+      new ParseError(GeordiErrorCode.E_SCENE_MISSING, 'Canonical AST scene object is missing', {
         location: loc,
       }).toDiagnostic(),
     );
@@ -186,7 +186,7 @@ function validateCanonicalAstShape(
     if (typeof value.scene.width !== 'number' || typeof value.scene.height !== 'number') {
       out.push(
         new ParseError(
-          SVJifErrorCode.E_SCENE_DIMENSIONS_INVALID,
+          GeordiErrorCode.E_SCENE_DIMENSIONS_INVALID,
           'Scene width/height must be numbers',
           { location: loc },
         ).toDiagnostic(),
@@ -196,7 +196,7 @@ function validateCanonicalAstShape(
 
   if (!Array.isArray(value.nodes)) {
     out.push(
-      new ParseError(SVJifErrorCode.E_INTERNAL_INVARIANT, 'Canonical AST nodes must be an array', {
+      new ParseError(GeordiErrorCode.E_INTERNAL_INVARIANT, 'Canonical AST nodes must be an array', {
         location: loc,
       }).toDiagnostic(),
     );

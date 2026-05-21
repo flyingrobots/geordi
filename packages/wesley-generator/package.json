@@ -1,7 +1,7 @@
 {
-  "name": "@svjif/wesley-generator",
+  "name": "@flyingrobots/geordi-wesley-generator",
   "version": "0.1.0",
-  "description": "Wesley generator plugin for SVJif compilation",
+  "description": "Wesley generator plugin for Geordi compilation",
   "type": "module",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -24,8 +24,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@svjif/compiler-core": "workspace:*",
-    "@svjif/schema-graphql": "workspace:*"
+    "@flyingrobots/geordi-compiler-core": "workspace:*",
+    "@flyingrobots/geordi-schema-graphql": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",

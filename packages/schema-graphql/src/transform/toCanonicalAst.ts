@@ -1,5 +1,5 @@
-import { deterministicId } from '@svjif/compiler-core';
-import type { CanonicalSceneAst, Node, NodeKind } from '@svjif/compiler-core';
+import { deterministicId } from '@flyingrobots/geordi-compiler-core';
+import type { CanonicalSceneAst, Node, NodeKind } from '@flyingrobots/geordi-compiler-core';
 import type { ExtractedScene } from '../parse/extractScene';
 import type { ExtractedNode } from '../parse/extractNodes';
 
@@ -8,7 +8,7 @@ import type { ExtractedNode } from '../parse/extractNodes';
  *
  * ID assignment:
  * - Scene ID: deterministicId('scene', sceneName)
- * - Node ID: explicit @svjif_node(id:...) if provided, else deterministicId('node', sceneName, fieldName)
+ * - Node ID: explicit @geordi_node(id:...) if provided, else deterministicId('node', sceneName, fieldName)
  *
  * Defaults:
  * - visible defaults to true if not specified

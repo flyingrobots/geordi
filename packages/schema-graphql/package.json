@@ -1,7 +1,7 @@
 {
-  "name": "@svjif/schema-graphql",
+  "name": "@flyingrobots/geordi-schema-graphql",
   "version": "0.1.0",
-  "description": "GraphQL SDL parser and directive handlers for SVJif",
+  "description": "GraphQL SDL parser and directive handlers for Geordi",
   "type": "module",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -24,7 +24,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@svjif/compiler-core": "workspace:*",
+    "@flyingrobots/geordi-compiler-core": "workspace:*",
     "graphql": "^16.14.0"
   },
   "devDependencies": {

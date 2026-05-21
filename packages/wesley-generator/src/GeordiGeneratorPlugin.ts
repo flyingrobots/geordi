@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Replace "any" types with real Wesley types once you wire @wesley/core in package.json.
-import { compile, type CompilerInput, type ParseInputDeps } from '@svjif/compiler-core';
-import { graphqlToCanonicalAst } from '@svjif/schema-graphql';
+import { compile, type CompilerInput, type ParseInputDeps } from '@flyingrobots/geordi-compiler-core';
+import { graphqlToCanonicalAst } from '@flyingrobots/geordi-schema-graphql';
 // import { GeneratorPlugin } from '@wesley/core';
 
 type WesleyPlanArtifact = { path: string; reason: string };
@@ -21,14 +21,14 @@ interface WesleyContextLike {
   // Add evidence/hooks fields when integrating with real Wesley runtime.
 }
 
-// export class SVJifGeneratorPlugin extends GeneratorPlugin {
-export class SVJifGeneratorPlugin {
+// export class GeordiGeneratorPlugin extends GeneratorPlugin {
+export class GeordiGeneratorPlugin {
   get apiVersion(): string {
     return '1';
   }
 
   get name(): string {
-    return 'svjif';
+    return 'geordi';
   }
 
   /**
@@ -38,11 +38,11 @@ export class SVJifGeneratorPlugin {
   async plan(schema: { sdl?: string }, context: WesleyContextLike): Promise<WesleyPlan> {
     const sdl = schema?.sdl ?? '';
 
-    context.logger?.info?.('[svjif] planning artifacts');
+    context.logger?.info?.('[geordi] planning artifacts');
 
     return {
       artifacts: [
-        { path: 'scene.svjif.json', reason: 'SVJif IR scene' },
+        { path: 'scene.geordi.json', reason: 'Geordi IR scene' },
         { path: 'types.ts', reason: 'TypeScript types for scene artifacts' },
       ],
       metadata: {
@@ -57,7 +57,7 @@ export class SVJifGeneratorPlugin {
    * Throw on compilation failure so Wesley marks generator failed.
    */
   async generate(plan: WesleyPlan, context: WesleyContextLike): Promise<WesleyGenerateResult> {
-    context.logger?.info?.('[svjif] generating artifacts');
+    context.logger?.info?.('[geordi] generating artifacts');
 
     const sdl = String(plan.metadata?.sdl ?? '');
 
@@ -66,7 +66,7 @@ export class SVJifGeneratorPlugin {
       source: sdl,
       filename: 'schema.graphql',
       options: {
-        target: 'svjif-ir-v1',
+        target: 'geordi-ir-v1',
         emit: {
           irJson: true,
           tsTypes: true,
@@ -92,7 +92,7 @@ export class SVJifGeneratorPlugin {
 
     if (!result.ok) {
       throw new Error(
-        `SVJif generation failed with ${result.diagnostics.filter((d) => d.severity === 'error').length} error(s)`,
+        `Geordi generation failed with ${result.diagnostics.filter((d) => d.severity === 'error').length} error(s)`,
       );
     }
 

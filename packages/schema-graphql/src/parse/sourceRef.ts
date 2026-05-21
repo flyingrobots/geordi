@@ -1,5 +1,5 @@
 import { getLocation, type Source } from 'graphql';
-import type { SourceRef } from '@svjif/compiler-core';
+import type { SourceRef } from '@flyingrobots/geordi-compiler-core';
 
 /**
  * Returns a SourceRef from a graphql-js AST node's loc, or a fallback.

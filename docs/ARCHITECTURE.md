@@ -1,12 +1,12 @@
-# SVJif Compiler Architecture
+# Geordi Compiler Architecture
 
 ## Overview
 
-SVJif uses a **clean seam architecture** where the compiler core remains framework-agnostic and integrations (like Wesley) are thin adapter layers.
+Geordi uses a **clean seam architecture** where the compiler core remains framework-agnostic and integrations (like Wesley) are thin adapter layers.
 
 ## Package Responsibilities
 
-### `@svjif/compiler-core`
+### `@geordi/compiler-core`
 **Pure domain logic. Zero external framework dependencies.**
 
 - **Types** (`src/types/`): Canonical AST, IR, compiler contracts
@@ -17,7 +17,7 @@ SVJif uses a **clean seam architecture** where the compiler core remains framewo
 
 **Key principle**: No Wesley types, no GraphQL AST leaks beyond parse phase.
 
-### `@svjif/schema-graphql`
+### `@geordi/schema-graphql`
 **GraphQL SDL → Canonical AST adapter**
 
 - **Directives** (`src/directives/`): Directive definitions, version validation
@@ -27,10 +27,10 @@ SVJif uses a **clean seam architecture** where the compiler core remains framewo
 
 **Key principle**: Exports pure functions that compiler-core can inject. No global state.
 
-### `@svjif/wesley-generator`
+### `@geordi/wesley-generator`
 **Wesley GeneratorPlugin adapter**
 
-- **SVJifGeneratorPlugin** (`src/SVJifGeneratorPlugin.ts`): Wesley plugin lifecycle
+- **GeordiGeneratorPlugin** (`src/GeordiGeneratorPlugin.ts`): Wesley plugin lifecycle
 - **Diagnostics adapter** (`src/diagnosticsAdapter.ts`): Maps compiler diagnostics → Wesley evidence
 
 **Key principle**: Thin transport layer. Brain lives in compiler-core.
@@ -48,9 +48,9 @@ normalizeCanonicalAst() [deterministic]
   ↓
 validateCanonicalAst() [semantic checks]
   ↓
-emitSvjifIr() + emitTypes() + emitSchema()
+emitGeordiIr() + emitTypes() + emitSchema()
   ↓
-Artifacts (scene.svjif.json, types.ts, etc.)
+Artifacts (scene.geordi.json, types.ts, etc.)
 ```
 
 ### Phase 1: Parse
@@ -80,9 +80,9 @@ Artifacts (scene.svjif.json, types.ts, etc.)
 - **Input**: Validated Canonical AST
 - **Output**: ArtifactMap
 - **Emitters**:
-  - `emitSvjifIr()` → scene.svjif.json
+  - `emitGeordiIr()` → scene.geordi.json
   - `emitTypes()` → types.ts
-  - `emitSchema()` → scene.svjif.schema.json (optional)
+  - `emitSchema()` → scene.geordi.schema.json (optional)
 
 ## Determinism
 
@@ -99,8 +99,8 @@ All operations are deterministic:
 **Internal faults** → Throw `InternalCompilerError`
 
 Error codes:
-- `SVJIF_E_*` - Errors (compilation fails)
-- `SVJIF_W_*` - Warnings (compilation succeeds unless `failOnWarnings: true`)
+- `GEORDI_E_*` - Errors (compilation fails)
+- `GEORDI_W_*` - Warnings (compilation succeeds unless `failOnWarnings: true`)
 
 See [`docs/ERROR_CODES.md`](./ERROR_CODES.md) for complete taxonomy.
 
@@ -114,7 +114,7 @@ See [`docs/ERROR_CODES.md`](./ERROR_CODES.md) for complete taxonomy.
 ## Versioning
 
 - **AST version**: `astVersion: "1"` (canonical AST)
-- **IR version**: `irVersion: "svjif-ir/1"` (output format)
+- **IR version**: `irVersion: "geordi-ir/1"` (output format)
 - **Directive version**: `v: "1"` (GraphQL directives)
 
 All versions are explicit and validated. Unknown versions → hard error.
@@ -123,8 +123,8 @@ All versions are explicit and validated. Unknown versions → hard error.
 
 Current limitations in v0.1:
 - GraphQL directive args use JSON strings for complex props (ugly but pragmatic)
-- Single output target (`svjif-ir-v1`)
-- No binary packer (`.svjifb` format)
+- Single output target (`geordi-ir-v1`)
+- No binary packer (`.geordib` format)
 
 Planned for v0.2:
 - Typed input objects for directive args

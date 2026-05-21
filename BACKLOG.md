@@ -1,4 +1,4 @@
-# SVJif Backlog
+# Geordi Backlog
 
 Items that are scoped, not urgent, and not yet scheduled for a sprint.
 Each item links to its corresponding GitHub issue for discussion and tracking.
@@ -8,7 +8,7 @@ Each item links to its corresponding GitHub issue for discussion and tracking.
 ## Compiler Core
 
 ### `buildIdentifierMap` — add `deduplicate` option
-**Issue**: [#2](https://github.com/flyingrobots/svjif/issues/2)
+**Issue**: [#2](https://github.com/flyingrobots/geordi/issues/2)
 
 `buildIdentifierMap(sources, opts)` currently accepts duplicate source strings but the
 `Map<string, string>` return type can only hold one value per key, making the behaviour on
@@ -18,7 +18,7 @@ documents and tests the per-occurrence uniqueness guarantee explicitly.
 ---
 
 ### `emitReceiptArtifact` — move to artifact builder method
-**Issue**: [#3](https://github.com/flyingrobots/svjif/issues/3)
+**Issue**: [#3](https://github.com/flyingrobots/geordi/issues/3)
 
 `emitReceiptArtifact(input, irContent, ruleIds)` receives the IR content as a raw string,
 creating an implicit coupling between caller and callee on string type correctness. Consider
@@ -28,19 +28,19 @@ as an untyped string — the builder holds the IR artifact and computes the rece
 ---
 
 ### `validateAst` — property-based fuzz tests (fast-check)
-**Issue**: [#4](https://github.com/flyingrobots/svjif/issues/4)
+**Issue**: [#4](https://github.com/flyingrobots/geordi/issues/4)
 
 Add fuzz coverage via `fast-check` for:
 - `detectCycles`: arbitrary DAGs with random parent assignments including cycles, duplicate IDs, and disconnected subgraphs
 - `sceneDimensions`: numeric edge cases (`NaN`, `Infinity`, `-0`, `Number.MIN_VALUE`)
 - `requiredProps`: randomly missing props across all NodeKinds
 
-Target package: `@svjif/compiler-core`. Add `fast-check` as a dev dependency.
+Target package: `@geordi/compiler-core`. Add `fast-check` as a dev dependency.
 
 ---
 
 ### `emitTypes` test — CI-gated TSC typecheck
-**Issue**: [#5](https://github.com/flyingrobots/svjif/issues/5)
+**Issue**: [#5](https://github.com/flyingrobots/geordi/issues/5)
 
 `emitTypes.test.ts` shells out to `node_modules/.bin/tsc` with a hardcoded path that breaks
 under PNP or hoisted workspace setups. Fix by resolving via `require.resolve('typescript/bin/tsc')`
@@ -49,7 +49,7 @@ and gate the slow typecheck behind `process.env.CI || process.env.TSC_GATE` so l
 ---
 
 ### `emitTypes` test — Group-kind zero-props interface
-**Issue**: [#6](https://github.com/flyingrobots/svjif/issues/6)
+**Issue**: [#6](https://github.com/flyingrobots/geordi/issues/6)
 
 No test asserts that a scene containing only `Group` nodes emits a valid `GroupNode` interface
 with an empty `props` block. This is an edge case in `TypeEmitter.emitKindInterface` where
@@ -60,7 +60,7 @@ with an empty `props` block. This is an edge case in `TypeEmitter.emitKindInterf
 ## Schema GraphQL
 
 ### `parseInput.ts` — surface `E_INPUT_INVALID_SDL` source location to diagnostics
-**Issue**: [#7](https://github.com/flyingrobots/svjif/issues/7)
+**Issue**: [#7](https://github.com/flyingrobots/geordi/issues/7)
 
 When `parseGraphql` throws a `ParseError` with `E_INPUT_INVALID_SDL`, `parseInput.ts` currently
 catches it and converts to a diagnostic but loses the GraphQL source location (`line`, `column`)
@@ -85,7 +85,7 @@ every field. A custom ESLint rule (or `no-restricted-syntax` selector) that flag
 
 When `adapter.ts` throws on `extractScene` failure, the thrown `Error` said "see diagnostics"
 but the diagnostics were in a local array invisible to the caller. Introduce a `DiagnosticsError`
-class in `@svjif/compiler-core` that carries a `diagnostics: Diagnostic[]` field. Any throw site
+class in `@geordi/compiler-core` that carries a `diagnostics: Diagnostic[]` field. Any throw site
 that has collected diagnostics should use this class so callers can always inspect the reason.
 
 ---
@@ -124,7 +124,7 @@ still produce the correct `__N`-suffixed output.
 ### `compiler-core` — extract a `constants.ts` barrel for all artifact path strings
 **Source**: PR #1 review retrospective
 
-`'scene.svjif.json'`, `'scene.svjif.json.receipt'`, and `'svjif-ir/1'` were used as string
+`'scene.geordi.json'`, `'scene.geordi.json.receipt'`, and `'geordi-ir/1'` were used as string
 literals in multiple files before being extracted as named constants in round 3. A single
 `src/constants.ts` barrel (or equivalent) for all artifact paths, IR version strings, and other
 shared literals would prevent this class of issue from recurring across future sprints.
@@ -168,7 +168,7 @@ the return type to `string[]` and update all callers and tests accordingly.
 
 `getDirectiveArgValue` returns `string | number | boolean | undefined`, but the call sites at
 lines 102–109 in `extractNodes.ts` cast results with `as number | undefined`, `as boolean | undefined`,
-etc., without any runtime type assertion. If a user writes `@svjif_node(x: "oops")`, the string
+etc., without any runtime type assertion. If a user writes `@geordi_node(x: "oops")`, the string
 `"oops"` silently passes through as a `number` at the type level, corrupting geometry downstream.
 
 Fix: replace the unsafe `as` casts with runtime type guards that emit `E_DIRECTIVE_ARG_INVALID_TYPE`

@@ -1,18 +1,18 @@
 /**
- * Utility functions for SVJif rendering
+ * Utility functions for Geordi rendering
  */
 
-import type { SVJifScene } from '@svjif/core';
-import { SVJifWebGLRenderer } from './WebGLRenderer.js';
+import type { GeordiScene } from '@flyingrobots/geordi-core';
+import { GeordiWebGLRenderer } from './WebGLRenderer.js';
 
 /**
- * Render a SVJif scene to a canvas element
+ * Render a Geordi scene to a canvas element
  *
- * @param scene - The SVJif scene to render
+ * @param scene - The Geordi scene to render
  * @returns Canvas element with the rendered scene
  */
-export function renderSVJifToCanvas(scene: SVJifScene): HTMLCanvasElement {
-  const renderer = new SVJifWebGLRenderer(
+export function renderGeordiToCanvas(scene: GeordiScene): HTMLCanvasElement {
+  const renderer = new GeordiWebGLRenderer(
     scene.canvas.width,
     scene.canvas.height,
   );

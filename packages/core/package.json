@@ -1,7 +1,7 @@
 {
-  "name": "@svjif/core",
+  "name": "@flyingrobots/geordi-core",
   "version": "0.1.0",
-  "description": "SVJif (Scene Vector Jif) - Scene Vector Jraphics interface format core types and validation",
+  "description": "Geordi - Core types and validation for the Geordi UI Intermediate Representation",
   "type": "module",
   "license": "Apache-2.0",
   "main": "./dist/index.js",

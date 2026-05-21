@@ -1,7 +1,7 @@
 /**
- * SVJif Node Type Definitions
+ * Geordi Node Type Definitions
  *
- * Core domain models for SVJif scene graph nodes.
+ * Core domain models for Geordi scene graph nodes.
  * Follows hexagonal architecture - pure domain logic, no infrastructure dependencies.
  */
 
@@ -92,8 +92,8 @@ export interface NodeStyle {
 /** Invalidation trigger - what causes this node to need re-layout/re-render */
 export type InvalidationTrigger = 'content' | 'children' | 'bounds' | 'style';
 
-/** Base SVJif Node */
-export interface SVJifNodeBase {
+/** Base Geordi Node */
+export interface GeordiNodeBase {
   /** Unique node identifier */
   readonly id: string;
 
@@ -114,47 +114,47 @@ export interface SVJifNodeBase {
 }
 
 /** Rect node */
-export interface RectNode extends SVJifNodeBase {
+export interface RectNode extends GeordiNodeBase {
   readonly type: 'rect';
 }
 
 /** Text node */
-export interface TextNode extends SVJifNodeBase {
+export interface TextNode extends GeordiNodeBase {
   readonly type: 'text';
   readonly content: string;
 }
 
 /** Group node (container) */
-export interface GroupNode extends SVJifNodeBase {
+export interface GroupNode extends GeordiNodeBase {
   readonly type: 'group';
   readonly children: readonly string[];
 }
 
 /** Image node */
-export interface ImageNode extends SVJifNodeBase {
+export interface ImageNode extends GeordiNodeBase {
   readonly type: 'image';
   readonly src: string;
 }
 
 /** Union type of all node types */
-export type SVJifNode = RectNode | TextNode | GroupNode | ImageNode;
+export type GeordiNode = RectNode | TextNode | GroupNode | ImageNode;
 
 /** Type guard for rect nodes */
-export function isRectNode(node: SVJifNode): node is RectNode {
+export function isRectNode(node: GeordiNode): node is RectNode {
   return node.type === 'rect';
 }
 
 /** Type guard for text nodes */
-export function isTextNode(node: SVJifNode): node is TextNode {
+export function isTextNode(node: GeordiNode): node is TextNode {
   return node.type === 'text';
 }
 
 /** Type guard for group nodes */
-export function isGroupNode(node: SVJifNode): node is GroupNode {
+export function isGroupNode(node: GeordiNode): node is GroupNode {
   return node.type === 'group';
 }
 
 /** Type guard for image nodes */
-export function isImageNode(node: SVJifNode): node is ImageNode {
+export function isImageNode(node: GeordiNode): node is ImageNode {
   return node.type === 'image';
 }

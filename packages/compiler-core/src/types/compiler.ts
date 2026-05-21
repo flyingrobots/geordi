@@ -5,7 +5,7 @@ import type { Diagnostic } from './diagnostics';
 export type InputFormat = 'graphql-sdl' | 'canonical-ast-json';
 
 export interface CompileOptions {
-  target: 'svjif-ir-v1';
+  target: 'geordi-ir-v1';
   emit: {
     irJson?: boolean;
     tsTypes?: boolean;

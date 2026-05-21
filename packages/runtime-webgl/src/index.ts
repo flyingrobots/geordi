@@ -1,8 +1,8 @@
 /**
- * @svjif/runtime-webgl
+ * @geordi/runtime-webgl
  *
- * WebGL/Canvas renderer for SVJif scenes
+ * WebGL/Canvas renderer for Geordi scenes
  */
 
-export { SVJifWebGLRenderer } from './WebGLRenderer.js';
-export { renderSVJifToCanvas } from './utils.js';
+export { GeordiWebGLRenderer } from './WebGLRenderer.js';
+export { renderGeordiToCanvas } from './utils.js';

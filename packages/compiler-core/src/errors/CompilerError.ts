@@ -1,5 +1,5 @@
 import type { Diagnostic, SourceLocation } from '../types';
-import type { SVJifErrorCodeValue } from './codes';
+import type { GeordiErrorCodeValue } from './codes';
 
 export interface CompilerErrorOptions {
   location?: SourceLocation;
@@ -9,7 +9,7 @@ export interface CompilerErrorOptions {
 }
 
 export class CompilerError extends Error {
-  public readonly code: SVJifErrorCodeValue;
+  public readonly code: GeordiErrorCodeValue;
   public readonly location?: SourceLocation;
   public readonly hint?: string;
   public readonly details?: Record<string, unknown>;
@@ -17,7 +17,7 @@ export class CompilerError extends Error {
   public readonly severity: 'error' | 'warning' | 'info';
 
   constructor(
-    code: SVJifErrorCodeValue,
+    code: GeordiErrorCodeValue,
     message: string,
     severity: 'error' | 'warning' | 'info' = 'error',
     options: CompilerErrorOptions = {},

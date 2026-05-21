@@ -1,1 +1,1 @@
-export { SVJifGeneratorPlugin } from './SVJifGeneratorPlugin';
+export { GeordiGeneratorPlugin } from './GeordiGeneratorPlugin';

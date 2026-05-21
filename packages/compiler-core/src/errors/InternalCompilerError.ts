@@ -1,9 +1,9 @@
 import { CompilerError, type CompilerErrorOptions } from './CompilerError';
-import { SVJifErrorCode } from './codes';
+import { GeordiErrorCode } from './codes';
 
 export class InternalCompilerError extends CompilerError {
   constructor(message: string, options: CompilerErrorOptions = {}) {
-    super(SVJifErrorCode.E_INTERNAL_INVARIANT, message, 'error', options);
+    super(GeordiErrorCode.E_INTERNAL_INVARIANT, message, 'error', options);
     this.name = 'InternalCompilerError';
   }
 }

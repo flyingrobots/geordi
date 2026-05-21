@@ -8,18 +8,18 @@ import type {
 } from '../types';
 
 import {
-  SVJifErrorCode,
+  GeordiErrorCode,
   InternalCompilerError,
 } from '../errors';
 
 import { parseInputToCanonicalAst, type ParseInputDeps } from './parseInput';
 import { HASH_ALGORITHM } from '../canonical/hashing';
 import { validateCanonicalAst, VALIDATION_RULE_IDS } from './validateAst';
-import { emitSvjifIrArtifact, emitReceiptArtifact, IR_ARTIFACT_KEY, IR_RECEIPT_KEY, IR_VERSION } from './emitIr';
+import { emitGeordiIrArtifact, emitReceiptArtifact, IR_ARTIFACT_KEY, IR_RECEIPT_KEY, IR_VERSION } from './emitIr';
 import { emitTypesArtifact } from './emitTypes';
 
 const DEFAULT_OPTIONS: CompileOptions = {
-  target: 'svjif-ir-v1',
+  target: 'geordi-ir-v1',
   emit: {
     irJson: true,
     tsTypes: true,
@@ -56,7 +56,7 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
     // Reject unsupported features before any artifacts are written
     if (options.emit.jsonSchema) {
       diagnostics.push({
-        code: SVJifErrorCode.E_FEATURE_NOT_IMPLEMENTED,
+        code: GeordiErrorCode.E_FEATURE_NOT_IMPLEMENTED,
         severity: 'error',
         message: 'emit.jsonSchema is not yet implemented. Remove jsonSchema: true from emit options.',
         details: { feature: 'jsonSchema' },
@@ -64,7 +64,7 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
       return finalize(false, canonicalAst, artifacts, diagnostics, input.format, started);
     }
     if (options.emit.irJson && canonicalAst) {
-      const irArtifact = emitSvjifIrArtifact(canonicalAst);
+      const irArtifact = emitGeordiIrArtifact(canonicalAst);
       artifacts[IR_ARTIFACT_KEY] = irArtifact;
 
       artifacts[IR_RECEIPT_KEY] = emitReceiptArtifact(input, irArtifact.content as string, VALIDATION_RULE_IDS);
@@ -74,7 +74,7 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
     }
     if (options.emit.binaryPack) {
       diagnostics.push({
-        code: SVJifErrorCode.W_BINARY_PACK_NOT_IMPLEMENTED,
+        code: GeordiErrorCode.W_BINARY_PACK_NOT_IMPLEMENTED,
         severity: 'warning',
         message: 'binaryPack requested but not implemented yet',
       });

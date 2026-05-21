@@ -1,7 +1,7 @@
 import type { CanonicalSceneAst, NodeKind } from '../types/ast';
 import type { CompileOptions } from '../types/compiler';
 import type { Diagnostic } from '../types/diagnostics';
-import { SVJifErrorCode } from '../errors/codes';
+import { GeordiErrorCode } from '../errors/codes';
 
 const VALID_NODE_KINDS = new Set<string>([
   'Rect',
@@ -46,7 +46,7 @@ export function validateCanonicalAst(
   if (!Number.isFinite(ast.scene.width) || ast.scene.width <= 0 ||
       !Number.isFinite(ast.scene.height) || ast.scene.height <= 0) {
     diagnostics.push({
-      code: SVJifErrorCode.E_SCENE_DIMENSIONS_INVALID,
+      code: GeordiErrorCode.E_SCENE_DIMENSIONS_INVALID,
       severity: 'error',
       message: `Scene width/height must be > 0 (got width=${ast.scene.width}, height=${ast.scene.height})`,
     });
@@ -56,7 +56,7 @@ export function validateCanonicalAst(
   for (const node of ast.nodes) {
     if (!VALID_NODE_KINDS.has(node.kind)) {
       diagnostics.push({
-        code: SVJifErrorCode.E_NODE_KIND_INVALID,
+        code: GeordiErrorCode.E_NODE_KIND_INVALID,
         severity: 'error',
         message: `Unknown node kind "${node.kind}" on node "${node.id}"`,
         details: { nodeId: node.id, kind: node.kind },
@@ -69,7 +69,7 @@ export function validateCanonicalAst(
   for (const node of ast.nodes) {
     if (idSet.has(node.id)) {
       diagnostics.push({
-        code: SVJifErrorCode.E_NODE_DUPLICATE_ID,
+        code: GeordiErrorCode.E_NODE_DUPLICATE_ID,
         severity: 'error',
         message: `Duplicate node id "${node.id}"`,
         details: { nodeId: node.id },
@@ -85,7 +85,7 @@ export function validateCanonicalAst(
   for (const node of ast.nodes) {
     if (node.parentId !== undefined && !nodeIds.has(node.parentId)) {
       diagnostics.push({
-        code: SVJifErrorCode.E_PARENT_NOT_FOUND,
+        code: GeordiErrorCode.E_PARENT_NOT_FOUND,
         severity: 'error',
         message: `Node "${node.id}" has parentId "${node.parentId}" which does not exist`,
         details: { nodeId: node.id, parentId: node.parentId },
@@ -95,7 +95,7 @@ export function validateCanonicalAst(
   for (const binding of ast.bindings ?? []) {
     if (!nodeIds.has(binding.targetNodeId)) {
       diagnostics.push({
-        code: SVJifErrorCode.E_BIND_TARGET_NOT_FOUND,
+        code: GeordiErrorCode.E_BIND_TARGET_NOT_FOUND,
         severity: 'error',
         message: `Binding "${binding.id}" references non-existent node "${binding.targetNodeId}"`,
         details: { bindingId: binding.id, targetNodeId: binding.targetNodeId },
@@ -105,7 +105,7 @@ export function validateCanonicalAst(
   for (const anim of ast.animations ?? []) {
     if (!nodeIds.has(anim.targetNodeId)) {
       diagnostics.push({
-        code: SVJifErrorCode.E_REF_TARGET_NOT_FOUND,
+        code: GeordiErrorCode.E_REF_TARGET_NOT_FOUND,
         severity: 'error',
         message: `Animation "${anim.id}" references non-existent node "${anim.targetNodeId}"`,
         details: { refKind: 'animation', animationId: anim.id, targetNodeId: anim.targetNodeId },
@@ -117,7 +117,7 @@ export function validateCanonicalAst(
   const cycleIds = detectCycles(ast);
   for (const nodeId of cycleIds) {
     diagnostics.push({
-      code: SVJifErrorCode.E_CYCLE_DETECTED,
+      code: GeordiErrorCode.E_CYCLE_DETECTED,
       severity: 'error',
       message: `Cycle detected involving node "${nodeId}"`,
       details: { nodeId },
@@ -137,7 +137,7 @@ export function validateCanonicalAst(
     for (const prop of required) {
       if (!(prop in node.props) || node.props[prop] === undefined || node.props[prop] === null) {
         diagnostics.push({
-          code: SVJifErrorCode.E_PROP_REQUIRED_MISSING,
+          code: GeordiErrorCode.E_PROP_REQUIRED_MISSING,
           severity: 'error',
           message: `Node "${node.id}" (kind=${node.kind}) is missing required prop "${prop}"`,
           details: { nodeId: node.id, kind: node.kind, prop },

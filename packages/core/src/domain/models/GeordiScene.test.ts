@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 
-import type { SVJifScene } from './SVJifScene.js';
+import type { GeordiScene } from './GeordiScene.js';
 
-describe('SVJifScene', (): void => {
+describe('GeordiScene', (): void => {
   it('should create a valid scene with metadata', (): void => {
-    const scene: SVJifScene = {
+    const scene: GeordiScene = {
       version: '0.1.0',
       meta: {
-        generator: '@svjif/vue',
+        generator: '@flyingrobots/geordi-vue',
         source: 'Terminal.vue',
         hash: 'sha256:abc123',
       },
@@ -27,10 +27,10 @@ describe('SVJifScene', (): void => {
   });
 
   it('should contain nodes with proper references', (): void => {
-    const scene: SVJifScene = {
+    const scene: GeordiScene = {
       version: '0.1.0',
       meta: {
-        generator: '@svjif/core',
+        generator: '@flyingrobots/geordi-core',
         source: 'test',
         hash: 'sha256:test',
       },
@@ -81,10 +81,10 @@ describe('SVJifScene', (): void => {
   });
 
   it('should have interaction hit regions', (): void => {
-    const scene: SVJifScene = {
+    const scene: GeordiScene = {
       version: '0.1.0',
       meta: {
-        generator: '@svjif/core',
+        generator: '@flyingrobots/geordi-core',
         source: 'test',
         hash: 'sha256:test',
       },

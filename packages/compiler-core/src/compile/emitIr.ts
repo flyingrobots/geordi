@@ -6,9 +6,9 @@ import { hashString } from '../canonical/hashing';
 import { cmpStr } from '../util/identifiers';
 
 export const COMPARATOR_VERSION = '1' as const;
-export const IR_VERSION = 'svjif-ir/1' as const;
-export const IR_ARTIFACT_KEY = 'scene.svjif.json' as const;
-export const IR_RECEIPT_KEY = 'scene.svjif.json.receipt' as const;
+export const IR_VERSION = 'geordi-ir/1' as const;
+export const IR_ARTIFACT_KEY = 'scene.geordi.json' as const;
+export const IR_RECEIPT_KEY = 'scene.geordi.json.receipt' as const;
 
 /**
  * Phase 1: Topological sort by parentId DAG.
@@ -17,7 +17,7 @@ export const IR_RECEIPT_KEY = 'scene.svjif.json.receipt' as const;
  * Nodes without parentId are roots and enter the ready queue first.
  * sourceRef and __typename are stripped.
  */
-export function emitSvjifIrArtifact(ast: CanonicalSceneAst): Artifact {
+export function emitGeordiIrArtifact(ast: CanonicalSceneAst): Artifact {
   const sorted = topoSort(ast);
 
   const content = stableStringify(

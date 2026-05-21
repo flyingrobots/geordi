@@ -9,7 +9,7 @@ export interface SourceLocation {
 }
 
 export interface Diagnostic {
-  code: string; // e.g. SVJIF_E_SCENE_MISSING
+  code: string; // e.g. GEORDI_E_SCENE_MISSING
   severity: DiagnosticSeverity;
   message: string;
   location?: SourceLocation;

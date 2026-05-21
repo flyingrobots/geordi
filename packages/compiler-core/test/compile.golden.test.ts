@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { compile } from '../src/compile/compile';
-import { SVJifErrorCode } from '../src/errors';
+import { GeordiErrorCode } from '../src/errors';
 
 function sha256(s: string): string {
   return createHash('sha256').update(s, 'utf8').digest('hex');
@@ -43,7 +43,7 @@ describe('compile() golden path', () => {
       source: JSON.stringify(validCanonicalAst),
       filename: 'fixtures/valid.scene.json',
       options: {
-        target: 'svjif-ir-v1',
+        target: 'geordi-ir-v1',
         emit: { irJson: true, tsTypes: true, jsonSchema: false, binaryPack: false },
         strict: true,
         failOnWarnings: false,
@@ -53,17 +53,17 @@ describe('compile() golden path', () => {
 
     expect(result.ok).toBe(true);
     expect(result.diagnostics.filter((d) => d.severity === 'error')).toHaveLength(0);
-    expect(result.artifacts['scene.svjif.json']).toBeDefined();
+    expect(result.artifacts['scene.geordi.json']).toBeDefined();
     expect(result.artifacts['types.ts']).toBeDefined();
 
-    const ir = JSON.parse(String(result.artifacts['scene.svjif.json'].content));
-    expect(ir.irVersion).toBe('svjif-ir/1');
+    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
+    expect(ir.irVersion).toBe('geordi-ir/1');
     expect(ir.scene.id).toBe('scene:terminal');
     expect(Array.isArray(ir.nodes)).toBe(true);
     expect(ir.nodes.length).toBe(2);
   });
 
-  it('scene.svjif.json.receipt is present and contains irHash', async () => {
+  it('scene.geordi.json.receipt is present and contains irHash', async () => {
     const source = JSON.stringify({
       kind: 'Scene',
       astVersion: '1',
@@ -77,20 +77,20 @@ describe('compile() golden path', () => {
     const result = await compile({
       format: 'canonical-ast-json',
       source,
-      options: { target: 'svjif-ir-v1', emit: { irJson: true, tsTypes: false } },
+      options: { target: 'geordi-ir-v1', emit: { irJson: true, tsTypes: false } },
     });
 
     expect(result.ok).toBe(true);
-    expect(result.artifacts['scene.svjif.json.receipt']).toBeDefined();
+    expect(result.artifacts['scene.geordi.json.receipt']).toBeDefined();
 
-    const receipt = JSON.parse(String(result.artifacts['scene.svjif.json.receipt'].content));
+    const receipt = JSON.parse(String(result.artifacts['scene.geordi.json.receipt'].content));
     expect(receipt.comparatorVersion).toBe('1');
-    expect(receipt.irVersion).toBe('svjif-ir/1');
+    expect(receipt.irVersion).toBe('geordi-ir/1');
     expect(receipt.inputHash).toBe(sha256(source));
     expect(typeof receipt.rulesetFingerprint).toBe('string');
 
     // irHash must match sha256 of the emitted IR
-    const irContent = String(result.artifacts['scene.svjif.json'].content);
+    const irContent = String(result.artifacts['scene.geordi.json'].content);
     expect(receipt.irHash).toBe(sha256(irContent));
     expect(receipt.irHashAlg).toBe('sha256');
   });
@@ -106,11 +106,11 @@ describe('compile() golden path', () => {
     const result = await compile({
       format: 'canonical-ast-json',
       source,
-      options: { target: 'svjif-ir-v1', emit: { irJson: true, tsTypes: false } },
+      options: { target: 'geordi-ir-v1', emit: { irJson: true, tsTypes: false } },
     });
 
     expect(result.ok).toBe(true);
-    const receipt = JSON.parse(String(result.artifacts['scene.svjif.json.receipt'].content));
+    const receipt = JSON.parse(String(result.artifacts['scene.geordi.json.receipt'].content));
     expect(receipt.inputHash).toBe(sha256(source));
   });
 
@@ -125,7 +125,7 @@ describe('compile() golden path', () => {
     const input = {
       format: 'canonical-ast-json' as const,
       source,
-      options: { target: 'svjif-ir-v1' as const, emit: { irJson: true, tsTypes: false } },
+      options: { target: 'geordi-ir-v1' as const, emit: { irJson: true, tsTypes: false } },
     };
 
     const r1 = await compile(input);
@@ -134,8 +134,8 @@ describe('compile() golden path', () => {
     expect(r1.ok).toBe(true);
     expect(r2.ok).toBe(true);
 
-    const rec1 = String(r1.artifacts['scene.svjif.json.receipt'].content);
-    const rec2 = String(r2.artifacts['scene.svjif.json.receipt'].content);
+    const rec1 = String(r1.artifacts['scene.geordi.json.receipt'].content);
+    const rec2 = String(r2.artifacts['scene.geordi.json.receipt'].content);
     expect(rec1).toBe(rec2);
     expect(sha256(rec1)).toBe(sha256(rec2));
   });
@@ -151,12 +151,12 @@ describe('compile() golden path', () => {
     const result = await compile({
       format: 'canonical-ast-json',
       source,
-      options: { target: 'svjif-ir-v1', emit: { jsonSchema: true } },
+      options: { target: 'geordi-ir-v1', emit: { jsonSchema: true } },
     });
 
     expect(result.ok).toBe(false);
     const codes = result.diagnostics.map((d) => d.code);
-    expect(codes).toContain(SVJifErrorCode.E_FEATURE_NOT_IMPLEMENTED);
+    expect(codes).toContain(GeordiErrorCode.E_FEATURE_NOT_IMPLEMENTED);
   });
 
   it('invalid fixture (empty input) fails with deterministic error code', async () => {
@@ -165,7 +165,7 @@ describe('compile() golden path', () => {
       source: '   ',
       filename: 'fixtures/invalid.empty.json',
       options: {
-        target: 'svjif-ir-v1',
+        target: 'geordi-ir-v1',
         emit: { irJson: true, tsTypes: true },
         strict: true,
         failOnWarnings: false,
@@ -179,6 +179,6 @@ describe('compile() golden path', () => {
       .filter((d) => d.severity === 'error')
       .map((d) => d.code);
 
-    expect(errorCodes).toContain(SVJifErrorCode.E_INPUT_EMPTY);
+    expect(errorCodes).toContain(GeordiErrorCode.E_INPUT_EMPTY);
   });
 });

@@ -38,7 +38,7 @@ const BASE_INPUT: CompilerInput = {
   }),
   filename: 'fixtures/determinism.json',
   options: {
-    target: 'svjif-ir-v1',
+    target: 'geordi-ir-v1',
     emit: { irJson: true, tsTypes: false },
     strict: true,
     failOnWarnings: false,
@@ -54,8 +54,8 @@ describe('determinism', () => {
     expect(result1.ok).toBe(true);
     expect(result2.ok).toBe(true);
 
-    const ir1 = String(result1.artifacts['scene.svjif.json'].content);
-    const ir2 = String(result2.artifacts['scene.svjif.json'].content);
+    const ir1 = String(result1.artifacts['scene.geordi.json'].content);
+    const ir2 = String(result2.artifacts['scene.geordi.json'].content);
 
     expect(ir1).toBe(ir2);
   });
@@ -102,8 +102,8 @@ describe('determinism', () => {
     expect(r1.ok).toBe(true);
     expect(r2.ok).toBe(true);
 
-    const ir1 = String(r1.artifacts['scene.svjif.json'].content);
-    const ir2 = String(r2.artifacts['scene.svjif.json'].content);
+    const ir1 = String(r1.artifacts['scene.geordi.json'].content);
+    const ir2 = String(r2.artifacts['scene.geordi.json'].content);
 
     expect(sha256(ir1)).toBe(sha256(ir2));
   });
@@ -151,7 +151,7 @@ describe('determinism', () => {
     const result = await compile(withReversedNodes);
     expect(result.ok).toBe(true);
 
-    const ir = JSON.parse(String(result.artifacts['scene.svjif.json'].content));
+    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
     expect(ir.nodes.map((n: { id: string }) => n.id)).toEqual(['node:z1', 'node:z2', 'node:z3']);
   });
 
@@ -188,7 +188,7 @@ describe('determinism', () => {
     for (const shuffle of shuffles) {
       const result = await compile(makeInput(shuffle));
       expect(result.ok).toBe(true);
-      const ir = String(result.artifacts['scene.svjif.json'].content);
+      const ir = String(result.artifacts['scene.geordi.json'].content);
       hashes.add(sha256(ir));
     }
 
@@ -214,7 +214,7 @@ describe('determinism', () => {
     const result = await compile(input);
     expect(result.ok).toBe(true);
 
-    const ir = JSON.parse(String(result.artifacts['scene.svjif.json'].content));
+    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
     const ids: string[] = ir.nodes.map((n: { id: string }) => n.id);
     expect(ids.indexOf('parent')).toBeLessThan(ids.indexOf('child'));
   });
@@ -238,7 +238,7 @@ describe('determinism', () => {
     const result = await compile(input);
     expect(result.ok).toBe(true);
 
-    const ir = JSON.parse(String(result.artifacts['scene.svjif.json'].content));
+    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
     expect(ir.nodes.map((n: { id: string }) => n.id)).toEqual(['n:a', 'n:z']);
   });
 });

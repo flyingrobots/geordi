@@ -1,56 +1,28 @@
-# SVJif Pronunciation Guide
+# Geordi Pronunciation Guide
 
 ## Official Pronunciation
 
-**"Scene Vector Jif"**
+**"Jor-dee"**
 
-**IPA:** `/siːn ˈvɛktər dʒɪf/`
+**IPA:** `/ˈdʒɔːrdi/`
 
-## Full Name
+## Origins
 
-**Scene Vector Jraphics interface format**
+Named after **Geordi La Forge**, the legendary Chief Engineer of the USS Enterprise-D.
 
-(Yes, "Jraphics" with a J - it's a deliberate play on SVG/Graphics with the GIF/JIF pronunciation)
-
-## Breakdown
-
-- **S** - Scene
-- **V** - Vector
-- **J** - Jraphics (Graphics pronounced with J)
-- **if** - interface format
-
-## How to Say It
-
-- **Scene** - /siːn/ - "SEEN" (normal word)
-- **Vector** - /ˈvɛktər/ - "VEK-tor" (normal word)
-- **Jif** - /dʒɪf/ - "JIF" (like the peanut butter, rhymes with "gift")
+The name reflects the project's identity: high-performance engineering, technical mastery, and the ability to "see" things differently through a specialized interface (like Geordi's VISOR).
 
 ## Capitalization
 
-The official capitalization is `SVJif` with lowercase 'f'. This is intentional.
+The official capitalization is **Geordi**.
 
-❌ **Wrong:** SVJIF, svjif, SvJif, SVJiF
-✅ **Correct:** SVJif
+❌ **Wrong:** GEORDI, geordi, GeorDi
+✅ **Correct:** Geordi
 
-## Pronunciation Note
+## Usage in Conversation
 
-Say it like a phrase, not letter-by-letter:
-- ✅ "Scene Vector Jif"
-- ❌ "Ess-Vee-Jif"
-- ❌ "Es-Vee-Jay-Eye-Eff"
+> "Geordi compiles our UI blueprints into GPU-native scenes."
 
-## Why This Matters
+> "The Geordi IR is powered by the Wesley framework."
 
-Consistent pronunciation helps:
-- Build brand recognition
-- Make documentation searchable
-- Create a professional identity
-- Avoid confusion in verbal discussions
-
-## In Conversation
-
-> "We're using **Scene Vector Jif** for GPU rendering."
-
-> "The **SVJif** compiler generates optimized scenes."
-
-> "This outputs a **.svjif** file" (pronounced: "dot scene-vector-jif")
+> "Is that a Geordi-optimized component?"

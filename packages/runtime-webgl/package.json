@@ -1,7 +1,7 @@
 {
-  "name": "@svjif/runtime-webgl",
+  "name": "@flyingrobots/geordi-runtime-webgl",
   "version": "0.1.0",
-  "description": "WebGL/Canvas renderer for SVJif scenes",
+  "description": "WebGL/Canvas renderer for the Geordi UI Intermediate Representation",
   "type": "module",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -24,7 +24,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@svjif/core": "file:../core"
+    "@flyingrobots/geordi-core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",

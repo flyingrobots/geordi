@@ -1,34 +1,47 @@
 
 
-> @svjif/compiler-core@0.1.0 test /Users/james/git/SVJif/packages/compiler-core
+> @flyingrobots/geordi-compiler-core@0.1.0 test /Users/james/git/SVJif/packages/compiler-core
 > vitest run
 
 [?25l
 [1m[30m[46m RUN [49m[39m[22m [36mv4.1.7 [39m[90m/Users/james/git/SVJif/packages/compiler-core[39m
 
 [?2026h
-[1m[33m ❯ [39m[22mtest/emitTypes.test.ts[2m [queued][22m
+[1m[33m ❯ [39m[22mtest/compile.golden.test.ts[2m [queued][22m
 
 [2m Test Files [22m[1m[32m0 passed[39m[22m[90m (6)[39m
 [2m      Tests [22m[1m[32m0 passed[39m[22m[90m (0)[39m
-[2m   Start at [22m10:46:26
-[2m   Duration [22m103ms
-[?2026l[?2026h[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K [32m✓[39m test/stableStringify.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 6[2mms[22m[39m
-
+[2m   Start at [22m14:10:54
+[2m   Duration [22m202ms
+[?2026l[?2026h[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K
 [1m[33m ❯ [39m[22mtest/compile.golden.test.ts[2m [queued][22m
 [1m[33m ❯ [39m[22mtest/determinism.test.ts[2m [queued][22m
-[1m[33m ❯ [39m[22mtest/emitTypes.test.ts[2m 0/20[22m
-[1m[33m ❯ [39m[22mtest/parseInput.test.ts[2m 0/9[22m
+[1m[33m ❯ [39m[22mtest/emitTypes.test.ts[2m [queued][22m
+[1m[33m ❯ [39m[22mtest/parseInput.test.ts[2m [queued][22m
+[1m[33m ❯ [39m[22mtest/stableStringify.test.ts[2m [queued][22m
 [1m[33m ❯ [39m[22mtest/validateAst.test.ts[2m [queued][22m
 
-[2m Test Files [22m[1m[32m1 passed[39m[22m[90m (6)[39m
-[2m      Tests [22m[1m[32m26 passed[39m[22m[90m (55)[39m
-[2m   Start at [22m10:46:26
-[2m   Duration [22m218ms
-[?2026l[?2026h[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K [32m✓[39m test/parseInput.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 4[2mms[22m[39m
- [32m✓[39m test/compile.golden.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
- [32m✓[39m test/determinism.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
- [32m✓[39m test/validateAst.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+[2m Test Files [22m[1m[32m0 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m[1m[32m0 passed[39m[22m[90m (0)[39m
+[2m   Start at [22m14:10:54
+[2m   Duration [22m302ms
+[?2026l[?2026h[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K [32m✓[39m test/stableStringify.test.ts [2m([22m[2m26 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m test/parseInput.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+
+
+[1m[33m ❯ [39m[22mtest/compile.golden.test.ts[2m 0/6[22m
+[1m[33m ❯ [39m[22mtest/determinism.test.ts[2m [queued][22m
+[1m[33m ❯ [39m[22mtest/emitTypes.test.ts[2m 0/20[22m
+[1m[33m ❯ [39m[22mtest/validateAst.test.ts[2m 0/19[22m
+
+[2m Test Files [22m[1m[32m2 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m[1m[32m35 passed[39m[22m[90m (80)[39m
+[2m   Start at [22m14:10:54
+[2m   Duration [22m504ms
+[?2026l[?2026h[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K [32m✓[39m test/compile.golden.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m test/determinism.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m test/validateAst.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 55[2mms[22m[39m
+
 
 
 
@@ -36,14 +49,14 @@
 
 [2m Test Files [22m[1m[32m5 passed[39m[22m[90m (6)[39m
 [2m      Tests [22m[1m[32m67 passed[39m[22m[90m (86)[39m
-[2m   Start at [22m10:46:26
-[2m   Duration [22m621ms
-[?2026l[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K [32m✓[39m test/emitTypes.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 422[2mms[22m[39m
-     [33m[2m✓[22m[39m emitted TypeScript passes tsc --noEmit (C3 success gate) [33m 418[2mms[22m[39m
+[2m   Start at [22m14:10:54
+[2m   Duration [22m912ms
+[?2026l[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K[1A[K [32m✓[39m test/emitTypes.test.ts [2m([22m[2m20 tests[22m[2m)[22m[33m 562[2mms[22m[39m
+     [33m[2m✓[22m[39m emitted TypeScript passes tsc --noEmit (C3 success gate) [33m 555[2mms[22m[39m
 
 [2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
 [2m      Tests [22m [1m[32m86 passed[39m[22m[90m (86)[39m
-[2m   Start at [22m 10:46:26
-[2m   Duration [22m 678ms[2m (transform 424ms, setup 0ms, import 603ms, tests 469ms, environment 1ms)[22m
+[2m   Start at [22m 14:10:54
+[2m   Duration [22m 1.00s[2m (transform 680ms, setup 0ms, import 955ms, tests 642ms, environment 0ms)[22m
 
 [?25h

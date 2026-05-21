@@ -1,6 +1,6 @@
 // Keep IR explicit and separate from canonical AST.
-export interface SvjifIrV1 {
-  irVersion: 'svjif-ir/1';
+export interface GeordiIrV1 {
+  irVersion: 'geordi-ir/1';
   scene: {
     id: string;
     width: number;

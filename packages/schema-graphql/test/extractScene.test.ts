@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SVJifErrorCode } from '@svjif/compiler-core';
-import type { Diagnostic } from '@svjif/compiler-core';
+import { GeordiErrorCode } from '@flyingrobots/geordi-compiler-core';
+import type { Diagnostic } from '@flyingrobots/geordi-compiler-core';
 import { parseGraphql } from '../src/parse/parseGraphql';
 import { extractScene } from '../src/parse/extractScene';
 
@@ -9,9 +9,9 @@ function parse(sdl: string) {
 }
 
 describe('extractScene (table-driven)', () => {
-  it('valid @svjif_scene type is extracted correctly', () => {
+  it('valid @geordi_scene type is extracted correctly', () => {
     const doc = parse(`
-      type Terminal @svjif_scene(v: "1", width: 800, height: 600) {
+      type Terminal @geordi_scene(v: "1", width: 800, height: 600) {
         _: String
       }
     `);
@@ -28,7 +28,7 @@ describe('extractScene (table-driven)', () => {
 
   it('extracts optional name and background', () => {
     const doc = parse(`
-      type UI @svjif_scene(v: "1", width: 1920, height: 1080, name: "Main UI", background: "#ffffff") {
+      type UI @geordi_scene(v: "1", width: 1920, height: 1080, name: "Main UI", background: "#ffffff") {
         _: String
       }
     `);
@@ -39,7 +39,7 @@ describe('extractScene (table-driven)', () => {
     expect(scene?.background).toBe('#ffffff');
   });
 
-  it('no @svjif_scene type → SVJIF_E_SCENE_MISSING', () => {
+  it('no @geordi_scene type → GEORDI_E_SCENE_MISSING', () => {
     const doc = parse(`
       type Query { _: String }
     `);
@@ -47,71 +47,71 @@ describe('extractScene (table-driven)', () => {
     const scene = extractScene(doc, diag, 'test.graphql');
 
     expect(scene).toBeUndefined();
-    expect(diag.map((d) => d.code)).toContain(SVJifErrorCode.E_SCENE_MISSING);
+    expect(diag.map((d) => d.code)).toContain(GeordiErrorCode.E_SCENE_MISSING);
   });
 
-  it('multiple @svjif_scene types → SVJIF_E_SCENE_MULTIPLE', () => {
+  it('multiple @geordi_scene types → GEORDI_E_SCENE_MULTIPLE', () => {
     const doc = parse(`
-      type SceneA @svjif_scene(v: "1", width: 100, height: 100) { _: String }
-      type SceneB @svjif_scene(v: "1", width: 200, height: 200) { _: String }
+      type SceneA @geordi_scene(v: "1", width: 100, height: 100) { _: String }
+      type SceneB @geordi_scene(v: "1", width: 200, height: 200) { _: String }
     `);
     const diag: Diagnostic[] = [];
     const scene = extractScene(doc, diag, 'test.graphql');
 
     expect(scene).toBeUndefined();
-    expect(diag.map((d) => d.code)).toContain(SVJifErrorCode.E_SCENE_MULTIPLE);
+    expect(diag.map((d) => d.code)).toContain(GeordiErrorCode.E_SCENE_MULTIPLE);
   });
 
-  it('wrong version → SVJIF_E_VERSION_UNSUPPORTED', () => {
+  it('wrong version → GEORDI_E_VERSION_UNSUPPORTED', () => {
     const doc = parse(`
-      type Scene @svjif_scene(v: "2", width: 800, height: 600) { _: String }
+      type Scene @geordi_scene(v: "2", width: 800, height: 600) { _: String }
     `);
     const diag: Diagnostic[] = [];
     const scene = extractScene(doc, diag, 'test.graphql');
 
     expect(scene).toBeUndefined();
-    expect(diag.map((d) => d.code)).toContain(SVJifErrorCode.E_VERSION_UNSUPPORTED);
+    expect(diag.map((d) => d.code)).toContain(GeordiErrorCode.E_VERSION_UNSUPPORTED);
   });
 
-  it('missing v argument → SVJIF_E_DIRECTIVE_ARG_MISSING', () => {
+  it('missing v argument → GEORDI_E_DIRECTIVE_ARG_MISSING', () => {
     // Note: graphql-js parse will fail without required args in SDL schema validation,
     // but the parser allows raw document parsing without schema validation
     // We test that extractScene validates the arg itself
     const doc = parse(`
-      type Scene @svjif_scene(width: 800, height: 600) { _: String }
+      type Scene @geordi_scene(width: 800, height: 600) { _: String }
     `);
     const diag: Diagnostic[] = [];
     const scene = extractScene(doc, diag, 'test.graphql');
 
     expect(scene).toBeUndefined();
-    expect(diag.map((d) => d.code)).toContain(SVJifErrorCode.E_DIRECTIVE_ARG_MISSING);
+    expect(diag.map((d) => d.code)).toContain(GeordiErrorCode.E_DIRECTIVE_ARG_MISSING);
   });
 
-  it('missing width argument → SVJIF_E_DIRECTIVE_ARG_MISSING', () => {
+  it('missing width argument → GEORDI_E_DIRECTIVE_ARG_MISSING', () => {
     const doc = parse(`
-      type Scene @svjif_scene(v: "1", height: 600) { _: String }
+      type Scene @geordi_scene(v: "1", height: 600) { _: String }
     `);
     const diag: Diagnostic[] = [];
     const scene = extractScene(doc, diag, 'test.graphql');
 
     expect(scene).toBeUndefined();
-    expect(diag.map((d) => d.code)).toContain(SVJifErrorCode.E_DIRECTIVE_ARG_MISSING);
+    expect(diag.map((d) => d.code)).toContain(GeordiErrorCode.E_DIRECTIVE_ARG_MISSING);
   });
 
-  it('missing height argument → SVJIF_E_DIRECTIVE_ARG_MISSING', () => {
+  it('missing height argument → GEORDI_E_DIRECTIVE_ARG_MISSING', () => {
     const doc = parse(`
-      type Scene @svjif_scene(v: "1", width: 800) { _: String }
+      type Scene @geordi_scene(v: "1", width: 800) { _: String }
     `);
     const diag: Diagnostic[] = [];
     const scene = extractScene(doc, diag, 'test.graphql');
 
     expect(scene).toBeUndefined();
-    expect(diag.map((d) => d.code)).toContain(SVJifErrorCode.E_DIRECTIVE_ARG_MISSING);
+    expect(diag.map((d) => d.code)).toContain(GeordiErrorCode.E_DIRECTIVE_ARG_MISSING);
   });
 
   it('has sourceRef with correct file', () => {
     const doc = parse(`
-      type Terminal @svjif_scene(v: "1", width: 800, height: 600) { _: String }
+      type Terminal @geordi_scene(v: "1", width: 800, height: 600) { _: String }
     `);
     const diag: Diagnostic[] = [];
     const scene = extractScene(doc, diag, 'my-scene.graphql');
@@ -123,7 +123,7 @@ describe('extractScene (table-driven)', () => {
 
   it('sourceRef fallback when no filename provided', () => {
     const doc = parse(`
-      type Terminal @svjif_scene(v: "1", width: 800, height: 600) { _: String }
+      type Terminal @geordi_scene(v: "1", width: 800, height: 600) { _: String }
     `);
     const diag: Diagnostic[] = [];
     const scene = extractScene(doc, diag);

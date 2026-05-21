@@ -1,7 +1,7 @@
 {
-  "name": "@svjif/compiler-core",
+  "name": "@flyingrobots/geordi-compiler-core",
   "version": "0.1.0",
-  "description": "SVJif compiler core - pure, framework-agnostic compilation engine",
+  "description": "Core compilation engine for Geordi, powered by the Wesley framework.",
   "type": "module",
   "license": "Apache-2.0",
   "main": "./dist/index.js",

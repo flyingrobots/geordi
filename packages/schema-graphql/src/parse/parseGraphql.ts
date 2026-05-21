@@ -1,5 +1,5 @@
 import { parse, Source, GraphQLError, type DocumentNode } from 'graphql';
-import { ParseError, SVJifErrorCode } from '@svjif/compiler-core';
+import { ParseError, GeordiErrorCode } from '@flyingrobots/geordi-compiler-core';
 
 /**
  * Parse a GraphQL SDL string into a DocumentNode.
@@ -20,7 +20,7 @@ export function parseGraphql(sdl: string, filename?: string): DocumentNode {
         : { file: effectiveName, line: 1, column: 1 };
 
     throw new ParseError(
-      SVJifErrorCode.E_INPUT_INVALID_SDL,
+      GeordiErrorCode.E_INPUT_INVALID_SDL,
       `GraphQL SDL parse error: ${cause instanceof Error ? cause.message : String(cause)}`,
       { cause, location },
     );
