@@ -18,8 +18,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit"
   },
