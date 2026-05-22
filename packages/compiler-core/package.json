@@ -15,6 +15,9 @@
   "files": [
     "dist"
   ],
+  "dependencies": {
+    "@flyingrobots/geordi-core": "workspace:*"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

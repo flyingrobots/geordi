@@ -17,7 +17,7 @@ semantic correctness rather than more repository scaffolding.
 
 Pure, framework-agnostic compilation engine.
 
-- Type system: canonical AST, IR, diagnostics, artifacts.
+- Type system: canonical AST, diagnostics, artifacts, and IR types re-exported from core.
 - Error taxonomy with stable `GEORDI_E_*` and `GEORDI_W_*` codes.
 - Compile orchestrator with parse, canonicalize, validate, and emit phases.
 - GraphQL SDL and canonical JSON input paths.
@@ -49,7 +49,8 @@ Wesley GeneratorPlugin adapter scaffold.
 Core domain package.
 
 - Current domain models and guards for the older scene shape.
-- Still needs migration to own validated `geordi-ir/1` runtime contract types.
+- Versioned `geordi-ir/1` constants, structural types, and validation.
+- Still needs the older scene shape deprecated, renamed, or internalized before v0.1.
 
 #### `@flyingrobots/geordi-runtime-webgl`
 
@@ -57,7 +58,8 @@ Canvas-backed WebGL-runtime scaffold.
 
 - Basic renderer implementation.
 - Public entrypoint contract test.
-- Still consumes the older `GeordiScene` shape and must migrate to `geordi-ir/1`.
+- Typed `geordi-ir/1` preparation path and `renderGeordiIrToCanvas()` adapter.
+- Still exposes the older `GeordiScene` path during migration.
 
 ## Infrastructure
 
@@ -75,16 +77,16 @@ Canvas-backed WebGL-runtime scaffold.
 
 ## Test Status
 
-Latest full local gate during the stabilization merge:
+Latest full local gate during the core IR runtime-contract work:
 
 | Package | Tests | Status |
 | --- | ---: | --- |
-| `@flyingrobots/geordi-compiler-core` | 71 | Green |
-| `@flyingrobots/geordi-schema-graphql` | 42 | Green |
-| `@flyingrobots/geordi-core` | 7 | Green |
-| `@flyingrobots/geordi-runtime-webgl` | 1 | Green |
-| `@flyingrobots/geordi-wesley-generator` | 1 | Green |
-| **Total package tests** | **122** | Green |
+| `@flyingrobots/geordi-compiler-core` | 73 | Green |
+| `@flyingrobots/geordi-schema-graphql` | 51 | Green |
+| `@flyingrobots/geordi-core` | 11 | Green |
+| `@flyingrobots/geordi-runtime-webgl` | 4 | Green |
+| `@flyingrobots/geordi-wesley-generator` | 3 | Green |
+| **Total package tests** | **142** | Green |
 
 Additional gates:
 
@@ -103,8 +105,10 @@ Immediate:
 1. Keep dependency hygiene clean.
    - GitHub Actions Dependabot update PR #10 has been merged.
    - npm/yarn Dependabot PR #8 was stale and conflicting; Dependabot has been asked to recreate it.
-2. Move versioned `geordi-ir/1` types and validation into `@flyingrobots/geordi-core`.
-3. Update `runtime-webgl` to consume the `geordi-ir/1` runtime contract.
+2. Make the runtime public API prefer `geordi-ir/1` and decide the deprecation/internalization path
+   for the older `GeordiScene` model.
+3. Define the validator failure surface for runtime-bound IR: caller-validated only, or explicit
+   runtime validation with custom runtime error types.
 
 Short term:
 

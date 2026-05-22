@@ -433,7 +433,10 @@ Add a root flat ESLint config or downgrade intentionally. CI currently runs lint
 
 Move versioned IR types and validation into `@flyingrobots/geordi-core`. Update `runtime-webgl` to accept validated IR directly or expose only an internal preparation step.
 
-**Status**: Completed. `geordi_bind` and `geordi_style` now emit source-located `GEORDI_E_FEATURE_NOT_IMPLEMENTED` diagnostics until they are deliberately lowered.
+**Status**: In progress. `@flyingrobots/geordi-core` now owns `geordi-ir/1` constants, types,
+and structural validation. `compiler-core` emits/re-exports the shared contract, and
+`runtime-webgl` has a typed IR preparation/render path. The older public `GeordiScene` shape still
+needs to be deprecated, renamed, or internalized before v0.1.
 
 ### P0: Implement or remove canonicalization
 
@@ -458,7 +461,8 @@ Replace unsafe directive argument casts with typed extractors that emit source-l
 
 Known directives such as `geordi_bind` and `geordi_style` must either lower into canonical AST/IR or produce explicit unsupported-feature diagnostics. Silent drops are not allowed.
 
-**Status**: Open.
+**Status**: Completed. `geordi_bind` and `geordi_style` now emit source-located
+`GEORDI_E_FEATURE_NOT_IMPLEMENTED` diagnostics until they are deliberately lowered.
 
 ### P0: Preserve typed diagnostics across adapter/compiler boundaries
 

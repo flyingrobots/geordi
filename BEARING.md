@@ -1,8 +1,8 @@
 # Geordi Bearing
 
 **Date**: 2026-05-22
-**Branch baseline**: `main` at `9287157`
-**Current head when written**: `9287157`
+**Branch baseline**: `main` at `16395d0`
+**Current head when written**: `16395d0`
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
@@ -30,11 +30,15 @@ Completed:
 - Known but unlowered GraphQL directives fail loudly instead of disappearing from the pipeline.
 - `wesley-generator` and `runtime-webgl` have behavior-level package contract tests, not only
   entrypoint smoke tests.
+- `@flyingrobots/geordi-core` owns versioned `geordi-ir/1` constants, types, and structural
+  validation.
+- `@flyingrobots/geordi-compiler-core` emits/re-exports the shared core IR contract.
+- `@flyingrobots/geordi-runtime-webgl` can prepare and render typed `geordi-ir/1` through the
+  existing canvas renderer.
 
 Still true:
 
-- `geordi-ir/1` is emitted by `compiler-core`, but `core` and `runtime-webgl` still expose an
-  older scene shape.
+- `runtime-webgl` still exposes the older `GeordiScene` rendering path during migration.
 - The graphics numeric profile is only partially defined. JSON is deterministic, but geometry,
   vectors, matrices, transforms, and runtime capability declaration are not fully specified.
 
@@ -44,13 +48,13 @@ Still true:
    - GitHub Actions Dependabot PR #10 was mergeable and has been merged.
    - Conflicting npm Dependabot PR #8 should be recreated by Dependabot before any manual lockfile
      work.
-2. Next focused stabilization target: move `geordi-ir/1` into `@flyingrobots/geordi-core` as the
-   runtime contract.
+2. Finish the runtime-contract migration by making the public renderer API prefer `geordi-ir/1`
+   and by deprecating, renaming, or internalizing the legacy scene shape.
 3. Keep the graphics numeric profile explicit while migrating runtime-facing types.
 
 ## Recommended P0 Order
 
-1. Move `geordi-ir/1` into `@flyingrobots/geordi-core` as the runtime contract.
+1. Finish making `geordi-ir/1` the public runtime contract.
 2. Define and enforce the graphics numeric profile.
 
 ## Dependency Work

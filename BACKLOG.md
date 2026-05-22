@@ -21,6 +21,10 @@ These open items come from the repo audit and the v0 design pass. See
 ### Make `geordi-ir/1` the runtime contract
 **Priority**: P0
 **Source**: v0 design laws, repo audit
+**Status**: In progress. Core now owns versioned `geordi-ir/1` types and structural validation,
+compiler-core emits/re-exports that shared contract, and runtime-webgl has a typed IR preparation
+and render path. The remaining release-blocker is retiring or explicitly deprecating the older
+public scene shape before v0.1.
 
 `@flyingrobots/geordi-compiler-core` emits `geordi-ir/1`, while `@flyingrobots/geordi-core` and
 `@flyingrobots/geordi-runtime-webgl` still model/render an older `version`/`canvas`/`type`/`bounds`
