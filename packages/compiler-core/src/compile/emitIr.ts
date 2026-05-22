@@ -1,14 +1,20 @@
 import type { CanonicalSceneAst } from '../types/ast.js';
 import type { CompilerInput } from '../types/compiler.js';
 import type { Artifact } from '../types/artifacts.js';
+import {
+  GEORDI_IR_ARTIFACT_KEY,
+  GEORDI_IR_HASH_ALGORITHM,
+  GEORDI_IR_RECEIPT_KEY,
+  GEORDI_IR_VERSION,
+} from '@flyingrobots/geordi-core';
 import { stringifyCanonicalJson } from '../ports/json.js';
 import { hashString } from '../canonical/hashing.js';
 import { cmpStr } from '../util/identifiers.js';
 
 export const COMPARATOR_VERSION = '1' as const;
-export const IR_VERSION = 'geordi-ir/1' as const;
-export const IR_ARTIFACT_KEY = 'scene.geordi.json' as const;
-export const IR_RECEIPT_KEY = 'scene.geordi.json.receipt' as const;
+export const IR_VERSION = GEORDI_IR_VERSION;
+export const IR_ARTIFACT_KEY = GEORDI_IR_ARTIFACT_KEY;
+export const IR_RECEIPT_KEY = GEORDI_IR_RECEIPT_KEY;
 
 /**
  * Phase 1: Topological sort by parentId DAG.
@@ -39,7 +45,7 @@ export function emitGeordiIrArtifact(ast: CanonicalSceneAst): Artifact {
   };
 }
 
-export const IR_HASH_ALG = 'sha256' as const;
+export const IR_HASH_ALG = GEORDI_IR_HASH_ALGORITHM;
 
 export function emitReceiptArtifact(
   input: CompilerInput,

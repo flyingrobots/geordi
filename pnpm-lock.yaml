@@ -40,6 +40,10 @@ importers:
         version: 4.1.7(@types/node@25.9.1)(vite@8.0.14(@types/node@25.9.1))
 
   packages/compiler-core:
+    dependencies:
+      '@flyingrobots/geordi-core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@types/node':
         specifier: ^25.9.1

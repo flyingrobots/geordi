@@ -5,4 +5,5 @@
  */
 
 export { GeordiCanvasContextUnavailableError, GeordiWebGLRenderer } from './WebGLRenderer.js';
-export { renderGeordiToCanvas } from './utils.js';
+export { GeordiRuntimeUnsupportedNodeKindError } from './prepareGeordiIr.js';
+export { renderGeordiIrToCanvas, renderGeordiToCanvas } from './utils.js';

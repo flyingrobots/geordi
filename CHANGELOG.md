@@ -8,6 +8,15 @@
 
 ### Features
 
+- **`@flyingrobots/geordi-core`**: Add core-owned `geordi-ir/1` constants, versioned IR types,
+  and structural validation for scenes, nodes, bindings, animations, keyframes, and finite
+  numeric fields.
+- **`@flyingrobots/geordi-compiler-core`**: Re-export IR types from
+  `@flyingrobots/geordi-core` and emit the shared core IR constants for artifact keys, receipt
+  keys, version, and hash algorithm.
+- **`@flyingrobots/geordi-runtime-webgl`**: Add a typed `geordi-ir/1` preparation path plus
+  `renderGeordiIrToCanvas()` so runtime callers can render core-owned IR through the existing
+  canvas renderer while legacy scene rendering remains available during migration.
 - **`@flyingrobots/geordi-compiler-core`**: Semantic validation engine — `validateCanonicalAst()` with two-tier rule registry; Tier 1 (structural: `sceneDimensions`, `nodeKindValid`, `duplicateId`, `danglingRef`, `cycleDetection`) gates Tier 2 (semantic: `requiredProps` per NodeKind); iterative Kahn's cycle detection passes 10k-node chains without stack overflow
 - **`@flyingrobots/geordi-compiler-core`**: Deterministic IR emitter — `emitGeordiIrArtifact()` replaces stub; two-phase topological sort (Kahn's on `parentId` DAG, tie-broken `zIndex ASC → kind ASC → id ASC` bytewise); strips `sourceRef` and `__typename`
 - **`@flyingrobots/geordi-compiler-core`**: Determinism certificate — `emitReceiptArtifact()` emits `scene.geordi.json.receipt` alongside IR containing `comparatorVersion`, `inputHash` (SHA-256 of `input.source`), `irHash` (SHA-256 of the emitted IR), `irHashAlg` (`"sha256"`), `irVersion`, and `rulesetFingerprint` (SHA-256 of sorted rule IDs)
@@ -28,6 +37,12 @@
 
 ### Tests
 
+- **`@flyingrobots/geordi-core`**: add `geordi-ir/1` validation coverage for valid IR, version
+  mismatch, non-finite numbers, and malformed node props.
+- **`@flyingrobots/geordi-compiler-core`**: add a compiler-to-core contract test proving emitted
+  IR parses through the canonical JSON port and validates under the core-owned IR contract.
+- **`@flyingrobots/geordi-runtime-webgl`**: add coverage for rendering `geordi-ir/1` through the
+  new runtime preparation path.
 - **`@flyingrobots/geordi-wesley-generator`**: add behavior contract tests for `plan()`, successful SDL-to-artifacts generation, and custom failure errors on bad SDL
 - **`@flyingrobots/geordi-runtime-webgl`**: add canvas/context mock behavior tests for rendering the current scene contract and context-unavailable failure
 - **`@flyingrobots/geordi-compiler-core`**: 74 new tests across sprint 3 — first batch: `stableStringify` (22), `parseInput` table-driven (9), `determinism` (3) → 36 tests; second batch: `validateAst` (15), `emitTypes` (19), `determinism` +4, `compile.golden` +3 → total 79 tests

@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import type { GeordiScene } from '@flyingrobots/geordi-core';
+import type { GeordiIrV1, GeordiScene } from '@flyingrobots/geordi-core';
 import {
   GeordiCanvasContextUnavailableError,
   GeordiWebGLRenderer,
+  renderGeordiIrToCanvas,
   renderGeordiToCanvas,
 } from './index';
 
@@ -160,6 +161,48 @@ function makeScene(): GeordiScene {
   };
 }
 
+function makeIr(): GeordiIrV1 {
+  return {
+    irVersion: 'geordi-ir/1',
+    scene: {
+      id: 'scene:runtime-ir',
+      width: 100,
+      height: 50,
+      units: 'px',
+    },
+    nodes: [
+      {
+        id: 'rect-1',
+        kind: 'Rect',
+        props: {
+          x: 1,
+          y: 2,
+          width: 10,
+          height: 20,
+          fill: '#123456',
+        },
+      },
+      {
+        id: 'text-1',
+        kind: 'Text',
+        props: {
+          x: 5,
+          y: 6,
+          width: 80,
+          height: 12,
+          content: 'Hello',
+          color: '#ffffff',
+          fontFamily: 'Inter',
+          fontSize: 12,
+          fontWeight: 400,
+        },
+      },
+    ],
+    bindings: [],
+    animations: [],
+  };
+}
+
 describe('runtime-webgl public API', () => {
   it('exports renderer entrypoints', () => {
     expect(GeordiWebGLRenderer).toBeTypeOf('function');
@@ -172,6 +215,31 @@ describe('runtime-webgl public API', () => {
     installCanvasDocument(canvas);
 
     const rendered = renderGeordiToCanvas(makeScene());
+
+    expect(rendered).toBe(canvas);
+    expect(canvas.width).toBe(100);
+    expect(canvas.height).toBe(50);
+    expect(context.calls).toEqual([
+      { name: 'fillRect', args: [0, 0, 100, 50] },
+      { name: 'save', args: [] },
+      { name: 'beginPath', args: [] },
+      { name: 'rect', args: [1, 2, 10, 20] },
+      { name: 'closePath', args: [] },
+      { name: 'fill', args: [] },
+      { name: 'restore', args: [] },
+      { name: 'save', args: [] },
+      { name: 'fillText', args: ['Hello', 5, 6] },
+      { name: 'restore', args: [] },
+    ]);
+    expect(context.font).toBe('400 12px Inter');
+  });
+
+  it('renders geordi-ir/1 through the runtime preparation path', () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    installCanvasDocument(canvas);
+
+    const rendered = renderGeordiIrToCanvas(makeIr());
 
     expect(rendered).toBe(canvas);
     expect(canvas.width).toBe(100);
