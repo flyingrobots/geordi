@@ -37,7 +37,6 @@ const DEFAULT_OPTIONS: CompileOptions = {
 const COMPILER_VERSION = '0.1.0-dev';
 
 export async function compile(input: CompilerInput, deps?: ParseInputDeps): Promise<CompileResult> {
-  const started = Date.now();
   const options = mergeOptions(DEFAULT_OPTIONS, input.options);
   const diagnostics: Diagnostic[] = [];
   const artifacts: ArtifactMap = {};
@@ -53,7 +52,7 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
     // Hard stop on errors
     const hasErrors = diagnostics.some((d) => d.severity === 'error');
     if (hasErrors) {
-      return finalize(false, canonicalAst, artifacts, diagnostics, input.format, started);
+      return finalize(false, canonicalAst, artifacts, diagnostics, input.format);
     }
 
     // Phase 3: Emit artifacts
@@ -65,7 +64,7 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
         message: 'emit.jsonSchema is not yet implemented. Remove jsonSchema: true from emit options.',
         details: { feature: 'jsonSchema' },
       });
-      return finalize(false, canonicalAst, artifacts, diagnostics, input.format, started);
+      return finalize(false, canonicalAst, artifacts, diagnostics, input.format);
     }
     if (options.emit.irJson && canonicalAst) {
       const irArtifact = emitGeordiIrArtifact(canonicalAst);
@@ -83,14 +82,14 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
         message: 'emit.binaryPack is not yet implemented. Remove binaryPack: true from emit options.',
         details: { feature: 'binaryPack' },
       });
-      return finalize(false, canonicalAst, artifacts, diagnostics, input.format, started);
+      return finalize(false, canonicalAst, artifacts, diagnostics, input.format);
     }
 
     if (options.failOnWarnings && diagnostics.some((d) => d.severity === 'warning')) {
-      return finalize(false, canonicalAst, artifacts, diagnostics, input.format, started);
+      return finalize(false, canonicalAst, artifacts, diagnostics, input.format);
     }
 
-    return finalize(true, canonicalAst, artifacts, diagnostics, input.format, started);
+    return finalize(true, canonicalAst, artifacts, diagnostics, input.format);
   } catch (cause) {
     const err = new InternalCompilerError('Unhandled compiler failure', {
       cause: normalizeCompilerErrorCause(cause as ThrownValue),
@@ -98,7 +97,7 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
     });
 
     diagnostics.push(err.toDiagnostic());
-    return finalize(false, undefined, artifacts, diagnostics, input.format, started);
+    return finalize(false, undefined, artifacts, diagnostics, input.format);
   }
 }
 
@@ -108,7 +107,6 @@ function finalize(
   artifacts: ArtifactMap,
   diagnostics: Diagnostic[],
   inputFormat: CompilerInput['format'],
-  started: number,
 ): CompileResult {
   return {
     ok,
@@ -119,7 +117,6 @@ function finalize(
       compilerVersion: COMPILER_VERSION,
       irVersion: IR_ARTIFACT_KEY in artifacts ? IR_VERSION : undefined,
       inputFormat,
-      elapsedMs: Date.now() - started,
       hashAlgorithm: HASH_ALGORITHM,
     },
   };

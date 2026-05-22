@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { compile } from '../src/compile/compile';
 import { parseJsonValue, stringifyCanonicalJson } from '../src/ports/json';
 import type { CompilerInput, GeordiIrV1 } from '../src/types';
@@ -48,6 +48,26 @@ const BASE_INPUT: CompilerInput = {
 };
 
 describe('determinism', () => {
+  it('compile metadata is independent of wall-clock time', async () => {
+    const dateNow = vi.spyOn(Date, 'now');
+    dateNow
+      .mockReturnValueOnce(1_000)
+      .mockReturnValueOnce(1_007)
+      .mockReturnValueOnce(2_000)
+      .mockReturnValueOnce(2_033);
+
+    try {
+      const result1 = await compile(BASE_INPUT);
+      const result2 = await compile(BASE_INPUT);
+
+      expect(result1.ok).toBe(true);
+      expect(result2.ok).toBe(true);
+      expect(result1.metadata).toEqual(result2.metadata);
+    } finally {
+      dateNow.mockRestore();
+    }
+  });
+
   it('compiling the same canonical JSON twice produces identical IR bytes', async () => {
     const result1 = await compile(BASE_INPUT);
     const result2 = await compile(BASE_INPUT);

@@ -28,7 +28,6 @@ export interface CompileMetadata {
   compilerVersion: string;
   irVersion?: string;
   inputFormat: InputFormat;
-  elapsedMs: number;
   hashAlgorithm?: 'sha256';
 }
 
