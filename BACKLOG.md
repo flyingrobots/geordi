@@ -1,7 +1,182 @@
 # Geordi Backlog
 
-Items that are scoped, not urgent, and not yet scheduled for a sprint.
-Each item links to its corresponding GitHub issue for discussion and tracking.
+Items are grouped by priority and readiness.
+
+- **P0 Stabilization**: release-blocking or repo-trust work needed before v0.1 can be considered shippable.
+- **Other sections**: scoped follow-up work that is not yet scheduled for a sprint.
+
+When a P0 item groups an existing lower-priority note, the lower entry remains as historical detail
+until the work is resolved.
+
+---
+
+## P0 Stabilization
+
+These items come from the repo audit and the v0 design pass. See
+[`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md) for the product and runtime-contract rationale.
+
+### Node ESM package exports must be importable after build
+**Priority**: P0
+**Source**: Repo audit, v0 design laws
+
+`pnpm build` succeeds, but public `dist/` entrypoints for `@flyingrobots/geordi-compiler-core`,
+`@flyingrobots/geordi-schema-graphql`, and `@flyingrobots/geordi-wesley-generator` are not
+importable under Node ESM because emitted JavaScript contains extensionless or directory imports.
+Package export maps are only meaningful if consumers can import the built package.
+
+Acceptance criteria:
+- All relative runtime imports emitted to `dist/` are Node ESM compatible.
+- A post-build smoke test imports every public package entrypoint.
+- CI runs the smoke test.
+
+---
+
+### Restore ESLint 10 as a real CI gate
+**Priority**: P0
+**Source**: Repo audit, CI workflow
+
+CI runs `pnpm lint`, but ESLint 10 currently fails before linting source because no flat
+`eslint.config.*` exists. Add a root flat config, or make an intentional version/config decision
+that restores `pnpm lint` as a working CI gate.
+
+Acceptance criteria:
+- `pnpm lint` passes locally.
+- The CI lint step runs source linting rather than failing on missing config.
+- The existing no-new-`Set`/`Map`-in-loops idea remains available as a follow-up rule once lint works.
+
+---
+
+### Make `geordi-ir/1` the runtime contract
+**Priority**: P0
+**Source**: v0 design laws, repo audit
+
+`@flyingrobots/geordi-compiler-core` emits `geordi-ir/1`, while `@flyingrobots/geordi-core` and
+`@flyingrobots/geordi-runtime-webgl` still model/render an older `version`/`canvas`/`type`/`bounds`
+scene shape. Per the v0 design decision, `geordi-ir/1` should be the public renderer contract.
+Any draw-ready lowering should be an internal runtime cache or preparation step, not a second
+public scene format.
+
+Acceptance criteria:
+- `@flyingrobots/geordi-core` owns versioned `geordi-ir/1` types and validation.
+- `@flyingrobots/geordi-runtime-webgl` accepts validated `geordi-ir/1` directly, or exposes only an
+  internal `prepare(ir)` path before rendering.
+- At least one integration test proves compiler output can be accepted by the runtime contract.
+- Legacy scene-model types are migrated, deprecated, or explicitly renamed before v0.1 release.
+
+---
+
+### Implement or remove canonicalization
+**Priority**: P0
+**Source**: Repo audit, architecture docs
+
+The architecture docs and compiler options advertise canonicalization, but `compile()` does not
+execute a normalization phase. `canonicalize: true` must either have observable, tested behavior or
+be removed from the public API and docs.
+
+Acceptance criteria:
+- `normalizeCanonicalAst()` exists and is called when canonicalization is enabled, or the option is
+  removed.
+- Tests prove the selected behavior.
+- `docs/ARCHITECTURE.md` matches the implementation.
+
+---
+
+### Validate GraphQL directive argument types at runtime
+**Priority**: P0
+**Source**: Repo audit, existing Post-Sprint 3 feedback
+
+`schema-graphql/extractNodes.ts` casts directive values with `as number`, `as boolean`, and
+`as string` after parsing SDL. Since this path does not perform GraphQL schema validation, wrong
+argument types can corrupt geometry and props. Replace unsafe casts with typed extractors that emit
+source-located diagnostics.
+
+Acceptance criteria:
+- Numeric, boolean, string, enum, and JSON-object directive arguments are validated at runtime.
+- Wrong directive argument types emit `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE` with source location and
+  useful details.
+- Invalid geometry/id/parent/visibility args cause `compile().ok === false`.
+- Existing lower backlog item `schema-graphql/extractNodes - runtime type validation for directive
+  argument values` is resolved or updated.
+
+---
+
+### Lower or explicitly reject every known Geordi directive
+**Priority**: P0
+**Source**: Repo audit, fail-loud principle
+
+`geordi_bind` and `geordi_style` are declared and treated as known directives, but they are not
+lowered into canonical AST or IR. Known directives must not be silently dropped.
+
+Acceptance criteria:
+- `geordi_bind` lowers into `bindings[]`, or returns an explicit unsupported-feature diagnostic.
+- `geordi_style` lowers into node style data, or returns an explicit unsupported-feature diagnostic.
+- Unknown `geordi_*` directives still produce the intended warning behavior.
+- No known Geordi directive is ignored without a diagnostic.
+
+---
+
+### Preserve typed diagnostics across adapter/compiler boundaries
+**Priority**: P0
+**Source**: Repo audit, existing Post-Sprint 3 feedback
+
+`parseGraphql()` can produce typed parse errors with source locations, but adapter exceptions can be
+wrapped as `GEORDI_E_INTERNAL_INVARIANT` by `parseInputToCanonicalAst()`. Add typed diagnostic
+transport so user-facing parse and directive errors survive the `schema-graphql` to `compiler-core`
+boundary.
+
+Acceptance criteria:
+- Add a `DiagnosticsError` or equivalent typed diagnostic transport.
+- Invalid SDL through `compile()` reports `GEORDI_E_INPUT_INVALID_SDL`, not an internal invariant.
+- Missing scene through `compile()` reports `GEORDI_E_SCENE_MISSING`, without a duplicate internal
+  error.
+- Source locations survive through `compile()`.
+- Existing lower backlog items for `parseInput.ts` SDL locations and `DiagnosticsError` are resolved
+  or updated.
+
+---
+
+### Replace placeholder tests with package contract tests
+**Priority**: P0
+**Source**: Repo audit
+
+`@flyingrobots/geordi-runtime-webgl` and `@flyingrobots/geordi-wesley-generator` currently pass
+placeholder tests. Replace them with tests that exercise public package behavior and prevent broken
+entrypoints or integration paths from passing unnoticed.
+
+Acceptance criteria:
+- No package test suite consists only of placeholder assertions.
+- `wesley-generator` tests plan/generate on minimal SDL and asserts emitted artifacts.
+- `runtime-webgl` tests the selected IR input contract, with a canvas/context mock if needed.
+- A post-build package import smoke test is included in CI.
+
+---
+
+### Remove tracked generated logs and stale nested lockfiles
+**Priority**: P0
+**Source**: Repo audit, repo hygiene
+
+Tracked `packages/*/.turbo/*.log` files are rewritten by normal verification commands, and
+package-level `pnpm-lock.yaml` files under `packages/core` and `packages/runtime-webgl` are stale
+relative to the root workspace lockfile. Normal verification should not dirty the working tree.
+
+Acceptance criteria:
+- Tracked Turbo logs are removed from git while `.turbo/` remains ignored.
+- Stale package-level lockfiles are removed unless a nested-install workflow is explicitly documented.
+- `pnpm install --frozen-lockfile`, `pnpm build`, and `pnpm test` do not create tracked churn.
+
+---
+
+### Align Turbo task outputs with command behavior
+**Priority**: P0
+**Source**: Repo audit, Turbo warnings
+
+`turbo.json` declares `coverage/**` as output for plain `test`, but package `test` scripts run
+`vitest run` without coverage. Keep coverage outputs on `test:coverage`; do not declare coverage
+outputs for plain tests unless plain tests actually emit them.
+
+Acceptance criteria:
+- `pnpm test` no longer emits Turbo "no output files found" warnings.
+- `pnpm test:coverage` still declares and caches coverage output if coverage remains supported.
 
 ---
 

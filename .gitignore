@@ -37,6 +37,10 @@ lerna-debug.log*
 *.swo
 *~
 
+# Obsidian
+.obsidian/
+.trash/
+
 # Temporary files
 *.tmp
 .cache/
