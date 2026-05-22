@@ -1,186 +1,146 @@
 # Geordi Compiler Status
 
-**Date**: 2026-02-18
+**Date**: 2026-05-22
 **Version**: 0.1.0-dev
-**Milestone**: Compiler Architecture Complete ✅
+**Milestone**: First stabilization pass merged
 
-## What's Built
+See [`../BEARING.md`](../BEARING.md) for the current operating map.
 
-### ✅ Complete Packages
+## Current State
+
+The compiler architecture is in place, the repo gates are real, and the next work should focus on
+semantic correctness rather than more repository scaffolding.
+
+### Complete Packages
 
 #### `@flyingrobots/geordi-compiler-core`
-**Pure, framework-agnostic compilation engine**
 
-- ✅ Type system (Canonical AST, IR, Diagnostics, Artifacts)
-- ✅ Error taxonomy (24 error codes, stable)
-- ✅ Compile orchestrator with phases
-- ✅ Parse dispatcher (GraphQL SDL + Canonical JSON)
-- ✅ Deterministic utilities (stableStringify, hashing abstraction)
-- ✅ Golden test suite (valid + invalid fixtures)
-- ✅ Vitest configured with coverage
-- **Test status**: ✅ 86/86 passing
+Pure, framework-agnostic compilation engine.
+
+- Type system: canonical AST, IR, diagnostics, artifacts.
+- Error taxonomy with stable `GEORDI_E_*` and `GEORDI_W_*` codes.
+- Compile orchestrator with parse, canonicalize, validate, and emit phases.
+- GraphQL SDL and canonical JSON input paths.
+- Deterministic JSON port for canonical parse/stringify boundaries.
+- Deterministic IR, receipt, and TypeScript type emission.
+- Post-build public export smoke coverage.
 
 #### `@flyingrobots/geordi-schema-graphql`
-**GraphQL SDL → Canonical AST adapter**
 
-- ✅ Directive definitions (v1 spec)
-- ✅ Version validation
-- ✅ Schema validation helpers
-- ✅ Type safety (GraphQL enums, directive args)
-- ✅ Parser implementation complete
-- **Test status**: ✅ 42/42 passing
+GraphQL SDL to canonical AST adapter.
+
+- Directive definitions for v1.
+- GraphQL parser wrapper with source naming.
+- Scene and node extraction.
+- Canonical AST transform.
+- End-to-end SDL compilation coverage through compiler-core.
 
 #### `@flyingrobots/geordi-wesley-generator`
-**Wesley GeneratorPlugin adapter**
 
-- ✅ Plugin lifecycle (apiVersion, name, plan, generate)
-- ✅ Diagnostics mapping (compiler → Wesley evidence)
-- ✅ Error handling (fail gracefully on compilation errors)
-- **Status**: Scaffold complete, ready for Wesley integration
-- **Test status**: ✅ 1/1 passing
+Wesley GeneratorPlugin adapter scaffold.
+
+- Plugin lifecycle shape: `apiVersion`, `name`, `plan`, `generate`.
+- Compiler adapter injection via `graphqlToCanonicalAst`.
+- Public entrypoint contract test.
+- Still needs behavior coverage for `plan()` and `generate()`.
 
 #### `@flyingrobots/geordi-core`
-**Core types and validation**
 
-- ✅ Domain models (Node, Scene, Style)
-- ✅ Type guards and basic validation
-- **Test status**: ✅ 7/7 passing
+Core domain package.
+
+- Current domain models and guards for the older scene shape.
+- Still needs migration to own validated `geordi-ir/1` runtime contract types.
 
 #### `@flyingrobots/geordi-runtime-webgl`
-**WebGL/Canvas renderer**
 
-- ✅ Basic WebGL renderer implementation
-- ✅ Rendering utilities
-- **Test status**: ✅ 1/1 passing (placeholder)
+Canvas-backed WebGL-runtime scaffold.
 
-### ✅ Infrastructure
+- Basic renderer implementation.
+- Public entrypoint contract test.
+- Still consumes the older `GeordiScene` shape and must migrate to `geordi-ir/1`.
 
-- ✅ Monorepo structure (pnpm workspaces)
-- ✅ Turbo build pipeline
-- ✅ Changesets versioning
-- ✅ TypeScript strict mode
-- ✅ Base tsconfig shared across packages
-- ✅ Vitest test framework
-- ✅ Documentation structure
+## Infrastructure
 
-### ✅ Documentation
+- pnpm workspace.
+- Turbo build/test/lint/typecheck pipeline.
+- GitHub Actions CI.
+- Dependabot grouped updates for npm workspace dependencies and GitHub Actions.
+- Strict TypeScript and type-aware ESLint.
+- Root hygiene gates:
+  - `pnpm test:exports`
+  - `pnpm test:package-names`
+  - `pnpm test:docs`
+  - `pnpm test:placeholders`
+  - `pnpm test:repo-sludge`
 
-- ✅ [`ARCHITECTURE.md`](./ARCHITECTURE.md) - System design, seams, principles
-- ✅ [`ERROR_CODES.md`](./ERROR_CODES.md) - Complete error taxonomy
-- ✅ README updated with v0.1 status
+## Test Status
+
+Latest full local gate during the stabilization merge:
+
+| Package | Tests | Status |
+| --- | ---: | --- |
+| `@flyingrobots/geordi-compiler-core` | 71 | Green |
+| `@flyingrobots/geordi-schema-graphql` | 42 | Green |
+| `@flyingrobots/geordi-core` | 7 | Green |
+| `@flyingrobots/geordi-runtime-webgl` | 1 | Green |
+| `@flyingrobots/geordi-wesley-generator` | 1 | Green |
+| **Total package tests** | **122** | Green |
+
+Additional gates:
+
+| Gate | Status |
+| --- | --- |
+| `pnpm lint:root` | Green |
+| `pnpm exec turbo run lint --force` | Green |
+| `pnpm typecheck` | Green |
+| `pnpm test:exports` | Green |
+| `pnpm audit --prod=false` | Green |
 
 ## What's Next
 
-### Immediate (Next 7 days)
+Immediate:
 
-1. **Wesley Integration**
-   - Wire `@flyingrobots/geordi-wesley-generator` into Wesley monorepo
-   - Add Wesley peer dependency back (when ready)
-   - Test with Wesley's harness
-   - Document integration guide
+1. Keep dependency hygiene clean.
+   - GitHub Actions Dependabot update PR #10 has been merged.
+   - npm/yarn Dependabot PR #8 was stale and conflicting; Dependabot has been asked to recreate it.
+2. Preserve typed diagnostics across the schema adapter to compiler-core boundary.
+3. Validate GraphQL directive argument types at runtime.
+4. Explicitly lower or reject all known Geordi directives.
 
-2. **End-to-End Example**
-   - Convert `examples/terminal/terminal.geordi.json` to GraphQL SDL
-   - Compile with new pipeline
-   - Verify IR output matches original
-   - Add to CI as regression test
+Short term:
 
-### Short-term (Next 14 days)
+5. Expand `wesley-generator` and `runtime-webgl` tests beyond public entrypoint shape.
+6. Move versioned `geordi-ir/1` types and validation into `@flyingrobots/geordi-core`.
+7. Update `runtime-webgl` to consume the `geordi-ir/1` runtime contract.
 
-3. **Binary Packer**
-   - Design `.geordib` format spec
-   - Implement pack/unpack utilities
-   - Add tests for size/performance
+Medium term:
 
-### Medium-term (Next 30 days)
-
-4. **Source Maps**
-   - Add source location tracking
-   - Map IR nodes → SDL line/column
-   - Improve diagnostic UX
-
-5. **CLI**
-   - Create `@flyingrobots/geordi-cli` package
-   - Commands: `compile`, `validate`, `pack`
-   - Watch mode for development
-   - Integration with Wesley CLI
-
-## Test Coverage
-
-| Package | Tests | Coverage | Status |
-|---------|-------|----------|--------|
-| `@flyingrobots/geordi-compiler-core` | 86/86 ✅ | ~85% | Green |
-| `@flyingrobots/geordi-schema-graphql` | 42/42 ✅ | ~90% | Green |
-| `@flyingrobots/geordi-core` | 7/7 ✅ | ~95% | Green |
-| `@flyingrobots/geordi-runtime-webgl` | 1/1 ✅ | ~10% | Green |
-| `@flyingrobots/geordi-wesley-generator` | 1/1 ✅ | ~20% | Green |
-
-**Target**: 90%+ coverage before v0.1.0 release
+8. Define the graphics numeric profile for geometry, vectors, matrices, transforms, and runtime
+   capability requirements.
+9. Add source maps and diagnostic UX improvements.
+10. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
 
 ## Decision Log
 
 ### Architectural Decisions
 
-1. **Seam Placement**: GraphQL SDL → Canonical AST → Geordi IR
-   - **Why**: Prevents Wesley lock-in, enables multi-frontend future
-   - **Trade-off**: Extra abstraction layer vs. flexibility
+1. **Seam placement**: GraphQL SDL to canonical AST to Geordi IR.
+   - Why: prevents Wesley lock-in and enables multiple frontends.
+   - Trade-off: extra abstraction layer.
 
-2. **Error Codes**: Stable string codes (`GEORDI_E_*`)
-   - **Why**: Machine-parseable, documentation-stable, future-proof
-   - **Trade-off**: More verbose vs. easier tooling
+2. **Error codes**: stable string codes.
+   - Why: machine-parseable, documentation-stable, future-proof.
+   - Trade-off: more verbose diagnostics.
 
-3. **Hashing**: SHA-256 now, BLAKE3 later
-   - **Why**: Wesley uses SHA-256; migrate when Wesley migrates
-   - **Trade-off**: Slower hashing vs. compatibility
+3. **Hashing**: SHA-256 for current receipts.
+   - Why: standard, available, and compatible with current tooling.
+   - Trade-off: slower than future alternatives such as BLAKE3.
 
-4. **AST Version**: Option 1.5 (Geordi-shaped, not Geordi-serialized)
-   - **Why**: Fast shipping, clear escape hatch for future targets
-   - **Trade-off**: Some coupling vs. premature abstraction
+4. **Canonical JSON boundary**: all production JSON ingress/egress goes through the compiler-core
+   JSON port.
+   - Why: deterministic bytes, strict non-finite number rejection, and one place to define JSON law.
+   - Trade-off: boundary code is stricter and less convenient than native `JSON.parse/stringify`.
 
-5. **Package Placement**: Geordi monorepo for v0.1
-   - **Why**: Faster iteration, atomic refactors, easier versioning
-   - **Trade-off**: Later graduation vs. immediate separation
-
-### Implementation Decisions
-
-1. **GraphQL Parser**: Use `graphql-js` directly
-   - **Why**: Standard, no Wesley coupling, well-maintained
-   - **Alternative rejected**: Wesley's parser (vendor lock-in)
-
-2. **Test Framework**: Vitest
-   - **Why**: Consistency with existing Geordi packages, fast, ESM-native
-   - **Alternative rejected**: Jest (slower, CJS issues)
-
-3. **Monorepo Tool**: pnpm + turbo
-   - **Why**: Fast, proven, good workspace support
-   - **Alternative rejected**: npm workspaces (slower), yarn (less used)
-
-4. **Versioning**: Changesets
-   - **Why**: Disciplined, works well with pnpm, used by Wesley
-   - **Alternative rejected**: Manual versioning (error-prone)
-
-## Risks & Mitigations
-
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Wesley API changes | High | Version pin, test against frozen Wesley snapshot |
-| GraphQL directive limits | Medium | JSON string escape hatch (v0.1), typed inputs (v0.2) |
-| Determinism guarantees break | High | Extensive property tests, golden snapshots |
-| AST evolution breaks IR | High | Version gates, migration tooling, round-trip tests |
-
-## Success Criteria (v0.1.0)
-
-- [x] Compile terminal example (GraphQL SDL → IR)
-- [x] Golden tests pass (valid + invalid fixtures)
-- [x] Determinism test passes (2x compile → identical bytes)
-- [ ] 90%+ test coverage
-- [x] Zero TypeScript errors
-- [x] Zero ESLint errors (strict config)
-- [x] Documentation complete (architecture, errors, directives)
-- [ ] Wesley integration working (if Wesley ready)
-
-## Contact
-
-**Maintainer**: Geordi Team
-**Repository**: github.com/flyingrobots/geordi
-**License**: Apache 2.0
+5. **Time outside core IR**: `geordi-ir/1` describes scene snapshots.
+   - Why: keeps v0 deterministic and avoids hidden frame scheduling semantics.
+   - Trade-off: hosts must emit new scenes for animation until a future animation profile exists.

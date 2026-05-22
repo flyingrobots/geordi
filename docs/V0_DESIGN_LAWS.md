@@ -413,51 +413,77 @@ This implies source references, layout traces, and diagnostic details should be 
 
 ## P0 Stabilization Implications
 
-These are implementation backlog candidates derived from the design laws and repo audit. They should become P0 backlog items after this design is accepted.
+These implementation items were derived from the design laws and repo audit. Current backlog state
+is tracked in [`../BACKLOG.md`](../BACKLOG.md), and current operating order is tracked in
+[`../BEARING.md`](../BEARING.md).
 
 ### P0: Make Node ESM package exports importable after build
 
 Public package entrypoints must work under Node ESM after `pnpm build`. Add smoke tests that import every package through its public export path.
 
+**Status**: Completed in the first stabilization pass.
+
 ### P0: Restore ESLint 10 as a real CI gate
 
 Add a root flat ESLint config or downgrade intentionally. CI currently runs lint, so lint must either work or be removed from CI until it is real.
+
+**Status**: Completed in the first stabilization pass.
 
 ### P0: Make `geordi-ir/1` the runtime contract
 
 Move versioned IR types and validation into `@flyingrobots/geordi-core`. Update `runtime-webgl` to accept validated IR directly or expose only an internal preparation step.
 
+**Status**: Open.
+
 ### P0: Implement or remove canonicalization
 
 `canonicalize` is part of the public compiler options and docs, but the current compiler does not execute a normalization phase. Implement `normalizeCanonicalAst()` or remove the option and update docs.
+
+**Status**: Completed in the first stabilization pass.
 
 ### P0: Define the graphics numeric profile
 
 Canonical JSON alone is not enough for a graphics library. Define the v0 scalar law for geometry, vectors, matrices, transforms, and animation values. Decide which fields lower to fixed-point integers, which may remain deterministic binary64, and how the profile is declared in IR and runtime capabilities.
 
+**Status**: Open. The JSON boundary rejects non-finite numbers and canonicalizes `-0`; graphics
+math and runtime capability semantics remain open.
+
 ### P0: Validate GraphQL directive argument types at runtime
 
 Replace unsafe directive argument casts with typed extractors that emit source-located `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE` diagnostics.
+
+**Status**: Open.
 
 ### P0: Lower or explicitly reject every known Geordi directive
 
 Known directives such as `geordi_bind` and `geordi_style` must either lower into canonical AST/IR or produce explicit unsupported-feature diagnostics. Silent drops are not allowed.
 
+**Status**: Open.
+
 ### P0: Preserve typed diagnostics across adapter/compiler boundaries
 
 Adapter failures should preserve `GEORDI_E_INPUT_INVALID_SDL`, `GEORDI_E_SCENE_MISSING`, directive errors, and source locations through `compile()`. Plain `Error` wrapping should be replaced with typed diagnostic transport.
+
+**Status**: Open.
 
 ### P0: Replace placeholder tests with package contract tests
 
 `runtime-webgl` and `wesley-generator` need tests that exercise public behavior, not placeholder assertions. Include post-build import smoke tests and at least one SDL-to-artifacts integration path.
 
+**Status**: Partially complete. Placeholder assertions are blocked by CI and package entrypoints are
+smoke-tested. Behavior tests for `runtime-webgl` and `wesley-generator` remain open.
+
 ### P0: Remove tracked generated logs and stale nested lockfiles
 
 Tracked `.turbo` logs and package-level stale lockfiles should be removed. Verification commands should not dirty the working tree.
 
+**Status**: Completed in the first stabilization pass.
+
 ### P0: Align Turbo task outputs with command behavior
 
 Plain `test` does not emit coverage, so `turbo.json` should not declare coverage output for `test`. Keep coverage outputs on `test:coverage`.
+
+**Status**: Completed in the first stabilization pass.
 
 ## Open Questions
 
@@ -471,13 +497,11 @@ These should be answered before locking the v0 IR schema:
 
 ## Recommended Next Step
 
-Add the P0 stabilization items above to `BACKLOG.md`, then implement them in dependency order:
+The first stabilization pass is merged. Continue in this order:
 
-1. Repo hygiene and Turbo outputs.
-2. ESM package importability.
-3. ESLint flat config.
-4. Public export smoke tests.
-5. Diagnostic transport and GraphQL type validation.
-6. Known directive lowering or hard rejection.
-7. Canonicalization.
-8. IR/core/runtime migration.
+1. Preserve typed diagnostics across adapter/compiler boundaries.
+2. Validate GraphQL directive argument types at runtime.
+3. Lower or explicitly reject every known Geordi directive.
+4. Expand package behavior tests beyond public entrypoint smoke.
+5. Move `geordi-ir/1` into `@flyingrobots/geordi-core` as the runtime contract.
+6. Define and enforce the graphics numeric profile.

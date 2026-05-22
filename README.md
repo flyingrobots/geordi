@@ -22,6 +22,8 @@ Core compiler architecture is complete. The current implementation is focused on
 - Deterministic artifact emission
 - WebGL runtime scaffolding
 
+See [BEARING.md](BEARING.md) for the current operating map.
+
 ---
 
 ## What is GPVue?

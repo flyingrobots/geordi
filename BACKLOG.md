@@ -12,37 +12,9 @@ until the work is resolved.
 
 ## P0 Stabilization
 
-These items come from the repo audit and the v0 design pass. See
+These open items come from the repo audit and the v0 design pass. See
+[`BEARING.md`](./BEARING.md) for the current operating map and
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md) for the product and runtime-contract rationale.
-
-### Node ESM package exports must be importable after build
-**Priority**: P0
-**Source**: Repo audit, v0 design laws
-
-`pnpm build` succeeds, but public `dist/` entrypoints for `@flyingrobots/geordi-compiler-core`,
-`@flyingrobots/geordi-schema-graphql`, and `@flyingrobots/geordi-wesley-generator` are not
-importable under Node ESM because emitted JavaScript contains extensionless or directory imports.
-Package export maps are only meaningful if consumers can import the built package.
-
-Acceptance criteria:
-- All relative runtime imports emitted to `dist/` are Node ESM compatible.
-- A post-build smoke test imports every public package entrypoint.
-- CI runs the smoke test.
-
----
-
-### Restore ESLint 10 as a real CI gate
-**Priority**: P0
-**Source**: Repo audit, CI workflow
-
-CI runs `pnpm lint`, but ESLint 10 currently fails before linting source because no flat
-`eslint.config.*` exists. Add a root flat config, or make an intentional version/config decision
-that restores `pnpm lint` as a working CI gate.
-
-Acceptance criteria:
-- `pnpm lint` passes locally.
-- The CI lint step runs source linting rather than failing on missing config.
-- The existing no-new-`Set`/`Map`-in-loops idea remains available as a follow-up rule once lint works.
 
 ---
 
@@ -62,22 +34,6 @@ Acceptance criteria:
   internal `prepare(ir)` path before rendering.
 - At least one integration test proves compiler output can be accepted by the runtime contract.
 - Legacy scene-model types are migrated, deprecated, or explicitly renamed before v0.1 release.
-
----
-
-### Implement or remove canonicalization
-**Priority**: P0
-**Source**: Repo audit, architecture docs
-
-The architecture docs and compiler options advertise canonicalization, but `compile()` does not
-execute a normalization phase. `canonicalize: true` must either have observable, tested behavior or
-be removed from the public API and docs.
-
-Acceptance criteria:
-- `normalizeCanonicalAst()` exists and is called when canonicalization is enabled, or the option is
-  removed.
-- Tests prove the selected behavior.
-- `docs/ARCHITECTURE.md` matches the implementation.
 
 ---
 
@@ -154,48 +110,38 @@ Acceptance criteria:
 
 ---
 
-### Replace placeholder tests with package contract tests
+### Expand package contract tests beyond smoke coverage
 **Priority**: P0
 **Source**: Repo audit
 
-`@flyingrobots/geordi-runtime-webgl` and `@flyingrobots/geordi-wesley-generator` currently pass
-placeholder tests. Replace them with tests that exercise public package behavior and prevent broken
-entrypoints or integration paths from passing unnoticed.
+`@flyingrobots/geordi-runtime-webgl` and `@flyingrobots/geordi-wesley-generator` now have public
+entrypoint contract tests, and the repo has a placeholder-test guard. They still need behavior tests
+that prove the runtime and generator contracts rather than only import shape.
 
 Acceptance criteria:
-- No package test suite consists only of placeholder assertions.
 - `wesley-generator` tests plan/generate on minimal SDL and asserts emitted artifacts.
 - `runtime-webgl` tests the selected IR input contract, with a canvas/context mock if needed.
-- A post-build package import smoke test is included in CI.
+- Keep the post-build package import smoke test in CI.
 
 ---
 
-### Remove tracked generated logs and stale nested lockfiles
-**Priority**: P0
-**Source**: Repo audit, repo hygiene
+## Completed Stabilization Work
 
-Tracked `packages/*/.turbo/*.log` files are rewritten by normal verification commands, and
-package-level `pnpm-lock.yaml` files under `packages/core` and `packages/runtime-webgl` are stale
-relative to the root workspace lockfile. Normal verification should not dirty the working tree.
+These P0 items were completed in the 2026-05-22 stabilization merge and are retained here as
+historical context.
 
-Acceptance criteria:
-- Tracked Turbo logs are removed from git while `.turbo/` remains ignored.
-- Stale package-level lockfiles are removed unless a nested-install workflow is explicitly documented.
-- `pnpm install --frozen-lockfile`, `pnpm build`, and `pnpm test` do not create tracked churn.
-
----
-
-### Align Turbo task outputs with command behavior
-**Priority**: P0
-**Source**: Repo audit, Turbo warnings
-
-`turbo.json` declares `coverage/**` as output for plain `test`, but package `test` scripts run
-`vitest run` without coverage. Keep coverage outputs on `test:coverage`; do not declare coverage
-outputs for plain tests unless plain tests actually emit them.
-
-Acceptance criteria:
-- `pnpm test` no longer emits Turbo "no output files found" warnings.
-- `pnpm test:coverage` still declares and caches coverage output if coverage remains supported.
+- Node ESM package exports are importable after build; `pnpm test:exports` imports every public
+  package entrypoint after `pnpm build`.
+- ESLint 10 is a real CI gate through root flat config plus package lint tasks.
+- Canonicalization is implemented through `normalizeCanonicalAst()` and wired behind
+  `canonicalize: true`.
+- Tracked generated Turbo logs and stale nested lockfiles were removed.
+- Turbo task outputs are aligned with command behavior: plain `test` has no coverage output, and
+  `test:coverage` owns coverage output.
+- Placeholder-only tests were removed, and `pnpm test:placeholders` prevents reintroduction.
+- Package name drift is guarded by `pnpm test:package-names`.
+- Documentation hygiene is guarded by `pnpm test:docs`.
+- Process scratchpad files are guarded by `pnpm test:repo-sludge`.
 
 ---
 
