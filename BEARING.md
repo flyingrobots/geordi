@@ -1,8 +1,8 @@
 # Geordi Bearing
 
 **Date**: 2026-05-22
-**Branch baseline**: `main`
-**Current head when written**: `79926fb`
+**Branch baseline**: `main` at `9287157`
+**Current head when written**: `9287157`
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
@@ -24,16 +24,16 @@ Completed:
 - Turbo `test` outputs match command behavior.
 - Placeholder package tests have been replaced with minimal public API contract tests.
 - Dependabot is configured for grouped workspace and GitHub Actions updates.
+- Typed adapter diagnostics survive through `compile()` without internal-invariant wrapping.
+- GraphQL `@geordi_scene` and `@geordi_node` directive arguments are validated at runtime before
+  values enter the canonical AST.
 
 Still true:
 
 - `geordi-ir/1` is emitted by `compiler-core`, but `core` and `runtime-webgl` still expose an
   older scene shape.
-- GraphQL directive arguments still need runtime type validation at the schema adapter boundary.
 - Known directives such as `geordi_bind` and `geordi_style` are declared but not lowered or
   hard-rejected.
-- Adapter/compiler diagnostic transport still needs to preserve typed diagnostics and source
-  locations through `compile()`.
 - The graphics numeric profile is only partially defined. JSON is deterministic, but geometry,
   vectors, matrices, transforms, and runtime capability declaration are not fully specified.
 
@@ -43,17 +43,15 @@ Still true:
    - GitHub Actions Dependabot PR #10 was mergeable and has been merged.
    - Conflicting npm Dependabot PR #8 should be recreated by Dependabot before any manual lockfile
      work.
-2. Keep the next feature branch focused on diagnostics and directive validation.
-3. Do not start runtime migration before typed diagnostics and directive semantics are stable.
+2. Next focused stabilization target: lower or explicitly reject every known Geordi directive.
+3. Do not start runtime migration before known directive semantics are fail-loud.
 
 ## Recommended P0 Order
 
-1. Preserve typed diagnostics across adapter/compiler boundaries.
-2. Validate GraphQL directive argument types at runtime.
-3. Lower or explicitly reject every known Geordi directive.
-4. Expand package contract tests from entrypoint smoke to behavior coverage.
-5. Move `geordi-ir/1` into `@flyingrobots/geordi-core` as the runtime contract.
-6. Define and enforce the graphics numeric profile.
+1. Lower or explicitly reject every known Geordi directive.
+2. Expand package contract tests from entrypoint smoke to behavior coverage.
+3. Move `geordi-ir/1` into `@flyingrobots/geordi-core` as the runtime contract.
+4. Define and enforce the graphics numeric profile.
 
 ## Dependency Work
 

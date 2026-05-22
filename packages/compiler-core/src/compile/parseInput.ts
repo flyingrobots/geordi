@@ -1,5 +1,12 @@
 import type { CanonicalSceneAst, CompilerInput, Diagnostic, JsonObject, JsonValue } from '../types/index.js';
-import { ParseError, GeordiErrorCode, normalizeCompilerErrorCause, type ThrownValue } from '../errors/index.js';
+import {
+  CompilerError,
+  DiagnosticsError,
+  ParseError,
+  GeordiErrorCode,
+  normalizeCompilerErrorCause,
+  type ThrownValue,
+} from '../errors/index.js';
 import { JsonParseError, parseJsonValue } from '../ports/json.js';
 
 /**
@@ -92,6 +99,16 @@ async function parseGraphqlSdl(
     const hasErrors = structural.some((d) => d.severity === 'error');
     return hasErrors ? undefined : ast;
   } catch (cause) {
+    if (cause instanceof DiagnosticsError) {
+      appendUniqueDiagnostics(diagnostics, cause.diagnostics);
+      return undefined;
+    }
+
+    if (cause instanceof CompilerError) {
+      diagnostics.push(cause.toDiagnostic());
+      return undefined;
+    }
+
     diagnostics.push(
       new ParseError(
         GeordiErrorCode.E_INTERNAL_INVARIANT,
@@ -103,6 +120,17 @@ async function parseGraphqlSdl(
       ).toDiagnostic(),
     );
     return undefined;
+  }
+}
+
+function appendUniqueDiagnostics(
+  target: Diagnostic[],
+  diagnostics: readonly Diagnostic[],
+): void {
+  for (const diagnostic of diagnostics) {
+    if (!target.includes(diagnostic)) {
+      target.push(diagnostic);
+    }
   }
 }
 

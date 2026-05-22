@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { compile, parseJsonValue } from '@flyingrobots/geordi-compiler-core';
+import { compile, GeordiErrorCode, parseJsonValue } from '@flyingrobots/geordi-compiler-core';
 import { graphqlToCanonicalAst } from '../src/index';
 import type { CompilerInput, CompileResult, GeordiIrV1, ParseInputDeps } from '@flyingrobots/geordi-compiler-core';
 
@@ -135,5 +135,47 @@ describe('e2e: Terminal SDL fixture', () => {
     const ir = parseIr(result);
     const zIndices = ir.nodes.map((n) => n.zIndex ?? 0);
     expect(zIndices).toEqual([...zIndices].sort((a: number, b: number) => a - b));
+  });
+
+  it('surfaces invalid SDL as GEORDI_E_INPUT_INVALID_SDL', async () => {
+    const result = await compile(makeInput('type Broken {', 'broken.graphql'), DEPS);
+
+    expect(result.ok).toBe(false);
+    const invalidSdl = result.diagnostics.find(
+      (d) => d.code === GeordiErrorCode.E_INPUT_INVALID_SDL,
+    );
+    expect(invalidSdl).toBeDefined();
+    expect(invalidSdl?.location?.file).toBe('broken.graphql');
+    expect(invalidSdl?.location?.line).toBeGreaterThanOrEqual(1);
+    expect(invalidSdl?.location?.column).toBeGreaterThanOrEqual(1);
+    expect(result.diagnostics.map((d) => d.code)).not.toContain(
+      GeordiErrorCode.E_INTERNAL_INVARIANT,
+    );
+  });
+
+  it('surfaces missing scene as GEORDI_E_SCENE_MISSING without internal wrapping', async () => {
+    const result = await compile(makeInput('type Query { _: String }', 'missing-scene.graphql'), DEPS);
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((d) => d.code)).toEqual([GeordiErrorCode.E_SCENE_MISSING]);
+  });
+
+  it('fails on invalid directive argument literal types', async () => {
+    const result = await compile(
+      makeInput(
+        `
+        type S @geordi_scene(v: "1", width: 100, height: 100) {
+          n: String @geordi_node(kind: Rect, x: "left")
+        }
+      `,
+        'bad-directive.graphql',
+      ),
+      DEPS,
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((d) => d.code)).toContain(
+      GeordiErrorCode.E_DIRECTIVE_ARG_INVALID_TYPE,
+    );
   });
 });

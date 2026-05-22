@@ -56,25 +56,6 @@ Acceptance criteria:
 
 ---
 
-### Validate GraphQL directive argument types at runtime
-**Priority**: P0
-**Source**: Repo audit, existing Post-Sprint 3 feedback
-
-`schema-graphql/extractNodes.ts` casts directive values with `as number`, `as boolean`, and
-`as string` after parsing SDL. Since this path does not perform GraphQL schema validation, wrong
-argument types can corrupt geometry and props. Replace unsafe casts with typed extractors that emit
-source-located diagnostics.
-
-Acceptance criteria:
-- Numeric, boolean, string, enum, and JSON-object directive arguments are validated at runtime.
-- Wrong directive argument types emit `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE` with source location and
-  useful details.
-- Invalid geometry/id/parent/visibility args cause `compile().ok === false`.
-- Existing lower backlog item `schema-graphql/extractNodes - runtime type validation for directive
-  argument values` is resolved or updated.
-
----
-
 ### Lower or explicitly reject every known Geordi directive
 **Priority**: P0
 **Source**: Repo audit, fail-loud principle
@@ -87,26 +68,6 @@ Acceptance criteria:
 - `geordi_style` lowers into node style data, or returns an explicit unsupported-feature diagnostic.
 - Unknown `geordi_*` directives still produce the intended warning behavior.
 - No known Geordi directive is ignored without a diagnostic.
-
----
-
-### Preserve typed diagnostics across adapter/compiler boundaries
-**Priority**: P0
-**Source**: Repo audit, existing Post-Sprint 3 feedback
-
-`parseGraphql()` can produce typed parse errors with source locations, but adapter exceptions can be
-wrapped as `GEORDI_E_INTERNAL_INVARIANT` by `parseInputToCanonicalAst()`. Add typed diagnostic
-transport so user-facing parse and directive errors survive the `schema-graphql` to `compiler-core`
-boundary.
-
-Acceptance criteria:
-- Add a `DiagnosticsError` or equivalent typed diagnostic transport.
-- Invalid SDL through `compile()` reports `GEORDI_E_INPUT_INVALID_SDL`, not an internal invariant.
-- Missing scene through `compile()` reports `GEORDI_E_SCENE_MISSING`, without a duplicate internal
-  error.
-- Source locations survive through `compile()`.
-- Existing lower backlog items for `parseInput.ts` SDL locations and `DiagnosticsError` are resolved
-  or updated.
 
 ---
 
@@ -127,7 +88,7 @@ Acceptance criteria:
 
 ## Completed Stabilization Work
 
-These P0 items were completed in the 2026-05-22 stabilization merge and are retained here as
+These P0 items were completed in the 2026-05-22 stabilization work and are retained here as
 historical context.
 
 - Node ESM package exports are importable after build; `pnpm test:exports` imports every public
@@ -142,6 +103,11 @@ historical context.
 - Package name drift is guarded by `pnpm test:package-names`.
 - Documentation hygiene is guarded by `pnpm test:docs`.
 - Process scratchpad files are guarded by `pnpm test:repo-sludge`.
+- Typed diagnostics are preserved across the `schema-graphql` adapter to `compiler-core` boundary;
+  invalid SDL and missing scene failures no longer collapse into `GEORDI_E_INTERNAL_INVARIANT`.
+- GraphQL `@geordi_scene` and `@geordi_node` directive arguments are read through typed runtime
+  extractors; wrong literal types, non-finite numeric values, and invalid `props` JSON object
+  payloads produce `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE`.
 
 ---
 
@@ -201,6 +167,7 @@ with an empty `props` block. This is an edge case in `TypeEmitter.emitKindInterf
 
 ### `parseInput.ts` — surface `E_INPUT_INVALID_SDL` source location to diagnostics
 **Issue**: [#7](https://github.com/flyingrobots/geordi/issues/7)
+**Status**: Resolved by the typed diagnostics transport P0 work.
 
 When `parseGraphql` throws a `ParseError` with `E_INPUT_INVALID_SDL`, `parseInput.ts` currently
 catches it and converts to a diagnostic but loses the GraphQL source location (`line`, `column`)
@@ -222,6 +189,7 @@ every field. A custom ESLint rule (or `no-restricted-syntax` selector) that flag
 
 ### `DiagnosticsError` — attach diagnostics array to thrown Errors
 **Source**: PR #1 review retrospective
+**Status**: Resolved by the typed diagnostics transport P0 work.
 
 When `adapter.ts` throws on `extractScene` failure, the thrown `Error` said "see diagnostics"
 but the diagnostics were in a local array invisible to the caller. Introduce a `DiagnosticsError`
@@ -242,10 +210,12 @@ existing `fast-check` backlog item (#4) or add a dedicated suite for `identifier
 
 ### `extractNodes` — add test: `W_UNUSED_FIELD` emitted for malformed `props` JSON
 **Source**: PR #1 review retrospective
+**Status**: Superseded. Invalid `props` JSON now emits `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE`;
+`W_UNUSED_FIELD` remains reserved for unknown `geordi_*` directives.
 
-`extractNodes.ts` now emits `W_UNUSED_FIELD` when the `props` directive argument contains
-invalid JSON. Add a test in `extractNodes.test.ts` asserting that a field with `props: "bad json"`
-produces exactly one `W_UNUSED_FIELD` warning with the expected message.
+The earlier proposal expected malformed `props` JSON to warn as `W_UNUSED_FIELD`. That behavior
+was superseded by the fail-loud directive argument rule: malformed or non-object `props` payloads
+are argument errors, not unused fields.
 
 ---
 
@@ -305,6 +275,7 @@ the return type to `string[]` and update all callers and tests accordingly.
 
 ### `schema-graphql/extractNodes` — runtime type validation for directive argument values
 **Source**: PR #1 review retrospective (raised in rounds 2–5, deferred)
+**Status**: Resolved by the directive argument validation P0 work.
 
 `getDirectiveArgValue` returns `string | number | boolean | undefined`, but the call sites at
 lines 102–109 in `extractNodes.ts` cast results with `as number | undefined`, `as boolean | undefined`,
