@@ -1,11 +1,12 @@
 import {
   type DirectiveNode,
+  Kind,
 } from 'graphql';
-import { ParseError, GeordiErrorCode } from '@flyingrobots/geordi-compiler-core';
-import type { Diagnostic, NodeKind, SourceRef } from '@flyingrobots/geordi-compiler-core';
-import { isGeordiNodeKind } from '../directives/v1';
-import type { ExtractedScene } from './extractScene';
-import { nodeSourceRef } from './sourceRef';
+import { ParseError, GeordiErrorCode, parseJsonValue } from '@flyingrobots/geordi-compiler-core';
+import type { Diagnostic, JsonObject, JsonValue, NodeKind, SourceRef } from '@flyingrobots/geordi-compiler-core';
+import { isGeordiNodeKind } from '../directives/v1.js';
+import type { ExtractedScene } from './extractScene.js';
+import { nodeSourceRef } from './sourceRef.js';
 
 export interface ExtractedNode {
   fieldName: string;
@@ -18,7 +19,7 @@ export interface ExtractedNode {
   visible?: boolean;
   parent?: string;
   id?: string;
-  props?: Record<string, unknown>;
+  props?: JsonObject;
   sourceRef: SourceRef;
   fieldOrder: number;
 }
@@ -30,15 +31,15 @@ function getDirectiveArgValue(
   const arg = directive.arguments?.find((a) => a.name.value === argName);
   if (!arg) return undefined;
   switch (arg.value.kind) {
-    case 'StringValue':
+    case Kind.STRING:
       return arg.value.value;
-    case 'IntValue':
+    case Kind.INT:
       return parseInt(arg.value.value, 10);
-    case 'FloatValue':
+    case Kind.FLOAT:
       return parseFloat(arg.value.value);
-    case 'BooleanValue':
+    case Kind.BOOLEAN:
       return arg.value.value;
-    case 'EnumValue':
+    case Kind.ENUM:
       return arg.value.value;
     default:
       return undefined;
@@ -94,7 +95,7 @@ export function extractNodes(
       continue;
     }
 
-    const kind = kindRaw as NodeKind;
+    const kind = kindRaw;
 
     // Extract geometry
     const x = (getDirectiveArgValue(nodeDir, 'x') as number | undefined) ?? 0;
@@ -107,13 +108,13 @@ export function extractNodes(
     const id = getDirectiveArgValue(nodeDir, 'id') as string | undefined;
 
     // Parse props JSON arg if present
-    let props: Record<string, unknown> | undefined;
+    let props: JsonObject | undefined;
     const propsRaw = getDirectiveArgValue(nodeDir, 'props') as string | undefined;
     if (propsRaw) {
       try {
-        const parsed = JSON.parse(propsRaw);
-        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
-          props = parsed as Record<string, unknown>;
+        const parsed = parseJsonValue(propsRaw);
+        if (isJsonObject(parsed)) {
+          props = parsed;
         } else {
           diagnostics.push({
             code: GeordiErrorCode.E_DIRECTIVE_ARG_INVALID_TYPE,
@@ -150,4 +151,8 @@ export function extractNodes(
   }
 
   return nodes;
+}
+
+function isJsonObject(value: JsonValue): value is JsonObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

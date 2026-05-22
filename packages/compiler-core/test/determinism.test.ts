@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { compile } from '../src/compile/compile';
-import type { CompilerInput } from '../src/types';
+import { parseJsonValue, stringifyCanonicalJson } from '../src/ports/json';
+import type { CompilerInput, GeordiIrV1 } from '../src/types';
 
 function sha256(content: string): string {
   return createHash('sha256').update(content, 'utf8').digest('hex');
@@ -9,7 +10,7 @@ function sha256(content: string): string {
 
 const BASE_INPUT: CompilerInput = {
   format: 'canonical-ast-json',
-  source: JSON.stringify({
+  source: stringifyCanonicalJson({
     kind: 'Scene',
     astVersion: '1',
     scene: {
@@ -85,14 +86,14 @@ describe('determinism', () => {
     // Compact JSON
     const compact: CompilerInput = {
       ...BASE_INPUT,
-      source: JSON.stringify(canonical),
+      source: stringifyCanonicalJson(canonical),
       filename: 'compact.json',
     };
 
     // Pretty-printed JSON with extra whitespace
     const pretty: CompilerInput = {
       ...BASE_INPUT,
-      source: JSON.stringify(canonical, null, 4),
+      source: stringifyCanonicalJson(canonical, { space: 4 }),
       filename: 'pretty.json',
     };
 
@@ -111,7 +112,7 @@ describe('determinism', () => {
   it('node ordering in IR is deterministic (zIndex asc, then id asc)', async () => {
     const withReversedNodes: CompilerInput = {
       ...BASE_INPUT,
-      source: JSON.stringify({
+      source: stringifyCanonicalJson({
         kind: 'Scene',
         astVersion: '1',
         scene: {
@@ -151,8 +152,8 @@ describe('determinism', () => {
     const result = await compile(withReversedNodes);
     expect(result.ok).toBe(true);
 
-    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
-    expect(ir.nodes.map((n: { id: string }) => n.id)).toEqual(['node:z1', 'node:z2', 'node:z3']);
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
+    expect(ir.nodes.map((n) => n.id)).toEqual(['node:z1', 'node:z2', 'node:z3']);
   });
 
   it('4 distinct rotated node orderings of the same scene → identical IR hashes', async () => {
@@ -166,7 +167,7 @@ describe('determinism', () => {
     function makeInput(nodes: typeof baseNodes): CompilerInput {
       return {
         ...BASE_INPUT,
-        source: JSON.stringify({
+        source: stringifyCanonicalJson({
           kind: 'Scene',
           astVersion: '1',
           scene: { id: 'scene:shuffle', width: 100, height: 100, units: 'px' },
@@ -198,7 +199,7 @@ describe('determinism', () => {
   it('parent-before-child ordering guaranteed in output', async () => {
     const input: CompilerInput = {
       ...BASE_INPUT,
-      source: JSON.stringify({
+      source: stringifyCanonicalJson({
         kind: 'Scene',
         astVersion: '1',
         scene: { id: 'scene:parent-child', width: 100, height: 100, units: 'px' },
@@ -214,15 +215,15 @@ describe('determinism', () => {
     const result = await compile(input);
     expect(result.ok).toBe(true);
 
-    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
-    const ids: string[] = ir.nodes.map((n: { id: string }) => n.id);
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
+    const ids = ir.nodes.map((n) => n.id);
     expect(ids.indexOf('parent')).toBeLessThan(ids.indexOf('child'));
   });
 
   it('tie-breaking: two same-zIndex same-kind nodes sorted by id bytewise', async () => {
     const input: CompilerInput = {
       ...BASE_INPUT,
-      source: JSON.stringify({
+      source: stringifyCanonicalJson({
         kind: 'Scene',
         astVersion: '1',
         scene: { id: 'scene:tiebreak', width: 100, height: 100, units: 'px' },
@@ -238,7 +239,7 @@ describe('determinism', () => {
     const result = await compile(input);
     expect(result.ok).toBe(true);
 
-    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
-    expect(ir.nodes.map((n: { id: string }) => n.id)).toEqual(['n:a', 'n:z']);
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
+    expect(ir.nodes.map((n) => n.id)).toEqual(['n:a', 'n:z']);
   });
 });

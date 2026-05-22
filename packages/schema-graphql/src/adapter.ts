@@ -1,12 +1,19 @@
 import type { CanonicalSceneAst, Diagnostic } from '@flyingrobots/geordi-compiler-core';
 import type { GraphqlToCanonicalAst } from '@flyingrobots/geordi-compiler-core';
-import { parseGraphql } from './parse/parseGraphql';
-import { extractScene } from './parse/extractScene';
-import { extractNodes } from './parse/extractNodes';
-import { toCanonicalAst } from './transform/toCanonicalAst';
+import { GeordiErrorCode, ParseError } from '@flyingrobots/geordi-compiler-core';
+import { parseGraphql } from './parse/parseGraphql.js';
+import { extractScene } from './parse/extractScene.js';
+import { extractNodes } from './parse/extractNodes.js';
+import { toCanonicalAst } from './transform/toCanonicalAst.js';
 
 // Re-export the type so callers can import it from this package
 export type { GraphqlToCanonicalAst };
+
+class GraphqlSceneExtractionError extends ParseError {
+  constructor(message: string) {
+    super(GeordiErrorCode.E_SCENE_MISSING, message);
+  }
+}
 
 /**
  * Converts a GraphQL SDL string into a CanonicalSceneAst.
@@ -14,11 +21,11 @@ export type { GraphqlToCanonicalAst };
  *
  * Throws on parse errors. Pushes semantic diagnostics to the provided array.
  */
-export const graphqlToCanonicalAst: GraphqlToCanonicalAst = async (args: {
+export const graphqlToCanonicalAst: GraphqlToCanonicalAst = (args: {
   sdl: string;
   filename?: string;
   diagnostics?: Diagnostic[];
-}): Promise<CanonicalSceneAst> => {
+}): CanonicalSceneAst => {
   const { sdl, filename, diagnostics = [] } = args;
 
   // Step 1: Parse SDL into DocumentNode (throws ParseError on syntax errors)
@@ -31,7 +38,7 @@ export const graphqlToCanonicalAst: GraphqlToCanonicalAst = async (args: {
       diagnostics.length > 0
         ? diagnostics[diagnostics.length - 1].message
         : 'Scene extraction failed';
-    throw new Error(reason);
+    throw new GraphqlSceneExtractionError(reason);
   }
 
   // Step 3: Extract nodes

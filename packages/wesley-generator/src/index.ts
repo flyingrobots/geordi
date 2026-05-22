@@ -1,1 +1,1 @@
-export { GeordiGeneratorPlugin } from './GeordiGeneratorPlugin';
+export { GeordiGeneratorPlugin } from './GeordiGeneratorPlugin.js';

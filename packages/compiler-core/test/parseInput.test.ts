@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { parseInputToCanonicalAst } from '../src/compile/parseInput';
 import { GeordiErrorCode } from '../src/errors';
-import type { CompilerInput, Diagnostic } from '../src/types';
+import { stringifyCanonicalJson } from '../src/ports/json';
+import type { CompilerInput, Diagnostic, JsonValue } from '../src/types';
 
-function makeJsonInput(obj: unknown, filename = 'test.json'): CompilerInput {
+function makeJsonInput(obj: JsonValue, filename = 'test.json'): CompilerInput {
   return {
     format: 'canonical-ast-json',
-    source: JSON.stringify(obj),
+    source: stringifyCanonicalJson(obj),
     filename,
   };
 }

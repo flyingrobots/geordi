@@ -1,4 +1,6 @@
-export interface CanonicalSceneAst {
+import type { JsonObject, JsonPrimitive, JsonValue } from './json.js';
+
+export interface CanonicalSceneAst extends JsonObject {
   kind: 'Scene';
   astVersion: '1';
   scene: Scene;
@@ -8,7 +10,7 @@ export interface CanonicalSceneAst {
   metadata?: AstMetadata;
 }
 
-export interface Scene {
+export interface Scene extends JsonObject {
   id: string;
   name?: string;
   width: number;
@@ -19,23 +21,25 @@ export interface Scene {
 
 export type NodeKind = 'Rect' | 'Text' | 'Image' | 'Group' | 'Line' | 'Ellipse' | 'Path';
 
-export interface SourceRef {
+export interface SourceRef extends JsonObject {
   file: string;
   line: number;
   column: number;
 }
 
-export interface StyleProps {
-  shadow?: {
-    x?: number;
-    y?: number;
-    blur?: number;
-    color?: string;
-  };
+export interface ShadowProps extends JsonObject {
+  x?: number;
+  y?: number;
+  blur?: number;
+  color?: string;
+}
+
+export interface StyleProps extends JsonObject {
+  shadow?: ShadowProps;
   blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay';
 }
 
-export interface CommonGeometry {
+export interface CommonGeometry extends JsonObject {
   x: number;
   y: number;
   width?: number;
@@ -44,17 +48,17 @@ export interface CommonGeometry {
   opacity?: number; // 0..1
 }
 
-export type Primitive = string | number | boolean | null;
-export type PropValue = Primitive | Primitive[] | Record<string, Primitive>;
+export type Primitive = JsonPrimitive;
+export type PropValue = JsonValue;
 
-export interface NodeBase {
+export interface NodeBase extends JsonObject {
   id: string;
-  kind: NodeKind;
+  kind: string;
   parentId?: string;
   zIndex?: number;
   visible?: boolean;
   locked?: boolean;
-  props: Record<string, PropValue>;
+  props: JsonObject;
   style?: StyleProps;
   sourceRef?: SourceRef;
 }
@@ -86,7 +90,7 @@ export interface ImageProps extends CommonGeometry {
   alt?: string;
 }
 
-export interface GroupProps extends CommonGeometry {}
+export type GroupProps = CommonGeometry;
 
 export interface LineProps extends CommonGeometry {
   x2: number;
@@ -110,16 +114,9 @@ export interface PathProps extends CommonGeometry {
   strokeWidth?: number;
 }
 
-export type Node =
-  | (NodeBase & { kind: 'Rect'; props: RectProps })
-  | (NodeBase & { kind: 'Text'; props: TextProps })
-  | (NodeBase & { kind: 'Image'; props: ImageProps })
-  | (NodeBase & { kind: 'Group'; props: GroupProps })
-  | (NodeBase & { kind: 'Line'; props: LineProps })
-  | (NodeBase & { kind: 'Ellipse'; props: EllipseProps })
-  | (NodeBase & { kind: 'Path'; props: PathProps });
+export type Node = NodeBase;
 
-export interface Binding {
+export interface Binding extends JsonObject {
   id: string;
   targetNodeId: string;
   targetProp: string;
@@ -127,16 +124,16 @@ export interface Binding {
   when?: string;
 }
 
-export interface Animation {
+export interface Animation extends JsonObject {
   id: string;
   targetNodeId: string;
   property: string;
-  keyframes: Array<{ t: number; value: Primitive }>;
+  keyframes: { t: number; value: Primitive }[];
   easing?: 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
   loop?: boolean;
 }
 
-export interface AstMetadata {
+export interface AstMetadata extends JsonObject {
   sourceFormat: 'graphql-sdl' | 'canonical-ast-json';
   sourceHash?: string;
   tags?: string[];

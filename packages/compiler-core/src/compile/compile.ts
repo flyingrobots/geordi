@@ -5,18 +5,21 @@ import type {
   CompilerInput,
   Diagnostic,
   ArtifactMap,
-} from '../types';
+} from '../types/index.js';
 
 import {
   GeordiErrorCode,
   InternalCompilerError,
-} from '../errors';
+  normalizeCompilerErrorCause,
+  type ThrownValue,
+} from '../errors/index.js';
 
-import { parseInputToCanonicalAst, type ParseInputDeps } from './parseInput';
-import { HASH_ALGORITHM } from '../canonical/hashing';
-import { validateCanonicalAst, VALIDATION_RULE_IDS } from './validateAst';
-import { emitGeordiIrArtifact, emitReceiptArtifact, IR_ARTIFACT_KEY, IR_RECEIPT_KEY, IR_VERSION } from './emitIr';
-import { emitTypesArtifact } from './emitTypes';
+import { parseInputToCanonicalAst, type ParseInputDeps } from './parseInput.js';
+import { HASH_ALGORITHM } from '../canonical/hashing.js';
+import { normalizeCanonicalAst } from '../canonical/normalizeAst.js';
+import { validateCanonicalAst, VALIDATION_RULE_IDS } from './validateAst.js';
+import { emitGeordiIrArtifact, emitReceiptArtifact, IR_ARTIFACT_KEY, IR_RECEIPT_KEY, IR_VERSION } from './emitIr.js';
+import { emitTypesArtifact } from './emitTypes.js';
 
 const DEFAULT_OPTIONS: CompileOptions = {
   target: 'geordi-ir-v1',
@@ -41,7 +44,8 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
 
   try {
     // Phase 1: Parse → Canonical AST
-    const canonicalAst = await parseInputToCanonicalAst(input, diagnostics, deps);
+    const parsedAst = await parseInputToCanonicalAst(input, diagnostics, deps);
+    const canonicalAst = options.canonicalize && parsedAst ? normalizeCanonicalAst(parsedAst) : parsedAst;
 
     // Phase 2: Semantic validation
     diagnostics.push(...validateCanonicalAst(canonicalAst, options));
@@ -74,10 +78,12 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
     }
     if (options.emit.binaryPack) {
       diagnostics.push({
-        code: GeordiErrorCode.W_BINARY_PACK_NOT_IMPLEMENTED,
-        severity: 'warning',
-        message: 'binaryPack requested but not implemented yet',
+        code: GeordiErrorCode.E_FEATURE_NOT_IMPLEMENTED,
+        severity: 'error',
+        message: 'emit.binaryPack is not yet implemented. Remove binaryPack: true from emit options.',
+        details: { feature: 'binaryPack' },
       });
+      return finalize(false, canonicalAst, artifacts, diagnostics, input.format, started);
     }
 
     if (options.failOnWarnings && diagnostics.some((d) => d.severity === 'warning')) {
@@ -87,7 +93,7 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
     return finalize(true, canonicalAst, artifacts, diagnostics, input.format, started);
   } catch (cause) {
     const err = new InternalCompilerError('Unhandled compiler failure', {
-      cause,
+      cause: normalizeCompilerErrorCause(cause as ThrownValue),
       details: { format: input.format, filename: input.filename },
     });
 
@@ -126,7 +132,7 @@ function mergeOptions(base: CompileOptions, partial?: CompileOptions): CompileOp
     ...partial,
     emit: {
       ...base.emit,
-      ...(partial.emit ?? {}),
+      ...partial.emit,
     },
   };
 }

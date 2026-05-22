@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { compile } from '../src/compile/compile';
 import { GeordiErrorCode } from '../src/errors';
+import { parseJsonValue, stringifyCanonicalJson } from '../src/ports/json';
+import type { GeordiIrV1, JsonObject } from '../src/types';
 
 function sha256(s: string): string {
   return createHash('sha256').update(s, 'utf8').digest('hex');
@@ -40,7 +42,7 @@ describe('compile() golden path', () => {
 
     const result = await compile({
       format: 'canonical-ast-json',
-      source: JSON.stringify(validCanonicalAst),
+      source: stringifyCanonicalJson(validCanonicalAst),
       filename: 'fixtures/valid.scene.json',
       options: {
         target: 'geordi-ir-v1',
@@ -56,7 +58,7 @@ describe('compile() golden path', () => {
     expect(result.artifacts['scene.geordi.json']).toBeDefined();
     expect(result.artifacts['types.ts']).toBeDefined();
 
-    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
     expect(ir.irVersion).toBe('geordi-ir/1');
     expect(ir.scene.id).toBe('scene:terminal');
     expect(Array.isArray(ir.nodes)).toBe(true);
@@ -64,7 +66,7 @@ describe('compile() golden path', () => {
   });
 
   it('scene.geordi.json.receipt is present and contains irHash', async () => {
-    const source = JSON.stringify({
+    const source = stringifyCanonicalJson({
       kind: 'Scene',
       astVersion: '1',
       scene: { id: 'scene:receipt-test', width: 400, height: 300 },
@@ -83,7 +85,7 @@ describe('compile() golden path', () => {
     expect(result.ok).toBe(true);
     expect(result.artifacts['scene.geordi.json.receipt']).toBeDefined();
 
-    const receipt = JSON.parse(String(result.artifacts['scene.geordi.json.receipt'].content));
+    const receipt = parseJsonValue(String(result.artifacts['scene.geordi.json.receipt'].content)) as JsonObject;
     expect(receipt.comparatorVersion).toBe('1');
     expect(receipt.irVersion).toBe('geordi-ir/1');
     expect(receipt.inputHash).toBe(sha256(source));
@@ -96,7 +98,7 @@ describe('compile() golden path', () => {
   });
 
   it('inputHash in receipt matches sha256(input.source)', async () => {
-    const source = JSON.stringify({
+    const source = stringifyCanonicalJson({
       kind: 'Scene', astVersion: '1',
       scene: { id: 'scene:hash-check', width: 100, height: 100 },
       nodes: [{ id: 'r1', kind: 'Rect', props: { width: 10, height: 10 }, zIndex: 1 }],
@@ -110,12 +112,12 @@ describe('compile() golden path', () => {
     });
 
     expect(result.ok).toBe(true);
-    const receipt = JSON.parse(String(result.artifacts['scene.geordi.json.receipt'].content));
+    const receipt = parseJsonValue(String(result.artifacts['scene.geordi.json.receipt'].content)) as JsonObject;
     expect(receipt.inputHash).toBe(sha256(source));
   });
 
   it('two compilations of the same input → byte-identical receipts', async () => {
-    const source = JSON.stringify({
+    const source = stringifyCanonicalJson({
       kind: 'Scene', astVersion: '1',
       scene: { id: 'scene:idempotent', width: 200, height: 200 },
       nodes: [{ id: 'n1', kind: 'Group', props: { x: 0, y: 0 }, zIndex: 1 }],
@@ -141,7 +143,7 @@ describe('compile() golden path', () => {
   });
 
   it('emit.jsonSchema: true → E_FEATURE_NOT_IMPLEMENTED error', async () => {
-    const source = JSON.stringify({
+    const source = stringifyCanonicalJson({
       kind: 'Scene', astVersion: '1',
       scene: { id: 'scene:schema-test', width: 100, height: 100 },
       nodes: [],

@@ -1,7 +1,7 @@
-import type { CanonicalSceneAst, NodeKind } from '../types/ast';
-import type { CompileOptions } from '../types/compiler';
-import type { Diagnostic } from '../types/diagnostics';
-import { GeordiErrorCode } from '../errors/codes';
+import type { CanonicalSceneAst, NodeKind } from '../types/ast.js';
+import type { CompileOptions } from '../types/compiler.js';
+import type { Diagnostic } from '../types/diagnostics.js';
+import { GeordiErrorCode } from '../errors/codes.js';
 
 const VALID_NODE_KINDS = new Set<string>([
   'Rect',
@@ -23,7 +23,7 @@ const REQUIRED_PROPS: Partial<Record<NodeKind, string[]>> = {
 };
 
 // Exported for use in receipt fingerprint
-export const VALIDATION_RULE_IDS: ReadonlyArray<string> = [
+export const VALIDATION_RULE_IDS: readonly string[] = [
   'sceneDimensions',
   'nodeKindValid',
   'duplicateId',

@@ -81,6 +81,25 @@ Acceptance criteria:
 
 ---
 
+### Define the graphics numeric profile
+**Priority**: P0
+**Source**: v0 design laws, graphics determinism discussion
+
+Canonical JSON can make bytes deterministic, but it cannot by itself define graphics fidelity for
+floats, vectors, matrix math, transforms, and shader-adjacent values. The IR needs an explicit
+numeric profile before Geordi can claim pixel-identical cross-runtime rendering.
+
+Acceptance criteria:
+- The JSON port is the only production JSON ingress/egress path and rejects non-finite numbers.
+- `-0` canonicalizes to `0`; no generic JSON layer silently rounds or rescales author values.
+- Layout-critical geometry fields either use a named fixed-point scalar, such as `px * scale`, or a
+  documented deterministic float profile.
+- Matrix/vector/transform values have an explicit representation and operation-order rule.
+- `geordi-ir/1` declares the numeric profile required by the scene, and runtimes fail loudly when
+  they do not support it.
+
+---
+
 ### Validate GraphQL directive argument types at runtime
 **Priority**: P0
 **Source**: Repo audit, existing Post-Sprint 3 feedback

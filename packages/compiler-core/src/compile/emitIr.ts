@@ -1,9 +1,9 @@
-import type { CanonicalSceneAst } from '../types/ast';
-import type { CompilerInput } from '../types/compiler';
-import type { Artifact } from '../types/artifacts';
-import { stableStringify } from '../util/stableStringify';
-import { hashString } from '../canonical/hashing';
-import { cmpStr } from '../util/identifiers';
+import type { CanonicalSceneAst } from '../types/ast.js';
+import type { CompilerInput } from '../types/compiler.js';
+import type { Artifact } from '../types/artifacts.js';
+import { stringifyCanonicalJson } from '../ports/json.js';
+import { hashString } from '../canonical/hashing.js';
+import { cmpStr } from '../util/identifiers.js';
 
 export const COMPARATOR_VERSION = '1' as const;
 export const IR_VERSION = 'geordi-ir/1' as const;
@@ -20,7 +20,7 @@ export const IR_RECEIPT_KEY = 'scene.geordi.json.receipt' as const;
 export function emitGeordiIrArtifact(ast: CanonicalSceneAst): Artifact {
   const sorted = topoSort(ast);
 
-  const content = stableStringify(
+  const content = stringifyCanonicalJson(
     {
       irVersion: IR_VERSION,
       scene: ast.scene,
@@ -44,13 +44,13 @@ export const IR_HASH_ALG = 'sha256' as const;
 export function emitReceiptArtifact(
   input: CompilerInput,
   irContent: string,
-  ruleIds: ReadonlyArray<string>,
+  ruleIds: readonly string[],
 ): Artifact {
   const inputHash = hashString(input.source);
   const irHash = hashString(irContent);
   const rulesetFingerprint = hashString([...ruleIds].sort().join('\n'));
 
-  const content = stableStringify(
+  const content = stringifyCanonicalJson(
     {
       comparatorVersion: COMPARATOR_VERSION,
       inputHash,
@@ -73,15 +73,24 @@ export function emitReceiptArtifact(
 // ─── Internals ───────────────────────────────────────────────────────────────
 
 function normalizeZIndex(z: number | undefined): number {
-  return Number.isFinite(z) ? (z as number) : 0;
+  return z === undefined ? 0 : Number.isFinite(z) ? z : 0;
 }
 
 type SanitizedNode = Omit<CanonicalSceneAst['nodes'][number], 'sourceRef' | '__typename'>;
 
 function sanitize(node: CanonicalSceneAst['nodes'][number]): SanitizedNode {
-  const n = node as Omit<typeof node, 'sourceRef' | '__typename'> & { sourceRef?: unknown; __typename?: unknown };
-  const { sourceRef: _s, __typename: _t, ...clean } = n;
-  return clean as SanitizedNode;
+  const clean: SanitizedNode = {
+    id: node.id,
+    kind: node.kind,
+    parentId: node.parentId,
+    zIndex: node.zIndex,
+    visible: node.visible,
+    locked: node.locked,
+    props: node.props,
+    style: node.style,
+  };
+
+  return clean;
 }
 
 function topoSort(ast: CanonicalSceneAst): SanitizedNode[] {
@@ -98,9 +107,14 @@ function topoSort(ast: CanonicalSceneAst): SanitizedNode[] {
   }
 
   for (const node of nodes) {
-    if (node.parentId !== undefined && children.has(node.parentId)) {
+    if (node.parentId !== undefined) {
+      const parentChildren = children.get(node.parentId);
+      if (!parentChildren) {
+        continue;
+      }
+
       inDegree.set(node.id, (inDegree.get(node.id) ?? 0) + 1);
-      children.get(node.parentId)!.push(node);
+      parentChildren.push(node);
     }
   }
 

@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { compile } from '@flyingrobots/geordi-compiler-core';
+import { compile, parseJsonValue } from '@flyingrobots/geordi-compiler-core';
 import { graphqlToCanonicalAst } from '../src/index';
-import type { CompilerInput, ParseInputDeps } from '@flyingrobots/geordi-compiler-core';
+import type { CompilerInput, CompileResult, GeordiIrV1, ParseInputDeps } from '@flyingrobots/geordi-compiler-core';
 
 const TERMINAL_SDL = `
 type Terminal @geordi_scene(v: "1", width: 800, height: 600) {
@@ -44,6 +44,15 @@ function makeInput(sdl: string, filename = 'terminal.graphql'): CompilerInput {
   };
 }
 
+function irContent(result: CompileResult): string {
+  const artifact = result.artifacts['scene.geordi.json'];
+  return String(artifact.content);
+}
+
+function parseIr(result: CompileResult): GeordiIrV1 {
+  return parseJsonValue(irContent(result)) as GeordiIrV1;
+}
+
 describe('e2e: Terminal SDL fixture', () => {
   it('compiles without errors', async () => {
     const result = await compile(makeInput(TERMINAL_SDL), DEPS);
@@ -55,12 +64,12 @@ describe('e2e: Terminal SDL fixture', () => {
     const result = await compile(makeInput(TERMINAL_SDL), DEPS);
 
     expect(result.ok).toBe(true);
-    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
+    const ir = parseIr(result);
 
     expect(ir.irVersion).toBe('geordi-ir/1');
     expect(ir.nodes).toHaveLength(3);
 
-    const kinds = ir.nodes.map((n: { kind: string }) => n.kind);
+    const kinds = ir.nodes.map((n) => n.kind);
     expect(kinds).toContain('Rect');
     expect(kinds).toContain('Text');
   });
@@ -68,16 +77,16 @@ describe('e2e: Terminal SDL fixture', () => {
   it('IR nodes have correct props', async () => {
     const result = await compile(makeInput(TERMINAL_SDL), DEPS);
 
-    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
+    const ir = parseIr(result);
 
-    const bgNode = ir.nodes.find((n: any) => n.props?.fill === '#1a1a1a');
+    const bgNode = ir.nodes.find((n) => n.props.fill === '#1a1a1a');
     expect(bgNode).toBeDefined();
-    expect(bgNode.kind).toBe('Rect');
+    expect(bgNode?.kind).toBe('Rect');
 
-    const titleNode = ir.nodes.find((n: any) => n.props?.content === 'Terminal v0.3');
+    const titleNode = ir.nodes.find((n) => n.props.content === 'Terminal v0.3');
     expect(titleNode).toBeDefined();
-    expect(titleNode.kind).toBe('Text');
-    expect(titleNode.props.color).toBe('#00ff00');
+    expect(titleNode?.kind).toBe('Text');
+    expect(titleNode?.props.color).toBe('#00ff00');
   });
 
   it('compiles to identical IR bytes on two consecutive runs (determinism)', async () => {
@@ -87,8 +96,8 @@ describe('e2e: Terminal SDL fixture', () => {
     expect(r1.ok).toBe(true);
     expect(r2.ok).toBe(true);
 
-    const ir1 = String(r1.artifacts['scene.geordi.json'].content);
-    const ir2 = String(r2.artifacts['scene.geordi.json'].content);
+    const ir1 = irContent(r1);
+    const ir2 = irContent(r2);
 
     expect(ir1).toBe(ir2);
   });
@@ -100,8 +109,8 @@ describe('e2e: Terminal SDL fixture', () => {
     expect(r1.ok).toBe(true);
     expect(r2.ok).toBe(true);
 
-    const ir1 = String(r1.artifacts['scene.geordi.json'].content);
-    const ir2 = String(r2.artifacts['scene.geordi.json'].content);
+    const ir1 = irContent(r1);
+    const ir2 = irContent(r2);
 
     expect(sha256(ir1)).toBe(sha256(ir2));
   });
@@ -109,7 +118,7 @@ describe('e2e: Terminal SDL fixture', () => {
   it('IR has scene with correct dimensions', async () => {
     const result = await compile(makeInput(TERMINAL_SDL), DEPS);
 
-    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
+    const ir = parseIr(result);
     expect(ir.scene.width).toBe(800);
     expect(ir.scene.height).toBe(600);
     expect(ir.scene.units).toBe('px');
@@ -123,8 +132,8 @@ describe('e2e: Terminal SDL fixture', () => {
   it('nodes are sorted by zIndex in the IR output', async () => {
     const result = await compile(makeInput(TERMINAL_SDL), DEPS);
 
-    const ir = JSON.parse(String(result.artifacts['scene.geordi.json'].content));
-    const zIndices = ir.nodes.map((n: { zIndex: number }) => n.zIndex);
+    const ir = parseIr(result);
+    const zIndices = ir.nodes.map((n) => n.zIndex ?? 0);
     expect(zIndices).toEqual([...zIndices].sort((a: number, b: number) => a - b));
   });
 });

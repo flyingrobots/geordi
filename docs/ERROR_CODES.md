@@ -177,8 +177,9 @@ All compiler errors use stable, documented error codes. Never ignore or suppress
 ### `GEORDI_W_BINARY_PACK_NOT_IMPLEMENTED`
 
 **Severity**: Warning
+**Status**: Deprecated; retained for historical compatibility.
 **Message**: Binary pack requested but not implemented yet
-**Fix**: Omit `binaryPack: true` or ignore warning (feature coming in v0.2)
+**Fix**: New compiler paths should emit `GEORDI_E_FEATURE_NOT_IMPLEMENTED` with `details.feature = "binaryPack"` so unsupported binary output fails loudly.
 
 ## Error Handling Policy
 

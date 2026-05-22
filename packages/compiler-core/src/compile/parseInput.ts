@@ -1,5 +1,6 @@
-import type { CanonicalSceneAst, CompilerInput, Diagnostic } from '../types';
-import { ParseError, GeordiErrorCode } from '../errors';
+import type { CanonicalSceneAst, CompilerInput, Diagnostic, JsonObject, JsonValue } from '../types/index.js';
+import { ParseError, GeordiErrorCode, normalizeCompilerErrorCause, type ThrownValue } from '../errors/index.js';
+import { JsonParseError, parseJsonValue } from '../ports/json.js';
 
 /**
  * Optional adapter signature so compiler-core does not hard-couple to schema-graphql internals.
@@ -39,7 +40,7 @@ export async function parseInputToCanonicalAst(
       diagnostics.push(
         new ParseError(
           GeordiErrorCode.E_INTERNAL_INVARIANT,
-          `Unsupported input format: ${(input as { format?: string }).format ?? 'unknown'}`,
+          `Unsupported input format: ${(input as CompilerInput & { format: string }).format}`,
           {
             location: input.filename ? { file: input.filename, line: 1, column: 1 } : undefined,
           },
@@ -96,7 +97,7 @@ async function parseGraphqlSdl(
         GeordiErrorCode.E_INTERNAL_INVARIANT,
         'Failed to parse GraphQL SDL into canonical AST',
         {
-          cause,
+          cause: normalizeCompilerErrorCause(cause as ThrownValue),
           location: input.filename ? { file: input.filename, line: 1, column: 1 } : undefined,
         },
       ).toDiagnostic(),
@@ -118,15 +119,19 @@ function parseCanonicalAstJson(
     return undefined;
   }
 
-  let parsed: unknown;
+  let parsed: JsonValue;
   try {
-    parsed = JSON.parse(input.source);
+    parsed = parseJsonValue(input.source);
   } catch (cause) {
+    const normalizedCause = normalizeCompilerErrorCause(cause as ThrownValue);
     diagnostics.push(
       new ParseError(GeordiErrorCode.E_INPUT_INVALID_JSON, 'Invalid JSON for canonical AST input', {
-        cause,
+        cause: normalizedCause,
         location: input.filename ? { file: input.filename, line: 1, column: 1 } : undefined,
-        hint: 'Ensure the input is valid JSON. Check for syntax errors like trailing commas or unquoted keys.',
+        hint:
+          cause instanceof JsonParseError
+            ? 'Ensure the input is valid JSON. Check for syntax errors like trailing commas or unquoted keys.'
+            : 'Ensure the input uses only finite canonical JSON numbers.',
       }).toDiagnostic(),
     );
     return undefined;
@@ -142,10 +147,7 @@ function parseCanonicalAstJson(
   return parsed as CanonicalSceneAst;
 }
 
-function validateCanonicalAstShape(
-  value: unknown,
-  filename?: string,
-): Diagnostic[] {
+function validateCanonicalAstShape(value: JsonValue, filename?: string): Diagnostic[] {
   const out: Diagnostic[] = [];
   const loc = filename ? { file: filename, line: 1, column: 1 } : undefined;
 
@@ -170,7 +172,7 @@ function validateCanonicalAstShape(
     out.push(
       new ParseError(
         GeordiErrorCode.E_VERSION_UNSUPPORTED,
-        `Unsupported astVersion: ${String(value.astVersion)} (expected "1")`,
+        `Unsupported astVersion: ${formatJsonValueForDiagnostic(value.astVersion)} (expected "1")`,
         { location: loc },
       ).toDiagnostic(),
     );
@@ -205,6 +207,26 @@ function validateCanonicalAstShape(
   return out;
 }
 
-function isRecord(x: unknown): x is Record<string, any> {
+function isRecord(x: JsonValue | undefined): x is JsonObject {
   return typeof x === 'object' && x !== null && !Array.isArray(x);
+}
+
+function formatJsonValueForDiagnostic(value: JsonValue | undefined): string {
+  if (value === undefined) {
+    return '<missing>';
+  }
+
+  if (value === null) {
+    return 'null';
+  }
+
+  if (Array.isArray(value)) {
+    return '<array>';
+  }
+
+  if (typeof value === 'object') {
+    return '<object>';
+  }
+
+  return String(value);
 }

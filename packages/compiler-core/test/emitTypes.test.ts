@@ -9,7 +9,33 @@ import {
   DEFAULT_OPTS,
 } from '../src/util/identifiers';
 import { TypeEmitter } from '../src/compile/emitTypes';
+import { stringifyCanonicalJson } from '../src/ports/json';
 import type { CanonicalSceneAst } from '../src/types/ast';
+import type { JsonObject } from '../src/types/json';
+
+interface ExecSyncFailure {
+  stdout?: string | Uint8Array;
+  stderr?: string | Uint8Array;
+}
+
+class GeneratedTypesTypecheckError extends Error {
+  constructor(stdout: string, stderr: string) {
+    super(`Generated types failed tsc --noEmit:\n${stdout}\n${stderr}`);
+    this.name = new.target.name;
+  }
+}
+
+function hasExecSyncOutput<T>(value: T): value is T & ExecSyncFailure {
+  return typeof value === 'object' && value !== null && ('stdout' in value || 'stderr' in value);
+}
+
+function outputText(value: string | Uint8Array | undefined): string {
+  if (value === undefined) {
+    return '';
+  }
+
+  return typeof value === 'string' ? value : Buffer.from(value).toString('utf8');
+}
 
 function makeAst(partial: Partial<CanonicalSceneAst> = {}): CanonicalSceneAst {
   return {
@@ -193,8 +219,8 @@ describe('TypeEmitter', () => {
           ],
         },
         include: ['types.ts'],
-      };
-      writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify(tsconfig), 'utf8');
+      } satisfies JsonObject;
+      writeFileSync(join(dir, 'tsconfig.json'), stringifyCanonicalJson(tsconfig), 'utf8');
       writeFileSync(file, output, 'utf8');
       // Run tsc in the temporary directory
       const tscPath = require.resolve('typescript/bin/tsc');
@@ -203,10 +229,12 @@ describe('TypeEmitter', () => {
         encoding: 'utf8',
         stdio: 'pipe',
       });
-    } catch (e: any) {
-      throw new Error(
-        `Generated types failed tsc --noEmit:\n${e.stdout ?? ''}\n${e.stderr ?? ''}`,
-      );
+    } catch (cause) {
+      if (hasExecSyncOutput(cause)) {
+        throw new GeneratedTypesTypecheckError(outputText(cause.stdout), outputText(cause.stderr));
+      }
+
+      throw new GeneratedTypesTypecheckError('', '');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

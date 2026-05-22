@@ -13,6 +13,13 @@ import type {
 } from '@flyingrobots/geordi-core';
 import { isRectNode, isTextNode } from '@flyingrobots/geordi-core';
 
+export class GeordiCanvasContextUnavailableError extends Error {
+  constructor() {
+    super('Canvas context unavailable');
+    this.name = new.target.name;
+  }
+}
+
 export class GeordiWebGLRenderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -28,7 +35,7 @@ export class GeordiWebGLRenderer {
     });
 
     if (!ctx) {
-      throw new Error('Failed to get 2D canvas context');
+      throw new GeordiCanvasContextUnavailableError();
     }
 
     this.ctx = ctx;

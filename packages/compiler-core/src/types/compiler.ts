@@ -1,6 +1,6 @@
-import type { CanonicalSceneAst } from './ast';
-import type { ArtifactMap } from './artifacts';
-import type { Diagnostic } from './diagnostics';
+import type { CanonicalSceneAst } from './ast.js';
+import type { ArtifactMap } from './artifacts.js';
+import type { Diagnostic } from './diagnostics.js';
 
 export type InputFormat = 'graphql-sdl' | 'canonical-ast-json';
 

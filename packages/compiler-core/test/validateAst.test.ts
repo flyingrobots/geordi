@@ -36,8 +36,9 @@ describe('validateCanonicalAst', () => {
   });
 
   it('unknown node kind → E_NODE_KIND_INVALID', () => {
+    const invalidKind = 'Widget' as CanonicalSceneAst['nodes'][number]['kind'];
     const ast = makeAst({
-      nodes: [{ id: 'n1', kind: 'Widget' as any, props: {} }],
+      nodes: [{ id: 'n1', kind: invalidKind, props: {} }],
     });
     const diags = validateCanonicalAst(ast);
     expect(diags.some((d) => d.code === GeordiErrorCode.E_NODE_KIND_INVALID)).toBe(true);
@@ -83,8 +84,8 @@ describe('validateCanonicalAst', () => {
     const diags = validateCanonicalAst(ast);
     const match = diags.find((d) => d.code === GeordiErrorCode.E_REF_TARGET_NOT_FOUND);
     expect(match).toBeDefined();
-    expect((match?.details as any)?.refKind).toBe('animation');
-    expect((match?.details as any)?.animationId).toBe('a1');
+    expect(match?.details?.refKind).toBe('animation');
+    expect(match?.details?.animationId).toBe('a1');
     // Must NOT report as E_BIND_TARGET_NOT_FOUND
     expect(diags.some((d) => d.code === GeordiErrorCode.E_BIND_TARGET_NOT_FOUND)).toBe(false);
   });
@@ -119,7 +120,7 @@ describe('validateCanonicalAst', () => {
       nodes: [{ id: 'n1', kind: 'Rect', props: { height: 10 } }],
     });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === GeordiErrorCode.E_PROP_REQUIRED_MISSING && (d.details as any)?.prop === 'width')).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_PROP_REQUIRED_MISSING && d.details?.prop === 'width')).toBe(true);
   });
 
   it('Text missing content → E_PROP_REQUIRED_MISSING', () => {
@@ -185,7 +186,7 @@ describe('validateCanonicalAst', () => {
         id: `n${i}`,
         kind: 'Group',
         props: {},
-        parentId: i > 0 ? `n${i - 1}` : `n${9999}`, // n0 points back to n9999
+        parentId: i > 0 ? `n${i - 1}` : 'n9999', // n0 points back to n9999
       });
     }
     const ast = makeAst({ nodes });

@@ -76,6 +76,21 @@ interface GeordiIrV1 {
 
 The current repo shape can evolve toward this without breaking the core idea. The important v0 law is that renderers consume `GeordiIrV1`, not a separate legacy scene graph.
 
+## Numeric Law
+
+Graphics numbers are part of the rendering contract, not incidental JSON details.
+
+v0 must define a numeric profile before claiming pixel-identical compliance:
+
+- JSON is only a debug, review, and interchange envelope.
+- The JSON port must canonicalize object order, normalize `-0` to `0`, and reject `NaN` and infinities.
+- The JSON port must not silently rescale or round ordinary numbers, because that changes author intent.
+- Geometry, vectors, matrices, transforms, and animation values need an explicit domain scalar.
+
+The preferred direction is an explicit fixed-point IR scalar for layout-critical geometry, for example `px * SCALE` stored as an integer with a named `numericProfile`. A value such as `5.123402px` may lower to `5123402` only if the IR says the field is fixed-point with `scale = 1_000_000`. That conversion belongs in compiler normalization, not hidden inside generic JSON serialization.
+
+Matrix and shader-adjacent math may require a separate profile, such as deterministic binary64 with a fixed operation order or a packed binary representation. This should be specified as a renderer compliance profile before v0 locks the IR schema.
+
 ## 1. Layout Law
 
 ### v0 Stance
@@ -373,14 +388,16 @@ Diagnostics should use stable error codes.
 
 ### Canonical JSON
 
-Canonical JSON is the v0 debug and review format:
+Canonical JSON is the v0 debug and review format, not the whole graphics fidelity story:
 
 - Stable key order.
 - Stable node order.
 - Stable whitespace profile for emitted artifacts.
 - Stable receipts containing input hash, IR hash, rule fingerprints, and profile information.
+- Finite-number-only input, with `-0` normalized to `0`.
+- No hidden rounding or fixed-point scaling inside the JSON port.
 
-A separate text IR can be considered later, but canonical JSON is sufficient for v0.
+A separate text IR can be considered later. A packed binary IR or explicit fixed-point numeric layer should be considered before claiming pixel-identical behavior for vector, matrix, or shader-heavy scenes.
 
 ### Explainability
 
@@ -413,6 +430,10 @@ Move versioned IR types and validation into `@flyingrobots/geordi-core`. Update 
 ### P0: Implement or remove canonicalization
 
 `canonicalize` is part of the public compiler options and docs, but the current compiler does not execute a normalization phase. Implement `normalizeCanonicalAst()` or remove the option and update docs.
+
+### P0: Define the graphics numeric profile
+
+Canonical JSON alone is not enough for a graphics library. Define the v0 scalar law for geometry, vectors, matrices, transforms, and animation values. Decide which fields lower to fixed-point integers, which may remain deterministic binary64, and how the profile is declared in IR and runtime capabilities.
 
 ### P0: Validate GraphQL directive argument types at runtime
 
@@ -460,4 +481,3 @@ Add the P0 stabilization items above to `BACKLOG.md`, then implement them in dep
 6. Known directive lowering or hard rejection.
 7. Canonicalization.
 8. IR/core/runtime migration.
-

@@ -107,7 +107,7 @@ export function hasRequiredGeordiDirectives(schema: GraphQLSchema): {
 /**
  * Optional utility for validating node kind values in transforms.
  */
-export function isGeordiNodeKind(value: unknown): value is
+export function isGeordiNodeKind(value: string | number | boolean | undefined): value is
   | 'Rect'
   | 'Text'
   | 'Image'

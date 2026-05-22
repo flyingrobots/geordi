@@ -1,9 +1,10 @@
-import type { CanonicalSceneAst, NodeKind } from '../types/ast';
-import type { Artifact } from '../types/artifacts';
-import { buildIdentifierMap } from '../util/identifiers';
+import type { CanonicalSceneAst, NodeKind } from '../types/ast.js';
+import type { Artifact } from '../types/artifacts.js';
+import { stringifyCanonicalJson } from '../ports/json.js';
+import { buildIdentifierMap } from '../util/identifiers.js';
 
 // Per-kind prop type definitions (only the commonly typed fields)
-const KIND_PROP_TYPES: Record<NodeKind, Array<[string, string, boolean]>> = {
+const KIND_PROP_TYPES: Record<NodeKind, [string, string, boolean][]> = {
   // [propName, tsType, required]
   Rect: [
     ['x', 'number', false],
@@ -128,7 +129,7 @@ export class TypeEmitter {
     if (nodeIds.length === 0) {
       tokens.push('never');
     } else {
-      tokens.push(nodeIds.map((id) => JSON.stringify(id)).join(' | '));
+      tokens.push(nodeIds.map((id) => stringifyCanonicalJson(id)).join(' | '));
     }
     tokens.push(';\n');
   }
@@ -144,7 +145,7 @@ export class TypeEmitter {
 
   private emitKindInterface(tokens: string[], kind: NodeKind): void {
     const ifaceName = `${kind}Node`;
-    const props = KIND_PROP_TYPES[kind] ?? [];
+    const props = KIND_PROP_TYPES[kind];
 
     tokens.push(`export interface ${ifaceName} {\n`);
     tokens.push('  id: string;\n');

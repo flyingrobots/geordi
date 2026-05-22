@@ -1,3 +1,5 @@
+import type { JsonObject } from './json.js';
+
 export type DiagnosticSeverity = 'error' | 'warning' | 'info';
 
 export interface SourceLocation {
@@ -14,5 +16,5 @@ export interface Diagnostic {
   message: string;
   location?: SourceLocation;
   hint?: string;
-  details?: Record<string, unknown>;
+  details?: JsonObject;
 }

@@ -3,11 +3,12 @@ import {
   type ObjectTypeDefinitionNode,
   type DirectiveNode,
   type ArgumentNode,
+  Kind,
 } from 'graphql';
 import { ParseError, GeordiErrorCode } from '@flyingrobots/geordi-compiler-core';
 import type { Diagnostic, SourceRef } from '@flyingrobots/geordi-compiler-core';
-import { validateGeordiDirectiveVersion } from '../directives/v1';
-import { nodeSourceRef } from './sourceRef';
+import { validateGeordiDirectiveVersion } from '../directives/v1.js';
+import { nodeSourceRef } from './sourceRef.js';
 
 export interface ExtractedScene {
   typeName: string;
@@ -30,14 +31,14 @@ function getArgValue(
 function getStringArg(directive: DirectiveNode, argName: string): string | undefined {
   const arg = getArgValue(directive, argName);
   if (!arg) return undefined;
-  if (arg.value.kind === 'StringValue') return arg.value.value;
+  if (arg.value.kind === Kind.STRING) return arg.value.value;
   return undefined;
 }
 
 function getIntArg(directive: DirectiveNode, argName: string): number | undefined {
   const arg = getArgValue(directive, argName);
   if (!arg) return undefined;
-  if (arg.value.kind === 'IntValue') return parseInt(arg.value.value, 10);
+  if (arg.value.kind === Kind.INT) return parseInt(arg.value.value, 10);
   return undefined;
 }
 
@@ -53,7 +54,7 @@ export function extractScene(
   const sceneCandidates: ObjectTypeDefinitionNode[] = [];
 
   for (const def of doc.definitions) {
-    if (def.kind !== 'ObjectTypeDefinition') continue;
+    if (def.kind !== Kind.OBJECT_TYPE_DEFINITION) continue;
     const sceneDir = def.directives?.find((d) => d.name.value === 'geordi_scene');
     if (sceneDir) {
       sceneCandidates.push(def);
@@ -84,8 +85,18 @@ export function extractScene(
   }
 
   const typeNode = sceneCandidates[0];
-  const sceneDir = typeNode.directives!.find((d) => d.name.value === 'geordi_scene')!;
   const sourceRef = nodeSourceRef(typeNode, filename);
+  const sceneDir = typeNode.directives?.find((d) => d.name.value === 'geordi_scene');
+  if (!sceneDir) {
+    diagnostics.push(
+      new ParseError(
+        GeordiErrorCode.E_SCENE_MISSING,
+        `Scene candidate "${typeNode.name.value}" is missing @geordi_scene directive`,
+        { location: sourceRef },
+      ).toDiagnostic(),
+    );
+    return undefined;
+  }
 
   // Validate version
   const v = getStringArg(sceneDir, 'v');

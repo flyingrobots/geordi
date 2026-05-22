@@ -6,11 +6,20 @@ import { extractScene } from '../src/parse/extractScene';
 import { extractNodes } from '../src/parse/extractNodes';
 import { toCanonicalAst } from '../src/transform/toCanonicalAst';
 
+class TestSceneExtractionError extends Error {
+  constructor(messages: string) {
+    super(messages);
+    this.name = new.target.name;
+  }
+}
+
 function compile(sdl: string, filename = 'test.graphql') {
   const diag: Diagnostic[] = [];
   const doc = parseGraphql(sdl, filename);
   const scene = extractScene(doc, diag, filename);
-  if (!scene) throw new Error('scene extraction failed: ' + diag.map((d) => d.message).join(', '));
+  if (!scene) {
+    throw new TestSceneExtractionError(diag.map((d) => d.message).join(', '));
+  }
   const nodes = extractNodes(scene, diag, filename);
   const ast = toCanonicalAst(scene, nodes, filename);
   return { ast, diag };
@@ -106,12 +115,12 @@ describe('toCanonicalAst', () => {
         n: String @geordi_node(kind: Rect, x: 5, y: 10, width: 50, height: 30, props: "{\\"fill\\":\\"#ff0000\\"}")
       }
     `);
-    const props = ast.nodes[0].props as Record<string, unknown>;
-    expect(props['fill']).toBe('#ff0000');
-    expect(props['x']).toBe(5);
-    expect(props['y']).toBe(10);
-    expect(props['width']).toBe(50);
-    expect(props['height']).toBe(30);
+    const props = ast.nodes[0].props;
+    expect(props.fill).toBe('#ff0000');
+    expect(props.x).toBe(5);
+    expect(props.y).toBe(10);
+    expect(props.width).toBe(50);
+    expect(props.height).toBe(30);
   });
 
   it('metadata.sourceFormat is graphql-sdl', () => {
@@ -157,11 +166,11 @@ describe('toCanonicalAst', () => {
     expect(ast.nodes).toHaveLength(3);
     expect(ast.nodes.map((n) => n.kind)).toEqual(['Rect', 'Rect', 'Text']);
 
-    const bgProps = ast.nodes[0].props as Record<string, unknown>;
-    expect(bgProps['fill']).toBe('#1a1a1a');
+    const bgProps = ast.nodes[0].props;
+    expect(bgProps.fill).toBe('#1a1a1a');
 
-    const titleProps = ast.nodes[2].props as Record<string, unknown>;
-    expect(titleProps['content']).toBe('Terminal v0.3');
-    expect(titleProps['color']).toBe('#00ff00');
+    const titleProps = ast.nodes[2].props;
+    expect(titleProps.content).toBe('Terminal v0.3');
+    expect(titleProps.color).toBe('#00ff00');
   });
 });

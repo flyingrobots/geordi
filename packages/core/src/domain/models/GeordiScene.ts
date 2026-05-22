@@ -15,6 +15,14 @@ export type Units = 'px' | 'pt' | 'em';
 /** Coordinate origin */
 export type Origin = 'top-left' | 'center' | 'bottom-left';
 
+/** JSON-compatible value accepted at package boundaries. */
+export type JsonPrimitive = string | number | boolean | null;
+export interface JsonObject {
+  readonly [key: string]: JsonValue | undefined;
+}
+export type JsonArray = readonly JsonValue[];
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+
 /** Scene metadata */
 export interface GeordiMeta {
   /** Tool that generated this scene */
@@ -46,9 +54,7 @@ export interface GeordiCanvas {
 }
 
 /** Design token map */
-export interface GeordiTokens {
-  readonly [tokenName: string]: string;
-}
+export type GeordiTokens = Readonly<Record<string, string>>;
 
 /** Hit region for interaction */
 export interface HitRegion {
@@ -90,18 +96,24 @@ export interface GeordiScene {
 }
 
 /** Type guard for Geordi scene */
-export function isGeordiScene(value: unknown): value is GeordiScene {
+export function isGeordiScene(value: object | null): value is GeordiScene {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
 
-  const scene = value as Record<string, unknown>;
+  const scene = value as Readonly<Partial<Record<keyof GeordiScene, JsonValue>>>;
 
   return (
-    typeof scene['version'] === 'string' &&
-    typeof scene['meta'] === 'object' &&
-    typeof scene['canvas'] === 'object' &&
-    Array.isArray(scene['nodes']) &&
-    typeof scene['tokens'] === 'object'
+    typeof scene.version === 'string' &&
+    typeof scene.meta === 'object' &&
+    scene.meta !== null &&
+    !Array.isArray(scene.meta) &&
+    typeof scene.canvas === 'object' &&
+    scene.canvas !== null &&
+    !Array.isArray(scene.canvas) &&
+    Array.isArray(scene.nodes) &&
+    typeof scene.tokens === 'object' &&
+    scene.tokens !== null &&
+    !Array.isArray(scene.tokens)
   );
 }

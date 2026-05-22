@@ -10,6 +10,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "test": "turbo run test",
+    "test:exports": "pnpm build && node scripts/smoke-package-exports.mjs",
     "test:coverage": "turbo run test:coverage",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
@@ -20,6 +21,11 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
+    "@types/node": "^25.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
     "turbo": "^2.9.14",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
