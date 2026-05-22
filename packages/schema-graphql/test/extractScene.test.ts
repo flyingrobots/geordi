@@ -109,6 +109,19 @@ describe('extractScene (table-driven)', () => {
     expect(diag.map((d) => d.code)).toContain(GeordiErrorCode.E_DIRECTIVE_ARG_MISSING);
   });
 
+  it('wrong required argument type → GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE', () => {
+    const doc = parse(`
+      type Scene @geordi_scene(v: 1, width: "800", height: 600) { _: String }
+    `);
+    const diag: Diagnostic[] = [];
+    const scene = extractScene(doc, diag, 'test.graphql');
+
+    expect(scene).toBeUndefined();
+    const errors = diag.filter((d) => d.severity === 'error');
+    expect(errors.map((d) => d.code)).toContain(GeordiErrorCode.E_DIRECTIVE_ARG_INVALID_TYPE);
+    expect(errors.map((d) => d.code)).not.toContain(GeordiErrorCode.E_DIRECTIVE_ARG_MISSING);
+  });
+
   it('has sourceRef with correct file', () => {
     const doc = parse(`
       type Terminal @geordi_scene(v: "1", width: 800, height: 600) { _: String }

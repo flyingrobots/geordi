@@ -127,6 +127,57 @@ describe('extractNodes (table-driven)', () => {
     expect(nodes[0].props).toEqual({ fill: '#ff0000' });
   });
 
+  it('wrong node argument type → GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE', () => {
+    const diag: Diagnostic[] = [];
+    parseAndExtract(
+      `
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        n: String @geordi_node(kind: Rect, x: "left", visible: "yes")
+      }
+    `,
+      diag,
+    );
+
+    const errors = diag.filter((d) => d.severity === 'error');
+    expect(errors.map((d) => d.code)).toEqual([
+      GeordiErrorCode.E_DIRECTIVE_ARG_INVALID_TYPE,
+      GeordiErrorCode.E_DIRECTIVE_ARG_INVALID_TYPE,
+    ]);
+    expect(errors.map((d) => d.message).join('\n')).toContain('x');
+    expect(errors.map((d) => d.message).join('\n')).toContain('visible');
+  });
+
+  it('non-finite numeric node argument → GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE', () => {
+    const diag: Diagnostic[] = [];
+    parseAndExtract(
+      `
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        n: String @geordi_node(kind: Rect, x: 1e999)
+      }
+    `,
+      diag,
+    );
+
+    const errors = diag.filter((d) => d.severity === 'error');
+    expect(errors.map((d) => d.code)).toContain(GeordiErrorCode.E_DIRECTIVE_ARG_INVALID_TYPE);
+    expect(errors.map((d) => d.details?.actual)).toContain('non-finite number');
+  });
+
+  it('invalid props JSON → GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE error', () => {
+    const diag: Diagnostic[] = [];
+    parseAndExtract(
+      `
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        n: String @geordi_node(kind: Rect, props: "[1,2,3]")
+      }
+    `,
+      diag,
+    );
+
+    const errors = diag.filter((d) => d.severity === 'error');
+    expect(errors.map((d) => d.code)).toContain(GeordiErrorCode.E_DIRECTIVE_ARG_INVALID_TYPE);
+  });
+
   it('preserves field order as fieldOrder property', () => {
     const diag: Diagnostic[] = [];
     const { nodes } = parseAndExtract(

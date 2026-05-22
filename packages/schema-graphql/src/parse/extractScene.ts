@@ -1,13 +1,13 @@
-import {
-  type DocumentNode,
-  type ObjectTypeDefinitionNode,
-  type DirectiveNode,
-  type ArgumentNode,
-  Kind,
-} from 'graphql';
+import { type DocumentNode, type ObjectTypeDefinitionNode, Kind } from 'graphql';
 import { ParseError, GeordiErrorCode } from '@flyingrobots/geordi-compiler-core';
 import type { Diagnostic, SourceRef } from '@flyingrobots/geordi-compiler-core';
 import { validateGeordiDirectiveVersion } from '../directives/v1.js';
+import {
+  readOptionalStringArg,
+  readRequiredIntArg,
+  readRequiredStringArg,
+  type DirectiveArgReaderContext,
+} from './directiveArgs.js';
 import { nodeSourceRef } from './sourceRef.js';
 
 export interface ExtractedScene {
@@ -19,27 +19,6 @@ export interface ExtractedScene {
   background?: string;
   sourceRef: SourceRef;
   typeNode: ObjectTypeDefinitionNode;
-}
-
-function getArgValue(
-  directive: DirectiveNode,
-  argName: string,
-): ArgumentNode | undefined {
-  return directive.arguments?.find((a) => a.name.value === argName);
-}
-
-function getStringArg(directive: DirectiveNode, argName: string): string | undefined {
-  const arg = getArgValue(directive, argName);
-  if (!arg) return undefined;
-  if (arg.value.kind === Kind.STRING) return arg.value.value;
-  return undefined;
-}
-
-function getIntArg(directive: DirectiveNode, argName: string): number | undefined {
-  const arg = getArgValue(directive, argName);
-  if (!arg) return undefined;
-  if (arg.value.kind === Kind.INT) return parseInt(arg.value.value, 10);
-  return undefined;
 }
 
 /**
@@ -99,15 +78,15 @@ export function extractScene(
   }
 
   // Validate version
-  const v = getStringArg(sceneDir, 'v');
-  if (!v) {
-    diagnostics.push(
-      new ParseError(
-        GeordiErrorCode.E_DIRECTIVE_ARG_MISSING,
-        `@geordi_scene requires argument v: "1"`,
-        { location: sourceRef },
-      ).toDiagnostic(),
-    );
+  const argContext: DirectiveArgReaderContext = {
+    directive: sceneDir,
+    directiveName: 'geordi_scene',
+    diagnostics,
+    filename,
+    owner: `type "${typeNode.name.value}"`,
+  };
+  const v = readRequiredStringArg(argContext, 'v');
+  if (v === undefined) {
     return undefined;
   }
 
@@ -124,33 +103,15 @@ export function extractScene(
   }
 
   // Validate required numeric args
-  const width = getIntArg(sceneDir, 'width');
-  const height = getIntArg(sceneDir, 'height');
+  const width = readRequiredIntArg(argContext, 'width');
+  const height = readRequiredIntArg(argContext, 'height');
 
-  if (width === undefined) {
-    diagnostics.push(
-      new ParseError(
-        GeordiErrorCode.E_DIRECTIVE_ARG_MISSING,
-        `@geordi_scene requires argument: width`,
-        { location: sourceRef },
-      ).toDiagnostic(),
-    );
+  if (width === undefined || height === undefined) {
     return undefined;
   }
 
-  if (height === undefined) {
-    diagnostics.push(
-      new ParseError(
-        GeordiErrorCode.E_DIRECTIVE_ARG_MISSING,
-        `@geordi_scene requires argument: height`,
-        { location: sourceRef },
-      ).toDiagnostic(),
-    );
-    return undefined;
-  }
-
-  const name = getStringArg(sceneDir, 'name');
-  const background = getStringArg(sceneDir, 'background');
+  const name = readOptionalStringArg(argContext, 'name');
+  const background = readOptionalStringArg(argContext, 'background');
 
   return {
     typeName: typeNode.name.value,

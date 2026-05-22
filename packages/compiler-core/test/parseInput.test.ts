@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseInputToCanonicalAst } from '../src/compile/parseInput';
-import { GeordiErrorCode } from '../src/errors';
+import { GeordiErrorCode, ParseError } from '../src/errors';
 import { stringifyCanonicalJson } from '../src/ports/json';
 import type { CompilerInput, Diagnostic, JsonValue } from '../src/types';
 
@@ -136,5 +136,30 @@ describe('parseInputToCanonicalAst (table-driven)', () => {
     const withHint = errorDiags.find((d) => d.hint);
     expect(withHint).toBeDefined();
     expect(withHint?.hint).toContain('schema-graphql');
+  });
+
+  it('graphql-sdl preserves typed diagnostics thrown by adapter', async () => {
+    const diagnostics: Diagnostic[] = [];
+    const result = await parseInputToCanonicalAst(
+      {
+        format: 'graphql-sdl',
+        source: 'type Broken {',
+        filename: 'broken.graphql',
+      },
+      diagnostics,
+      {
+        graphqlToCanonicalAst: () => {
+          throw new ParseError(GeordiErrorCode.E_INPUT_INVALID_SDL, 'adapter typed parse error', {
+            location: { file: 'broken.graphql', line: 1, column: 13 },
+          });
+        },
+      },
+    );
+
+    expect(result).toBeUndefined();
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0].code).toBe(GeordiErrorCode.E_INPUT_INVALID_SDL);
+    expect(diagnostics[0].location).toEqual({ file: 'broken.graphql', line: 1, column: 13 });
+    expect(diagnostics.map((d) => d.code)).not.toContain(GeordiErrorCode.E_INTERNAL_INVARIANT);
   });
 });

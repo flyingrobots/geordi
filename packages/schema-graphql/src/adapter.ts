@@ -1,6 +1,6 @@
 import type { CanonicalSceneAst, Diagnostic } from '@flyingrobots/geordi-compiler-core';
 import type { GraphqlToCanonicalAst } from '@flyingrobots/geordi-compiler-core';
-import { GeordiErrorCode, ParseError } from '@flyingrobots/geordi-compiler-core';
+import { DiagnosticsError, GeordiErrorCode, ParseError } from '@flyingrobots/geordi-compiler-core';
 import { parseGraphql } from './parse/parseGraphql.js';
 import { extractScene } from './parse/extractScene.js';
 import { extractNodes } from './parse/extractNodes.js';
@@ -8,12 +8,6 @@ import { toCanonicalAst } from './transform/toCanonicalAst.js';
 
 // Re-export the type so callers can import it from this package
 export type { GraphqlToCanonicalAst };
-
-class GraphqlSceneExtractionError extends ParseError {
-  constructor(message: string) {
-    super(GeordiErrorCode.E_SCENE_MISSING, message);
-  }
-}
 
 /**
  * Converts a GraphQL SDL string into a CanonicalSceneAst.
@@ -38,7 +32,11 @@ export const graphqlToCanonicalAst: GraphqlToCanonicalAst = (args: {
       diagnostics.length > 0
         ? diagnostics[diagnostics.length - 1].message
         : 'Scene extraction failed';
-    throw new GraphqlSceneExtractionError(reason);
+    const sceneDiagnostics =
+      diagnostics.length > 0
+        ? diagnostics
+        : [new ParseError(GeordiErrorCode.E_SCENE_MISSING, reason).toDiagnostic()];
+    throw new DiagnosticsError(sceneDiagnostics, reason);
   }
 
   // Step 3: Extract nodes

@@ -452,7 +452,7 @@ math and runtime capability semantics remain open.
 
 Replace unsafe directive argument casts with typed extractors that emit source-located `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE` diagnostics.
 
-**Status**: Open.
+**Status**: Completed. `@geordi_scene` and `@geordi_node` arguments now cross the schema boundary through typed runtime readers; wrong literal types, non-finite numeric values, and invalid `props` JSON object payloads fail with source-located diagnostics.
 
 ### P0: Lower or explicitly reject every known Geordi directive
 
@@ -464,7 +464,7 @@ Known directives such as `geordi_bind` and `geordi_style` must either lower into
 
 Adapter failures should preserve `GEORDI_E_INPUT_INVALID_SDL`, `GEORDI_E_SCENE_MISSING`, directive errors, and source locations through `compile()`. Plain `Error` wrapping should be replaced with typed diagnostic transport.
 
-**Status**: Open.
+**Status**: Completed. Adapter-thrown compiler errors are preserved, and `DiagnosticsError` carries already-collected diagnostics across the `schema-graphql` to `compiler-core` boundary.
 
 ### P0: Replace placeholder tests with package contract tests
 
