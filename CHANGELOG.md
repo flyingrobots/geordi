@@ -28,6 +28,8 @@
 
 ### Tests
 
+- **`@flyingrobots/geordi-wesley-generator`**: add behavior contract tests for `plan()`, successful SDL-to-artifacts generation, and custom failure errors on bad SDL
+- **`@flyingrobots/geordi-runtime-webgl`**: add canvas/context mock behavior tests for rendering the current scene contract and context-unavailable failure
 - **`@flyingrobots/geordi-compiler-core`**: 74 new tests across sprint 3 — first batch: `stableStringify` (22), `parseInput` table-driven (9), `determinism` (3) → 36 tests; second batch: `validateAst` (15), `emitTypes` (19), `determinism` +4, `compile.golden` +3 → total 79 tests
 - **`@flyingrobots/geordi-schema-graphql`**: 42 new tests — `extractScene` (10), `extractNodes` (10), `toCanonicalAst` (14), `e2e.terminal` (8)
 - Cycle detection verifies Tier 2 is suppressed when Tier 1 errors present

@@ -56,21 +56,6 @@ Acceptance criteria:
 
 ---
 
-### Expand package contract tests beyond smoke coverage
-**Priority**: P0
-**Source**: Repo audit
-
-`@flyingrobots/geordi-runtime-webgl` and `@flyingrobots/geordi-wesley-generator` now have public
-entrypoint contract tests, and the repo has a placeholder-test guard. They still need behavior tests
-that prove the runtime and generator contracts rather than only import shape.
-
-Acceptance criteria:
-- `wesley-generator` tests plan/generate on minimal SDL and asserts emitted artifacts.
-- `runtime-webgl` tests the selected IR input contract, with a canvas/context mock if needed.
-- Keep the post-build package import smoke test in CI.
-
----
-
 ## Completed Stabilization Work
 
 These P0 items were completed in the 2026-05-22 stabilization work and are retained here as
@@ -95,6 +80,9 @@ historical context.
   payloads produce `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE`.
 - Known but unlowered GraphQL directives, currently `geordi_bind` and `geordi_style`, fail loudly
   with `GEORDI_E_FEATURE_NOT_IMPLEMENTED`; unknown future `geordi_*` directives remain warnings.
+- Package contract tests now exercise behavior: `wesley-generator` plans/generates artifacts from
+  minimal SDL and fails with a custom error on bad SDL, while `runtime-webgl` renders the current
+  scene contract against a canvas/context mock.
 
 ---
 
