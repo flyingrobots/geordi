@@ -1,15 +1,28 @@
+import { validateGeordiIrV1 } from '@flyingrobots/geordi-core';
 import type {
   Bounds,
   GeordiIrNodeV1,
   GeordiIrV1,
-  GeordiNode,
-  GeordiScene,
+  GeordiIrValidationIssue,
   JsonObject,
+  JsonValue,
   NodeStyle,
   PaintStyle,
+  PreparedGeordiNode,
+  PreparedGeordiScene,
   SolidFill,
   TextStyle,
 } from '@flyingrobots/geordi-core';
+
+export class GeordiRuntimeInvalidIrError extends Error {
+  public readonly issues: readonly GeordiIrValidationIssue[];
+
+  constructor(issues: readonly GeordiIrValidationIssue[]) {
+    super('Invalid Geordi IR');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
 
 export class GeordiRuntimeUnsupportedNodeKindError extends Error {
   public readonly nodeKind: string;
@@ -21,7 +34,26 @@ export class GeordiRuntimeUnsupportedNodeKindError extends Error {
   }
 }
 
-export function prepareGeordiIr(ir: GeordiIrV1): GeordiScene {
+export class GeordiRuntimeInvalidNodePropsError extends Error {
+  public readonly nodeId: string;
+  public readonly prop: string;
+  public readonly expected: string;
+
+  constructor(nodeId: string, prop: string, expected: string) {
+    super('Invalid runtime node props');
+    this.name = new.target.name;
+    this.nodeId = nodeId;
+    this.prop = prop;
+    this.expected = expected;
+  }
+}
+
+export function prepareGeordiIr(ir: GeordiIrV1): PreparedGeordiScene {
+  const result = validateGeordiIrV1(ir);
+  if (!result.ok) {
+    throw new GeordiRuntimeInvalidIrError(result.issues);
+  }
+
   return {
     version: '0.1.0',
     meta: {
@@ -40,14 +72,14 @@ export function prepareGeordiIr(ir: GeordiIrV1): GeordiScene {
   };
 }
 
-function prepareNode(node: GeordiIrNodeV1, children: readonly string[]): GeordiNode {
+function prepareNode(node: GeordiIrNodeV1, children: readonly string[]): PreparedGeordiNode {
   switch (node.kind) {
     case 'Rect':
       return {
         id: node.id,
         type: 'rect',
-        bounds: boundsFromProps(node.props),
-        style: styleFromProps(node.props),
+        bounds: boundsFromNode(node, true),
+        style: styleFromNode(node),
         static: true,
       };
 
@@ -55,18 +87,18 @@ function prepareNode(node: GeordiIrNodeV1, children: readonly string[]): GeordiN
       return {
         id: node.id,
         type: 'text',
-        bounds: boundsFromProps(node.props),
-        style: textNodeStyleFromProps(node.props),
+        bounds: boundsFromNode(node, false),
+        style: textNodeStyleFromNode(node),
         static: true,
-        content: stringProp(node.props, 'content', ''),
+        content: requiredStringProp(node, 'content'),
       };
 
     case 'Group':
       return {
         id: node.id,
         type: 'group',
-        bounds: boundsFromProps(node.props),
-        style: styleFromProps(node.props),
+        bounds: boundsFromNode(node, false),
+        style: styleFromNode(node),
         static: true,
         children,
       };
@@ -75,10 +107,10 @@ function prepareNode(node: GeordiIrNodeV1, children: readonly string[]): GeordiN
       return {
         id: node.id,
         type: 'image',
-        bounds: boundsFromProps(node.props),
-        style: styleFromProps(node.props),
+        bounds: boundsFromNode(node, false),
+        style: styleFromNode(node),
         static: true,
-        src: stringProp(node.props, 'src', ''),
+        src: requiredStringProp(node, 'src'),
       };
 
     default:
@@ -92,32 +124,32 @@ function childIdsFor(ir: GeordiIrV1, parentId: string): string[] {
     .map((node) => node.id);
 }
 
-function boundsFromProps(props: JsonObject): Bounds {
+function boundsFromNode(node: GeordiIrNodeV1, requireSize: boolean): Bounds {
   return [
-    numberProp(props, 'x', 0),
-    numberProp(props, 'y', 0),
-    numberProp(props, 'width', 0),
-    numberProp(props, 'height', 0),
+    optionalNumberProp(node, 'x') ?? 0,
+    optionalNumberProp(node, 'y') ?? 0,
+    requireSize ? requiredNumberProp(node, 'width') : optionalNumberProp(node, 'width') ?? 0,
+    requireSize ? requiredNumberProp(node, 'height') : optionalNumberProp(node, 'height') ?? 0,
   ];
 }
 
-function styleFromProps(props: JsonObject): NodeStyle {
-  const paint = paintStyleFromProps(props);
+function styleFromNode(node: GeordiIrNodeV1): NodeStyle {
+  const paint = paintStyleFromNode(node);
   return paint ? { paint } : {};
 }
 
-function textNodeStyleFromProps(props: JsonObject): NodeStyle {
-  const paint = paintStyleFromProps(props);
-  const text = textStyleFromProps(props);
+function textNodeStyleFromNode(node: GeordiIrNodeV1): NodeStyle {
+  const paint = paintStyleFromNode(node);
+  const text = textStyleFromNode(node);
   return paint ? { paint, text } : { text };
 }
 
-function paintStyleFromProps(props: JsonObject): PaintStyle | undefined {
-  const fill = solidFillFromString(optionalStringProp(props, 'fill'));
-  const stroke = solidFillFromString(optionalStringProp(props, 'stroke'));
-  const strokeWidth = optionalNumberProp(props, 'strokeWidth');
-  const opacity = optionalNumberProp(props, 'opacity');
-  const cornerRadius = optionalNumberProp(props, 'cornerRadius');
+function paintStyleFromNode(node: GeordiIrNodeV1): PaintStyle | undefined {
+  const fill = solidFillFromString(optionalStringProp(node, 'fill'));
+  const stroke = solidFillFromString(optionalStringProp(node, 'stroke'));
+  const strokeWidth = optionalNumberProp(node, 'strokeWidth');
+  const opacity = optionalNumberProp(node, 'opacity');
+  const cornerRadius = optionalNumberProp(node, 'cornerRadius');
 
   if (
     fill === undefined &&
@@ -138,15 +170,15 @@ function paintStyleFromProps(props: JsonObject): PaintStyle | undefined {
   };
 }
 
-function textStyleFromProps(props: JsonObject): TextStyle {
-  const lineHeight = optionalNumberProp(props, 'lineHeight');
-  const align = textAlignFromProp(props);
+function textStyleFromNode(node: GeordiIrNodeV1): TextStyle {
+  const lineHeight = optionalNumberProp(node, 'lineHeight');
+  const align = textAlignFromProp(node);
 
   return {
-    font: stringProp(props, 'fontFamily', 'sans-serif'),
-    size: numberProp(props, 'fontSize', 16),
-    weight: fontWeightFromProp(props),
-    color: stringProp(props, 'color', '#000000'),
+    font: optionalStringProp(node, 'fontFamily') ?? 'sans-serif',
+    size: optionalNumberProp(node, 'fontSize') ?? 16,
+    weight: fontWeightFromProp(node),
+    color: optionalStringProp(node, 'color') ?? '#000000',
     ...(lineHeight !== undefined ? { lineHeight } : {}),
     ...(align !== undefined ? { align } : {}),
   };
@@ -156,8 +188,12 @@ function solidFillFromString(value: string | undefined): SolidFill | undefined {
   return value === undefined ? undefined : { type: 'solid', color: value };
 }
 
-function fontWeightFromProp(props: JsonObject): number {
-  const value = propValue(props, 'fontWeight');
+function fontWeightFromProp(node: GeordiIrNodeV1): number {
+  const value = propValue(node.props, 'fontWeight');
+  if (value === undefined || value === 'normal') {
+    return 400;
+  }
+
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
   }
@@ -166,36 +202,74 @@ function fontWeightFromProp(props: JsonObject): number {
     return 700;
   }
 
-  return 400;
+  throw new GeordiRuntimeInvalidNodePropsError(
+    node.id,
+    'fontWeight',
+    'finite number, "normal", or "bold"',
+  );
 }
 
-function textAlignFromProp(props: JsonObject): 'left' | 'center' | 'right' | undefined {
-  const value = propValue(props, 'align');
+function textAlignFromProp(node: GeordiIrNodeV1): 'left' | 'center' | 'right' | undefined {
+  const value = propValue(node.props, 'align');
+  if (value === undefined) {
+    return undefined;
+  }
+
   if (value === 'left' || value === 'center' || value === 'right') {
     return value;
   }
 
-  return undefined;
+  throw new GeordiRuntimeInvalidNodePropsError(
+    node.id,
+    'align',
+    '"left", "center", or "right"',
+  );
 }
 
-function numberProp(props: JsonObject, key: string, fallback: number): number {
-  return optionalNumberProp(props, key) ?? fallback;
+function requiredNumberProp(node: GeordiIrNodeV1, key: string): number {
+  const value = propValue(node.props, key);
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  throw new GeordiRuntimeInvalidNodePropsError(node.id, key, 'finite number');
 }
 
-function optionalNumberProp(props: JsonObject, key: string): number | undefined {
-  const value = propValue(props, key);
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+function optionalNumberProp(node: GeordiIrNodeV1, key: string): number | undefined {
+  const value = propValue(node.props, key);
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  throw new GeordiRuntimeInvalidNodePropsError(node.id, key, 'finite number');
 }
 
-function stringProp(props: JsonObject, key: string, fallback: string): string {
-  return optionalStringProp(props, key) ?? fallback;
+function requiredStringProp(node: GeordiIrNodeV1, key: string): string {
+  const value = propValue(node.props, key);
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  throw new GeordiRuntimeInvalidNodePropsError(node.id, key, 'string');
 }
 
-function optionalStringProp(props: JsonObject, key: string): string | undefined {
-  const value = propValue(props, key);
-  return typeof value === 'string' ? value : undefined;
+function optionalStringProp(node: GeordiIrNodeV1, key: string): string | undefined {
+  const value = propValue(node.props, key);
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  throw new GeordiRuntimeInvalidNodePropsError(node.id, key, 'string');
 }
 
-function propValue(props: JsonObject, key: string) {
+function propValue(props: JsonObject, key: string): JsonValue | undefined {
   return props[key];
 }

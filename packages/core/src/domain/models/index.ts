@@ -28,6 +28,7 @@ export type {
   GroupNode,
   ImageNode,
   GeordiNode,
+  PreparedGeordiNode,
 } from './GeordiNode.js';
 
 export { isRectNode, isTextNode, isGroupNode, isImageNode } from './GeordiNode.js';
@@ -45,10 +46,11 @@ export type {
   GeordiTokens,
   HitRegion,
   GeordiInteraction,
+  PreparedGeordiScene,
   GeordiScene,
 } from './GeordiScene.js';
 
-export { isGeordiScene } from './GeordiScene.js';
+export { isPreparedGeordiScene, isGeordiScene } from './GeordiScene.js';
 
 export {
   GEORDI_IR_VERSION,

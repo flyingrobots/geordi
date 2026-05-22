@@ -4,7 +4,7 @@
  * Root scene graph structure.
  */
 
-import type { Bounds, GeordiNode } from './GeordiNode.js';
+import type { Bounds, PreparedGeordiNode } from './GeordiNode.js';
 
 /** Scene version */
 export type GeordiVersion = '0.1.0';
@@ -71,8 +71,8 @@ export interface GeordiInteraction {
   readonly hitRegions: readonly HitRegion[];
 }
 
-/** Complete Geordi scene */
-export interface GeordiScene {
+/** Draw-ready scene produced by a runtime preparation step. */
+export interface PreparedGeordiScene {
   /** Scene format version */
   readonly version: GeordiVersion;
 
@@ -83,7 +83,7 @@ export interface GeordiScene {
   readonly canvas: GeordiCanvas;
 
   /** Scene nodes */
-  readonly nodes: readonly GeordiNode[];
+  readonly nodes: readonly PreparedGeordiNode[];
 
   /** Design tokens */
   readonly tokens: GeordiTokens;
@@ -95,13 +95,21 @@ export interface GeordiScene {
   readonly diagnostics?: readonly string[];
 }
 
-/** Type guard for Geordi scene */
-export function isGeordiScene(value: object | null): value is GeordiScene {
+/**
+ * Complete Geordi scene.
+ *
+ * Compatibility alias retained during the v0.1 migration. `geordi-ir/1` is the
+ * public scene contract; use `PreparedGeordiScene` for draw-ready runtime internals.
+ */
+export type GeordiScene = PreparedGeordiScene;
+
+/** Type guard for prepared runtime scenes. */
+export function isPreparedGeordiScene(value: object | null): value is PreparedGeordiScene {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
 
-  const scene = value as Readonly<Partial<Record<keyof GeordiScene, JsonValue>>>;
+  const scene = value as Readonly<Partial<Record<keyof PreparedGeordiScene, JsonValue>>>;
 
   return (
     typeof scene.version === 'string' &&
@@ -117,3 +125,10 @@ export function isGeordiScene(value: object | null): value is GeordiScene {
     !Array.isArray(scene.tokens)
   );
 }
+
+/**
+ * Type guard for Geordi scene.
+ *
+ * Compatibility alias retained during the v0.1 migration. Use `isPreparedGeordiScene`.
+ */
+export const isGeordiScene = isPreparedGeordiScene;

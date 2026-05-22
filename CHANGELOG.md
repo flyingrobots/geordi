@@ -17,6 +17,12 @@
 - **`@flyingrobots/geordi-runtime-webgl`**: Add a typed `geordi-ir/1` preparation path plus
   `renderGeordiIrToCanvas()` so runtime callers can render core-owned IR through the existing
   canvas renderer while legacy scene rendering remains available during migration.
+- **`@flyingrobots/geordi-runtime-webgl`**: Promote `renderGeordiToCanvas()` to the primary
+  public `geordi-ir/1` rendering API, add `renderPreparedSceneToCanvas()` for the draw-ready
+  runtime scene shape, and retain `renderGeordiIrToCanvas()` as a compatibility alias.
+- **`@flyingrobots/geordi-core`**: Rename the draw-ready scene model at the type level with
+  `PreparedGeordiScene` and `PreparedGeordiNode` aliases so the public contract is no longer
+  confused with `geordi-ir/1`.
 - **`@flyingrobots/geordi-compiler-core`**: Semantic validation engine — `validateCanonicalAst()` with two-tier rule registry; Tier 1 (structural: `sceneDimensions`, `nodeKindValid`, `duplicateId`, `danglingRef`, `cycleDetection`) gates Tier 2 (semantic: `requiredProps` per NodeKind); iterative Kahn's cycle detection passes 10k-node chains without stack overflow
 - **`@flyingrobots/geordi-compiler-core`**: Deterministic IR emitter — `emitGeordiIrArtifact()` replaces stub; two-phase topological sort (Kahn's on `parentId` DAG, tie-broken `zIndex ASC → kind ASC → id ASC` bytewise); strips `sourceRef` and `__typename`
 - **`@flyingrobots/geordi-compiler-core`**: Determinism certificate — `emitReceiptArtifact()` emits `scene.geordi.json.receipt` alongside IR containing `comparatorVersion`, `inputHash` (SHA-256 of `input.source`), `irHash` (SHA-256 of the emitted IR), `irHashAlg` (`"sha256"`), `irVersion`, and `rulesetFingerprint` (SHA-256 of sorted rule IDs)
@@ -43,8 +49,11 @@
   IR parses through the canonical JSON port and validates under the core-owned IR contract.
 - **`@flyingrobots/geordi-runtime-webgl`**: add coverage for rendering `geordi-ir/1` through the
   new runtime preparation path.
+- **`@flyingrobots/geordi-runtime-webgl`**: add runtime-bound IR validation, fail-loud prop
+  lowering, and compiler-to-runtime contract coverage that compiles canonical AST JSON, parses
+  emitted IR through the canonical JSON port, validates it as `geordi-ir/1`, and renders it.
 - **`@flyingrobots/geordi-wesley-generator`**: add behavior contract tests for `plan()`, successful SDL-to-artifacts generation, and custom failure errors on bad SDL
-- **`@flyingrobots/geordi-runtime-webgl`**: add canvas/context mock behavior tests for rendering the current scene contract and context-unavailable failure
+- **`@flyingrobots/geordi-runtime-webgl`**: add canvas/context mock behavior tests for rendering the prepared scene contract and context-unavailable failure
 - **`@flyingrobots/geordi-compiler-core`**: 74 new tests across sprint 3 — first batch: `stableStringify` (22), `parseInput` table-driven (9), `determinism` (3) → 36 tests; second batch: `validateAst` (15), `emitTypes` (19), `determinism` +4, `compile.golden` +3 → total 79 tests
 - **`@flyingrobots/geordi-schema-graphql`**: 42 new tests — `extractScene` (10), `extractNodes` (10), `toCanonicalAst` (14), `e2e.terminal` (8)
 - Cycle detection verifies Tier 2 is suppressed when Tier 1 errors present
@@ -74,6 +83,9 @@
 - `parseGraphql`: SDL wrapped in `Source(sdl, filename)` so the returned `DocumentNode` carries filename metadata through to downstream diagnostics
 - `test/determinism`: shuffle fixture aligned with `BASE_INPUT` — added `visible: true` to all nodes and `units: 'px'` to scene
 - `docs/ERROR_CODES.md`: corrected `Rect` required props example — only `width` and `height` are required; `x` and `y` are optional
+- `runtime-webgl`: runtime rendering now validates IR before preparing draw-ready scenes and
+  throws custom runtime errors for invalid IR, unsupported node kinds, and invalid required node
+  props instead of silently falling back to invisible geometry or empty content.
 
 - Invalid JSON input no longer emits `GEORDI_E_INTERNAL_INVARIANT`; now correctly emits `GEORDI_E_INPUT_INVALID_JSON`
 - Invalid GraphQL SDL input now emits `GEORDI_E_INPUT_INVALID_SDL` instead of `GEORDI_E_INTERNAL_INVARIANT`

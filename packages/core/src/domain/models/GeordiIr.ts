@@ -95,8 +95,8 @@ function validateScene(value: JsonValue | undefined, issues: GeordiIrValidationI
   }
 
   requireString(value, 'id', '$.scene.id', issues);
-  requireFiniteNumber(value, 'width', '$.scene.width', issues);
-  requireFiniteNumber(value, 'height', '$.scene.height', issues);
+  requirePositiveFiniteNumber(value, 'width', '$.scene.width', issues);
+  requirePositiveFiniteNumber(value, 'height', '$.scene.height', issues);
   optionalLiteral(value, 'units', 'px', '$.scene.units', issues);
   optionalString(value, 'background', '$.scene.background', issues);
 }
@@ -241,6 +241,18 @@ function requireFiniteNumber(
 ): void {
   if (!isFiniteNumber(object[key])) {
     pushIssue(issues, path, 'Value must be a finite number');
+  }
+}
+
+function requirePositiveFiniteNumber(
+  object: JsonObject,
+  key: string,
+  path: string,
+  issues: GeordiIrValidationIssue[],
+): void {
+  const value = property(object, key);
+  if (!isFiniteNumber(value) || value <= 0) {
+    pushIssue(issues, path, 'Value must be a positive finite number');
   }
 }
 

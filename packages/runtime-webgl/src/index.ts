@@ -5,5 +5,13 @@
  */
 
 export { GeordiCanvasContextUnavailableError, GeordiWebGLRenderer } from './WebGLRenderer.js';
-export { GeordiRuntimeUnsupportedNodeKindError } from './prepareGeordiIr.js';
-export { renderGeordiIrToCanvas, renderGeordiToCanvas } from './utils.js';
+export {
+  GeordiRuntimeInvalidIrError,
+  GeordiRuntimeInvalidNodePropsError,
+  GeordiRuntimeUnsupportedNodeKindError,
+} from './prepareGeordiIr.js';
+export {
+  renderGeordiIrToCanvas,
+  renderGeordiToCanvas,
+  renderPreparedSceneToCanvas,
+} from './utils.js';

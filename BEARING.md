@@ -33,12 +33,14 @@ Completed:
 - `@flyingrobots/geordi-core` owns versioned `geordi-ir/1` constants, types, and structural
   validation.
 - `@flyingrobots/geordi-compiler-core` emits/re-exports the shared core IR contract.
-- `@flyingrobots/geordi-runtime-webgl` can prepare and render typed `geordi-ir/1` through the
-  existing canvas renderer.
+- `@flyingrobots/geordi-runtime-webgl` validates and renders typed `geordi-ir/1` through
+  `renderGeordiToCanvas()`.
+- The draw-ready runtime scene shape is explicitly named `PreparedGeordiScene`; compatibility
+  aliases remain for the v0.1 migration, but `geordi-ir/1` is the documented renderer contract.
+- Compiler-emitted IR is covered end to end through runtime rendering.
 
 Still true:
 
-- `runtime-webgl` still exposes the older `GeordiScene` rendering path during migration.
 - The graphics numeric profile is only partially defined. JSON is deterministic, but geometry,
   vectors, matrices, transforms, and runtime capability declaration are not fully specified.
 
@@ -48,14 +50,14 @@ Still true:
    - GitHub Actions Dependabot PR #10 was mergeable and has been merged.
    - Conflicting npm Dependabot PR #8 should be recreated by Dependabot before any manual lockfile
      work.
-2. Finish the runtime-contract migration by making the public renderer API prefer `geordi-ir/1`
-   and by deprecating, renaming, or internalizing the legacy scene shape.
-3. Keep the graphics numeric profile explicit while migrating runtime-facing types.
+2. Define and enforce the graphics numeric profile.
+3. Move the canonical JSON port into core so IR validation, deterministic JSON, and numeric law
+   share the same package boundary.
 
 ## Recommended P0 Order
 
-1. Finish making `geordi-ir/1` the public runtime contract.
-2. Define and enforce the graphics numeric profile.
+1. Define and enforce the graphics numeric profile.
+2. Move canonical JSON ownership into `@flyingrobots/geordi-core`.
 
 ## Dependency Work
 

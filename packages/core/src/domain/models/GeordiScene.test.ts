@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 
-import type { GeordiScene } from './GeordiScene.js';
+import type { PreparedGeordiScene } from './GeordiScene.js';
 
-describe('GeordiScene', (): void => {
-  it('should create a valid scene with metadata', (): void => {
-    const scene: GeordiScene = {
+describe('PreparedGeordiScene', (): void => {
+  it('should create a valid prepared scene with metadata', (): void => {
+    const scene: PreparedGeordiScene = {
       version: '0.1.0',
       meta: {
         generator: '@flyingrobots/geordi-vue',
@@ -27,7 +27,7 @@ describe('GeordiScene', (): void => {
   });
 
   it('should contain nodes with proper references', (): void => {
-    const scene: GeordiScene = {
+    const scene: PreparedGeordiScene = {
       version: '0.1.0',
       meta: {
         generator: '@flyingrobots/geordi-core',
@@ -81,7 +81,7 @@ describe('GeordiScene', (): void => {
   });
 
   it('should have interaction hit regions', (): void => {
-    const scene: GeordiScene = {
+    const scene: PreparedGeordiScene = {
       version: '0.1.0',
       meta: {
         generator: '@flyingrobots/geordi-core',

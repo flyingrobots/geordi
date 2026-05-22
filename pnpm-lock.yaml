@@ -97,6 +97,9 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@flyingrobots/geordi-compiler-core':
+        specifier: workspace:*
+        version: link:../compiler-core
       '@types/node':
         specifier: ^25.9.1
         version: 25.9.1

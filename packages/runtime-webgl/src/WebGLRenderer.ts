@@ -6,8 +6,8 @@
  */
 
 import type {
-  GeordiScene,
   GeordiNode,
+  PreparedGeordiScene,
   RectNode,
   TextNode,
 } from '@flyingrobots/geordi-core';
@@ -42,9 +42,9 @@ export class GeordiWebGLRenderer {
   }
 
   /**
-   * Render a complete Geordi scene to the canvas
+   * Render a prepared runtime scene to the canvas
    */
-  render(scene: GeordiScene): HTMLCanvasElement {
+  renderPreparedScene(scene: PreparedGeordiScene): HTMLCanvasElement {
     // Clear canvas
     this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -55,6 +55,15 @@ export class GeordiWebGLRenderer {
     }
 
     return this.canvas;
+  }
+
+  /**
+   * Render a prepared runtime scene to the canvas.
+   *
+   * @deprecated Use `renderPreparedScene`.
+   */
+  render(scene: PreparedGeordiScene): HTMLCanvasElement {
+    return this.renderPreparedScene(scene);
   }
 
   /**

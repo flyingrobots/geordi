@@ -433,10 +433,11 @@ Add a root flat ESLint config or downgrade intentionally. CI currently runs lint
 
 Move versioned IR types and validation into `@flyingrobots/geordi-core`. Update `runtime-webgl` to accept validated IR directly or expose only an internal preparation step.
 
-**Status**: In progress. `@flyingrobots/geordi-core` now owns `geordi-ir/1` constants, types,
-and structural validation. `compiler-core` emits/re-exports the shared contract, and
-`runtime-webgl` has a typed IR preparation/render path. The older public `GeordiScene` shape still
-needs to be deprecated, renamed, or internalized before v0.1.
+**Status**: Completed. `@flyingrobots/geordi-core` owns `geordi-ir/1` constants, types, and
+structural validation. `compiler-core` emits/re-exports the shared contract. `runtime-webgl`
+validates IR at the boundary, renders it through the primary `renderGeordiToCanvas()` API, and
+names the draw-ready runtime shape `PreparedGeordiScene`. Compatibility aliases remain during the
+v0.1 migration, but they are no longer the documented public renderer contract.
 
 ### P0: Implement or remove canonicalization
 
@@ -507,5 +508,5 @@ The first stabilization pass is merged. Continue in this order:
 2. Validate GraphQL directive argument types at runtime.
 3. Lower or explicitly reject every known Geordi directive.
 4. Expand package behavior tests beyond public entrypoint smoke.
-5. Move `geordi-ir/1` into `@flyingrobots/geordi-core` as the runtime contract.
-6. Define and enforce the graphics numeric profile.
+5. Define and enforce the graphics numeric profile.
+6. Move canonical JSON ownership into `@flyingrobots/geordi-core`.
