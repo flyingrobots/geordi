@@ -136,8 +136,11 @@ export interface ImageNode extends GeordiNodeBase {
   readonly src: string;
 }
 
-/** Union type of all node types */
+/** Union type of all prepared runtime node types */
 export type GeordiNode = RectNode | TextNode | GroupNode | ImageNode;
+
+/** Draw-ready node produced by a runtime preparation step. */
+export type PreparedGeordiNode = GeordiNode;
 
 /** Type guard for rect nodes */
 export function isRectNode(node: GeordiNode): node is RectNode {

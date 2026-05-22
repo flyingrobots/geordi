@@ -21,10 +21,11 @@ These open items come from the repo audit and the v0 design pass. See
 ### Make `geordi-ir/1` the runtime contract
 **Priority**: P0
 **Source**: v0 design laws, repo audit
-**Status**: In progress. Core now owns versioned `geordi-ir/1` types and structural validation,
-compiler-core emits/re-exports that shared contract, and runtime-webgl has a typed IR preparation
-and render path. The remaining release-blocker is retiring or explicitly deprecating the older
-public scene shape before v0.1.
+**Status**: Completed. Core owns versioned `geordi-ir/1` types and structural validation,
+compiler-core emits/re-exports that shared contract, runtime-webgl validates and renders
+`geordi-ir/1` through its primary API, and the old draw-ready scene shape is explicitly named
+`PreparedGeordiScene` for runtime internals. Compatibility aliases remain during the v0.1
+migration, but they are no longer the documented public renderer contract.
 
 `@flyingrobots/geordi-compiler-core` emits `geordi-ir/1`, while `@flyingrobots/geordi-core` and
 `@flyingrobots/geordi-runtime-webgl` still model/render an older `version`/`canvas`/`type`/`bounds`
@@ -87,6 +88,9 @@ historical context.
 - Package contract tests now exercise behavior: `wesley-generator` plans/generates artifacts from
   minimal SDL and fails with a custom error on bad SDL, while `runtime-webgl` renders the current
   scene contract against a canvas/context mock.
+- `geordi-ir/1` is the runtime contract: core owns IR validation, compiler-core emits the shared
+  contract, runtime-webgl validates IR at the boundary, fail-loud prop lowering rejects invalid
+  drawable props, and compiler output is rendered through the runtime contract in tests.
 
 ---
 

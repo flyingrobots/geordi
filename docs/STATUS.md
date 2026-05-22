@@ -48,9 +48,9 @@ Wesley GeneratorPlugin adapter scaffold.
 
 Core domain package.
 
-- Current domain models and guards for the older scene shape.
 - Versioned `geordi-ir/1` constants, structural types, and validation.
-- Still needs the older scene shape deprecated, renamed, or internalized before v0.1.
+- Draw-ready runtime scene aliases named `PreparedGeordiScene` and `PreparedGeordiNode`.
+- Compatibility aliases for the older scene names remain during the v0.1 migration.
 
 #### `@flyingrobots/geordi-runtime-webgl`
 
@@ -58,8 +58,10 @@ Canvas-backed WebGL-runtime scaffold.
 
 - Basic renderer implementation.
 - Public entrypoint contract test.
-- Typed `geordi-ir/1` preparation path and `renderGeordiIrToCanvas()` adapter.
-- Still exposes the older `GeordiScene` path during migration.
+- `renderGeordiToCanvas()` is the primary public `geordi-ir/1` rendering API.
+- `renderPreparedSceneToCanvas()` renders draw-ready runtime scenes explicitly.
+- Runtime-bound IR validation and fail-loud prop lowering use custom runtime error types.
+- Compiler-emitted IR is rendered through the runtime contract in an integration test.
 
 ## Infrastructure
 
@@ -83,10 +85,10 @@ Latest full local gate during the core IR runtime-contract work:
 | --- | ---: | --- |
 | `@flyingrobots/geordi-compiler-core` | 73 | Green |
 | `@flyingrobots/geordi-schema-graphql` | 51 | Green |
-| `@flyingrobots/geordi-core` | 11 | Green |
-| `@flyingrobots/geordi-runtime-webgl` | 4 | Green |
+| `@flyingrobots/geordi-core` | 12 | Green |
+| `@flyingrobots/geordi-runtime-webgl` | 9 | Green |
 | `@flyingrobots/geordi-wesley-generator` | 3 | Green |
-| **Total package tests** | **142** | Green |
+| **Total package tests** | **148** | Green |
 
 Additional gates:
 
@@ -105,17 +107,14 @@ Immediate:
 1. Keep dependency hygiene clean.
    - GitHub Actions Dependabot update PR #10 has been merged.
    - npm/yarn Dependabot PR #8 was stale and conflicting; Dependabot has been asked to recreate it.
-2. Make the runtime public API prefer `geordi-ir/1` and decide the deprecation/internalization path
-   for the older `GeordiScene` model.
-3. Define the validator failure surface for runtime-bound IR: caller-validated only, or explicit
-   runtime validation with custom runtime error types.
+2. Move the canonical JSON port into `@flyingrobots/geordi-core`.
+3. Define the graphics numeric profile for geometry, vectors, matrices, transforms, and runtime
+   capability requirements.
 
 Short term:
 
-4. Define the graphics numeric profile for geometry, vectors, matrices, transforms, and runtime
-   capability requirements.
-5. Add source maps and diagnostic UX improvements.
-6. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
+4. Add source maps and diagnostic UX improvements.
+5. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
 
 ## Decision Log
 

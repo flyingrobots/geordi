@@ -75,6 +75,23 @@ describe('Geordi IR v1 contract', () => {
     ]);
   });
 
+  it('rejects non-positive scene dimensions', () => {
+    const result = validateGeordiIrV1({
+      ...VALID_IR,
+      scene: {
+        id: 'scene:test',
+        width: 0,
+        height: -1,
+      },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual([
+      '$.scene.width',
+      '$.scene.height',
+    ]);
+  });
+
   it('rejects nodes without object props', () => {
     const result = validateGeordiIrV1({
       ...VALID_IR,

@@ -2,25 +2,33 @@
  * Utility functions for Geordi rendering
  */
 
-import type { GeordiIrV1, GeordiScene } from '@flyingrobots/geordi-core';
+import type { GeordiIrV1, PreparedGeordiScene } from '@flyingrobots/geordi-core';
 import { GeordiWebGLRenderer } from './WebGLRenderer.js';
 import { prepareGeordiIr } from './prepareGeordiIr.js';
 
 /**
- * Render a Geordi scene to a canvas element
+ * Render a prepared runtime scene to a canvas element.
  *
- * @param scene - The Geordi scene to render
+ * @param scene - The prepared scene to render
  * @returns Canvas element with the rendered scene
  */
-export function renderGeordiToCanvas(scene: GeordiScene): HTMLCanvasElement {
+export function renderPreparedSceneToCanvas(scene: PreparedGeordiScene): HTMLCanvasElement {
   const renderer = new GeordiWebGLRenderer(
     scene.canvas.width,
     scene.canvas.height,
   );
 
-  return renderer.render(scene);
+  return renderer.renderPreparedScene(scene);
 }
 
-export function renderGeordiIrToCanvas(ir: GeordiIrV1): HTMLCanvasElement {
-  return renderGeordiToCanvas(prepareGeordiIr(ir));
+/** Render public `geordi-ir/1` to a canvas element. */
+export function renderGeordiToCanvas(ir: GeordiIrV1): HTMLCanvasElement {
+  return renderPreparedSceneToCanvas(prepareGeordiIr(ir));
 }
+
+/**
+ * Render public `geordi-ir/1` to a canvas element.
+ *
+ * Compatibility alias retained during the v0.1 migration. Use `renderGeordiToCanvas`.
+ */
+export const renderGeordiIrToCanvas = renderGeordiToCanvas;

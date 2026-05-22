@@ -1,9 +1,21 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import type { GeordiIrV1, GeordiScene } from '@flyingrobots/geordi-core';
+import {
+  isGeordiIrV1,
+  type GeordiIrV1,
+  type PreparedGeordiScene,
+} from '@flyingrobots/geordi-core';
+import {
+  compile,
+  parseJsonValue,
+  stringifyCanonicalJson,
+} from '@flyingrobots/geordi-compiler-core';
 import {
   GeordiCanvasContextUnavailableError,
+  GeordiRuntimeInvalidIrError,
+  GeordiRuntimeInvalidNodePropsError,
   GeordiWebGLRenderer,
   renderGeordiIrToCanvas,
+  renderPreparedSceneToCanvas,
   renderGeordiToCanvas,
 } from './index';
 
@@ -75,6 +87,13 @@ class FakeCanvasContext2D {
   }
 }
 
+class RuntimeContractTestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = new.target.name;
+  }
+}
+
 const hadDocument = Object.prototype.hasOwnProperty.call(globalThis, 'document');
 const originalDocument = hadDocument ? globalThis.document : undefined;
 
@@ -112,7 +131,7 @@ function installCanvasDocument(canvas: HTMLCanvasElement): void {
   });
 }
 
-function makeScene(): GeordiScene {
+function makePreparedScene(): PreparedGeordiScene {
   return {
     version: '0.1.0',
     meta: {
@@ -207,14 +226,15 @@ describe('runtime-webgl public API', () => {
   it('exports renderer entrypoints', () => {
     expect(GeordiWebGLRenderer).toBeTypeOf('function');
     expect(renderGeordiToCanvas).toBeTypeOf('function');
+    expect(renderPreparedSceneToCanvas).toBeTypeOf('function');
   });
 
-  it('renders the current scene contract to a canvas context', () => {
+  it('renders prepared scenes to a canvas context', () => {
     const context = new FakeCanvasContext2D();
     const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
     installCanvasDocument(canvas);
 
-    const rendered = renderGeordiToCanvas(makeScene());
+    const rendered = renderPreparedSceneToCanvas(makePreparedScene());
 
     expect(rendered).toBe(canvas);
     expect(canvas.width).toBe(100);
@@ -234,12 +254,12 @@ describe('runtime-webgl public API', () => {
     expect(context.font).toBe('400 12px Inter');
   });
 
-  it('renders geordi-ir/1 through the runtime preparation path', () => {
+  it('renders geordi-ir/1 through the primary runtime API', () => {
     const context = new FakeCanvasContext2D();
     const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
     installCanvasDocument(canvas);
 
-    const rendered = renderGeordiIrToCanvas(makeIr());
+    const rendered = renderGeordiToCanvas(makeIr());
 
     expect(rendered).toBe(canvas);
     expect(canvas.width).toBe(100);
@@ -257,6 +277,61 @@ describe('runtime-webgl public API', () => {
       { name: 'restore', args: [] },
     ]);
     expect(context.font).toBe('400 12px Inter');
+  });
+
+  it('keeps the deprecated IR helper as a compatibility alias', () => {
+    expect(renderGeordiIrToCanvas).toBe(renderGeordiToCanvas);
+  });
+
+  it('throws a custom error when runtime IR validation fails', () => {
+    const invalidIr = {
+      ...makeIr(),
+      scene: {
+        id: 'scene:runtime-ir',
+        width: 0,
+        height: 50,
+      },
+    } as object as GeordiIrV1;
+
+    expect(() => renderGeordiToCanvas(invalidIr)).toThrow(GeordiRuntimeInvalidIrError);
+  });
+
+  it('throws a custom error when required runtime node props are missing', () => {
+    const invalidIr: GeordiIrV1 = {
+      ...makeIr(),
+      nodes: [
+        {
+          id: 'rect-1',
+          kind: 'Rect',
+          props: {
+            height: 20,
+          },
+        },
+      ],
+    };
+
+    expect(() => renderGeordiToCanvas(invalidIr)).toThrow(
+      GeordiRuntimeInvalidNodePropsError,
+    );
+  });
+
+  it('throws a custom error when required string props are invalid', () => {
+    const invalidIr: GeordiIrV1 = {
+      ...makeIr(),
+      nodes: [
+        {
+          id: 'image-1',
+          kind: 'Image',
+          props: {
+            src: null,
+          },
+        },
+      ],
+    };
+
+    expect(() => renderGeordiToCanvas(invalidIr)).toThrow(
+      GeordiRuntimeInvalidNodePropsError,
+    );
   });
 
   it('throws a custom error when a canvas context cannot be created', () => {
@@ -265,5 +340,91 @@ describe('runtime-webgl public API', () => {
     expect(() => new GeordiWebGLRenderer(10, 10)).toThrow(
       GeordiCanvasContextUnavailableError,
     );
+  });
+
+  it('renders compiler-emitted geordi-ir/1 through the runtime contract', async () => {
+    const source = stringifyCanonicalJson({
+      kind: 'Scene',
+      astVersion: '1',
+      scene: {
+        id: 'scene:compiler-runtime',
+        width: 120,
+        height: 80,
+        units: 'px',
+      },
+      nodes: [
+        {
+          id: 'rect-1',
+          kind: 'Rect',
+          props: {
+            x: 4,
+            y: 5,
+            width: 20,
+            height: 30,
+            fill: '#123456',
+          },
+          visible: true,
+        },
+        {
+          id: 'text-1',
+          kind: 'Text',
+          props: {
+            x: 7,
+            y: 8,
+            content: 'Compiled',
+            color: '#ffffff',
+            fontFamily: 'Inter',
+            fontSize: 14,
+          },
+          visible: true,
+        },
+      ],
+      metadata: { sourceFormat: 'canonical-ast-json' },
+    });
+
+    const result = await compile({
+      format: 'canonical-ast-json',
+      source,
+      options: {
+        target: 'geordi-ir-v1',
+        emit: {
+          irJson: true,
+          tsTypes: false,
+        },
+        canonicalize: true,
+      },
+    });
+
+    if (!result.ok) {
+      throw new RuntimeContractTestError('Compile failed');
+    }
+
+    const artifact = result.artifacts['scene.geordi.json'];
+    const ir = parseJsonValue(String(artifact.content));
+    if (!isGeordiIrV1(ir)) {
+      throw new RuntimeContractTestError('Invalid IR artifact');
+    }
+
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    installCanvasDocument(canvas);
+
+    const rendered = renderGeordiToCanvas(ir);
+
+    expect(rendered).toBe(canvas);
+    expect(canvas.width).toBe(120);
+    expect(canvas.height).toBe(80);
+    expect(context.calls).toEqual([
+      { name: 'fillRect', args: [0, 0, 120, 80] },
+      { name: 'save', args: [] },
+      { name: 'beginPath', args: [] },
+      { name: 'rect', args: [4, 5, 20, 30] },
+      { name: 'closePath', args: [] },
+      { name: 'fill', args: [] },
+      { name: 'restore', args: [] },
+      { name: 'save', args: [] },
+      { name: 'fillText', args: ['Compiled', 7, 8] },
+      { name: 'restore', args: [] },
+    ]);
   });
 });
