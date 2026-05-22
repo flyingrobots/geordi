@@ -56,21 +56,6 @@ Acceptance criteria:
 
 ---
 
-### Lower or explicitly reject every known Geordi directive
-**Priority**: P0
-**Source**: Repo audit, fail-loud principle
-
-`geordi_bind` and `geordi_style` are declared and treated as known directives, but they are not
-lowered into canonical AST or IR. Known directives must not be silently dropped.
-
-Acceptance criteria:
-- `geordi_bind` lowers into `bindings[]`, or returns an explicit unsupported-feature diagnostic.
-- `geordi_style` lowers into node style data, or returns an explicit unsupported-feature diagnostic.
-- Unknown `geordi_*` directives still produce the intended warning behavior.
-- No known Geordi directive is ignored without a diagnostic.
-
----
-
 ### Expand package contract tests beyond smoke coverage
 **Priority**: P0
 **Source**: Repo audit
@@ -108,6 +93,8 @@ historical context.
 - GraphQL `@geordi_scene` and `@geordi_node` directive arguments are read through typed runtime
   extractors; wrong literal types, non-finite numeric values, and invalid `props` JSON object
   payloads produce `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE`.
+- Known but unlowered GraphQL directives, currently `geordi_bind` and `geordi_style`, fail loudly
+  with `GEORDI_E_FEATURE_NOT_IMPLEMENTED`; unknown future `geordi_*` directives remain warnings.
 
 ---
 

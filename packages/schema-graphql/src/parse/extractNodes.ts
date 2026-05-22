@@ -29,6 +29,7 @@ export interface ExtractedNode {
 }
 
 const KNOWN_GEORDI_DIRS = new Set(['geordi_scene', 'geordi_node', 'geordi_bind', 'geordi_style']);
+const UNLOWERED_GEORDI_DIRS = new Set(['geordi_bind', 'geordi_style']);
 
 /**
  * Extracts all @geordi_node field definitions from the scene type.
@@ -47,9 +48,19 @@ export function extractNodes(
     const field = fields[i];
     const sourceRef = nodeSourceRef(field, filename);
 
-    // Check for unknown geordi_* directives (warn only for geordi_ prefixed)
+    // Check Geordi directives before lowering the node payload.
     if (field.directives) {
       for (const dir of field.directives) {
+        if (UNLOWERED_GEORDI_DIRS.has(dir.name.value)) {
+          pushUnloweredDirectiveError(
+            diagnostics,
+            field.name.value,
+            dir.name.value,
+            nodeSourceRef(dir, filename),
+          );
+          continue;
+        }
+
         if (dir.name.value.startsWith('geordi_') && !KNOWN_GEORDI_DIRS.has(dir.name.value)) {
           diagnostics.push({
             code: GeordiErrorCode.W_UNUSED_FIELD,
@@ -156,6 +167,28 @@ function pushPropsInvalidType(
           directive: 'geordi_node',
           argument: 'props',
           expected: 'json-object-string',
+        },
+      },
+    ).toDiagnostic(),
+  );
+}
+
+function pushUnloweredDirectiveError(
+  diagnostics: Diagnostic[],
+  fieldName: string,
+  directiveName: string,
+  sourceRef: SourceRef,
+): void {
+  diagnostics.push(
+    new ParseError(
+      GeordiErrorCode.E_FEATURE_NOT_IMPLEMENTED,
+      `@${directiveName} on field "${fieldName}" is declared but is not lowered into canonical AST yet`,
+      {
+        location: sourceRef,
+        details: {
+          directive: directiveName,
+          field: fieldName,
+          phase: 'schema-graphql',
         },
       },
     ).toDiagnostic(),

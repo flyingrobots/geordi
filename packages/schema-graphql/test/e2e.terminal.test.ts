@@ -178,4 +178,26 @@ describe('e2e: Terminal SDL fixture', () => {
       GeordiErrorCode.E_DIRECTIVE_ARG_INVALID_TYPE,
     );
   });
+
+  it('fails loudly when known directives are declared but not lowered', async () => {
+    const result = await compile(
+      makeInput(
+        `
+        type S @geordi_scene(v: "1", width: 100, height: 100) {
+          n: String
+            @geordi_node(kind: Rect)
+            @geordi_bind(targetProp: "props.fill", expr: "theme.primary")
+        }
+      `,
+        'unsupported-directive.graphql',
+      ),
+      DEPS,
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics.map((d) => d.code)).toContain(
+      GeordiErrorCode.E_FEATURE_NOT_IMPLEMENTED,
+    );
+    expect(result.diagnostics.map((d) => d.code)).not.toContain(GeordiErrorCode.W_UNUSED_FIELD);
+  });
 });
