@@ -6,7 +6,8 @@ Geordi uses a **clean seam architecture** where the compiler core remains framew
 
 ## Package Responsibilities
 
-### `@geordi/compiler-core`
+### `@flyingrobots/geordi-compiler-core`
+
 **Pure domain logic. Zero external framework dependencies.**
 
 - **Types** (`src/types/`): Canonical AST, IR, compiler contracts
@@ -17,7 +18,8 @@ Geordi uses a **clean seam architecture** where the compiler core remains framew
 
 **Key principle**: No Wesley types, no GraphQL AST leaks beyond parse phase.
 
-### `@geordi/schema-graphql`
+### `@flyingrobots/geordi-schema-graphql`
+
 **GraphQL SDL → Canonical AST adapter**
 
 - **Directives** (`src/directives/`): Directive definitions, version validation
@@ -27,7 +29,8 @@ Geordi uses a **clean seam architecture** where the compiler core remains framew
 
 **Key principle**: Exports pure functions that compiler-core can inject. No global state.
 
-### `@geordi/wesley-generator`
+### `@flyingrobots/geordi-wesley-generator`
+
 **Wesley GeneratorPlugin adapter**
 
 - **GeordiGeneratorPlugin** (`src/GeordiGeneratorPlugin.ts`): Wesley plugin lifecycle

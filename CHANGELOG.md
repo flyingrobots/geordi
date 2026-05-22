@@ -20,16 +20,16 @@
 - **`@flyingrobots/geordi-compiler-core`**: `compile()` now accepts optional `deps?: ParseInputDeps` second argument for adapter injection
 - **`@flyingrobots/geordi-compiler-core`**: IR emitter uses `stableStringify`, sorts nodes by `zIndex ASC → kind ASC → id ASC` (bytewise), strips `sourceRef` from output, adds `hashAlgorithm` to compile metadata
 - **`@flyingrobots/geordi-compiler-core`**: `CompileMetadata` gains optional `hashAlgorithm` field (narrowed to `'sha256'`)
-- **`@geordi/schema-graphql`**: Full GraphQL SDL parser pipeline — `parseGraphql`, `extractScene`, `extractNodes`, `toCanonicalAst`
-- **`@geordi/schema-graphql`**: `graphqlToCanonicalAst` adapter exported from package root, satisfies `GraphqlToCanonicalAst` interface from compiler-core
-- **`@geordi/schema-graphql`**: Null-safe source location policy (`SourceRef` fallback to `<inline>:1:1` when `loc` absent)
-- **`@geordi/schema-graphql`**: `GEORDI_W_UNUSED_FIELD` warning only for unknown `geordi_*`-prefixed directives; non-`geordi_` directives silently ignored
-- **`@geordi/wesley-generator`**: Imports and injects `graphqlToCanonicalAst` adapter into `compile()`; adds `@geordi/schema-graphql` dependency
+- **`@flyingrobots/geordi-schema-graphql`**: Full GraphQL SDL parser pipeline — `parseGraphql`, `extractScene`, `extractNodes`, `toCanonicalAst`
+- **`@flyingrobots/geordi-schema-graphql`**: `graphqlToCanonicalAst` adapter exported from package root, satisfies `GraphqlToCanonicalAst` interface from compiler-core
+- **`@flyingrobots/geordi-schema-graphql`**: Null-safe source location policy (`SourceRef` fallback to `<inline>:1:1` when `loc` absent)
+- **`@flyingrobots/geordi-schema-graphql`**: `GEORDI_W_UNUSED_FIELD` warning only for unknown `geordi_*`-prefixed directives; non-`geordi_` directives silently ignored
+- **`@flyingrobots/geordi-wesley-generator`**: Imports and injects `graphqlToCanonicalAst` adapter into `compile()`; adds `@flyingrobots/geordi-schema-graphql` dependency
 
 ### Tests
 
 - **`@flyingrobots/geordi-compiler-core`**: 74 new tests across sprint 3 — first batch: `stableStringify` (22), `parseInput` table-driven (9), `determinism` (3) → 36 tests; second batch: `validateAst` (15), `emitTypes` (19), `determinism` +4, `compile.golden` +3 → total 79 tests
-- **`@geordi/schema-graphql`**: 42 new tests — `extractScene` (10), `extractNodes` (10), `toCanonicalAst` (14), `e2e.terminal` (8)
+- **`@flyingrobots/geordi-schema-graphql`**: 42 new tests — `extractScene` (10), `extractNodes` (10), `toCanonicalAst` (14), `e2e.terminal` (8)
 - Cycle detection verifies Tier 2 is suppressed when Tier 1 errors present
 - 4 rotated input orderings of the same scene produce byte-identical IR (SHA-256 verified)
 - Parent-before-child ordering guaranteed in topological emitter output

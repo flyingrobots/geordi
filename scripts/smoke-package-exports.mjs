@@ -71,4 +71,4 @@ for (const check of checks) {
   }
 }
 
-console.log(`Imported ${checks.length} package entrypoints successfully.`);
+process.stdout.write(`Imported ${checks.length} package entrypoints successfully.\n`);

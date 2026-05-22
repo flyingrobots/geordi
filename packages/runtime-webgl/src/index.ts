@@ -1,5 +1,5 @@
 /**
- * @geordi/runtime-webgl
+ * @flyingrobots/geordi-runtime-webgl
  *
  * WebGL/Canvas renderer for Geordi scenes
  */

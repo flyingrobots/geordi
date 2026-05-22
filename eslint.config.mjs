@@ -110,6 +110,9 @@ export default [
       sourceType: 'module',
     },
     rules: {
+      ...tsPlugin.configs['flat/disable-type-checked'].rules,
+      'no-console': 'error',
+      'no-restricted-syntax': ['error', ...restrictedSyntax],
       'no-unused-vars': unusedVars,
     },
   },

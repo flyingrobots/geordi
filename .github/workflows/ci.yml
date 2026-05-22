@@ -37,5 +37,8 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Verify package names
+        run: pnpm test:package-names
+
       - name: Verify package exports
         run: pnpm test:exports

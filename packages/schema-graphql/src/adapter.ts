@@ -17,7 +17,7 @@ class GraphqlSceneExtractionError extends ParseError {
 
 /**
  * Converts a GraphQL SDL string into a CanonicalSceneAst.
- * This is the primary adapter between @geordi/schema-graphql and @flyingrobots/geordi-compiler-core.
+ * This is the primary adapter between @flyingrobots/geordi-schema-graphql and @flyingrobots/geordi-compiler-core.
  *
  * Throws on parse errors. Pushes semantic diagnostics to the provided array.
  */

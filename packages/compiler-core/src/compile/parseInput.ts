@@ -71,7 +71,7 @@ async function parseGraphqlSdl(
         GeordiErrorCode.E_INTERNAL_INVARIANT,
         'GraphQL parser adapter is not configured (graphqlToCanonicalAst missing)',
         {
-          hint: 'Provide parseInput deps.graphqlToCanonicalAst from @geordi/schema-graphql.',
+          hint: 'Provide parseInput deps.graphqlToCanonicalAst from @flyingrobots/geordi-schema-graphql.',
           location: input.filename ? { file: input.filename, line: 1, column: 1 } : undefined,
         },
       ).toDiagnostic(),

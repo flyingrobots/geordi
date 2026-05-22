@@ -229,7 +229,7 @@ Add fuzz coverage via `fast-check` for:
 - `sceneDimensions`: numeric edge cases (`NaN`, `Infinity`, `-0`, `Number.MIN_VALUE`)
 - `requiredProps`: randomly missing props across all NodeKinds
 
-Target package: `@geordi/compiler-core`. Add `fast-check` as a dev dependency.
+Target package: `@flyingrobots/geordi-compiler-core`. Add `fast-check` as a dev dependency.
 
 ---
 
@@ -279,7 +279,7 @@ every field. A custom ESLint rule (or `no-restricted-syntax` selector) that flag
 
 When `adapter.ts` throws on `extractScene` failure, the thrown `Error` said "see diagnostics"
 but the diagnostics were in a local array invisible to the caller. Introduce a `DiagnosticsError`
-class in `@geordi/compiler-core` that carries a `diagnostics: Diagnostic[]` field. Any throw site
+class in `@flyingrobots/geordi-compiler-core` that carries a `diagnostics: Diagnostic[]` field. Any throw site
 that has collected diagnostics should use this class so callers can always inspect the reason.
 
 ---
