@@ -28,6 +28,8 @@ Completed:
 - GraphQL `@geordi_scene` and `@geordi_node` directive arguments are validated at runtime before
   values enter the canonical AST.
 - Known but unlowered GraphQL directives fail loudly instead of disappearing from the pipeline.
+- `wesley-generator` and `runtime-webgl` have behavior-level package contract tests, not only
+  entrypoint smoke tests.
 
 Still true:
 
@@ -42,15 +44,14 @@ Still true:
    - GitHub Actions Dependabot PR #10 was mergeable and has been merged.
    - Conflicting npm Dependabot PR #8 should be recreated by Dependabot before any manual lockfile
      work.
-2. Next focused stabilization target: expand package contract tests from entrypoint smoke to
-   behavior coverage.
-3. Do not start runtime migration before package contract tests cover behavior, not only imports.
+2. Next focused stabilization target: move `geordi-ir/1` into `@flyingrobots/geordi-core` as the
+   runtime contract.
+3. Keep the graphics numeric profile explicit while migrating runtime-facing types.
 
 ## Recommended P0 Order
 
-1. Expand package contract tests from entrypoint smoke to behavior coverage.
-2. Move `geordi-ir/1` into `@flyingrobots/geordi-core` as the runtime contract.
-3. Define and enforce the graphics numeric profile.
+1. Move `geordi-ir/1` into `@flyingrobots/geordi-core` as the runtime contract.
+2. Define and enforce the graphics numeric profile.
 
 ## Dependency Work
 

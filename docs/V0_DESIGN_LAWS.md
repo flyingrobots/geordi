@@ -470,8 +470,8 @@ Adapter failures should preserve `GEORDI_E_INPUT_INVALID_SDL`, `GEORDI_E_SCENE_M
 
 `runtime-webgl` and `wesley-generator` need tests that exercise public behavior, not placeholder assertions. Include post-build import smoke tests and at least one SDL-to-artifacts integration path.
 
-**Status**: Partially complete. Placeholder assertions are blocked by CI and package entrypoints are
-smoke-tested. Behavior tests for `runtime-webgl` and `wesley-generator` remain open.
+**Status**: Completed. Placeholder assertions are blocked by CI, package entrypoints are
+smoke-tested, and `runtime-webgl` plus `wesley-generator` now have behavior-level contract tests.
 
 ### P0: Remove tracked generated logs and stale nested lockfiles
 

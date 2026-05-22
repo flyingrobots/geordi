@@ -103,19 +103,15 @@ Immediate:
 1. Keep dependency hygiene clean.
    - GitHub Actions Dependabot update PR #10 has been merged.
    - npm/yarn Dependabot PR #8 was stale and conflicting; Dependabot has been asked to recreate it.
-2. Expand `wesley-generator` and `runtime-webgl` tests beyond public entrypoint shape.
+2. Move versioned `geordi-ir/1` types and validation into `@flyingrobots/geordi-core`.
+3. Update `runtime-webgl` to consume the `geordi-ir/1` runtime contract.
 
 Short term:
 
-3. Move versioned `geordi-ir/1` types and validation into `@flyingrobots/geordi-core`.
-4. Update `runtime-webgl` to consume the `geordi-ir/1` runtime contract.
-
-Medium term:
-
-5. Define the graphics numeric profile for geometry, vectors, matrices, transforms, and runtime
+4. Define the graphics numeric profile for geometry, vectors, matrices, transforms, and runtime
    capability requirements.
-6. Add source maps and diagnostic UX improvements.
-7. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
+5. Add source maps and diagnostic UX improvements.
+6. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
 
 ## Decision Log
 

@@ -1,1 +1,1 @@
-export { GeordiGeneratorPlugin } from './GeordiGeneratorPlugin.js';
+export { GeordiGenerationFailedError, GeordiGeneratorPlugin } from './GeordiGeneratorPlugin.js';
