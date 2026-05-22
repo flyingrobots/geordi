@@ -11,6 +11,7 @@
     "dev": "turbo run dev",
     "test": "turbo run test",
     "test:exports": "pnpm build && node scripts/smoke-package-exports.mjs",
+    "test:docs": "node scripts/check-doc-hygiene.mjs",
     "test:package-names": "node scripts/check-package-name-scope.mjs",
     "test:placeholders": "node scripts/check-test-placeholders.mjs",
     "test:repo-sludge": "node scripts/check-repo-sludge.mjs",

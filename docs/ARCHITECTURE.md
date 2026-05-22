@@ -40,7 +40,7 @@ Geordi uses a **clean seam architecture** where the compiler core remains framew
 
 ## Compilation Pipeline
 
-```
+```text
 Input (SDL or canonical JSON)
   ↓
 parseInputToCanonicalAst()

@@ -40,6 +40,9 @@ jobs:
       - name: Verify package names
         run: pnpm test:package-names
 
+      - name: Verify docs
+        run: pnpm test:docs
+
       - name: Verify test placeholders
         run: pnpm test:placeholders
 
