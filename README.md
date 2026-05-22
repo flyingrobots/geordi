@@ -1,202 +1,251 @@
-# SVJif
+# Geordi
 
-**Scene Vector Jraphics interface format**
+**Deterministic GPU scene IR for interactive vector UI**
 
-Pronounced: **"Scene Vector Jif"** (/siːn ˈvɛktər dʒɪf/)
+Formerly SVJif (Scene Vector Jraphics Interface Format)
 
-Deterministic GPU scene IR for interactive vector UI.
+Geordi is a **canonical intermediate representation (IR)** for building high-performance, GPU-native user interfaces with deterministic rendering.
 
-> Unlike legacy SVG weirdness, SVJif uses a sane Euclidean coordinate space:
-> - explicit origin
-> - explicit units
-> - explicit transforms
-> - deterministic layout + draw
+> No implicit layout rules. No runtime CSS cascade. No ambiguity.  
+> Just explicit geometry, explicit transforms, and reproducible pixels.
 
-## Status: v0.1.0-dev 🚧
+---
 
-**Compiler architecture complete.** Now implementing:
-- GraphQL → Canonical AST parser
+## Status
+
+**v0.1.0-dev — active development**
+
+Core compiler architecture is complete. Now implementing:
+
+- GraphQL → canonical AST parsing
 - Semantic validation
-- Full artifact emission
+- Full artifact emission pipeline
 
-## What is SVJif?
+---
 
-SVJif is the **canonical intermediate representation** for GPU-native vector UI rendering. It's not a replacement for SVG or the browser DOM—it's the universal compile target for high-performance GPU rendering.
+## What is Geordi?
 
-**Think LLVM IR, but for UI.**
+Geordi is a **compile target**, not a framework.
+
+It sits between UI authoring tools and GPU runtimes, providing a **deterministic, portable scene representation**.
+
+Think:
+
+- LLVM IR, but for UI
+- WASM, but for rendering
+
+Geordi does not replace the DOM or SVG—it replaces the *runtime ambiguity* of those systems when targeting high-performance rendering.
+
+---
 
 ## What is GPVue?
 
-**GPVue** is the developer-facing Vue SDK that compiles Vue components to SVJif for deterministic GPU rendering.
+**GPVue** is the first developer-facing SDK built on Geordi.
 
-**Positioning:** GPVue compiles Vue components to SVJif for deterministic GPU rendering.
+It compiles Vue components into Geordi IR for deterministic GPU rendering.
 
-At runtime: no CSS parser, no cascade—only deterministic subtree relayout and GPU draw.
+At runtime:
 
-## Architecture
+- No CSS parsing
+- No cascade
+- No layout thrashing
 
-```
-GPVue / GPReact / GPSvelte / GPFigma
-              ↓
-       SVJif IR (universal format)
-              ↓
-    ┌─────────┼─────────┬─────────┬─────────┐
-    ↓         ↓         ↓         ↓         ↓
-  WebGL    WebGPU     Metal    Vulkan     wgpu
- (browser) (browser)  (Apple)  (native)   (Rust)
-```
+Only:
 
-**SVJif is the compile target. Renderers are swappable.**
+- Deterministic subtree recomputation
+- Direct GPU draw calls
 
-Like LLVM IR → multiple backends, or WASM → multiple runtimes.
+---
 
-## Architecture
+## System architecture
 
-```
-Vue/Figma/SVG
-       ↓
-  SVJif Compiler (build time)
-       ↓
-   SVJif IR (.svjif.json)
-       ↓
-   Pack (.svjif.bin)
-       ↓
-  WebGL Runtime (GPU rendering)
-```
+```mermaid
+flowchart LR
+  subgraph SDKs
+    A[GPVue]
+    B["GPReact<br/>(planned)"]
+    C["GPSvelte<br/>(planned)"]
+    D["GPFigma<br/>(planned)"]
+  end
 
-## Key Principles
+  subgraph IR[Geordi IR]
+    E[Geordi Scene IR]
+  end
 
-1. **Deterministic** - Same IR in, same pixels out
-2. **Build-time CSS** - No runtime parsing or cascade
-3. **Runtime layout VM** - Only recompute dirty subtrees
-4. **GPU-native** - Direct shader rendering
-5. **Fail loud** - Unsupported features are compile errors
+  subgraph Backends[GPU runtimes]
+    F["WebGL<br/>(browser)"]
+    G["WebGPU<br/>(browser)"]
+    H["Metal<br/>(Apple)"]
+    I["Vulkan<br/>(native)"]
+    J["wgpu<br/>(Rust)"]
+  end
 
-## Project Status
+  A --> E
+  B --> E
+  C --> E
+  D --> E
 
-🚧 **v0.1 in development** - Terminal rendering proof of concept
-
-## Repository Structure
-
-```
-SVJif/
-  packages/
-    # SVJif Core (universal IR)
-    core/              # @svjif/core - IR types, validation
-    compiler/          # @svjif/compiler - Base compiler infra
-    cli/               # @svjif/cli - Command-line tools
-
-    # SVJif Runtimes (swappable backends)
-    runtime-webgl/     # @svjif/runtime-webgl - WebGL (browser)
-    runtime-webgpu/    # @svjif/runtime-webgpu - WebGPU (modern browser)
-    runtime-metal/     # @svjif/runtime-metal - Metal (Apple native)
-    runtime-wgpu/      # @svjif/runtime-wgpu - wgpu (Rust)
-    runtime-vulkan/    # @svjif/runtime-vulkan - Vulkan (cross-platform)
-
-    # Front-end SDKs (compile to SVJif)
-    gpvue/             # @gpvue/vue - Vue → SVJif
-    gpreact/           # @gpreact/react - React → SVJif (future)
-    gpsvelte/          # @gpsvelte/svelte - Svelte → SVJif (future)
-
-  schemas/
-    svjif.v0.1.json    # SVJif IR JSON Schema
-  examples/
-    gpvue-terminal/    # GPVue cloth terminal demo
-  docs/
-    spec.md            # SVJif specification
-    runtime-api.md     # Runtime interface contract
+  E --> F
+  E --> G
+  E --> H
+  E --> I
+  E --> J
 ```
 
-## Runtime Abstraction
+**Geordi is the stable contract. Runtimes are interchangeable.**
 
-All SVJif runtimes implement the same interface:
+---
 
-```typescript
-interface SVJifRuntime {
-  load(scene: SVJifScene): Promise<void>;
+## Compilation pipeline
+
+```mermaid
+flowchart TD
+  A["Vue / Figma / SVG / other frontends"]
+  B["Geordi Compiler<br/>(build time)"]
+  C["Geordi IR<br/>(.geordi.json)"]
+  D["Packed binary<br/>(.geordi.bin)"]
+  E["Geordi Runtime<br/>(WebGL/WebGPU/Metal/Vulkan/wgpu)"]
+
+  A --> B --> C --> D --> E
+```
+
+---
+
+## Core principles
+
+1. **Deterministic** – Same IR input always produces identical pixels.
+2. **Explicit geometry** – Coordinate space, units, and transforms are fully defined.
+3. **No runtime CSS** – Layout and styling are resolved at build time.
+4. **Incremental layout VM** – Only dirty subtrees are recomputed.
+5. **GPU-native rendering** – No DOM, no layout engine, no abstraction leakage.
+6. **Fail loud** – Unsupported features are compile-time errors, not runtime surprises.
+
+---
+
+## Runtime interface
+
+All Geordi runtimes implement a shared contract:
+
+```ts
+interface GeordiRuntime {
+  load(scene: GeordiScene): Promise<void>;
   render(): void;
-  updateNode(id: string, updates: Partial<SVJifNode>): void;
+  updateNode(id: string, updates: Partial<GeordiNode>): void;
   hitTest(x: number, y: number): HitResult | null;
   dispose(): void;
 }
 ```
 
-**Same IR. Same API. Different GPU backend.**
+**Same scene. Same API. Any backend.**
 
-Choose your runtime:
-- **Browser?** → `@svjif/runtime-webgl` or `@svjif/runtime-webgpu`
-- **Native app?** → `@svjif/runtime-metal` (macOS/iOS) or `@svjif/runtime-vulkan`
-- **Rust?** → `@svjif/runtime-wgpu`
+Runtimes:
 
-## Supported CSS Subset (v0.1)
+- Browser: `@geordi/runtime-webgl`, `@geordi/runtime-webgpu`
+- Apple platforms: `@geordi/runtime-metal`
+- Native cross-platform: `@geordi/runtime-vulkan`
+- Rust ecosystem: `@geordi/runtime-wgpu`
 
-**Layout:** `display`, `flex-*`, `width`, `height`, `padding`, `margin`, `gap`, `position`
-**Paint:** `background-color`, `color`, `border`, `border-radius`, `opacity`
-**Text:** `font-family`, `font-size`, `font-weight`, `line-height`, `text-align`
+---
 
-See [docs/css-subset.md](docs/css-subset.md) for full details.
+## Supported CSS subset (v0.1)
 
-## Quick Start (coming soon)
+**Layout**
 
-### For Vue Developers (GPVue)
+- `display`, `flex-*`, `width`, `height`, `padding`, `margin`, `gap`, `position`
+
+**Paint**
+
+- `background-color`, `color`, `border`, `border-radius`, `opacity`
+
+**Text**
+
+- `font-family`, `font-size`, `font-weight`, `line-height`, `text-align`
+
+See `docs/css-subset.md` for full details.
+
+---
+
+## Repository structure
+
+```text
+geordi/
+  packages/
+    core/              # IR types, validation
+    compiler/          # Compiler infrastructure
+    cli/               # CLI tools
+
+    runtime-webgl/     # WebGL (browser)
+    runtime-webgpu/    # WebGPU (modern browser)
+    runtime-metal/     # Metal (Apple native)
+    runtime-wgpu/      # wgpu (Rust)
+    runtime-vulkan/    # Vulkan (cross-platform)
+
+    gpvue/             # Vue → Geordi
+    gpreact/           # React → Geordi (planned)
+    gpsvelte/          # Svelte → Geordi (planned)
+
+  schemas/
+    geordi.v0.1.json   # Geordi IR JSON Schema
+
+  examples/
+    gpvue-terminal/    # GPVue cloth terminal demo
+
+  docs/
+    spec.md            # Geordi specification
+    runtime-api.md     # Runtime interface contract
+```
+
+---
+
+## Quick start (preview)
+
+### Vue developers (GPVue)
 
 ```bash
 # Install GPVue
 npm install @gpvue/vue
 
-# Write your Vue component
-# Terminal.vue - renders on GPU!
-
-# Build to SVJif
+# Build your Vue component to Geordi IR
 npx gpvue build Terminal.vue
 
-# Run
+# Run with GPU rendering
 npx gpvue serve --gpu
 ```
 
-### For Format/Tooling Developers (SVJif Core)
+### Format / tooling authors (Geordi core)
 
 ```bash
-# Install SVJif tools
-npm install -g @svjif/cli
+# Install Geordi CLI
+npm install -g @geordi/cli
 
-# Validate SVJif IR
-svjif validate terminal.svjif.json
+# Validate Geordi IR
+geordi validate terminal.geordi.json
 
 # Pack for production
-svjif pack terminal.svjif.json -o terminal.svjif.bin
+geordi pack terminal.geordi.json -o terminal.geordi.bin
 
-# Build your own compiler targeting SVJif
-import { SVJifScene } from '@svjif/core';
+# Use the core types in your own compiler
+import { GeordiScene } from '@geordi/core';
 ```
 
-## Development Principles
+---
 
-- **Apache 2.0 License** - Open and permissive
-- **Hexagonal Architecture** - Domain/Application/Infrastructure layers
-- **TypeScript** - Strict mode, full type safety
-- **H-H-H-HOLY SHIT ESLint** - Maximum strictness (eslint:all + @typescript-eslint/all)
-- **Test is the Spec** - Tests define behavior, 90%+ coverage required
+## Engineering principles
 
-## Project Structure
+- Apache 2.0 license
+- Hexagonal architecture (domain / application / infrastructure)
+- Strict TypeScript
+- Extremely strict linting (eslint:all + @typescript-eslint/all)
+- Tests define behavior; target ≥ 90% coverage
 
-```
-@svjif/core
-  src/
-    domain/          # Pure domain logic (models, business rules)
-      models/        # SVJifNode, SVJifScene types
-      ports/         # Interfaces for external dependencies
-    application/     # Use cases and application services
-      usecases/      # Business workflows
-      services/      # Application logic
-    infrastructure/  # External adapters (I/O, frameworks)
-      adapters/      # Concrete implementations
-```
+---
 
 ## License
 
 Apache 2.0
 
+---
+
 ## Contributing
 
-SVJif is in early development. Watch this space.
+Geordi is in early development. Issues, discussions, and small PRs are welcome as the core stabilizes.
