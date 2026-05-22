@@ -40,5 +40,8 @@ jobs:
       - name: Verify package names
         run: pnpm test:package-names
 
+      - name: Verify test placeholders
+        run: pnpm test:placeholders
+
       - name: Verify package exports
         run: pnpm test:exports

@@ -1,5 +1,8 @@
-import { expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { GeordiGeneratorPlugin } from './index';
 
-test('it works', () => {
-  expect(true).toBe(true);
+describe('wesley-generator public API', () => {
+  it('exports GeordiGeneratorPlugin', () => {
+    expect(GeordiGeneratorPlugin).toBeTypeOf('function');
+  });
 });

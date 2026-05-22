@@ -12,6 +12,7 @@
     "test": "turbo run test",
     "test:exports": "pnpm build && node scripts/smoke-package-exports.mjs",
     "test:package-names": "node scripts/check-package-name-scope.mjs",
+    "test:placeholders": "node scripts/check-test-placeholders.mjs",
     "test:coverage": "turbo run test:coverage",
     "lint": "pnpm lint:root && turbo run lint",
     "lint:root": "eslint . --max-warnings 0",

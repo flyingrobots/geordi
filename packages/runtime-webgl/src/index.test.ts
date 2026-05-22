@@ -1,5 +1,9 @@
-import { expect, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { GeordiWebGLRenderer, renderGeordiToCanvas } from './index';
 
-test('it works', () => {
-  expect(true).toBe(true);
+describe('runtime-webgl public API', () => {
+  it('exports renderer entrypoints', () => {
+    expect(GeordiWebGLRenderer).toBeTypeOf('function');
+    expect(renderGeordiToCanvas).toBeTypeOf('function');
+  });
 });
