@@ -118,6 +118,7 @@ See [`docs/ERROR_CODES.md`](./ERROR_CODES.md) for complete taxonomy.
 
 - **AST version**: `astVersion: "1"` (canonical AST)
 - **IR version**: `irVersion: "geordi-ir/1"` (output format)
+- **Numeric profile**: `numericProfile: "geordi-finite-binary64/1"` (finite binary64 graphics numbers)
 - **Directive version**: `v: "1"` (GraphQL directives)
 
 All versions are explicit and validated. Unknown versions → hard error.

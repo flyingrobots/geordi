@@ -71,3 +71,12 @@ export type {
   GeordiIrValidationIssue,
   GeordiIrValidationResult,
 } from './GeordiIr.js';
+
+export {
+  GEORDI_NUMERIC_PROFILE,
+  GeordiInvalidGraphicsNumberError,
+  isFiniteGraphicsNumber,
+  requireFiniteGraphicsNumber,
+} from './GeordiNumericProfile.js';
+
+export type { GeordiNumericProfile } from './GeordiNumericProfile.js';

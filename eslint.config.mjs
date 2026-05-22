@@ -92,7 +92,7 @@ export default [
     },
   },
   {
-    files: ['packages/compiler-core/src/ports/json.ts'],
+    files: ['packages/core/src/ports/json.ts'],
     rules: {
       'no-restricted-syntax': ['error', ...restrictedSyntaxWithoutJsonCalls],
     },

@@ -45,6 +45,10 @@ Acceptance criteria:
 ### Define the graphics numeric profile
 **Priority**: P0
 **Source**: v0 design laws, graphics determinism discussion
+**Status**: Completed. Core owns the canonical JSON port and the v0
+`geordi-finite-binary64/1` numeric profile. `geordi-ir/1` declares `numericProfile`,
+compiler receipts include it, runtime-webgl declares its supported runtime profile, and runtime
+rendering fails loudly when IR asks for an unsupported profile.
 
 Canonical JSON can make bytes deterministic, but it cannot by itself define graphics fidelity for
 floats, vectors, matrix math, transforms, and shader-adjacent values. The IR needs an explicit
@@ -91,6 +95,9 @@ historical context.
 - `geordi-ir/1` is the runtime contract: core owns IR validation, compiler-core emits the shared
   contract, runtime-webgl validates IR at the boundary, fail-loud prop lowering rejects invalid
   drawable props, and compiler output is rendered through the runtime contract in tests.
+- Graphics numeric profile is explicit: core owns `geordi-finite-binary64/1`, canonical JSON
+  rejects non-finite numbers and canonicalizes `-0`, compiler IR and receipts declare the profile,
+  and runtime-webgl rejects unsupported profile requirements before rendering.
 
 ---
 

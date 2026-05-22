@@ -23,6 +23,14 @@
 - **`@flyingrobots/geordi-core`**: Rename the draw-ready scene model at the type level with
   `PreparedGeordiScene` and `PreparedGeordiNode` aliases so the public contract is no longer
   confused with `geordi-ir/1`.
+- **`@flyingrobots/geordi-core`**: Own the v0 graphics numeric profile
+  (`geordi-finite-binary64/1`), graphics-number helpers, and the canonical JSON port with custom
+  parse, non-finite-number, and stringify error types.
+- **`@flyingrobots/geordi-compiler-core`**: Emit `numericProfile` in `scene.geordi.json` and
+  `scene.geordi.json.receipt`, and re-export the core-owned canonical JSON port for compatibility.
+- **`@flyingrobots/geordi-runtime-webgl`**: Add `GEORDI_WEBGL_RUNTIME_PROFILE` and fail loudly
+  with `GeordiRuntimeUnsupportedProfileError` when IR requests an unsupported IR version or
+  numeric profile.
 - **`@flyingrobots/geordi-compiler-core`**: Semantic validation engine — `validateCanonicalAst()` with two-tier rule registry; Tier 1 (structural: `sceneDimensions`, `nodeKindValid`, `duplicateId`, `danglingRef`, `cycleDetection`) gates Tier 2 (semantic: `requiredProps` per NodeKind); iterative Kahn's cycle detection passes 10k-node chains without stack overflow
 - **`@flyingrobots/geordi-compiler-core`**: Deterministic IR emitter — `emitGeordiIrArtifact()` replaces stub; two-phase topological sort (Kahn's on `parentId` DAG, tie-broken `zIndex ASC → kind ASC → id ASC` bytewise); strips `sourceRef` and `__typename`
 - **`@flyingrobots/geordi-compiler-core`**: Determinism certificate — `emitReceiptArtifact()` emits `scene.geordi.json.receipt` alongside IR containing `comparatorVersion`, `inputHash` (SHA-256 of `input.source`), `irHash` (SHA-256 of the emitted IR), `irHashAlg` (`"sha256"`), `irVersion`, and `rulesetFingerprint` (SHA-256 of sorted rule IDs)
@@ -52,6 +60,11 @@
 - **`@flyingrobots/geordi-runtime-webgl`**: add runtime-bound IR validation, fail-loud prop
   lowering, and compiler-to-runtime contract coverage that compiles canonical AST JSON, parses
   emitted IR through the canonical JSON port, validates it as `geordi-ir/1`, and renders it.
+- **`@flyingrobots/geordi-core`**: add canonical JSON port coverage for stable key order,
+  `-0` normalization, nested non-finite-number rejection with paths, deterministic finite float
+  spelling, and no hidden fixed-point scaling.
+- **`@flyingrobots/geordi-runtime-webgl`**: add runtime profile export and unsupported profile
+  rejection coverage.
 - **`@flyingrobots/geordi-wesley-generator`**: add behavior contract tests for `plan()`, successful SDL-to-artifacts generation, and custom failure errors on bad SDL
 - **`@flyingrobots/geordi-runtime-webgl`**: add canvas/context mock behavior tests for rendering the prepared scene contract and context-unavailable failure
 - **`@flyingrobots/geordi-compiler-core`**: 74 new tests across sprint 3 — first batch: `stableStringify` (22), `parseInput` table-driven (9), `determinism` (3) → 36 tests; second batch: `validateAst` (15), `emitTypes` (19), `determinism` +4, `compile.golden` +3 → total 79 tests

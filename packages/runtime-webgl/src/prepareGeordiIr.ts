@@ -13,6 +13,7 @@ import type {
   SolidFill,
   TextStyle,
 } from '@flyingrobots/geordi-core';
+import { assertSupportedRuntimeProfile } from './profile.js';
 
 export class GeordiRuntimeInvalidIrError extends Error {
   public readonly issues: readonly GeordiIrValidationIssue[];
@@ -49,6 +50,8 @@ export class GeordiRuntimeInvalidNodePropsError extends Error {
 }
 
 export function prepareGeordiIr(ir: GeordiIrV1): PreparedGeordiScene {
+  assertSupportedRuntimeProfile(ir);
+
   const result = validateGeordiIrV1(ir);
   if (!result.ok) {
     throw new GeordiRuntimeInvalidIrError(result.issues);

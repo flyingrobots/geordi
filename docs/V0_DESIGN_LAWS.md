@@ -14,7 +14,7 @@ It also defines the v0 design laws that keep Geordi from becoming a generic scen
 
 `geordi-ir/1` is the public renderer contract.
 
-`@flyingrobots/geordi-core` should own the versioned IR types, validation, canonical JSON rules, feature profiles, and capability matching. `@flyingrobots/geordi-compiler-core` should emit `geordi-ir/1`. Renderers such as `@flyingrobots/geordi-runtime-webgl` should accept validated `geordi-ir/1` directly.
+`@flyingrobots/geordi-core` owns the versioned IR types, validation, canonical JSON rules, numeric profile, and compatibility constants. `@flyingrobots/geordi-compiler-core` emits `geordi-ir/1`. Renderers such as `@flyingrobots/geordi-runtime-webgl` accept validated `geordi-ir/1` directly and declare the runtime profile they support.
 
 A renderer may lower IR into an internal draw-ready cache, GPU command list, packed binary, atlas plan, or scene acceleration structure. That lowering is an implementation detail. It must not become a second public scene format unless it has its own version, validator, and explicit reason to exist.
 
@@ -27,8 +27,8 @@ A renderer may lower IR into an internal draw-ready cache, GPU command list, pac
 
 ### Consequences
 
-- The current `core` scene model with `version`, `canvas`, lowercase `type`, `bounds`, and `style` is legacy or internal. It should be migrated, deprecated, or renamed before v0.1 release.
-- Runtime APIs should move toward `render(ir: GeordiIrV1, options?: RenderOptions)`.
+- The draw-ready runtime scene model with `version`, `canvas`, lowercase `type`, `bounds`, and `style` is internal and named `PreparedGeordiScene`.
+- Runtime APIs should consume `GeordiIrV1`; `runtime-webgl` uses `renderGeordiToCanvas(ir)`.
 - Canonical AST remains a compiler-facing interchange shape, not the runtime contract.
 - Renderers must fail loudly when IR requires unsupported features.
 - If a runtime needs preprocessing, expose it as `prepare(ir)` or an internal cache, not as a separate public input format.
@@ -66,6 +66,7 @@ Recommended top-level direction:
 ```ts
 interface GeordiIrV1 {
   irVersion: 'geordi-ir/1';
+  numericProfile: 'geordi-finite-binary64/1';
   requires: string[];
   scene: SceneFrame;
   assets?: AssetManifest;
@@ -80,14 +81,15 @@ The current repo shape can evolve toward this without breaking the core idea. Th
 
 Graphics numbers are part of the rendering contract, not incidental JSON details.
 
-v0 must define a numeric profile before claiming pixel-identical compliance:
+v0 defines `geordi-finite-binary64/1` as the current graphics numeric profile:
 
 - JSON is only a debug, review, and interchange envelope.
 - The JSON port must canonicalize object order, normalize `-0` to `0`, and reject `NaN` and infinities.
 - The JSON port must not silently rescale or round ordinary numbers, because that changes author intent.
-- Geometry, vectors, matrices, transforms, and animation values need an explicit domain scalar.
+- Geometry, vectors, matrices, transforms, and animation values use finite JavaScript/IEEE-754 binary64 numbers in v0, with deterministic operation order still to be specified where multi-step math is introduced.
+- `geordi-ir/1` declares `numericProfile`, compiler receipts include it, and runtimes fail loudly when the requested profile is unsupported.
 
-The preferred direction is an explicit fixed-point IR scalar for layout-critical geometry, for example `px * SCALE` stored as an integer with a named `numericProfile`. A value such as `5.123402px` may lower to `5123402` only if the IR says the field is fixed-point with `scale = 1_000_000`. That conversion belongs in compiler normalization, not hidden inside generic JSON serialization.
+An explicit fixed-point IR scalar can be added later for layout-critical geometry, for example `px * SCALE` stored as an integer under a new named `numericProfile`. A value such as `5.123402px` may lower to `5123402` only if the IR says the field is fixed-point with `scale = 1_000_000`. That conversion belongs in compiler normalization, not hidden inside generic JSON serialization.
 
 Matrix and shader-adjacent math may require a separate profile, such as deterministic binary64 with a fixed operation order or a packed binary representation. This should be specified as a renderer compliance profile before v0 locks the IR schema.
 
@@ -388,7 +390,9 @@ Diagnostics should use stable error codes.
 
 ### Canonical JSON
 
-Canonical JSON is the v0 debug and review format, not the whole graphics fidelity story:
+Canonical JSON is the v0 debug and review format, not the whole graphics fidelity story. The
+canonical JSON port lives in `@flyingrobots/geordi-core`; other packages use or re-export that
+boundary instead of calling `JSON.parse` or `JSON.stringify` directly:
 
 - Stable key order.
 - Stable node order.
@@ -449,8 +453,10 @@ v0.1 migration, but they are no longer the documented public renderer contract.
 
 Canonical JSON alone is not enough for a graphics library. Define the v0 scalar law for geometry, vectors, matrices, transforms, and animation values. Decide which fields lower to fixed-point integers, which may remain deterministic binary64, and how the profile is declared in IR and runtime capabilities.
 
-**Status**: Open. The JSON boundary rejects non-finite numbers and canonicalizes `-0`; graphics
-math and runtime capability semantics remain open.
+**Status**: Completed. `geordi-ir/1` declares `numericProfile: "geordi-finite-binary64/1"`,
+compiler receipts include the profile, runtime-webgl declares and checks its supported profile,
+and the core JSON port rejects non-finite numbers, canonicalizes `-0`, and does not round or
+fixed-point scale ordinary finite values.
 
 ### P0: Validate GraphQL directive argument types at runtime
 
@@ -508,5 +514,5 @@ The first stabilization pass is merged. Continue in this order:
 2. Validate GraphQL directive argument types at runtime.
 3. Lower or explicitly reject every known Geordi directive.
 4. Expand package behavior tests beyond public entrypoint smoke.
-5. Define and enforce the graphics numeric profile.
-6. Move canonical JSON ownership into `@flyingrobots/geordi-core`.
+5. Add source maps and diagnostic UX improvements.
+6. Define the next feature/capability profile beyond the v0 baseline.

@@ -4,9 +4,11 @@ import {
   isGeordiIrV1,
   validateGeordiIrV1,
 } from './GeordiIr';
+import { GEORDI_NUMERIC_PROFILE } from './GeordiNumericProfile';
 
 const VALID_IR = {
   irVersion: GEORDI_IR_VERSION,
+  numericProfile: GEORDI_NUMERIC_PROFILE,
   scene: {
     id: 'scene:test',
     width: 320,
@@ -47,6 +49,22 @@ describe('Geordi IR v1 contract', () => {
 
     expect(result.ok).toBe(false);
     expect(result.issues.map((issue) => issue.path)).toContain('$.irVersion');
+  });
+
+  it('rejects missing or unsupported numeric profiles', () => {
+    const missingProfile = { ...VALID_IR };
+    Reflect.deleteProperty(missingProfile, 'numericProfile');
+
+    const missingResult = validateGeordiIrV1(missingProfile);
+    const unsupportedResult = validateGeordiIrV1({
+      ...VALID_IR,
+      numericProfile: 'geordi-fixed-point-px6/1',
+    });
+
+    expect(missingResult.ok).toBe(false);
+    expect(unsupportedResult.ok).toBe(false);
+    expect(missingResult.issues.map((issue) => issue.path)).toContain('$.numericProfile');
+    expect(unsupportedResult.issues.map((issue) => issue.path)).toContain('$.numericProfile');
   });
 
   it('rejects non-finite scene dimensions and node z-index', () => {

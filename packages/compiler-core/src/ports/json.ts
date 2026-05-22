@@ -1,54 +1,34 @@
-import type { JsonObject, JsonValue } from '../types/json.js';
+import {
+  canonicalJsonPort as coreCanonicalJsonPort,
+  GeordiJsonNonFiniteNumberError,
+  GeordiJsonParseError,
+  GeordiJsonStringifyError,
+  normalizeJsonValue as normalizeCoreJsonValue,
+  parseJsonValue as parseCoreJsonValue,
+  stringifyCanonicalJson as stringifyCoreCanonicalJson,
+  type CanonicalJsonOptions,
+} from '@flyingrobots/geordi-core';
+import type { JsonValue } from '../types/json.js';
 
-export interface CanonicalJsonOptions {
-  space?: number | string;
-}
+export type { CanonicalJsonOptions, JsonPort } from '@flyingrobots/geordi-core';
 
-export interface JsonPort {
-  parse(source: string): JsonValue;
-  stringify(value: JsonValue, options?: CanonicalJsonOptions): string;
-  normalize(value: JsonValue): JsonValue;
-}
+export {
+  GeordiJsonNonFiniteNumberError,
+  GeordiJsonParseError,
+  GeordiJsonStringifyError,
+  GeordiJsonNonFiniteNumberError as JsonNonFiniteNumberError,
+  GeordiJsonParseError as JsonParseError,
+  GeordiJsonStringifyError as JsonSerializationError,
+  GeordiJsonStringifyError as JsonStringifyError,
+};
 
-export class JsonParseError extends Error {
-  constructor() {
-    super('Invalid JSON input');
-    this.name = new.target.name;
-  }
-}
-
-export class JsonNonFiniteNumberError extends Error {
-  public readonly path: string;
-
-  constructor(path: string) {
-    super('JSON numbers must be finite');
-    this.name = new.target.name;
-    this.path = path;
-  }
-}
-
-export class JsonSerializationError extends Error {
-  constructor() {
-    super('Canonical JSON serialization failed');
-    this.name = new.target.name;
-  }
-}
-
-export const canonicalJsonPort: JsonPort = {
+export const canonicalJsonPort = {
   parse(source: string): JsonValue {
-    let parsed: JsonValue;
-    try {
-      parsed = JSON.parse(source) as JsonValue;
-    } catch {
-      throw new JsonParseError();
-    }
-
-    return normalizeJsonValue(parsed);
+    return parseJsonValue(source);
   },
 
-  stringify(value: JsonValue, options: CanonicalJsonOptions = {}): string {
-    const normalized = normalizeJsonValue(value);
-    return JSON.stringify(normalized, null, options.space);
+  stringify(value: JsonValue, options?: CanonicalJsonOptions): string {
+    return stringifyCanonicalJson(value, options);
   },
 
   normalize(value: JsonValue): JsonValue {
@@ -57,39 +37,18 @@ export const canonicalJsonPort: JsonPort = {
 };
 
 export function parseJsonValue(source: string): JsonValue {
-  return canonicalJsonPort.parse(source);
+  return parseCoreJsonValue(source) as JsonValue;
 }
 
-export function stringifyCanonicalJson(value: JsonValue, options: CanonicalJsonOptions = {}): string {
-  return canonicalJsonPort.stringify(value, options);
+export function stringifyCanonicalJson(
+  value: JsonValue,
+  options: CanonicalJsonOptions = {},
+): string {
+  return stringifyCoreCanonicalJson(value, options);
 }
 
 export function normalizeJsonValue(value: JsonValue, path = '$'): JsonValue {
-  if (value === null || typeof value === 'string' || typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) {
-      throw new JsonNonFiniteNumberError(path);
-    }
-
-    return Object.is(value, -0) ? 0 : value;
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item, index) => normalizeJsonValue(item, `${path}[${index}]`));
-  }
-
-  const normalized: JsonObject = {};
-  const keys = Object.keys(value).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-
-  for (const key of keys) {
-    const item = value[key];
-    if (item !== undefined) {
-      normalized[key] = normalizeJsonValue(item, `${path}.${key}`);
-    }
-  }
-
-  return normalized;
+  return normalizeCoreJsonValue(value, path) as JsonValue;
 }
+
+export const coreJsonPort = coreCanonicalJsonPort;

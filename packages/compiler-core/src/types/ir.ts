@@ -5,4 +5,5 @@ export type {
   GeordiIrKeyframeV1,
   GeordiIrAnimationV1,
   GeordiIrV1,
+  GeordiNumericProfile,
 } from '@flyingrobots/geordi-core';
