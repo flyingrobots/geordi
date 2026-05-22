@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { compile } from '../src/compile/compile';
-import type { CompilerInput } from '../src/types';
+import { parseJsonValue, stringifyCanonicalJson } from '../src/ports/json';
+import type { CompilerInput, GeordiIrV1 } from '../src/types';
 
 function sha256(content: string): string {
   return createHash('sha256').update(content, 'utf8').digest('hex');
@@ -9,7 +10,7 @@ function sha256(content: string): string {
 
 const BASE_INPUT: CompilerInput = {
   format: 'canonical-ast-json',
-  source: JSON.stringify({
+  source: stringifyCanonicalJson({
     kind: 'Scene',
     astVersion: '1',
     scene: {
@@ -38,7 +39,7 @@ const BASE_INPUT: CompilerInput = {
   }),
   filename: 'fixtures/determinism.json',
   options: {
-    target: 'svjif-ir-v1',
+    target: 'geordi-ir-v1',
     emit: { irJson: true, tsTypes: false },
     strict: true,
     failOnWarnings: false,
@@ -47,6 +48,26 @@ const BASE_INPUT: CompilerInput = {
 };
 
 describe('determinism', () => {
+  it('compile metadata is independent of wall-clock time', async () => {
+    const dateNow = vi.spyOn(Date, 'now');
+    dateNow
+      .mockReturnValueOnce(1_000)
+      .mockReturnValueOnce(1_007)
+      .mockReturnValueOnce(2_000)
+      .mockReturnValueOnce(2_033);
+
+    try {
+      const result1 = await compile(BASE_INPUT);
+      const result2 = await compile(BASE_INPUT);
+
+      expect(result1.ok).toBe(true);
+      expect(result2.ok).toBe(true);
+      expect(result1.metadata).toEqual(result2.metadata);
+    } finally {
+      dateNow.mockRestore();
+    }
+  });
+
   it('compiling the same canonical JSON twice produces identical IR bytes', async () => {
     const result1 = await compile(BASE_INPUT);
     const result2 = await compile(BASE_INPUT);
@@ -54,8 +75,8 @@ describe('determinism', () => {
     expect(result1.ok).toBe(true);
     expect(result2.ok).toBe(true);
 
-    const ir1 = String(result1.artifacts['scene.svjif.json'].content);
-    const ir2 = String(result2.artifacts['scene.svjif.json'].content);
+    const ir1 = String(result1.artifacts['scene.geordi.json'].content);
+    const ir2 = String(result2.artifacts['scene.geordi.json'].content);
 
     expect(ir1).toBe(ir2);
   });
@@ -85,14 +106,14 @@ describe('determinism', () => {
     // Compact JSON
     const compact: CompilerInput = {
       ...BASE_INPUT,
-      source: JSON.stringify(canonical),
+      source: stringifyCanonicalJson(canonical),
       filename: 'compact.json',
     };
 
     // Pretty-printed JSON with extra whitespace
     const pretty: CompilerInput = {
       ...BASE_INPUT,
-      source: JSON.stringify(canonical, null, 4),
+      source: stringifyCanonicalJson(canonical, { space: 4 }),
       filename: 'pretty.json',
     };
 
@@ -102,8 +123,8 @@ describe('determinism', () => {
     expect(r1.ok).toBe(true);
     expect(r2.ok).toBe(true);
 
-    const ir1 = String(r1.artifacts['scene.svjif.json'].content);
-    const ir2 = String(r2.artifacts['scene.svjif.json'].content);
+    const ir1 = String(r1.artifacts['scene.geordi.json'].content);
+    const ir2 = String(r2.artifacts['scene.geordi.json'].content);
 
     expect(sha256(ir1)).toBe(sha256(ir2));
   });
@@ -111,7 +132,7 @@ describe('determinism', () => {
   it('node ordering in IR is deterministic (zIndex asc, then id asc)', async () => {
     const withReversedNodes: CompilerInput = {
       ...BASE_INPUT,
-      source: JSON.stringify({
+      source: stringifyCanonicalJson({
         kind: 'Scene',
         astVersion: '1',
         scene: {
@@ -151,8 +172,8 @@ describe('determinism', () => {
     const result = await compile(withReversedNodes);
     expect(result.ok).toBe(true);
 
-    const ir = JSON.parse(String(result.artifacts['scene.svjif.json'].content));
-    expect(ir.nodes.map((n: { id: string }) => n.id)).toEqual(['node:z1', 'node:z2', 'node:z3']);
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
+    expect(ir.nodes.map((n) => n.id)).toEqual(['node:z1', 'node:z2', 'node:z3']);
   });
 
   it('4 distinct rotated node orderings of the same scene → identical IR hashes', async () => {
@@ -166,7 +187,7 @@ describe('determinism', () => {
     function makeInput(nodes: typeof baseNodes): CompilerInput {
       return {
         ...BASE_INPUT,
-        source: JSON.stringify({
+        source: stringifyCanonicalJson({
           kind: 'Scene',
           astVersion: '1',
           scene: { id: 'scene:shuffle', width: 100, height: 100, units: 'px' },
@@ -188,7 +209,7 @@ describe('determinism', () => {
     for (const shuffle of shuffles) {
       const result = await compile(makeInput(shuffle));
       expect(result.ok).toBe(true);
-      const ir = String(result.artifacts['scene.svjif.json'].content);
+      const ir = String(result.artifacts['scene.geordi.json'].content);
       hashes.add(sha256(ir));
     }
 
@@ -198,7 +219,7 @@ describe('determinism', () => {
   it('parent-before-child ordering guaranteed in output', async () => {
     const input: CompilerInput = {
       ...BASE_INPUT,
-      source: JSON.stringify({
+      source: stringifyCanonicalJson({
         kind: 'Scene',
         astVersion: '1',
         scene: { id: 'scene:parent-child', width: 100, height: 100, units: 'px' },
@@ -214,15 +235,15 @@ describe('determinism', () => {
     const result = await compile(input);
     expect(result.ok).toBe(true);
 
-    const ir = JSON.parse(String(result.artifacts['scene.svjif.json'].content));
-    const ids: string[] = ir.nodes.map((n: { id: string }) => n.id);
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
+    const ids = ir.nodes.map((n) => n.id);
     expect(ids.indexOf('parent')).toBeLessThan(ids.indexOf('child'));
   });
 
   it('tie-breaking: two same-zIndex same-kind nodes sorted by id bytewise', async () => {
     const input: CompilerInput = {
       ...BASE_INPUT,
-      source: JSON.stringify({
+      source: stringifyCanonicalJson({
         kind: 'Scene',
         astVersion: '1',
         scene: { id: 'scene:tiebreak', width: 100, height: 100, units: 'px' },
@@ -238,7 +259,7 @@ describe('determinism', () => {
     const result = await compile(input);
     expect(result.ok).toBe(true);
 
-    const ir = JSON.parse(String(result.artifacts['scene.svjif.json'].content));
-    expect(ir.nodes.map((n: { id: string }) => n.id)).toEqual(['n:a', 'n:z']);
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
+    expect(ir.nodes.map((n) => n.id)).toEqual(['n:a', 'n:z']);
   });
 });

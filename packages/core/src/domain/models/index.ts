@@ -22,26 +22,26 @@ export type {
   TextStyle,
   NodeStyle,
   InvalidationTrigger,
-  SVJifNodeBase,
+  GeordiNodeBase,
   RectNode,
   TextNode,
   GroupNode,
   ImageNode,
-  SVJifNode,
-} from './SVJifNode.js';
+  GeordiNode,
+} from './GeordiNode.js';
 
-export { isRectNode, isTextNode, isGroupNode, isImageNode } from './SVJifNode.js';
+export { isRectNode, isTextNode, isGroupNode, isImageNode } from './GeordiNode.js';
 
 export type {
-  SVJifVersion,
+  GeordiVersion,
   Units,
   Origin,
-  SVJifMeta,
-  SVJifCanvas,
-  SVJifTokens,
+  GeordiMeta,
+  GeordiCanvas,
+  GeordiTokens,
   HitRegion,
-  SVJifInteraction,
-  SVJifScene,
-} from './SVJifScene.js';
+  GeordiInteraction,
+  GeordiScene,
+} from './GeordiScene.js';
 
-export { isSVJifScene } from './SVJifScene.js';
+export { isGeordiScene } from './GeordiScene.js';

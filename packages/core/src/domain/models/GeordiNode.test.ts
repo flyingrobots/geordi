@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 
-import type { SVJifNode } from './SVJifNode.js';
+import type { GeordiNode } from './GeordiNode.js';
 
-describe('SVJifNode', (): void => {
+describe('GeordiNode', (): void => {
   describe('Rect Node', (): void => {
     it('should create a valid rect node with required properties', (): void => {
-      const node: SVJifNode = {
+      const node: GeordiNode = {
         id: 'rect-1',
         type: 'rect',
         bounds: [0, 0, 100, 100],
@@ -34,7 +34,7 @@ describe('SVJifNode', (): void => {
 
   describe('Text Node', (): void => {
     it('should create a valid text node with font properties', (): void => {
-      const node: SVJifNode = {
+      const node: GeordiNode = {
         id: 'text-1',
         type: 'text',
         bounds: [10, 10, 200, 30],
@@ -60,7 +60,7 @@ describe('SVJifNode', (): void => {
 
   describe('Group Node', (): void => {
     it('should create a group with flex layout', (): void => {
-      const node: SVJifNode = {
+      const node: GeordiNode = {
         id: 'group-1',
         type: 'group',
         bounds: [0, 0, 800, 600],

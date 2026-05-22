@@ -1,48 +1,65 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// Replace "any" types with real Wesley types once you wire @wesley/core in package.json.
-import { compile, type CompilerInput, type ParseInputDeps } from '@svjif/compiler-core';
-import { graphqlToCanonicalAst } from '@svjif/schema-graphql';
+import { compile, type CompilerInput, type ParseInputDeps } from '@flyingrobots/geordi-compiler-core';
+import { graphqlToCanonicalAst } from '@flyingrobots/geordi-schema-graphql';
 // import { GeneratorPlugin } from '@wesley/core';
 
-type WesleyPlanArtifact = { path: string; reason: string };
-type WesleyPlan = {
+interface WesleyPlanArtifact {
+  path: string;
+  reason: string;
+}
+
+interface WesleyPlanMetadata {
+  inputFormat: 'graphql-sdl';
+  sdl: string;
+}
+
+interface WesleyPlan {
   artifacts: WesleyPlanArtifact[];
-  metadata?: Record<string, unknown>;
-};
+  metadata: WesleyPlanMetadata;
+}
 
 type WesleyGenerateResult = Record<string, string | Uint8Array>;
 
+interface WesleySchemaLike {
+  sdl?: string;
+}
+
 interface WesleyContextLike {
   logger?: {
-    info?: (msg: string, meta?: unknown) => void;
-    warn?: (msg: string, meta?: unknown) => void;
-    error?: (msg: string, meta?: unknown) => void;
+    info?: (msg: string) => void;
+    warn?: (msg: string) => void;
+    error?: (msg: string) => void;
   };
   // Add evidence/hooks fields when integrating with real Wesley runtime.
 }
 
-// export class SVJifGeneratorPlugin extends GeneratorPlugin {
-export class SVJifGeneratorPlugin {
-  get apiVersion(): string {
-    return '1';
-  }
+export class GeordiGenerationFailedError extends Error {
+  public readonly errorCount: number;
 
-  get name(): string {
-    return 'svjif';
+  constructor(errorCount: number) {
+    super(`Generation failed with ${errorCount} error(s)`);
+    this.name = new.target.name;
+    this.errorCount = errorCount;
   }
+}
+
+// export class GeordiGeneratorPlugin extends GeneratorPlugin {
+export class GeordiGeneratorPlugin {
+  readonly apiVersion = '1';
+
+  readonly name = 'geordi';
 
   /**
    * plan() should be cheap and non-compiling where possible.
    * It declares outputs and seeds metadata used by generate().
    */
-  async plan(schema: { sdl?: string }, context: WesleyContextLike): Promise<WesleyPlan> {
-    const sdl = schema?.sdl ?? '';
+  plan(schema: WesleySchemaLike, context: WesleyContextLike): WesleyPlan {
+    const sdl = schema.sdl ?? '';
 
-    context.logger?.info?.('[svjif] planning artifacts');
+    context.logger?.info?.('[geordi] planning artifacts');
 
     return {
       artifacts: [
-        { path: 'scene.svjif.json', reason: 'SVJif IR scene' },
+        { path: 'scene.geordi.json', reason: 'Geordi IR scene' },
         { path: 'types.ts', reason: 'TypeScript types for scene artifacts' },
       ],
       metadata: {
@@ -57,16 +74,16 @@ export class SVJifGeneratorPlugin {
    * Throw on compilation failure so Wesley marks generator failed.
    */
   async generate(plan: WesleyPlan, context: WesleyContextLike): Promise<WesleyGenerateResult> {
-    context.logger?.info?.('[svjif] generating artifacts');
+    context.logger?.info?.('[geordi] generating artifacts');
 
-    const sdl = String(plan.metadata?.sdl ?? '');
+    const sdl = plan.metadata.sdl;
 
     const input: CompilerInput = {
       format: 'graphql-sdl',
       source: sdl,
       filename: 'schema.graphql',
       options: {
-        target: 'svjif-ir-v1',
+        target: 'geordi-ir-v1',
         emit: {
           irJson: true,
           tsTypes: true,
@@ -85,15 +102,13 @@ export class SVJifGeneratorPlugin {
     for (const d of result.diagnostics) {
       const line = d.location ? `${d.location.file}:${d.location.line}:${d.location.column}` : 'unknown';
       const msg = `[${d.code}] ${d.message} (${line})`;
-      if (d.severity === 'error') context.logger?.error?.(msg, d.details);
-      else if (d.severity === 'warning') context.logger?.warn?.(msg, d.details);
-      else context.logger?.info?.(msg, d.details);
+      if (d.severity === 'error') context.logger?.error?.(msg);
+      else if (d.severity === 'warning') context.logger?.warn?.(msg);
+      else context.logger?.info?.(msg);
     }
 
     if (!result.ok) {
-      throw new Error(
-        `SVJif generation failed with ${result.diagnostics.filter((d) => d.severity === 'error').length} error(s)`,
-      );
+      throw new GeordiGenerationFailedError(result.diagnostics.filter((d) => d.severity === 'error').length);
     }
 
     // Convert ArtifactMap -> Wesley expected output

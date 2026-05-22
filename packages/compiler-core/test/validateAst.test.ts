@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validateCanonicalAst } from '../src/compile/validateAst';
-import { SVJifErrorCode } from '../src/errors';
+import { GeordiErrorCode } from '../src/errors';
 import type { CanonicalSceneAst } from '../src/types/ast';
 
 function makeScene(overrides: Partial<CanonicalSceneAst['scene']> = {}): CanonicalSceneAst['scene'] {
@@ -26,21 +26,22 @@ describe('validateCanonicalAst', () => {
   it('width=0 → E_SCENE_DIMENSIONS_INVALID', () => {
     const ast = makeAst({ scene: makeScene({ width: 0 }) });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_SCENE_DIMENSIONS_INVALID)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_SCENE_DIMENSIONS_INVALID)).toBe(true);
   });
 
   it('height=-1 → E_SCENE_DIMENSIONS_INVALID', () => {
     const ast = makeAst({ scene: makeScene({ height: -1 }) });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_SCENE_DIMENSIONS_INVALID)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_SCENE_DIMENSIONS_INVALID)).toBe(true);
   });
 
   it('unknown node kind → E_NODE_KIND_INVALID', () => {
+    const invalidKind = 'Widget' as CanonicalSceneAst['nodes'][number]['kind'];
     const ast = makeAst({
-      nodes: [{ id: 'n1', kind: 'Widget' as any, props: {} }],
+      nodes: [{ id: 'n1', kind: invalidKind, props: {} }],
     });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_NODE_KIND_INVALID)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_NODE_KIND_INVALID)).toBe(true);
   });
 
   it('duplicate node IDs → E_NODE_DUPLICATE_ID', () => {
@@ -51,7 +52,7 @@ describe('validateCanonicalAst', () => {
       ],
     });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_NODE_DUPLICATE_ID)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_NODE_DUPLICATE_ID)).toBe(true);
   });
 
   it('parentId pointing to nonexistent node → E_PARENT_NOT_FOUND', () => {
@@ -59,7 +60,7 @@ describe('validateCanonicalAst', () => {
       nodes: [{ id: 'n1', kind: 'Rect', props: { width: 10, height: 10 }, parentId: 'ghost' }],
     });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_PARENT_NOT_FOUND)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_PARENT_NOT_FOUND)).toBe(true);
   });
 
   it('binding with bad targetNodeId → E_BIND_TARGET_NOT_FOUND', () => {
@@ -70,7 +71,7 @@ describe('validateCanonicalAst', () => {
       ],
     });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_BIND_TARGET_NOT_FOUND)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_BIND_TARGET_NOT_FOUND)).toBe(true);
   });
 
   it('animation with bad targetNodeId → E_REF_TARGET_NOT_FOUND with refKind=animation', () => {
@@ -81,12 +82,12 @@ describe('validateCanonicalAst', () => {
       ],
     });
     const diags = validateCanonicalAst(ast);
-    const match = diags.find((d) => d.code === SVJifErrorCode.E_REF_TARGET_NOT_FOUND);
+    const match = diags.find((d) => d.code === GeordiErrorCode.E_REF_TARGET_NOT_FOUND);
     expect(match).toBeDefined();
-    expect((match?.details as any)?.refKind).toBe('animation');
-    expect((match?.details as any)?.animationId).toBe('a1');
+    expect(match?.details?.refKind).toBe('animation');
+    expect(match?.details?.animationId).toBe('a1');
     // Must NOT report as E_BIND_TARGET_NOT_FOUND
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_BIND_TARGET_NOT_FOUND)).toBe(false);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_BIND_TARGET_NOT_FOUND)).toBe(false);
   });
 
   it('cycle A→B→A → E_CYCLE_DETECTED', () => {
@@ -97,7 +98,7 @@ describe('validateCanonicalAst', () => {
       ],
     });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_CYCLE_DETECTED)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_CYCLE_DETECTED)).toBe(true);
   });
 
   it('cycle suppresses Tier 2 requiredProps', () => {
@@ -110,8 +111,8 @@ describe('validateCanonicalAst', () => {
       ],
     });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_CYCLE_DETECTED)).toBe(true);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_PROP_REQUIRED_MISSING)).toBe(false);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_CYCLE_DETECTED)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_PROP_REQUIRED_MISSING)).toBe(false);
   });
 
   it('Rect missing width → E_PROP_REQUIRED_MISSING', () => {
@@ -119,7 +120,7 @@ describe('validateCanonicalAst', () => {
       nodes: [{ id: 'n1', kind: 'Rect', props: { height: 10 } }],
     });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_PROP_REQUIRED_MISSING && (d.details as any)?.prop === 'width')).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_PROP_REQUIRED_MISSING && d.details?.prop === 'width')).toBe(true);
   });
 
   it('Text missing content → E_PROP_REQUIRED_MISSING', () => {
@@ -127,7 +128,7 @@ describe('validateCanonicalAst', () => {
       nodes: [{ id: 'n1', kind: 'Text', props: {} }],
     });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_PROP_REQUIRED_MISSING)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_PROP_REQUIRED_MISSING)).toBe(true);
   });
 
   it('Image missing src → E_PROP_REQUIRED_MISSING', () => {
@@ -135,7 +136,7 @@ describe('validateCanonicalAst', () => {
       nodes: [{ id: 'n1', kind: 'Image', props: {} }],
     });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_PROP_REQUIRED_MISSING)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_PROP_REQUIRED_MISSING)).toBe(true);
   });
 
   it('valid Rect with all required props → 0 errors', () => {
@@ -158,7 +159,7 @@ describe('validateCanonicalAst', () => {
     const ast = makeAst({ nodes });
     // Linear chain — no cycle
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_CYCLE_DETECTED)).toBe(false);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_CYCLE_DETECTED)).toBe(false);
   });
 
   it('undefined AST → empty diagnostics (no-op, not an error)', () => {
@@ -169,13 +170,13 @@ describe('validateCanonicalAst', () => {
   it('NaN scene width → E_SCENE_DIMENSIONS_INVALID', () => {
     const ast = makeAst({ scene: makeScene({ width: NaN }) });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_SCENE_DIMENSIONS_INVALID)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_SCENE_DIMENSIONS_INVALID)).toBe(true);
   });
 
   it('Infinity scene height → E_SCENE_DIMENSIONS_INVALID', () => {
     const ast = makeAst({ scene: makeScene({ height: Infinity }) });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_SCENE_DIMENSIONS_INVALID)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_SCENE_DIMENSIONS_INVALID)).toBe(true);
   });
 
   it('complete ring cycle (all nodes point in a circle) — E_CYCLE_DETECTED', () => {
@@ -185,11 +186,11 @@ describe('validateCanonicalAst', () => {
         id: `n${i}`,
         kind: 'Group',
         props: {},
-        parentId: i > 0 ? `n${i - 1}` : `n${9999}`, // n0 points back to n9999
+        parentId: i > 0 ? `n${i - 1}` : 'n9999', // n0 points back to n9999
       });
     }
     const ast = makeAst({ nodes });
     const diags = validateCanonicalAst(ast);
-    expect(diags.some((d) => d.code === SVJifErrorCode.E_CYCLE_DETECTED)).toBe(true);
+    expect(diags.some((d) => d.code === GeordiErrorCode.E_CYCLE_DETECTED)).toBe(true);
   });
 });

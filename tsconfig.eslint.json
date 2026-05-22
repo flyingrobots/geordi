@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "allowJs": false,
+    "declaration": false,
+    "declarationMap": false,
+    "ignoreDeprecations": "6.0",
+    "lib": ["ES2022", "DOM"],
+    "noEmit": true,
+    "outDir": "./dist-eslint",
+    "baseUrl": ".",
+    "paths": {
+      "@flyingrobots/geordi-compiler-core": ["packages/compiler-core/src/index.ts"],
+      "@flyingrobots/geordi-core": ["packages/core/src/index.ts"],
+      "@flyingrobots/geordi-runtime-webgl": ["packages/runtime-webgl/src/index.ts"],
+      "@flyingrobots/geordi-schema-graphql": ["packages/schema-graphql/src/index.ts"],
+      "@flyingrobots/geordi-wesley-generator": ["packages/wesley-generator/src/index.ts"]
+    },
+    "rootDir": ".",
+    "sourceMap": false
+  },
+  "include": [
+    "packages/**/*.ts"
+  ],
+  "exclude": [
+    "**/coverage/**",
+    "**/dist/**",
+    "**/node_modules/**"
+  ]
+}

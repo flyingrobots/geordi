@@ -1,11 +1,11 @@
-import type { CanonicalSceneAst } from './ast';
-import type { ArtifactMap } from './artifacts';
-import type { Diagnostic } from './diagnostics';
+import type { CanonicalSceneAst } from './ast.js';
+import type { ArtifactMap } from './artifacts.js';
+import type { Diagnostic } from './diagnostics.js';
 
 export type InputFormat = 'graphql-sdl' | 'canonical-ast-json';
 
 export interface CompileOptions {
-  target: 'svjif-ir-v1';
+  target: 'geordi-ir-v1';
   emit: {
     irJson?: boolean;
     tsTypes?: boolean;
@@ -28,7 +28,6 @@ export interface CompileMetadata {
   compilerVersion: string;
   irVersion?: string;
   inputFormat: InputFormat;
-  elapsedMs: number;
   hashAlgorithm?: 'sha256';
 }
 

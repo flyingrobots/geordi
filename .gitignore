@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+packages/*/pnpm-lock.yaml
 .pnp
 .pnp.js
 
@@ -37,7 +38,12 @@ lerna-debug.log*
 *.swo
 *~
 
+# Obsidian
+.obsidian/
+.trash/
+
 # Temporary files
 *.tmp
 .cache/
 .temp/
+.turbo/

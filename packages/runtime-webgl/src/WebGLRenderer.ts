@@ -1,19 +1,26 @@
 /**
- * SVJif WebGL Renderer
+ * Geordi WebGL Renderer
  *
  * POC implementation using Canvas 2D API.
  * WebGL shaders will be added in v0.2.
  */
 
 import type {
-  SVJifScene,
-  SVJifNode,
+  GeordiScene,
+  GeordiNode,
   RectNode,
   TextNode,
-} from '@svjif/core';
-import { isRectNode, isTextNode } from '@svjif/core';
+} from '@flyingrobots/geordi-core';
+import { isRectNode, isTextNode } from '@flyingrobots/geordi-core';
 
-export class SVJifWebGLRenderer {
+export class GeordiCanvasContextUnavailableError extends Error {
+  constructor() {
+    super('Canvas context unavailable');
+    this.name = new.target.name;
+  }
+}
+
+export class GeordiWebGLRenderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
 
@@ -28,16 +35,16 @@ export class SVJifWebGLRenderer {
     });
 
     if (!ctx) {
-      throw new Error('Failed to get 2D canvas context');
+      throw new GeordiCanvasContextUnavailableError();
     }
 
     this.ctx = ctx;
   }
 
   /**
-   * Render a complete SVJif scene to the canvas
+   * Render a complete Geordi scene to the canvas
    */
-  render(scene: SVJifScene): HTMLCanvasElement {
+  render(scene: GeordiScene): HTMLCanvasElement {
     // Clear canvas
     this.ctx.fillStyle = '#000000';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -53,7 +60,7 @@ export class SVJifWebGLRenderer {
   /**
    * Render a single node (dispatches to type-specific renderer)
    */
-  private renderNode(node: SVJifNode): void {
+  private renderNode(node: GeordiNode): void {
     if (isRectNode(node)) {
       this.renderRect(node);
     } else if (isTextNode(node)) {

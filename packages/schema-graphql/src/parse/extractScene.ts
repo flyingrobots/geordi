@@ -3,11 +3,12 @@ import {
   type ObjectTypeDefinitionNode,
   type DirectiveNode,
   type ArgumentNode,
+  Kind,
 } from 'graphql';
-import { ParseError, SVJifErrorCode } from '@svjif/compiler-core';
-import type { Diagnostic, SourceRef } from '@svjif/compiler-core';
-import { validateSvjifDirectiveVersion } from '../directives/v1';
-import { nodeSourceRef } from './sourceRef';
+import { ParseError, GeordiErrorCode } from '@flyingrobots/geordi-compiler-core';
+import type { Diagnostic, SourceRef } from '@flyingrobots/geordi-compiler-core';
+import { validateGeordiDirectiveVersion } from '../directives/v1.js';
+import { nodeSourceRef } from './sourceRef.js';
 
 export interface ExtractedScene {
   typeName: string;
@@ -30,19 +31,19 @@ function getArgValue(
 function getStringArg(directive: DirectiveNode, argName: string): string | undefined {
   const arg = getArgValue(directive, argName);
   if (!arg) return undefined;
-  if (arg.value.kind === 'StringValue') return arg.value.value;
+  if (arg.value.kind === Kind.STRING) return arg.value.value;
   return undefined;
 }
 
 function getIntArg(directive: DirectiveNode, argName: string): number | undefined {
   const arg = getArgValue(directive, argName);
   if (!arg) return undefined;
-  if (arg.value.kind === 'IntValue') return parseInt(arg.value.value, 10);
+  if (arg.value.kind === Kind.INT) return parseInt(arg.value.value, 10);
   return undefined;
 }
 
 /**
- * Extracts the single @svjif_scene type definition from a DocumentNode.
+ * Extracts the single @geordi_scene type definition from a DocumentNode.
  * Pushes diagnostics and returns undefined on error.
  */
 export function extractScene(
@@ -53,8 +54,8 @@ export function extractScene(
   const sceneCandidates: ObjectTypeDefinitionNode[] = [];
 
   for (const def of doc.definitions) {
-    if (def.kind !== 'ObjectTypeDefinition') continue;
-    const sceneDir = def.directives?.find((d) => d.name.value === 'svjif_scene');
+    if (def.kind !== Kind.OBJECT_TYPE_DEFINITION) continue;
+    const sceneDir = def.directives?.find((d) => d.name.value === 'geordi_scene');
     if (sceneDir) {
       sceneCandidates.push(def);
     }
@@ -63,8 +64,8 @@ export function extractScene(
   if (sceneCandidates.length === 0) {
     diagnostics.push(
       new ParseError(
-        SVJifErrorCode.E_SCENE_MISSING,
-        'No type with @svjif_scene directive found. Add @svjif_scene(v: "1", width: N, height: N) to exactly one type.',
+        GeordiErrorCode.E_SCENE_MISSING,
+        'No type with @geordi_scene directive found. Add @geordi_scene(v: "1", width: N, height: N) to exactly one type.',
         { location: { file: filename ?? '<inline>', line: 1, column: 1 } },
       ).toDiagnostic(),
     );
@@ -75,8 +76,8 @@ export function extractScene(
     const names = sceneCandidates.map((t) => t.name.value).join(', ');
     diagnostics.push(
       new ParseError(
-        SVJifErrorCode.E_SCENE_MULTIPLE,
-        `Multiple types with @svjif_scene found: ${names}. Only one scene type is allowed per SDL.`,
+        GeordiErrorCode.E_SCENE_MULTIPLE,
+        `Multiple types with @geordi_scene found: ${names}. Only one scene type is allowed per SDL.`,
         { location: nodeSourceRef(sceneCandidates[1], filename) },
       ).toDiagnostic(),
     );
@@ -84,28 +85,38 @@ export function extractScene(
   }
 
   const typeNode = sceneCandidates[0];
-  const sceneDir = typeNode.directives!.find((d) => d.name.value === 'svjif_scene')!;
   const sourceRef = nodeSourceRef(typeNode, filename);
-
-  // Validate version
-  const v = getStringArg(sceneDir, 'v');
-  if (!v) {
+  const sceneDir = typeNode.directives?.find((d) => d.name.value === 'geordi_scene');
+  if (!sceneDir) {
     diagnostics.push(
       new ParseError(
-        SVJifErrorCode.E_DIRECTIVE_ARG_MISSING,
-        `@svjif_scene requires argument v: "1"`,
+        GeordiErrorCode.E_SCENE_MISSING,
+        `Scene candidate "${typeNode.name.value}" is missing @geordi_scene directive`,
         { location: sourceRef },
       ).toDiagnostic(),
     );
     return undefined;
   }
 
-  const vCheck = validateSvjifDirectiveVersion(v);
+  // Validate version
+  const v = getStringArg(sceneDir, 'v');
+  if (!v) {
+    diagnostics.push(
+      new ParseError(
+        GeordiErrorCode.E_DIRECTIVE_ARG_MISSING,
+        `@geordi_scene requires argument v: "1"`,
+        { location: sourceRef },
+      ).toDiagnostic(),
+    );
+    return undefined;
+  }
+
+  const vCheck = validateGeordiDirectiveVersion(v);
   if (!vCheck.ok) {
     diagnostics.push(
       new ParseError(
-        SVJifErrorCode.E_VERSION_UNSUPPORTED,
-        `Unsupported @svjif_scene version: "${v}" (expected "${vCheck.expected}")`,
+        GeordiErrorCode.E_VERSION_UNSUPPORTED,
+        `Unsupported @geordi_scene version: "${v}" (expected "${vCheck.expected}")`,
         { location: sourceRef },
       ).toDiagnostic(),
     );
@@ -119,8 +130,8 @@ export function extractScene(
   if (width === undefined) {
     diagnostics.push(
       new ParseError(
-        SVJifErrorCode.E_DIRECTIVE_ARG_MISSING,
-        `@svjif_scene requires argument: width`,
+        GeordiErrorCode.E_DIRECTIVE_ARG_MISSING,
+        `@geordi_scene requires argument: width`,
         { location: sourceRef },
       ).toDiagnostic(),
     );
@@ -130,8 +141,8 @@ export function extractScene(
   if (height === undefined) {
     diagnostics.push(
       new ParseError(
-        SVJifErrorCode.E_DIRECTIVE_ARG_MISSING,
-        `@svjif_scene requires argument: height`,
+        GeordiErrorCode.E_DIRECTIVE_ARG_MISSING,
+        `@geordi_scene requires argument: height`,
         { location: sourceRef },
       ).toDiagnostic(),
     );

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { SVJifErrorCode } from '@svjif/compiler-core';
-import type { Diagnostic } from '@svjif/compiler-core';
+import { GeordiErrorCode } from '@flyingrobots/geordi-compiler-core';
+import type { Diagnostic } from '@flyingrobots/geordi-compiler-core';
 import { parseGraphql } from '../src/parse/parseGraphql';
 import { extractScene } from '../src/parse/extractScene';
 import { extractNodes } from '../src/parse/extractNodes';
@@ -14,12 +14,12 @@ function parseAndExtract(sdl: string, diag: Diagnostic[] = []) {
 }
 
 describe('extractNodes (table-driven)', () => {
-  it('extracts @svjif_node fields with geometry', () => {
+  it('extracts @geordi_node fields with geometry', () => {
     const diag: Diagnostic[] = [];
     const { nodes } = parseAndExtract(
       `
-      type Terminal @svjif_scene(v: "1", width: 800, height: 600) {
-        bg: String @svjif_node(kind: Rect, x: 0, y: 0, width: 800, height: 600)
+      type Terminal @geordi_scene(v: "1", width: 800, height: 600) {
+        bg: String @geordi_node(kind: Rect, x: 0, y: 0, width: 800, height: 600)
       }
     `,
       diag,
@@ -40,8 +40,8 @@ describe('extractNodes (table-driven)', () => {
     for (const kind of ['Rect', 'Text', 'Image', 'Group', 'Line', 'Ellipse', 'Path']) {
       const diag: Diagnostic[] = [];
       const { nodes } = parseAndExtract(
-        `type S @svjif_scene(v: "1", width: 100, height: 100) {
-          n: String @svjif_node(kind: ${kind}, x: 0, y: 0)
+        `type S @geordi_scene(v: "1", width: 100, height: 100) {
+          n: String @geordi_node(kind: ${kind}, x: 0, y: 0)
         }`,
         diag,
       );
@@ -50,27 +50,27 @@ describe('extractNodes (table-driven)', () => {
     }
   });
 
-  it('invalid kind → SVJIF_E_NODE_KIND_INVALID and field is skipped', () => {
+  it('invalid kind → GEORDI_E_NODE_KIND_INVALID and field is skipped', () => {
     const diag: Diagnostic[] = [];
     const { nodes } = parseAndExtract(
       `
-      type S @svjif_scene(v: "1", width: 100, height: 100) {
-        n: String @svjif_node(kind: InvalidKind, x: 0, y: 0)
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        n: String @geordi_node(kind: InvalidKind, x: 0, y: 0)
       }
     `,
       diag,
     );
 
     expect(nodes).toHaveLength(0);
-    expect(diag.map((d) => d.code)).toContain(SVJifErrorCode.E_NODE_KIND_INVALID);
+    expect(diag.map((d) => d.code)).toContain(GeordiErrorCode.E_NODE_KIND_INVALID);
   });
 
-  it('fields without @svjif_node are ignored', () => {
+  it('fields without @geordi_node are ignored', () => {
     const diag: Diagnostic[] = [];
     const { nodes } = parseAndExtract(
       `
-      type S @svjif_scene(v: "1", width: 100, height: 100) {
-        withNode: String @svjif_node(kind: Rect, x: 0, y: 0)
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        withNode: String @geordi_node(kind: Rect, x: 0, y: 0)
         withoutNode: String
       }
     `,
@@ -81,43 +81,43 @@ describe('extractNodes (table-driven)', () => {
     expect(nodes[0].fieldName).toBe('withNode');
   });
 
-  it('non-svjif_ directives are silently ignored (no warning)', () => {
+  it('non-geordi_ directives are silently ignored (no warning)', () => {
     const diag: Diagnostic[] = [];
     parseAndExtract(
       `
-      type S @svjif_scene(v: "1", width: 100, height: 100) {
-        n: String @svjif_node(kind: Rect, x: 0, y: 0) @deprecated(reason: "old")
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        n: String @geordi_node(kind: Rect, x: 0, y: 0) @deprecated(reason: "old")
       }
     `,
       diag,
     );
 
-    // @deprecated is not svjif_, so no warning
+    // @deprecated is not geordi_, so no warning
     const warnings = diag.filter((d) => d.severity === 'warning');
     expect(warnings).toHaveLength(0);
   });
 
-  it('unknown svjif_* directive emits SVJIF_W_UNUSED_FIELD warning', () => {
+  it('unknown geordi_* directive emits GEORDI_W_UNUSED_FIELD warning', () => {
     const diag: Diagnostic[] = [];
     parseAndExtract(
       `
-      type S @svjif_scene(v: "1", width: 100, height: 100) {
-        n: String @svjif_node(kind: Rect, x: 0, y: 0) @svjif_unknown_future_directive
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        n: String @geordi_node(kind: Rect, x: 0, y: 0) @geordi_unknown_future_directive
       }
     `,
       diag,
     );
 
     const warnings = diag.filter((d) => d.severity === 'warning');
-    expect(warnings.map((w) => w.code)).toContain(SVJifErrorCode.W_UNUSED_FIELD);
+    expect(warnings.map((w) => w.code)).toContain(GeordiErrorCode.W_UNUSED_FIELD);
   });
 
   it('parses props JSON arg into object', () => {
     const diag: Diagnostic[] = [];
     const { nodes } = parseAndExtract(
       `
-      type S @svjif_scene(v: "1", width: 100, height: 100) {
-        n: String @svjif_node(kind: Rect, x: 0, y: 0, props: "{\\"fill\\":\\"#ff0000\\"}")
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        n: String @geordi_node(kind: Rect, x: 0, y: 0, props: "{\\"fill\\":\\"#ff0000\\"}")
       }
     `,
       diag,
@@ -131,10 +131,10 @@ describe('extractNodes (table-driven)', () => {
     const diag: Diagnostic[] = [];
     const { nodes } = parseAndExtract(
       `
-      type S @svjif_scene(v: "1", width: 100, height: 100) {
-        first: String @svjif_node(kind: Rect, x: 0, y: 0)
-        second: String @svjif_node(kind: Text, x: 10, y: 10)
-        third: String @svjif_node(kind: Rect, x: 20, y: 20)
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        first: String @geordi_node(kind: Rect, x: 0, y: 0)
+        second: String @geordi_node(kind: Text, x: 10, y: 10)
+        third: String @geordi_node(kind: Rect, x: 20, y: 20)
       }
     `,
       diag,
@@ -148,8 +148,8 @@ describe('extractNodes (table-driven)', () => {
     const diag: Diagnostic[] = [];
     const { nodes } = parseAndExtract(
       `
-      type S @svjif_scene(v: "1", width: 100, height: 100) {
-        n: String @svjif_node(kind: Rect, x: 0, y: 0, zIndex: 5, visible: false, parent: "group1", id: "custom-id")
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        n: String @geordi_node(kind: Rect, x: 0, y: 0, zIndex: 5, visible: false, parent: "group1", id: "custom-id")
       }
     `,
       diag,
@@ -165,8 +165,8 @@ describe('extractNodes (table-driven)', () => {
     const diag: Diagnostic[] = [];
     const { nodes } = parseAndExtract(
       `
-      type S @svjif_scene(v: "1", width: 100, height: 100) {
-        n: String @svjif_node(kind: Rect)
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        n: String @geordi_node(kind: Rect)
       }
     `,
       diag,

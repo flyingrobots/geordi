@@ -1,14 +1,14 @@
-import { deterministicId } from '@svjif/compiler-core';
-import type { CanonicalSceneAst, Node, NodeKind } from '@svjif/compiler-core';
-import type { ExtractedScene } from '../parse/extractScene';
-import type { ExtractedNode } from '../parse/extractNodes';
+import { deterministicId } from '@flyingrobots/geordi-compiler-core';
+import type { CanonicalSceneAst, JsonObject, Node } from '@flyingrobots/geordi-compiler-core';
+import type { ExtractedScene } from '../parse/extractScene.js';
+import type { ExtractedNode } from '../parse/extractNodes.js';
 
 /**
  * Maps extracted scene + nodes into a CanonicalSceneAst.
  *
  * ID assignment:
  * - Scene ID: deterministicId('scene', sceneName)
- * - Node ID: explicit @svjif_node(id:...) if provided, else deterministicId('node', sceneName, fieldName)
+ * - Node ID: explicit @geordi_node(id:...) if provided, else deterministicId('node', sceneName, fieldName)
  *
  * Defaults:
  * - visible defaults to true if not specified
@@ -27,23 +27,23 @@ export function toCanonicalAst(
     const id = n.id ?? deterministicId('node', scene.typeName, n.fieldName);
 
     // Build merged props: start with extracted JSON props, merge in geometry
-    const baseProps: Record<string, unknown> = {
+    const baseProps: JsonObject = {
       ...(n.props ?? {}),
       x: n.x,
       y: n.y,
     };
-    if (n.width !== undefined) baseProps['width'] = n.width;
-    if (n.height !== undefined) baseProps['height'] = n.height;
+    if (n.width !== undefined) baseProps.width = n.width;
+    if (n.height !== undefined) baseProps.height = n.height;
 
     return {
       id,
-      kind: n.kind as NodeKind,
+      kind: n.kind,
       parentId: n.parent,
       zIndex: n.zIndex ?? n.fieldOrder + 1,
       visible: n.visible ?? true,
-      props: baseProps as any,
+      props: baseProps,
       sourceRef: n.sourceRef,
-    } as Node;
+    } satisfies Node;
   });
 
   return {

@@ -7,6 +7,13 @@ export interface IdentifierOptions {
   emptyFallback: string;
 }
 
+export class IdentifierMapDuplicateSourceError extends Error {
+  constructor() {
+    super('Duplicate source strings are not supported');
+    this.name = new.target.name;
+  }
+}
+
 export const DEFAULT_OPTS: IdentifierOptions = {
   invalidStartPrefix: 'N',
   reservedPrefix: 'Kw',
@@ -100,7 +107,7 @@ export function buildIdentifierMap(
   // Precondition: sources must be unique. The output Map is keyed by source string,
   // so duplicate sources cannot be represented — the last one would silently overwrite.
   if (new Set(sources).size !== sources.length) {
-    throw new Error('buildIdentifierMap: duplicate source strings are not supported');
+    throw new IdentifierMapDuplicateSourceError();
   }
 
   // Sort indices bytewise by source value for deterministic collision resolution.

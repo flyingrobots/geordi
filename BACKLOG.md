@@ -1,14 +1,208 @@
-# SVJif Backlog
+# Geordi Backlog
 
-Items that are scoped, not urgent, and not yet scheduled for a sprint.
-Each item links to its corresponding GitHub issue for discussion and tracking.
+Items are grouped by priority and readiness.
+
+- **P0 Stabilization**: release-blocking or repo-trust work needed before v0.1 can be considered shippable.
+- **Other sections**: scoped follow-up work that is not yet scheduled for a sprint.
+
+When a P0 item groups an existing lower-priority note, the lower entry remains as historical detail
+until the work is resolved.
+
+---
+
+## P0 Stabilization
+
+These items come from the repo audit and the v0 design pass. See
+[`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md) for the product and runtime-contract rationale.
+
+### Node ESM package exports must be importable after build
+**Priority**: P0
+**Source**: Repo audit, v0 design laws
+
+`pnpm build` succeeds, but public `dist/` entrypoints for `@flyingrobots/geordi-compiler-core`,
+`@flyingrobots/geordi-schema-graphql`, and `@flyingrobots/geordi-wesley-generator` are not
+importable under Node ESM because emitted JavaScript contains extensionless or directory imports.
+Package export maps are only meaningful if consumers can import the built package.
+
+Acceptance criteria:
+- All relative runtime imports emitted to `dist/` are Node ESM compatible.
+- A post-build smoke test imports every public package entrypoint.
+- CI runs the smoke test.
+
+---
+
+### Restore ESLint 10 as a real CI gate
+**Priority**: P0
+**Source**: Repo audit, CI workflow
+
+CI runs `pnpm lint`, but ESLint 10 currently fails before linting source because no flat
+`eslint.config.*` exists. Add a root flat config, or make an intentional version/config decision
+that restores `pnpm lint` as a working CI gate.
+
+Acceptance criteria:
+- `pnpm lint` passes locally.
+- The CI lint step runs source linting rather than failing on missing config.
+- The existing no-new-`Set`/`Map`-in-loops idea remains available as a follow-up rule once lint works.
+
+---
+
+### Make `geordi-ir/1` the runtime contract
+**Priority**: P0
+**Source**: v0 design laws, repo audit
+
+`@flyingrobots/geordi-compiler-core` emits `geordi-ir/1`, while `@flyingrobots/geordi-core` and
+`@flyingrobots/geordi-runtime-webgl` still model/render an older `version`/`canvas`/`type`/`bounds`
+scene shape. Per the v0 design decision, `geordi-ir/1` should be the public renderer contract.
+Any draw-ready lowering should be an internal runtime cache or preparation step, not a second
+public scene format.
+
+Acceptance criteria:
+- `@flyingrobots/geordi-core` owns versioned `geordi-ir/1` types and validation.
+- `@flyingrobots/geordi-runtime-webgl` accepts validated `geordi-ir/1` directly, or exposes only an
+  internal `prepare(ir)` path before rendering.
+- At least one integration test proves compiler output can be accepted by the runtime contract.
+- Legacy scene-model types are migrated, deprecated, or explicitly renamed before v0.1 release.
+
+---
+
+### Implement or remove canonicalization
+**Priority**: P0
+**Source**: Repo audit, architecture docs
+
+The architecture docs and compiler options advertise canonicalization, but `compile()` does not
+execute a normalization phase. `canonicalize: true` must either have observable, tested behavior or
+be removed from the public API and docs.
+
+Acceptance criteria:
+- `normalizeCanonicalAst()` exists and is called when canonicalization is enabled, or the option is
+  removed.
+- Tests prove the selected behavior.
+- `docs/ARCHITECTURE.md` matches the implementation.
+
+---
+
+### Define the graphics numeric profile
+**Priority**: P0
+**Source**: v0 design laws, graphics determinism discussion
+
+Canonical JSON can make bytes deterministic, but it cannot by itself define graphics fidelity for
+floats, vectors, matrix math, transforms, and shader-adjacent values. The IR needs an explicit
+numeric profile before Geordi can claim pixel-identical cross-runtime rendering.
+
+Acceptance criteria:
+- The JSON port is the only production JSON ingress/egress path and rejects non-finite numbers.
+- `-0` canonicalizes to `0`; no generic JSON layer silently rounds or rescales author values.
+- Layout-critical geometry fields either use a named fixed-point scalar, such as `px * scale`, or a
+  documented deterministic float profile.
+- Matrix/vector/transform values have an explicit representation and operation-order rule.
+- `geordi-ir/1` declares the numeric profile required by the scene, and runtimes fail loudly when
+  they do not support it.
+
+---
+
+### Validate GraphQL directive argument types at runtime
+**Priority**: P0
+**Source**: Repo audit, existing Post-Sprint 3 feedback
+
+`schema-graphql/extractNodes.ts` casts directive values with `as number`, `as boolean`, and
+`as string` after parsing SDL. Since this path does not perform GraphQL schema validation, wrong
+argument types can corrupt geometry and props. Replace unsafe casts with typed extractors that emit
+source-located diagnostics.
+
+Acceptance criteria:
+- Numeric, boolean, string, enum, and JSON-object directive arguments are validated at runtime.
+- Wrong directive argument types emit `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE` with source location and
+  useful details.
+- Invalid geometry/id/parent/visibility args cause `compile().ok === false`.
+- Existing lower backlog item `schema-graphql/extractNodes - runtime type validation for directive
+  argument values` is resolved or updated.
+
+---
+
+### Lower or explicitly reject every known Geordi directive
+**Priority**: P0
+**Source**: Repo audit, fail-loud principle
+
+`geordi_bind` and `geordi_style` are declared and treated as known directives, but they are not
+lowered into canonical AST or IR. Known directives must not be silently dropped.
+
+Acceptance criteria:
+- `geordi_bind` lowers into `bindings[]`, or returns an explicit unsupported-feature diagnostic.
+- `geordi_style` lowers into node style data, or returns an explicit unsupported-feature diagnostic.
+- Unknown `geordi_*` directives still produce the intended warning behavior.
+- No known Geordi directive is ignored without a diagnostic.
+
+---
+
+### Preserve typed diagnostics across adapter/compiler boundaries
+**Priority**: P0
+**Source**: Repo audit, existing Post-Sprint 3 feedback
+
+`parseGraphql()` can produce typed parse errors with source locations, but adapter exceptions can be
+wrapped as `GEORDI_E_INTERNAL_INVARIANT` by `parseInputToCanonicalAst()`. Add typed diagnostic
+transport so user-facing parse and directive errors survive the `schema-graphql` to `compiler-core`
+boundary.
+
+Acceptance criteria:
+- Add a `DiagnosticsError` or equivalent typed diagnostic transport.
+- Invalid SDL through `compile()` reports `GEORDI_E_INPUT_INVALID_SDL`, not an internal invariant.
+- Missing scene through `compile()` reports `GEORDI_E_SCENE_MISSING`, without a duplicate internal
+  error.
+- Source locations survive through `compile()`.
+- Existing lower backlog items for `parseInput.ts` SDL locations and `DiagnosticsError` are resolved
+  or updated.
+
+---
+
+### Replace placeholder tests with package contract tests
+**Priority**: P0
+**Source**: Repo audit
+
+`@flyingrobots/geordi-runtime-webgl` and `@flyingrobots/geordi-wesley-generator` currently pass
+placeholder tests. Replace them with tests that exercise public package behavior and prevent broken
+entrypoints or integration paths from passing unnoticed.
+
+Acceptance criteria:
+- No package test suite consists only of placeholder assertions.
+- `wesley-generator` tests plan/generate on minimal SDL and asserts emitted artifacts.
+- `runtime-webgl` tests the selected IR input contract, with a canvas/context mock if needed.
+- A post-build package import smoke test is included in CI.
+
+---
+
+### Remove tracked generated logs and stale nested lockfiles
+**Priority**: P0
+**Source**: Repo audit, repo hygiene
+
+Tracked `packages/*/.turbo/*.log` files are rewritten by normal verification commands, and
+package-level `pnpm-lock.yaml` files under `packages/core` and `packages/runtime-webgl` are stale
+relative to the root workspace lockfile. Normal verification should not dirty the working tree.
+
+Acceptance criteria:
+- Tracked Turbo logs are removed from git while `.turbo/` remains ignored.
+- Stale package-level lockfiles are removed unless a nested-install workflow is explicitly documented.
+- `pnpm install --frozen-lockfile`, `pnpm build`, and `pnpm test` do not create tracked churn.
+
+---
+
+### Align Turbo task outputs with command behavior
+**Priority**: P0
+**Source**: Repo audit, Turbo warnings
+
+`turbo.json` declares `coverage/**` as output for plain `test`, but package `test` scripts run
+`vitest run` without coverage. Keep coverage outputs on `test:coverage`; do not declare coverage
+outputs for plain tests unless plain tests actually emit them.
+
+Acceptance criteria:
+- `pnpm test` no longer emits Turbo "no output files found" warnings.
+- `pnpm test:coverage` still declares and caches coverage output if coverage remains supported.
 
 ---
 
 ## Compiler Core
 
 ### `buildIdentifierMap` — add `deduplicate` option
-**Issue**: [#2](https://github.com/flyingrobots/svjif/issues/2)
+**Issue**: [#2](https://github.com/flyingrobots/geordi/issues/2)
 
 `buildIdentifierMap(sources, opts)` currently accepts duplicate source strings but the
 `Map<string, string>` return type can only hold one value per key, making the behaviour on
@@ -18,7 +212,7 @@ documents and tests the per-occurrence uniqueness guarantee explicitly.
 ---
 
 ### `emitReceiptArtifact` — move to artifact builder method
-**Issue**: [#3](https://github.com/flyingrobots/svjif/issues/3)
+**Issue**: [#3](https://github.com/flyingrobots/geordi/issues/3)
 
 `emitReceiptArtifact(input, irContent, ruleIds)` receives the IR content as a raw string,
 creating an implicit coupling between caller and callee on string type correctness. Consider
@@ -28,19 +222,19 @@ as an untyped string — the builder holds the IR artifact and computes the rece
 ---
 
 ### `validateAst` — property-based fuzz tests (fast-check)
-**Issue**: [#4](https://github.com/flyingrobots/svjif/issues/4)
+**Issue**: [#4](https://github.com/flyingrobots/geordi/issues/4)
 
 Add fuzz coverage via `fast-check` for:
 - `detectCycles`: arbitrary DAGs with random parent assignments including cycles, duplicate IDs, and disconnected subgraphs
 - `sceneDimensions`: numeric edge cases (`NaN`, `Infinity`, `-0`, `Number.MIN_VALUE`)
 - `requiredProps`: randomly missing props across all NodeKinds
 
-Target package: `@svjif/compiler-core`. Add `fast-check` as a dev dependency.
+Target package: `@flyingrobots/geordi-compiler-core`. Add `fast-check` as a dev dependency.
 
 ---
 
 ### `emitTypes` test — CI-gated TSC typecheck
-**Issue**: [#5](https://github.com/flyingrobots/svjif/issues/5)
+**Issue**: [#5](https://github.com/flyingrobots/geordi/issues/5)
 
 `emitTypes.test.ts` shells out to `node_modules/.bin/tsc` with a hardcoded path that breaks
 under PNP or hoisted workspace setups. Fix by resolving via `require.resolve('typescript/bin/tsc')`
@@ -49,7 +243,7 @@ and gate the slow typecheck behind `process.env.CI || process.env.TSC_GATE` so l
 ---
 
 ### `emitTypes` test — Group-kind zero-props interface
-**Issue**: [#6](https://github.com/flyingrobots/svjif/issues/6)
+**Issue**: [#6](https://github.com/flyingrobots/geordi/issues/6)
 
 No test asserts that a scene containing only `Group` nodes emits a valid `GroupNode` interface
 with an empty `props` block. This is an edge case in `TypeEmitter.emitKindInterface` where
@@ -60,7 +254,7 @@ with an empty `props` block. This is an edge case in `TypeEmitter.emitKindInterf
 ## Schema GraphQL
 
 ### `parseInput.ts` — surface `E_INPUT_INVALID_SDL` source location to diagnostics
-**Issue**: [#7](https://github.com/flyingrobots/svjif/issues/7)
+**Issue**: [#7](https://github.com/flyingrobots/geordi/issues/7)
 
 When `parseGraphql` throws a `ParseError` with `E_INPUT_INVALID_SDL`, `parseInput.ts` currently
 catches it and converts to a diagnostic but loses the GraphQL source location (`line`, `column`)
@@ -85,7 +279,7 @@ every field. A custom ESLint rule (or `no-restricted-syntax` selector) that flag
 
 When `adapter.ts` throws on `extractScene` failure, the thrown `Error` said "see diagnostics"
 but the diagnostics were in a local array invisible to the caller. Introduce a `DiagnosticsError`
-class in `@svjif/compiler-core` that carries a `diagnostics: Diagnostic[]` field. Any throw site
+class in `@flyingrobots/geordi-compiler-core` that carries a `diagnostics: Diagnostic[]` field. Any throw site
 that has collected diagnostics should use this class so callers can always inspect the reason.
 
 ---
@@ -124,7 +318,7 @@ still produce the correct `__N`-suffixed output.
 ### `compiler-core` — extract a `constants.ts` barrel for all artifact path strings
 **Source**: PR #1 review retrospective
 
-`'scene.svjif.json'`, `'scene.svjif.json.receipt'`, and `'svjif-ir/1'` were used as string
+`'scene.geordi.json'`, `'scene.geordi.json.receipt'`, and `'geordi-ir/1'` were used as string
 literals in multiple files before being extracted as named constants in round 3. A single
 `src/constants.ts` barrel (or equivalent) for all artifact paths, IR version strings, and other
 shared literals would prevent this class of issue from recurring across future sprints.
@@ -168,7 +362,7 @@ the return type to `string[]` and update all callers and tests accordingly.
 
 `getDirectiveArgValue` returns `string | number | boolean | undefined`, but the call sites at
 lines 102–109 in `extractNodes.ts` cast results with `as number | undefined`, `as boolean | undefined`,
-etc., without any runtime type assertion. If a user writes `@svjif_node(x: "oops")`, the string
+etc., without any runtime type assertion. If a user writes `@geordi_node(x: "oops")`, the string
 `"oops"` silently passes through as a `number` at the type level, corrupting geometry downstream.
 
 Fix: replace the unsafe `as` casts with runtime type guards that emit `E_DIRECTIVE_ARG_INVALID_TYPE`

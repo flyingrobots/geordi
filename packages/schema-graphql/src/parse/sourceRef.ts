@@ -1,5 +1,5 @@
 import { getLocation, type Source } from 'graphql';
-import type { SourceRef } from '@svjif/compiler-core';
+import type { SourceRef } from '@flyingrobots/geordi-compiler-core';
 
 /**
  * Returns a SourceRef from a graphql-js AST node's loc, or a fallback.
@@ -12,7 +12,7 @@ export function nodeSourceRef(
   if (node.loc) {
     const { line, column } = getLocation(node.loc.source, node.loc.start);
     return {
-      file: filename ?? node.loc.source.name ?? '<inline>',
+      file: filename ?? node.loc.source.name,
       line,
       column,
     };
