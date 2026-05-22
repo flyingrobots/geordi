@@ -433,7 +433,7 @@ Add a root flat ESLint config or downgrade intentionally. CI currently runs lint
 
 Move versioned IR types and validation into `@flyingrobots/geordi-core`. Update `runtime-webgl` to accept validated IR directly or expose only an internal preparation step.
 
-**Status**: Open.
+**Status**: Completed. `geordi_bind` and `geordi_style` now emit source-located `GEORDI_E_FEATURE_NOT_IMPLEMENTED` diagnostics until they are deliberately lowered.
 
 ### P0: Implement or remove canonicalization
 

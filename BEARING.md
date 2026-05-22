@@ -27,13 +27,12 @@ Completed:
 - Typed adapter diagnostics survive through `compile()` without internal-invariant wrapping.
 - GraphQL `@geordi_scene` and `@geordi_node` directive arguments are validated at runtime before
   values enter the canonical AST.
+- Known but unlowered GraphQL directives fail loudly instead of disappearing from the pipeline.
 
 Still true:
 
 - `geordi-ir/1` is emitted by `compiler-core`, but `core` and `runtime-webgl` still expose an
   older scene shape.
-- Known directives such as `geordi_bind` and `geordi_style` are declared but not lowered or
-  hard-rejected.
 - The graphics numeric profile is only partially defined. JSON is deterministic, but geometry,
   vectors, matrices, transforms, and runtime capability declaration are not fully specified.
 
@@ -43,15 +42,15 @@ Still true:
    - GitHub Actions Dependabot PR #10 was mergeable and has been merged.
    - Conflicting npm Dependabot PR #8 should be recreated by Dependabot before any manual lockfile
      work.
-2. Next focused stabilization target: lower or explicitly reject every known Geordi directive.
-3. Do not start runtime migration before known directive semantics are fail-loud.
+2. Next focused stabilization target: expand package contract tests from entrypoint smoke to
+   behavior coverage.
+3. Do not start runtime migration before package contract tests cover behavior, not only imports.
 
 ## Recommended P0 Order
 
-1. Lower or explicitly reject every known Geordi directive.
-2. Expand package contract tests from entrypoint smoke to behavior coverage.
-3. Move `geordi-ir/1` into `@flyingrobots/geordi-core` as the runtime contract.
-4. Define and enforce the graphics numeric profile.
+1. Expand package contract tests from entrypoint smoke to behavior coverage.
+2. Move `geordi-ir/1` into `@flyingrobots/geordi-core` as the runtime contract.
+3. Define and enforce the graphics numeric profile.
 
 ## Dependency Work
 

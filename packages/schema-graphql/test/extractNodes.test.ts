@@ -112,6 +112,29 @@ describe('extractNodes (table-driven)', () => {
     expect(warnings.map((w) => w.code)).toContain(GeordiErrorCode.W_UNUSED_FIELD);
   });
 
+  it('known unlowered directives emit GEORDI_E_FEATURE_NOT_IMPLEMENTED errors', () => {
+    const diag: Diagnostic[] = [];
+    parseAndExtract(
+      `
+      type S @geordi_scene(v: "1", width: 100, height: 100) {
+        n: String
+          @geordi_node(kind: Rect, x: 0, y: 0)
+          @geordi_bind(targetProp: "props.fill", expr: "theme.primary")
+          @geordi_style(shadow: "{\\"blur\\":4}")
+      }
+    `,
+      diag,
+    );
+
+    const errors = diag.filter((d) => d.severity === 'error');
+    expect(errors.map((d) => d.code)).toEqual([
+      GeordiErrorCode.E_FEATURE_NOT_IMPLEMENTED,
+      GeordiErrorCode.E_FEATURE_NOT_IMPLEMENTED,
+    ]);
+    expect(errors.map((d) => d.details?.directive)).toEqual(['geordi_bind', 'geordi_style']);
+    expect(diag.map((d) => d.code)).not.toContain(GeordiErrorCode.W_UNUSED_FIELD);
+  });
+
   it('parses props JSON arg into object', () => {
     const diag: Diagnostic[] = [];
     const { nodes } = parseAndExtract(

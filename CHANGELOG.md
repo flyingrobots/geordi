@@ -43,6 +43,7 @@
 - `compiler-core/errors`: add `DiagnosticsError` to carry collected diagnostics across adapter boundaries without losing error codes or locations
 - `schema-graphql/adapter`: missing-scene extraction now reports `GEORDI_E_SCENE_MISSING` through `compile()` without duplicate internal-invariant diagnostics
 - `schema-graphql/directives`: replace unsafe directive argument casts with typed runtime readers for `@geordi_scene` and `@geordi_node`; wrong literal types, non-finite numeric literals, and invalid `props` JSON object payloads emit `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE`
+- `schema-graphql/directives`: `geordi_bind` and `geordi_style` now fail loudly with `GEORDI_E_FEATURE_NOT_IMPLEMENTED` instead of being silently ignored
 - `compiler-core/compile`: `emit.binaryPack: true` now fails before any artifacts are emitted, matching the hard-failure behavior of other unsupported artifact targets
 - `compiler-core/compile`: removed wall-clock `elapsedMs` from `CompileMetadata`; compile results now remain deterministic for identical inputs
 - `emitIr`: O(n²) `shift()`+re-sort queue replaced with `qi`-pointer dequeue and batch merge of newly-ready children — O(n log n) for tree-structured graphs
