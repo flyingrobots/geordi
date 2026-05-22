@@ -39,6 +39,7 @@
 
 ### Bug Fixes
 
+- `compiler-core/compile`: `emit.binaryPack: true` now fails before any artifacts are emitted, matching the hard-failure behavior of other unsupported artifact targets
 - `compiler-core/compile`: removed wall-clock `elapsedMs` from `CompileMetadata`; compile results now remain deterministic for identical inputs
 - `emitIr`: O(n²) `shift()`+re-sort queue replaced with `qi`-pointer dequeue and batch merge of newly-ready children — O(n log n) for tree-structured graphs
 - `schema-graphql/adapter`: diagnostic message now embedded in thrown `Error` when `extractScene` fails; "see diagnostics" was a lie when caller omitted the `diagnostics` array

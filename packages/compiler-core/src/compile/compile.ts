@@ -66,15 +66,6 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
       });
       return finalize(false, canonicalAst, artifacts, diagnostics, input.format);
     }
-    if (options.emit.irJson && canonicalAst) {
-      const irArtifact = emitGeordiIrArtifact(canonicalAst);
-      artifacts[IR_ARTIFACT_KEY] = irArtifact;
-
-      artifacts[IR_RECEIPT_KEY] = emitReceiptArtifact(input, irArtifact.content as string, VALIDATION_RULE_IDS);
-    }
-    if (options.emit.tsTypes && canonicalAst) {
-      artifacts['types.ts'] = emitTypesArtifact(canonicalAst);
-    }
     if (options.emit.binaryPack) {
       diagnostics.push({
         code: GeordiErrorCode.E_FEATURE_NOT_IMPLEMENTED,
@@ -83,6 +74,15 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
         details: { feature: 'binaryPack' },
       });
       return finalize(false, canonicalAst, artifacts, diagnostics, input.format);
+    }
+    if (options.emit.irJson && canonicalAst) {
+      const irArtifact = emitGeordiIrArtifact(canonicalAst);
+      artifacts[IR_ARTIFACT_KEY] = irArtifact;
+
+      artifacts[IR_RECEIPT_KEY] = emitReceiptArtifact(input, irArtifact.content as string, VALIDATION_RULE_IDS);
+    }
+    if (options.emit.tsTypes && canonicalAst) {
+      artifacts['types.ts'] = emitTypesArtifact(canonicalAst);
     }
 
     if (options.failOnWarnings && diagnostics.some((d) => d.severity === 'warning')) {

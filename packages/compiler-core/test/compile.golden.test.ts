@@ -159,6 +159,30 @@ describe('compile() golden path', () => {
     expect(result.ok).toBe(false);
     const codes = result.diagnostics.map((d) => d.code);
     expect(codes).toContain(GeordiErrorCode.E_FEATURE_NOT_IMPLEMENTED);
+    expect(Object.keys(result.artifacts)).toHaveLength(0);
+  });
+
+  it('emit.binaryPack: true fails before writing partial artifacts', async () => {
+    const source = stringifyCanonicalJson({
+      kind: 'Scene', astVersion: '1',
+      scene: { id: 'scene:binary-pack-test', width: 100, height: 100 },
+      nodes: [],
+      metadata: { sourceFormat: 'canonical-ast-json' },
+    });
+
+    const result = await compile({
+      format: 'canonical-ast-json',
+      source,
+      options: {
+        target: 'geordi-ir-v1',
+        emit: { irJson: true, tsTypes: true, binaryPack: true },
+      },
+    });
+
+    expect(result.ok).toBe(false);
+    const codes = result.diagnostics.map((d) => d.code);
+    expect(codes).toContain(GeordiErrorCode.E_FEATURE_NOT_IMPLEMENTED);
+    expect(Object.keys(result.artifacts)).toHaveLength(0);
   });
 
   it('invalid fixture (empty input) fails with deterministic error code', async () => {
