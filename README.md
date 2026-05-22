@@ -1,100 +1,204 @@
 # Geordi
 
-**Deterministic GPU-Native UI Intermediate Representation**
+**Deterministic GPU scene IR for interactive vector UI**
 
-Pronounced: **"Jor-dee"** (/ˈdʒɔːrdi/)
+Formerly SVJif, Geordi is a canonical intermediate representation for building
+high-performance, GPU-native user interfaces with deterministic rendering.
 
-Geordi is the **canonical intermediate representation** for GPU-native vector UI rendering. It is not a replacement for SVG or the browser DOM—it is the universal compile target for high-performance GPU rendering.
+Geordi is a compile target, not a framework. It sits between UI authoring tools
+and GPU runtimes, providing a portable scene representation with explicit
+geometry, explicit transforms, and reproducible output.
 
-**Think LLVM IR, but for UI.**
+---
 
-> Unlike legacy SVG complexities, Geordi uses a sane Euclidean coordinate space:
-> - Explicit origin and units
-> - Explicit transforms
-> - Deterministic layout and draw
-> - Powered by the **Wesley** compiler framework
+## Status
 
-## Status: v0.1.0-dev 🚧
+**v0.1.0-dev - active development**
 
-**Geordi-Wesley architecture complete.** Now implementing:
-- GraphQL SDL → Geordi IR parser (via Wesley extensions)
+Core compiler architecture is complete. The current implementation is focused on:
+
+- GraphQL SDL to canonical AST parsing
 - Semantic validation
-- GPU-native rendering runtimes
+- Deterministic artifact emission
+- WebGL runtime scaffolding
 
-## What is Geordi?
-
-Geordi provides a stable, deterministic bridge between modern UI frameworks and the GPU. It allows developers to define UI using high-level concepts (like GraphQL SDL) and compile them down to a highly optimized, cross-platform representation that can be rendered with perfect fidelity on any GPU backend.
-
-## Why Wesley?
-
-Geordi is built on top of [Wesley](https://github.com/flyingrobots/wesley), a domain-free, GraphQL-to-"anything" compiler framework. 
-
-Wesley provides the abstract "brain" of the compiler—handling the complexities of GraphQL parsing, directive orchestration, and artifact management. Geordi provides the "engineering"—the specific extensions, rules, and logic that transform a general-purpose GraphQL representation into a concrete, performance-tuned UI scene graph.
+---
 
 ## What is GPVue?
 
-**GPVue** is the developer-facing Vue SDK that compiles Vue components to Geordi for deterministic GPU rendering.
+GPVue is the first planned developer-facing SDK built on Geordi. It compiles Vue
+components into Geordi IR for deterministic GPU rendering.
 
-At runtime: no CSS parser, no cascade—only deterministic subtree relayout and GPU draw.
+At runtime:
 
-## Architecture
+- No CSS parsing
+- No cascade
+- No layout thrashing
+- Deterministic subtree recomputation
+- Direct GPU draw calls
 
+---
+
+## System Architecture
+
+```mermaid
+flowchart LR
+  subgraph SDKs
+    A[GPVue]
+    B["GPReact<br/>(planned)"]
+    C["GPSvelte<br/>(planned)"]
+    D["GPFigma<br/>(planned)"]
+  end
+
+  subgraph IR[Geordi IR]
+    E[Geordi Scene IR]
+  end
+
+  subgraph Backends[GPU runtimes]
+    F["WebGL<br/>(browser)"]
+    G["WebGPU<br/>(browser, planned)"]
+    H["Metal<br/>(Apple, planned)"]
+    I["Vulkan<br/>(native, planned)"]
+    J["wgpu<br/>(Rust, planned)"]
+  end
+
+  A --> E
+  B --> E
+  C --> E
+  D --> E
+
+  E --> F
+  E --> G
+  E --> H
+  E --> I
+  E --> J
 ```
-GPVue / GPReact / GPSvelte / Figma
-              ↓
-    Geordi IR (Universal Format)
-    (Compiled via Wesley)
-              ↓
-    ┌─────────┼─────────┬─────────┬─────────┐
-    ↓         ↓         ↓         ↓         ↓
-  WebGL    WebGPU     Metal    Vulkan     wgpu
- (browser) (browser)  (Apple)  (native)   (Rust)
+
+**Geordi is the stable contract. Runtimes are interchangeable.**
+
+---
+
+## Compilation Pipeline
+
+```mermaid
+flowchart TD
+  A["Vue / Figma / SVG / other frontends"]
+  B["Geordi Compiler<br/>(build time)"]
+  C["Geordi IR<br/>(.geordi.json)"]
+  D["Packed binary<br/>(.geordi.bin, planned)"]
+  E["Geordi Runtime<br/>(WebGL/WebGPU/Metal/Vulkan/wgpu)"]
+
+  A --> B --> C --> D --> E
 ```
 
-**Geordi is the compile target. Renderers are swappable.**
+---
 
-## Key Principles
+## Core Principles
 
-1. **Deterministic** - Same IR in, same pixels out.
-2. **Build-time Optimization** - No runtime parsing or cascade; layout is resolved during compilation.
-3. **GPU-native** - Direct shader rendering for maximum performance.
-4. **Fail Loud** - Unsupported features are caught at compile time, not run time.
+1. **Deterministic** - Same IR input always produces identical output.
+2. **Explicit geometry** - Coordinate space, units, and transforms are fully defined.
+3. **No runtime CSS** - Layout and styling are resolved before runtime rendering.
+4. **Incremental layout VM** - Only dirty subtrees are recomputed.
+5. **GPU-native rendering** - No DOM, no layout engine, no abstraction leakage.
+6. **Fail loud** - Unsupported features are compile-time errors, not runtime surprises.
 
-## Project Structure
+---
 
+## Runtime Interface
+
+All Geordi runtimes implement a shared contract:
+
+```ts
+interface GeordiRuntime {
+  load(scene: GeordiScene): Promise<void>;
+  render(): void;
+  updateNode(id: string, updates: Partial<GeordiNode>): void;
+  hitTest(x: number, y: number): HitResult | null;
+  dispose(): void;
+}
 ```
-Geordi/
+
+**Same scene. Same API. Any backend.**
+
+Planned runtime packages:
+
+- Browser: `@flyingrobots/geordi-runtime-webgl`, `@flyingrobots/geordi-runtime-webgpu`
+- Apple platforms: `@flyingrobots/geordi-runtime-metal`
+- Native cross-platform: `@flyingrobots/geordi-runtime-vulkan`
+- Rust ecosystem: `@flyingrobots/geordi-runtime-wgpu`
+
+---
+
+## Supported CSS Subset
+
+Geordi v0 design work is intentionally narrowing the supported surface area.
+See [docs/V0_DESIGN_LAWS.md](docs/V0_DESIGN_LAWS.md) for the current design law.
+
+Baseline areas under specification:
+
+- Layout: flex, absolute positioning, intrinsic sizing
+- Paint: solid color, opacity, borders, border radius
+- Text: deterministic font packs, shaping, line breaking
+- Assets: explicit resource identity and fixed material models
+- Interaction: deterministic hit testing with host-owned event routing
+
+---
+
+## Repository Structure
+
+```text
+geordi/
   packages/
-    # Geordi Core (Universal IR)
-    core/              # @flyingrobots/geordi-core - IR types, validation
+    core/              # @flyingrobots/geordi-core - IR types and domain models
     compiler-core/     # @flyingrobots/geordi-compiler-core - Compilation engine
+    schema-graphql/    # @flyingrobots/geordi-schema-graphql - GraphQL SDL adapter
+    wesley-generator/  # @flyingrobots/geordi-wesley-generator - Wesley integration
+    runtime-webgl/     # @flyingrobots/geordi-runtime-webgl - WebGL runtime
 
-    # Wesley Integration
-    schema-graphql/    # @flyingrobots/geordi-schema-graphql - GraphQL → Geordi adapter
-    wesley-generator/  # @flyingrobots/geordi-wesley-generator - Geordi extension for Wesley
-
-    # Geordi Runtimes (Swappable backends)
-    runtime-webgl/     # @flyingrobots/geordi-runtime-webgl - WebGL (browser)
-    runtime-webgpu/    # (future) WebGPU
-    runtime-metal/     # (future) Metal
-    runtime-vulkan/    # (future) Vulkan
-
-    # Front-end SDKs
-    gpvue/             # @flyingrobots/gpvue - Vue → Geordi
+  docs/
+    ARCHITECTURE.md
+    ERROR_CODES.md
+    V0_DESIGN_LAWS.md
 ```
 
-## Development Principles
+---
 
-- **Apache 2.0 License** - Open and permissive.
-- **Hexagonal Architecture** - Clean separation of Domain, Application, and Infrastructure layers.
-- **Wesley-First** - Leverages the Wesley framework for all compilation tasks.
-- **Strict TypeScript** - Maximum type safety and internal consistency.
-- **Test-Driven** - Tests define behavior; 90%+ coverage required.
+## Current Compiler Usage
+
+```ts
+import { compile } from '@flyingrobots/geordi-compiler-core';
+
+const result = await compile({
+  format: 'canonical-ast-json',
+  source: '{"astVersion":"1","kind":"Scene","nodes":[],"scene":{"height":600,"id":"scene","width":800}}',
+});
+
+if (!result.ok) {
+  console.error(result.diagnostics);
+}
+```
+
+---
+
+## Engineering Principles
+
+- Apache 2.0 license
+- Hexagonal architecture at package boundaries
+- Strict TypeScript
+- Strict linting with type-aware rules
+- Custom error types for all thrown errors
+- Encoding and JSON handling through explicit ports
+- Tests define behavior; target 90% or better coverage
+
+---
 
 ## License
 
 Apache 2.0
 
+---
+
 ## Contributing
 
-Geordi is in early development. Inspired by the engineering prowess of Geordi La Forge and the potential of Wesley Crusher.
+Geordi is in early development. Issues, discussions, and small PRs are welcome as
+the core stabilizes.
