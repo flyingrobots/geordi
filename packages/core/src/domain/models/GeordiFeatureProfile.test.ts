@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   GEORDI_BASELINE_FEATURES,
   GEORDI_CORE_PROFILE,
+  GEORDI_KNOWN_FEATURES,
   isGeordiFeatureRequirement,
 } from './GeordiFeatureProfile';
 
@@ -27,7 +28,11 @@ describe('Geordi feature profile', () => {
     ]);
   });
 
-  it('classifies supported feature requirements', () => {
+  it('keeps baseline features inside the known feature registry', () => {
+    expect(GEORDI_KNOWN_FEATURES).toEqual(GEORDI_BASELINE_FEATURES);
+  });
+
+  it('classifies known feature requirements', () => {
     expect(isGeordiFeatureRequirement('shape.rect')).toBe(true);
     expect(isGeordiFeatureRequirement('effect.blur/1')).toBe(false);
   });

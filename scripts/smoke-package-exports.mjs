@@ -10,6 +10,7 @@ const checks = [
     exports: [
       'GEORDI_BASELINE_FEATURES',
       'GEORDI_CORE_PROFILE',
+      'GEORDI_KNOWN_FEATURES',
       'GEORDI_NUMERIC_PROFILE',
       'isGeordiFeatureRequirement',
       'isGeordiScene',
