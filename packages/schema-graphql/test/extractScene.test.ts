@@ -134,6 +134,29 @@ describe('extractScene (table-driven)', () => {
     expect(scene?.sourceRef.column).toBeGreaterThanOrEqual(1);
   });
 
+  it('attaches exact scene type source span', () => {
+    const doc = parseGraphql(
+      [
+        'type Terminal @geordi_scene(v: "1", width: 800, height: 600) {',
+        '  _: String',
+        '}',
+      ].join('\n'),
+      'scene.graphql',
+    );
+    const diag: Diagnostic[] = [];
+    const scene = extractScene(doc, diag, 'scene.graphql');
+
+    expect(scene?.sourceRef).toMatchObject({
+      file: 'scene.graphql',
+      line: 1,
+      column: 1,
+      endLine: 3,
+      offset: 0,
+    });
+    expect(scene?.sourceRef.endColumn).toBeGreaterThan(1);
+    expect(scene?.sourceRef.endOffset).toBeGreaterThan(0);
+  });
+
   it('sourceRef fallback when no filename provided', () => {
     const doc = parse(`
       type Terminal @geordi_scene(v: "1", width: 800, height: 600) { _: String }

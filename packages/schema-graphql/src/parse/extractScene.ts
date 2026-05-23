@@ -1,5 +1,9 @@
 import { type DocumentNode, type ObjectTypeDefinitionNode, Kind } from 'graphql';
-import { ParseError, GeordiErrorCode } from '@flyingrobots/geordi-compiler-core';
+import {
+  createSourceLocation,
+  ParseError,
+  GeordiErrorCode,
+} from '@flyingrobots/geordi-compiler-core';
 import type { Diagnostic, SourceRef } from '@flyingrobots/geordi-compiler-core';
 import { validateGeordiDirectiveVersion } from '../directives/geordiDirectives.js';
 import {
@@ -45,7 +49,7 @@ export function extractScene(
       new ParseError(
         GeordiErrorCode.E_SCENE_MISSING,
         'No type with @geordi_scene directive found. Add @geordi_scene(v: "1", width: N, height: N) to exactly one type.',
-        { location: { file: filename ?? '<inline>', line: 1, column: 1 } },
+        { location: createSourceLocation({ file: filename }) },
       ).toDiagnostic(),
     );
     return undefined;
