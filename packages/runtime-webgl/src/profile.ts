@@ -18,7 +18,7 @@ export type GeordiRuntimeVisualFeature =
 export interface GeordiRuntimeProfile {
   readonly irVersion: typeof GEORDI_IR_VERSION;
   readonly numericProfile: GeordiNumericProfile;
-  readonly featureRequirements: readonly GeordiFeatureRequirement[];
+  readonly supportedFeatureRequirements: readonly GeordiFeatureRequirement[];
   readonly nodeKinds: readonly GeordiRuntimeNodeKind[];
   readonly visualFeatures: readonly GeordiRuntimeVisualFeature[];
 }
@@ -26,7 +26,7 @@ export interface GeordiRuntimeProfile {
 export const GEORDI_WEBGL_RUNTIME_PROFILE: GeordiRuntimeProfile = {
   irVersion: GEORDI_IR_VERSION,
   numericProfile: GEORDI_NUMERIC_PROFILE,
-  featureRequirements: GEORDI_BASELINE_FEATURES,
+  supportedFeatureRequirements: GEORDI_BASELINE_FEATURES,
   nodeKinds: ['Rect', 'Text', 'Group', 'Image'],
   visualFeatures: ['solid-fill', 'solid-stroke', 'opacity', 'corner-radius', 'text-fill'],
 };
@@ -70,23 +70,23 @@ export function assertSupportedRuntimeProfile(
   if (!Array.isArray(ir.requires)) {
     throw new GeordiRuntimeUnsupportedProfileError(
       'requires=<missing>',
-      `requires=${profile.featureRequirements.join(',')}`,
+      `requires=${profile.supportedFeatureRequirements.join(',')}`,
     );
   }
 
-  const supportedFeatureRequirements = new Set<string>(profile.featureRequirements);
+  const supportedFeatureRequirements = new Set<string>(profile.supportedFeatureRequirements);
   for (const [index, requirement] of ir.requires.entries()) {
     if (typeof requirement !== 'string') {
       throw new GeordiRuntimeUnsupportedProfileError(
         `requires[${index}]=${String(requirement)}`,
-        `requires=${profile.featureRequirements.join(',')}`,
+        `requires=${profile.supportedFeatureRequirements.join(',')}`,
       );
     }
 
     if (!supportedFeatureRequirements.has(requirement)) {
       throw new GeordiRuntimeUnsupportedProfileError(
         `requires=${requirement}`,
-        `requires=${profile.featureRequirements.join(',')}`,
+        `requires=${profile.supportedFeatureRequirements.join(',')}`,
       );
     }
   }

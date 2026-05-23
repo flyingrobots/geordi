@@ -239,7 +239,7 @@ describe('runtime-webgl public API', () => {
     expect(GEORDI_WEBGL_RUNTIME_PROFILE).toEqual({
       irVersion: 'geordi-ir/1',
       numericProfile: GEORDI_NUMERIC_PROFILE,
-      featureRequirements: GEORDI_BASELINE_FEATURES,
+      supportedFeatureRequirements: GEORDI_BASELINE_FEATURES,
       nodeKinds: ['Rect', 'Text', 'Group', 'Image'],
       visualFeatures: ['solid-fill', 'solid-stroke', 'opacity', 'corner-radius', 'text-fill'],
     });
