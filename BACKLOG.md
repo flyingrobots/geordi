@@ -65,6 +65,26 @@ Acceptance criteria:
 
 ---
 
+### Define the baseline feature/capability profile
+**Priority**: P0
+**Source**: v0 design laws, cross-runtime compliance contract
+**Status**: Completed. Core owns `GEORDI_CORE_PROFILE` and `GEORDI_BASELINE_FEATURES`,
+`geordi-ir/1` validates `requires`, compiler-core emits the baseline requirements in IR and
+receipts, and runtime-webgl declares and enforces the same requirement set before rendering.
+
+The numeric profile defines number semantics, but it does not say which render features a scene
+requires. `geordi-ir/1` needs a small, explicit feature declaration so runtimes fail loudly instead
+of approximating unsupported nodes, effects, text modes, or future layout features.
+
+Acceptance criteria:
+- `@flyingrobots/geordi-core` owns the baseline feature vocabulary and validates `ir.requires`.
+- Compiler-emitted `scene.geordi.json` includes the baseline `requires` list.
+- Receipts record feature requirements and a deterministic feature-requirement hash.
+- Runtime profiles declare the feature requirements they support.
+- Runtime rendering rejects missing or unsupported feature requirements before drawing.
+
+---
+
 ## Completed Stabilization Work
 
 These P0 items were completed in the 2026-05-22 stabilization work and are retained here as
@@ -97,7 +117,10 @@ historical context.
   drawable props, and compiler output is rendered through the runtime contract in tests.
 - Graphics numeric profile is explicit: core owns `geordi-finite-binary64/1`, canonical JSON
   rejects non-finite numbers and canonicalizes `-0`, compiler IR and receipts declare the profile,
-  and runtime-webgl rejects unsupported profile requirements before rendering.
+  and runtime-webgl rejects unsupported numeric profiles before rendering.
+- Baseline feature profile is explicit: core owns `GEORDI_BASELINE_FEATURES`, compiler IR and
+  receipts declare `requires`, receipts include `featureRequirementsHash`, and runtime-webgl
+  rejects missing or unsupported feature requirements before rendering.
 
 ---
 
