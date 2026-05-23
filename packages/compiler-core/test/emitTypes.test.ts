@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -16,6 +17,11 @@ import type { JsonObject } from '../src/types/json';
 interface ExecSyncFailure {
   stdout?: string | Uint8Array;
   stderr?: string | Uint8Array;
+}
+
+interface GeneratedTypesTscGateEnv {
+  readonly CI?: string;
+  readonly TSC_GATE?: string;
 }
 
 class GeneratedTypesTypecheckError extends Error {
@@ -35,6 +41,10 @@ function outputText(value: string | Uint8Array | undefined): string {
   }
 
   return typeof value === 'string' ? value : Buffer.from(value).toString('utf8');
+}
+
+function shouldRunGeneratedTypesTsc(env: GeneratedTypesTscGateEnv = process.env): boolean {
+  return env.CI === 'true' || env.TSC_GATE === '1';
 }
 
 function makeAst(partial: Partial<CanonicalSceneAst> = {}): CanonicalSceneAst {
@@ -219,7 +229,18 @@ describe('TypeEmitter', () => {
     expect(source).not.toContain(forbiddenOption);
   });
 
+  it('generated typecheck gate runs only in CI or by explicit opt-in', () => {
+    expect(shouldRunGeneratedTypesTsc({})).toBe(false);
+    expect(shouldRunGeneratedTypesTsc({ CI: 'false', TSC_GATE: '0' })).toBe(false);
+    expect(shouldRunGeneratedTypesTsc({ CI: 'true' })).toBe(true);
+    expect(shouldRunGeneratedTypesTsc({ TSC_GATE: '1' })).toBe(true);
+  });
+
   it('emitted TypeScript passes tsc --noEmit (C3 success gate)', () => {
+    if (!shouldRunGeneratedTypesTsc()) {
+      return;
+    }
+
     const ast = makeAst({
       nodes: [
         // 'type' is a reserved keyword — identifier guard must fire
@@ -249,7 +270,8 @@ describe('TypeEmitter', () => {
       writeFileSync(join(dir, 'tsconfig.json'), stringifyCanonicalJson(tsconfig), 'utf8');
       writeFileSync(file, output, 'utf8');
       // Run tsc in the temporary directory
-      const tscPath = require.resolve('typescript/bin/tsc');
+      const requireFromTest = createRequire(import.meta.url);
+      const tscPath = requireFromTest.resolve('typescript/bin/tsc');
       execSync(tscPath, {
         cwd: dir,
         encoding: 'utf8',
