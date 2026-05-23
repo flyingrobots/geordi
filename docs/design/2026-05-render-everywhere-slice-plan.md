@@ -126,7 +126,7 @@ pixel-identical browser/native claim until strict text exists.
   - Render solid Rect nodes from the shared IR.
   - Use explicit draw order.
   - Fail loudly on unsupported node kinds or properties.
-  - Done: current slice.
+  - Done: `b425bec`.
   - Verification: visible native demo plus renderer tests where practical.
 
 - [ ] **Slice 15: Rust offscreen smoke mode**
