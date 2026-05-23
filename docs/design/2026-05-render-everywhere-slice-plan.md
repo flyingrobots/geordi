@@ -40,11 +40,12 @@ pixel-identical browser/native claim until strict text exists.
   - Done: current slice.
   - Verification: fixture JSON parses through the core JSON port.
 
-- [ ] **Slice 3: Fixture manifest validator**
+- [x] **Slice 3: Fixture manifest validator**
   - Add a typed TypeScript validator for `geordi-render-fixture/1`.
   - Validate fixture version, fixture id, paths, artifact hash, canvas dimensions, feature profile,
     and pixel probes.
   - Use custom error classes for every failure path.
+  - Done: current slice.
   - Verification: unit tests for valid and invalid manifests.
 
 - [ ] **Slice 4: Pixel probe contract**
