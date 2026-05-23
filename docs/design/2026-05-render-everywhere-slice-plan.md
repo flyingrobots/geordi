@@ -75,7 +75,7 @@ pixel-identical browser/native claim until strict text exists.
   - Add Playwright test coverage for the browser harness.
   - Assert page load, canvas count, dimensions, nonblank output, and exact pixel probes.
   - Add a root or package script for the browser gate.
-  - Done: current slice.
+  - Done: `2125487`.
   - Verification: `pnpm --filter <browser-harness-package> test:browser`.
 
 - [ ] **Slice 8: Browser failure fixture**
