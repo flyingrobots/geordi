@@ -12,6 +12,7 @@ const checks = [
       'GEORDI_CORE_PROFILE',
       'GEORDI_KNOWN_FEATURES',
       'GEORDI_NUMERIC_PROFILE',
+      'GEORDI_STRICT_TEXT_FEATURES',
       'isGeordiFeatureRequirement',
       'isGeordiScene',
       'isRectNode',
