@@ -2,7 +2,7 @@
 
 **Date**: 2026-05-23
 **Version**: 0.1.0-dev
-**Milestone**: Capability profile contract work starting from `main` at `fce5978`
+**Milestone**: Next slice execution starting from `main` at `1719019`
 
 See [`../BEARING.md`](../BEARING.md) for the current operating map.
 
@@ -87,6 +87,7 @@ Canvas-backed WebGL-runtime scaffold.
 - GitHub Actions CI.
 - Dependabot grouped updates for npm workspace dependencies and GitHub Actions.
 - Strict TypeScript and type-aware ESLint.
+- Formal design pack for the next P0 slice sequence in `docs/design/`.
 - Root hygiene gates:
   - `pnpm test:exports`
   - `pnpm test:package-names`
@@ -96,7 +97,7 @@ Canvas-backed WebGL-runtime scaffold.
 
 ## Test Status
 
-Latest package test counts for the capability-profile branch:
+Latest package test counts after the capability-profile and design-pack merges:
 
 | Package | Tests | Status |
 | --- | ---: | --- |
@@ -122,14 +123,15 @@ Additional gates:
 Immediate:
 
 1. Define the next strict text/font profile beyond `text.raw-runtime-shaping`.
-2. Specify deterministic operation-order rules for future vector, matrix, transform, and animation
+2. Split known feature vocabulary from compiler-emitted baseline requirements.
+3. Specify deterministic operation-order rules for future vector, matrix, transform, and animation
    math.
-3. Keep source-map, diagnostic formatter, and receipt behavior wired into future CLI/Wesley
+4. Keep source-map, diagnostic formatter, and receipt behavior wired into future CLI/Wesley
    entrypoints.
 
 Short term:
 
-4. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
+5. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
 
 ## Decision Log
 
