@@ -173,6 +173,31 @@ describe('TypeEmitter', () => {
     expect(output).toContain('export interface PathNode');
   });
 
+  it('Group-only scenes emit a valid zero-required-props GroupNode interface', () => {
+    const ast = makeAst({
+      nodes: [{ id: 'group', kind: 'Group', props: {} }],
+    });
+    const output = new TypeEmitter(ast).emit();
+
+    expect(output).toContain('export type NodeId = "group";');
+    expect(output).toContain(`export interface GroupNode {
+  id: string;
+  kind: "Group";
+  props: {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    rotation?: number;
+    opacity?: number;
+  };
+}
+`);
+    expect(output).toContain('export type SceneNode = GroupNode;');
+    expect(output).not.toContain('export interface RectNode');
+    expect(output).not.toContain('export interface TextNode');
+  });
+
   it('SceneRoot always present with required fields', () => {
     const ast = makeAst();
     const output = new TypeEmitter(ast).emit();
