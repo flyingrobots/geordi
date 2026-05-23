@@ -1,0 +1,41 @@
+{
+  "irVersion": "geordi-ir/1",
+  "nodes": [
+    {
+      "id": "background",
+      "kind": "Rect",
+      "props": {
+        "fill": "#101820",
+        "height": 96,
+        "width": 128,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "panel",
+      "kind": "Rect",
+      "props": {
+        "fill": "#f8fafc",
+        "height": 48,
+        "width": 80,
+        "x": 24,
+        "y": 24
+      }
+    }
+  ],
+  "numericProfile": "geordi-finite-binary64/1",
+  "requires": [
+    "geordi/core/1",
+    "layout.resolved",
+    "shape.rect",
+    "paint.solid",
+    "text.fontPack"
+  ],
+  "scene": {
+    "height": 96,
+    "id": "render-everywhere:unsupported-strict-text",
+    "units": "px",
+    "width": 128
+  }
+}

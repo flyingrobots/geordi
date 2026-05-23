@@ -78,10 +78,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `2125487`.
   - Verification: `pnpm --filter <browser-harness-package> test:browser`.
 
-- [ ] **Slice 8: Browser failure fixture**
+- [x] **Slice 8: Browser failure fixture**
   - Add an unsupported-feature fixture.
   - Prove browser harness rejects unsupported requirements before drawing.
   - Assert the thrown failure is a custom runtime or harness error.
+  - Done: current slice.
   - Verification: Playwright or Vitest failure-path test.
 
 - [ ] **Slice 9: Cargo workspace scaffold**
