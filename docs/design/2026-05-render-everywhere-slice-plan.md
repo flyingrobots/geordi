@@ -30,14 +30,14 @@ pixel-identical browser/native claim until strict text exists.
   - Add design docs for the shared demo contract, browser harness, native Rust harness, and GPVue
     fixture pipeline.
   - Add this slice checklist and wire repo instructions to it.
-  - Done: `cbef665`.
+  - Done: `cbef665`; checklist closed in `380b909`.
   - Verification: `pnpm test:docs`, `git diff --cached --check`.
 
 - [x] **Slice 2: Shared fixture root**
   - Add `fixtures/render-everywhere/hello-panel`.
   - Add `fixture.json`, `scene.geordi.json`, `scene.geordi.json.receipt`, and `README.md`.
   - Keep the scene rectangle-only and declare only the features actually used.
-  - Done: current slice.
+  - Done: `63935e2`.
   - Verification: fixture JSON parses through the core JSON port.
 
 - [x] **Slice 3: Fixture manifest validator**
@@ -45,14 +45,14 @@ pixel-identical browser/native claim until strict text exists.
   - Validate fixture version, fixture id, paths, artifact hash, canvas dimensions, feature profile,
     and pixel probes.
   - Use custom error classes for every failure path.
-  - Done: current slice.
+  - Done: `7723683`.
   - Verification: unit tests for valid and invalid manifests.
 
 - [x] **Slice 4: Pixel probe contract**
   - Add shared TypeScript probe records and probe assertion helpers.
   - Compare exact RGBA byte values at integer canvas coordinates.
   - Report fixture id, probe id, coordinate, expected RGBA, and actual RGBA on mismatch.
-  - Done: current slice.
+  - Done: `18d67de`.
   - Verification: helper tests for pass and fail paths.
 
 - [x] **Slice 5: Browser harness scaffold**
@@ -60,7 +60,7 @@ pixel-identical browser/native claim until strict text exists.
     scripts.
   - Import only public workspace package entrypoints.
   - Keep the DOM shell separate from scene rendering.
-  - Done: current slice.
+  - Done: `3208234`.
   - Verification: package build, typecheck, and lint.
 
 - [ ] **Slice 6: Browser render smoke**
