@@ -36,6 +36,28 @@ describe('extractNodes (table-driven)', () => {
     expect(bg.height).toBe(600);
   });
 
+  it('attaches exact field source span to extracted nodes', () => {
+    const diag: Diagnostic[] = [];
+    const { nodes } = parseAndExtract(
+      [
+        'type S @geordi_scene(v: "1", width: 100, height: 100) {',
+        '  title: String @geordi_node(kind: Text, x: 10, y: 20)',
+        '}',
+      ].join('\n'),
+      diag,
+    );
+
+    expect(nodes[0].sourceRef).toMatchObject({
+      file: 'test.graphql',
+      line: 2,
+      column: 3,
+      endLine: 2,
+    });
+    expect(nodes[0].sourceRef.endColumn).toBeGreaterThan(nodes[0].sourceRef.column);
+    expect(nodes[0].sourceRef.offset).toBeGreaterThan(0);
+    expect(nodes[0].sourceRef.endOffset).toBeGreaterThan(nodes[0].sourceRef.offset ?? 0);
+  });
+
   it('extracts all valid node kinds', () => {
     for (const kind of ['Rect', 'Text', 'Image', 'Group', 'Line', 'Ellipse', 'Path']) {
       const diag: Diagnostic[] = [];
@@ -168,6 +190,24 @@ describe('extractNodes (table-driven)', () => {
     ]);
     expect(errors.map((d) => d.message).join('\n')).toContain('x');
     expect(errors.map((d) => d.message).join('\n')).toContain('visible');
+  });
+
+  it('pins invalid directive argument value locations', () => {
+    const diag: Diagnostic[] = [];
+    parseAndExtract(
+      [
+        'type S @geordi_scene(v: "1", width: 100, height: 100) {',
+        '  n: String @geordi_node(kind: Rect, x: "left", visible: "yes")',
+        '}',
+      ].join('\n'),
+      diag,
+    );
+
+    const errors = diag.filter((d) => d.severity === 'error');
+    expect(errors.map((d) => d.location)).toEqual([
+      expect.objectContaining({ file: 'test.graphql', line: 2, column: 41 }),
+      expect.objectContaining({ file: 'test.graphql', line: 2, column: 58 }),
+    ]);
   });
 
   it('non-finite numeric node argument → GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE', () => {

@@ -53,7 +53,7 @@ validateCanonicalAst() [semantic checks]
   ↓
 emitGeordiIr() + emitTypes() + emitSchema()
   ↓
-Artifacts (scene.geordi.json, types.ts, etc.)
+Artifacts (scene.geordi.json, scene.geordi.map.json, types.ts, etc.)
 ```
 
 ### Phase 1: Parse
@@ -84,6 +84,7 @@ Artifacts (scene.geordi.json, types.ts, etc.)
 - **Output**: ArtifactMap
 - **Emitters**:
   - `emitGeordiIr()` → scene.geordi.json
+  - source map emission → scene.geordi.map.json
   - `emitTypes()` → types.ts
   - `emitSchema()` → scene.geordi.schema.json (optional)
 
@@ -118,6 +119,7 @@ See [`docs/ERROR_CODES.md`](./ERROR_CODES.md) for complete taxonomy.
 
 - **AST version**: `astVersion: "1"` (canonical AST)
 - **IR version**: `irVersion: "geordi-ir/1"` (output format)
+- **Source map version**: `version: "geordi-source-map/1"` (IR node ID to source location map)
 - **Numeric profile**: `numericProfile: "geordi-finite-binary64/1"` (finite binary64 graphics numbers)
 - **Directive version**: `v: "1"` (GraphQL directives)
 

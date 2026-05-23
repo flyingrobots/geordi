@@ -19,6 +19,7 @@
     "lint": "pnpm lint:root && turbo run lint",
     "lint:root": "eslint . --max-warnings 0",
     "typecheck": "turbo run typecheck",
+    "wesley": "wesley",
     "clean": "turbo run clean && rm -rf node_modules",
     "changeset": "changeset",
     "version-packages": "changeset version",

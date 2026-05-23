@@ -157,12 +157,14 @@ with an empty `props` block. This is an edge case in `TypeEmitter.emitKindInterf
 
 ### `parseInput.ts` — surface `E_INPUT_INVALID_SDL` source location to diagnostics
 **Issue**: [#7](https://github.com/flyingrobots/geordi/issues/7)
-**Status**: Resolved by the typed diagnostics transport P0 work.
+**Status**: Resolved by the typed diagnostics transport P0 work. GitHub issue #7 is closed.
 
 When `parseGraphql` throws a `ParseError` with `E_INPUT_INVALID_SDL`, `parseInput.ts` currently
 catches it and converts to a diagnostic but loses the GraphQL source location (`line`, `column`)
 from the original `ParseError`. Propagate the location into `Diagnostic.details` so callers can
 report precise SDL error positions to users.
+
+Open GitHub-backed backlog after this reconciliation: #2, #3, #4, #5, and #6 remain active.
 
 ---
 

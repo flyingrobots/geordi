@@ -1,5 +1,6 @@
 export * from './types/index.js';
 export * from './errors/index.js';
+export * from './diagnostics/index.js';
 export * from './ports/json.js';
 export { compile } from './compile/compile.js';
 export type { GraphqlToCanonicalAst, ParseInputDeps } from './compile/parseInput.js';

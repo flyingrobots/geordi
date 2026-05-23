@@ -1,5 +1,11 @@
 import { parse, Source, GraphQLError, type DocumentNode } from 'graphql';
-import { ParseError, GeordiErrorCode, normalizeCompilerErrorCause, type ThrownValue } from '@flyingrobots/geordi-compiler-core';
+import {
+  createSourceLocation,
+  ParseError,
+  GeordiErrorCode,
+  normalizeCompilerErrorCause,
+  type ThrownValue,
+} from '@flyingrobots/geordi-compiler-core';
 
 /**
  * Parse a GraphQL SDL string into a DocumentNode.
@@ -12,12 +18,12 @@ export function parseGraphql(sdl: string, filename?: string): DocumentNode {
   } catch (cause) {
     const location =
       cause instanceof GraphQLError && cause.locations?.[0]
-        ? {
+        ? createSourceLocation({
             file: effectiveName,
             line: cause.locations[0].line,
             column: cause.locations[0].column,
-          }
-        : { file: effectiveName, line: 1, column: 1 };
+          })
+        : createSourceLocation({ file: effectiveName });
 
     throw new ParseError(
       GeordiErrorCode.E_INPUT_INVALID_SDL,

@@ -18,7 +18,15 @@ import { parseInputToCanonicalAst, type ParseInputDeps } from './parseInput.js';
 import { HASH_ALGORITHM } from '../canonical/hashing.js';
 import { normalizeCanonicalAst } from '../canonical/normalizeAst.js';
 import { validateCanonicalAst, VALIDATION_RULE_IDS } from './validateAst.js';
-import { emitGeordiIrArtifact, emitReceiptArtifact, IR_ARTIFACT_KEY, IR_RECEIPT_KEY, IR_VERSION } from './emitIr.js';
+import {
+  emitGeordiIrArtifact,
+  emitReceiptArtifact,
+  emitSourceMapArtifact,
+  IR_ARTIFACT_KEY,
+  IR_RECEIPT_KEY,
+  IR_VERSION,
+  SOURCE_MAP_ARTIFACT_KEY,
+} from './emitIr.js';
 import { emitTypesArtifact } from './emitTypes.js';
 
 const DEFAULT_OPTIONS: CompileOptions = {
@@ -77,9 +85,16 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
     }
     if (options.emit.irJson && canonicalAst) {
       const irArtifact = emitGeordiIrArtifact(canonicalAst);
+      const sourceMapArtifact = emitSourceMapArtifact(canonicalAst);
       artifacts[IR_ARTIFACT_KEY] = irArtifact;
+      artifacts[SOURCE_MAP_ARTIFACT_KEY] = sourceMapArtifact;
 
-      artifacts[IR_RECEIPT_KEY] = emitReceiptArtifact(input, irArtifact.content as string, VALIDATION_RULE_IDS);
+      artifacts[IR_RECEIPT_KEY] = emitReceiptArtifact(
+        input,
+        irArtifact.content as string,
+        sourceMapArtifact.content as string,
+        VALIDATION_RULE_IDS,
+      );
     }
     if (options.emit.tsTypes && canonicalAst) {
       artifacts['types.ts'] = emitTypesArtifact(canonicalAst);

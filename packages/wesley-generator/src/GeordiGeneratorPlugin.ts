@@ -1,4 +1,9 @@
-import { compile, type CompilerInput, type ParseInputDeps } from '@flyingrobots/geordi-compiler-core';
+import {
+  compile,
+  formatDiagnostic,
+  type CompilerInput,
+  type ParseInputDeps,
+} from '@flyingrobots/geordi-compiler-core';
 import { graphqlToCanonicalAst } from '@flyingrobots/geordi-schema-graphql';
 // import { GeneratorPlugin } from '@wesley/core';
 
@@ -60,6 +65,7 @@ export class GeordiGeneratorPlugin {
     return {
       artifacts: [
         { path: 'scene.geordi.json', reason: 'Geordi IR scene' },
+        { path: 'scene.geordi.map.json', reason: 'Geordi IR source map' },
         { path: 'types.ts', reason: 'TypeScript types for scene artifacts' },
       ],
       metadata: {
@@ -100,8 +106,7 @@ export class GeordiGeneratorPlugin {
     const result = await compile(input, deps);
 
     for (const d of result.diagnostics) {
-      const line = d.location ? `${d.location.file}:${d.location.line}:${d.location.column}` : 'unknown';
-      const msg = `[${d.code}] ${d.message} (${line})`;
+      const msg = formatDiagnostic(d);
       if (d.severity === 'error') context.logger?.error?.(msg);
       else if (d.severity === 'warning') context.logger?.warn?.(msg);
       else context.logger?.info?.(msg);

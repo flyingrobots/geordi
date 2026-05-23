@@ -1,8 +1,8 @@
 # Geordi Bearing
 
-**Date**: 2026-05-22
-**Branch baseline**: `main` at `c4597a6`
-**Current head when written**: `c4597a6`
+**Date**: 2026-05-23
+**Branch baseline**: `main` at `2dcf510`
+**Current head when written**: `2dcf510`
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
@@ -42,6 +42,17 @@ Completed:
   behavior and custom JSON error types.
 - `geordi-ir/1` declares `numericProfile: "geordi-finite-binary64/1"`; compiler receipts include
   that profile, and runtime-webgl rejects unsupported profile requirements before rendering.
+- Public TypeScript API names are de-versioned for the current IR surface: use `GeordiIr`,
+  `validateGeordiIr()`, `isGeordiIr()`, and compiler target `geordi-ir`; payload/profile
+  identities remain explicit through values such as `irVersion: "geordi-ir/1"`.
+- GitHub issue #7 was closed after confirmation that typed diagnostics transport already preserves
+  invalid-SDL diagnostic location details.
+- Source locations now have a canonical compiler-core model shared by AST `SourceRef` and
+  diagnostics. GraphQL extraction preserves source spans and offsets.
+- `scene.geordi.map.json` is emitted alongside IR JSON and receipts include `sourceMapHash`.
+- Compiler-core exposes a deterministic diagnostic formatter, and the Wesley generator uses it for
+  stable logging.
+- Root `pnpm wesley` shells out to the installed Wesley CLI.
 
 Still true:
 
@@ -50,24 +61,19 @@ Still true:
 
 ## Immediate Moves
 
-1. Finish dependency hygiene:
-   - GitHub Actions Dependabot PR #10 was mergeable and has been merged.
-   - Conflicting npm Dependabot PR #8 should be recreated by Dependabot before any manual lockfile
-     work.
-2. Add source maps and diagnostic UX improvements.
-3. Define the next explicit feature/capability profile beyond the v0 baseline.
+1. Define the next explicit feature/capability profile beyond the v0 baseline.
+2. Keep source-map and diagnostic formatter behavior wired into future CLI/Wesley entrypoints.
+3. Keep dependency hygiene clean; there are no open PRs at the time this bearing was refreshed.
 
 ## Recommended P0 Order
 
-1. Add source maps and diagnostic UX improvements.
-2. Define the next feature/capability profile beyond the v0 baseline.
+1. Define the next feature/capability profile beyond the v0 baseline.
+2. Decide whether Wesley modernization should target `wesley-cli`/`wesley-core` 0.0.5 through a
+   CLI boundary, Rust workspace boundary, or future npm/WASM boundary.
 
 ## Dependency Work
 
-Open Dependabot state when this was written:
+Open Dependabot state when this was refreshed: none.
 
-- PR #10, GitHub Actions group: merged.
-- PR #8, npm/yarn group: stale/conflicting; Dependabot has been asked to recreate it.
-
-Manual lockfile conflict resolution should be avoided unless Dependabot cannot regenerate a clean
-branch.
+Manual lockfile conflict resolution should still be avoided unless Dependabot cannot regenerate a
+clean branch.

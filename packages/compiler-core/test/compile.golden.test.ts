@@ -29,6 +29,7 @@ describe('compile() golden path', () => {
           props: { x: 0, y: 0, width: 800, height: 40, fill: '#2a2a2a' },
           zIndex: 1,
           visible: true,
+          sourceRef: { file: 'fixtures/valid.scene.json', line: 10, column: 9 },
         },
         {
           id: 'node:title',
@@ -36,6 +37,7 @@ describe('compile() golden path', () => {
           props: { x: 20, y: 10, content: 'Terminal v0.3', color: '#00ff00', fontSize: 14 },
           zIndex: 2,
           visible: true,
+          sourceRef: { file: 'fixtures/valid.scene.json', line: 18, column: 9 },
         },
       ],
       metadata: { sourceFormat: 'canonical-ast-json' },
@@ -57,6 +59,7 @@ describe('compile() golden path', () => {
     expect(result.ok).toBe(true);
     expect(result.diagnostics.filter((d) => d.severity === 'error')).toHaveLength(0);
     expect(result.artifacts['scene.geordi.json']).toBeDefined();
+    expect(result.artifacts['scene.geordi.map.json']).toBeDefined();
     expect(result.artifacts['types.ts']).toBeDefined();
 
     const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIr;
@@ -65,6 +68,22 @@ describe('compile() golden path', () => {
     expect(ir.scene.id).toBe('scene:terminal');
     expect(Array.isArray(ir.nodes)).toBe(true);
     expect(ir.nodes.length).toBe(2);
+    expect(ir.nodes.some((node) => 'sourceRef' in node)).toBe(false);
+
+    const sourceMap = parseJsonValue(String(result.artifacts['scene.geordi.map.json'].content)) as JsonObject;
+    expect(sourceMap.version).toBe('geordi-source-map/1');
+    expect(sourceMap.irVersion).toBe('geordi-ir/1');
+    expect(sourceMap.sourceFormat).toBe('canonical-ast-json');
+    expect(sourceMap.nodes).toEqual([
+      {
+        id: 'node:header',
+        source: { column: 9, file: 'fixtures/valid.scene.json', line: 10 },
+      },
+      {
+        id: 'node:title',
+        source: { column: 9, file: 'fixtures/valid.scene.json', line: 18 },
+      },
+    ]);
   });
 
   it('scene.geordi.json.receipt is present and contains irHash', async () => {
@@ -93,11 +112,15 @@ describe('compile() golden path', () => {
     expect(receipt.numericProfile).toBe(GEORDI_NUMERIC_PROFILE);
     expect(receipt.inputHash).toBe(sha256(source));
     expect(typeof receipt.rulesetFingerprint).toBe('string');
+    expect(typeof receipt.sourceMapHash).toBe('string');
+    expect(receipt.sourceMapHashAlg).toBe('sha256');
 
     // irHash must match sha256 of the emitted IR
     const irContent = String(result.artifacts['scene.geordi.json'].content);
+    const sourceMapContent = String(result.artifacts['scene.geordi.map.json'].content);
     expect(receipt.irHash).toBe(sha256(irContent));
     expect(receipt.irHashAlg).toBe('sha256');
+    expect(receipt.sourceMapHash).toBe(sha256(sourceMapContent));
   });
 
   it('inputHash in receipt matches sha256(input.source)', async () => {
