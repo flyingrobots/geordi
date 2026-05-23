@@ -302,14 +302,17 @@ describe('runtime-webgl public API', () => {
     const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
     installCanvasDocument(canvas);
 
+    const ir = makeIr();
     const rendered = renderGeordiToCanvas({
-      ...makeIr(),
+      ...ir,
       requires: [GEORDI_CORE_PROFILE, 'shape.rect'],
+      nodes: ir.nodes.filter((node) => node.kind === 'Rect'),
     });
 
     expect(rendered).toBe(canvas);
     expect(canvas.width).toBe(100);
     expect(canvas.height).toBe(50);
+    expect(context.calls.some((call) => call.name === 'fillText')).toBe(false);
   });
 
   it('keeps the deprecated IR helper as a compatibility alias', () => {
