@@ -53,6 +53,14 @@ export type {
 export { isPreparedGeordiScene, isGeordiScene } from './GeordiScene.js';
 
 export {
+  GEORDI_BASELINE_FEATURES,
+  GEORDI_CORE_PROFILE,
+  isGeordiFeatureRequirement,
+} from './GeordiFeatureProfile.js';
+
+export type { GeordiFeatureRequirement } from './GeordiFeatureProfile.js';
+
+export {
   GEORDI_IR_VERSION,
   GEORDI_IR_ARTIFACT_KEY,
   GEORDI_IR_RECEIPT_KEY,
