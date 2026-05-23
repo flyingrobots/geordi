@@ -4,7 +4,10 @@ use geordi_ir::{
     GEORDI_CORE_PROFILE, GEORDI_IR_VERSION, GEORDI_NUMERIC_PROFILE, GeordiIr, GeordiIrLoadError,
     GeordiIrValidationError, load_geordi_ir, validate_geordi_ir,
 };
-use geordi_renderer::{GeordiRuntimeUnsupportedProfileError, assert_native_runtime_profile};
+use geordi_renderer::{
+    GeordiRenderError, GeordiRuntimeUnsupportedProfileError, RenderedImage,
+    assert_native_runtime_profile, render_geordi_to_image,
+};
 use minifb::{Key, Window, WindowOptions};
 use serde::Deserialize;
 use std::env;
@@ -19,8 +22,6 @@ const FIXTURE_MANIFEST_PATH: &str = "fixture.json";
 const RENDER_FIXTURE_VERSION: &str = "geordi-render-fixture/1";
 const HASH_PREFIX: &str = "sha256:";
 const HASH_HEX_LENGTH: usize = 64;
-const WINDOW_BACKGROUND: u32 = 0x0010_1820;
-
 fn main() -> Result<(), NativeAppError> {
     run_from_env(env::args_os())
 }
@@ -70,6 +71,7 @@ impl NativeArgs {
 
 #[derive(Debug)]
 struct LoadedFixture {
+    image: RenderedImage,
     ir: GeordiIr,
     manifest: RenderFixtureManifest,
 }
@@ -120,6 +122,7 @@ enum NativeAppError {
     ManifestParse(NativeManifestParseError),
     ManifestValidation(NativeManifestValidationError),
     Output(NativeOutputError),
+    Render(GeordiRenderError),
     RuntimeProfile(GeordiRuntimeUnsupportedProfileError),
     Window(NativeWindowError),
 }
@@ -140,6 +143,7 @@ impl Error for NativeAppError {
             Self::ManifestParse(source) => Some(source),
             Self::ManifestValidation(source) => Some(source),
             Self::Output(source) => Some(source),
+            Self::Render(source) => Some(source),
             Self::RuntimeProfile(source) => Some(source),
             Self::Window(source) => Some(source),
         }
@@ -185,6 +189,12 @@ impl From<NativeManifestValidationError> for NativeAppError {
 impl From<NativeOutputError> for NativeAppError {
     fn from(error: NativeOutputError) -> Self {
         Self::Output(error)
+    }
+}
+
+impl From<GeordiRenderError> for NativeAppError {
+    fn from(error: GeordiRenderError) -> Self {
+        Self::Render(error)
     }
 }
 
@@ -380,8 +390,13 @@ fn load_fixture(fixture_dir: &Path) -> Result<LoadedFixture, NativeAppError> {
     validate_geordi_ir(&ir)?;
     validate_manifest_matches_ir(&manifest, &ir)?;
     assert_native_runtime_profile(&ir)?;
+    let image = render_geordi_to_image(&ir)?;
 
-    Ok(LoadedFixture { ir, manifest })
+    Ok(LoadedFixture {
+        image,
+        ir,
+        manifest,
+    })
 }
 
 fn load_manifest(path: &Path) -> Result<RenderFixtureManifest, NativeAppError> {
@@ -671,10 +686,7 @@ fn write_fixture_summary(
 fn open_fixture_window(loaded: &LoadedFixture) -> Result<(), NativeWindowError> {
     let width = loaded.manifest.canvas.width;
     let height = loaded.manifest.canvas.height;
-    let buffer_size = width
-        .checked_mul(height)
-        .ok_or_else(NativeWindowError::buffer_size)?;
-    let buffer = vec![WINDOW_BACKGROUND; buffer_size];
+    let buffer = minifb_buffer(&loaded.image)?;
     let mut window = Window::new(
         &window_title(loaded),
         width,
@@ -690,6 +702,28 @@ fn open_fixture_window(loaded: &LoadedFixture) -> Result<(), NativeWindowError> 
     }
 
     Ok(())
+}
+
+fn minifb_buffer(image: &RenderedImage) -> Result<Vec<u32>, NativeWindowError> {
+    let mut buffer = Vec::with_capacity(
+        image
+            .width()
+            .checked_mul(image.height())
+            .ok_or_else(NativeWindowError::buffer_size)?,
+    );
+
+    for rgba in image.rgba().chunks_exact(4) {
+        let red = u32::from(rgba[0]);
+        let green = u32::from(rgba[1]);
+        let blue = u32::from(rgba[2]);
+        buffer.push((red << 16) | (green << 8) | blue);
+    }
+
+    if buffer.is_empty() {
+        return Err(NativeWindowError::buffer_size());
+    }
+
+    Ok(buffer)
 }
 
 fn window_title(loaded: &LoadedFixture) -> String {

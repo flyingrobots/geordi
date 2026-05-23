@@ -122,10 +122,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `e0e7972`.
   - Verification: app starts and validates fixture without rendering claims beyond shell load.
 
-- [ ] **Slice 14: Rust rectangle renderer**
+- [x] **Slice 14: Rust rectangle renderer**
   - Render solid Rect nodes from the shared IR.
   - Use explicit draw order.
   - Fail loudly on unsupported node kinds or properties.
+  - Done: current slice.
   - Verification: visible native demo plus renderer tests where practical.
 
 - [ ] **Slice 15: Rust offscreen smoke mode**
