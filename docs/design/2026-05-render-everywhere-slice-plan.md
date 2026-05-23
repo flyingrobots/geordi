@@ -99,11 +99,12 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `5cb3aa3`.
   - Verification: unit test loads the shared fixture into typed structs.
 
-- [ ] **Slice 11: Rust IR validation**
+- [x] **Slice 11: Rust IR validation**
   - Validate IR version, numeric profile, feature requirements, finite numbers, scene dimensions,
     node kinds, and Rect props.
   - Reject unsupported features before drawing.
   - Use custom Rust error types.
+  - Done: current slice.
   - Verification: valid fixture plus invalid version/profile/feature/number/prop tests.
 
 - [ ] **Slice 12: Rust runtime profile**
