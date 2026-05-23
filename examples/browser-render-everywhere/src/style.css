@@ -95,13 +95,32 @@ select {
 }
 
 .viewport-slot {
+  display: grid;
+  align-items: center;
+  justify-items: center;
   min-height: 280px;
   border: 1px dashed #8aa3b8;
+  padding: 16px;
   background:
     linear-gradient(90deg, rgba(20, 54, 79, 0.06) 1px, transparent 1px),
     linear-gradient(rgba(20, 54, 79, 0.06) 1px, transparent 1px),
     #ffffff;
   background-size: 24px 24px;
+}
+
+.viewport-slot canvas {
+  display: block;
+  width: min(100%, 640px);
+  max-height: 100%;
+  border: 1px solid #101820;
+}
+
+.harness-failure {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  color: #991b1b;
+  font-weight: 700;
 }
 
 @media (max-width: 760px) {

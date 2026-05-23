@@ -63,11 +63,12 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `3208234`.
   - Verification: package build, typecheck, and lint.
 
-- [ ] **Slice 6: Browser render smoke**
+- [x] **Slice 6: Browser render smoke**
   - Browser harness fetches the shared fixture manifest and `scene.geordi.json`.
   - Parse JSON through the core JSON port.
   - Validate `geordi-ir/1`.
   - Call `renderGeordiToCanvas()` and mount exactly one canvas.
+  - Done: current slice.
   - Verification: browser harness renders the shared fixture manually and through a test path.
 
 - [ ] **Slice 7: Browser Playwright gate**

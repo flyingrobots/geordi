@@ -7,6 +7,19 @@ export class BrowserHarnessMountError extends Error {
   }
 }
 
+export class BrowserHarnessCanvasSlotError extends Error {
+  public readonly slotCount: number;
+
+  constructor(slotCount: number) {
+    super('Browser harness canvas slot invalid');
+    this.name = new.target.name;
+    this.slotCount = slotCount;
+  }
+}
+
+const CANVAS_SLOT_ATTRIBUTE = 'data-harness-canvas-slot' as const;
+const CANVAS_SLOT_SELECTOR = `[${CANVAS_SLOT_ATTRIBUTE}="true"]` as const;
+
 export function mountBrowserHarnessShell(
   root: HTMLElement | null,
   status: BrowserHarnessStatus,
@@ -16,6 +29,35 @@ export function mountBrowserHarnessShell(
   }
 
   root.replaceChildren(createShell(status));
+}
+
+export function mountRenderedFixtureCanvas(
+  root: ParentNode | null,
+  canvas: HTMLCanvasElement,
+): void {
+  if (root === null) {
+    throw new BrowserHarnessMountError();
+  }
+
+  const slots = root.querySelectorAll<HTMLElement>(CANVAS_SLOT_SELECTOR);
+  if (slots.length !== 1) {
+    throw new BrowserHarnessCanvasSlotError(slots.length);
+  }
+
+  const slot = slots.item(0);
+  canvas.setAttribute('data-geordi-render-canvas', 'true');
+  slot.replaceChildren(canvas);
+}
+
+export function mountBrowserHarnessFailure(root: HTMLElement | null): void {
+  if (root === null) {
+    return;
+  }
+
+  const failure = document.createElement('section');
+  failure.className = 'harness-failure';
+  failure.textContent = 'Render failed';
+  root.replaceChildren(failure);
 }
 
 function createShell(status: BrowserHarnessStatus): HTMLElement {
@@ -67,6 +109,6 @@ function appendStatus(grid: HTMLElement, label: string, value: string): void {
 function createViewportSlot(): HTMLElement {
   const viewport = document.createElement('section');
   viewport.className = 'viewport-slot';
-  viewport.setAttribute('data-harness-canvas-slot', 'true');
+  viewport.setAttribute(CANVAS_SLOT_ATTRIBUTE, 'true');
   return viewport;
 }
