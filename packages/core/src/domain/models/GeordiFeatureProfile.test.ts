@@ -45,7 +45,9 @@ describe('Geordi feature profile', () => {
       ...GEORDI_BASELINE_FEATURES,
       ...GEORDI_STRICT_TEXT_FEATURES,
     ]);
-    expect(GEORDI_BASELINE_FEATURES).not.toContain('text.glyphRuns');
+    for (const feature of GEORDI_STRICT_TEXT_FEATURES) {
+      expect(GEORDI_BASELINE_FEATURES).not.toContain(feature);
+    }
   });
 
   it('classifies known feature requirements', () => {

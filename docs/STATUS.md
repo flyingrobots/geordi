@@ -136,7 +136,7 @@ Immediate:
 
 Short term:
 
-5. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
+1. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
 
 ## Decision Log
 

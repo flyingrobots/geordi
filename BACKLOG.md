@@ -87,7 +87,8 @@ Acceptance criteria:
 
 ### Define the strict text/font profile
 **Priority**: P0
-**Source**: v0 design laws, [`docs/design/2026-05-strict-text-font-profile.md`](./docs/design/2026-05-strict-text-font-profile.md)
+**Source**: v0 design laws,
+[`docs/design/2026-05-strict-text-font-profile.md`](./docs/design/2026-05-strict-text-font-profile.md)
 **Status**: Ready for implementation. The current baseline remains `text.raw-runtime-shaping`;
 strict text features must be known to the IR contract without being emitted by default until the
 compiler can lower text deterministically.

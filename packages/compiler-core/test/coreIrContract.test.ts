@@ -3,6 +3,7 @@ import {
   GEORDI_BASELINE_FEATURES,
   GEORDI_KNOWN_FEATURES,
   GEORDI_NUMERIC_PROFILE,
+  GEORDI_STRICT_TEXT_FEATURES,
   validateGeordiIr,
 } from '@flyingrobots/geordi-core';
 import type { GeordiIr } from '@flyingrobots/geordi-core';
@@ -59,5 +60,8 @@ describe('compiler-core to geordi-core IR contract', () => {
     expect((ir as GeordiIr).numericProfile).toBe(GEORDI_NUMERIC_PROFILE);
     expect((ir as GeordiIr).requires).toEqual(GEORDI_BASELINE_FEATURES);
     expect((ir as GeordiIr).requires).not.toEqual(GEORDI_KNOWN_FEATURES);
+    for (const feature of GEORDI_STRICT_TEXT_FEATURES) {
+      expect((ir as GeordiIr).requires).not.toContain(feature);
+    }
   });
 });

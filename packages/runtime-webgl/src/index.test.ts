@@ -305,7 +305,7 @@ describe('runtime-webgl public API', () => {
     const ir = makeIr();
     const rendered = renderGeordiToCanvas({
       ...ir,
-      requires: [GEORDI_CORE_PROFILE, 'shape.rect'],
+      requires: [GEORDI_CORE_PROFILE, 'layout.resolved', 'shape.rect', 'paint.solid'],
       nodes: ir.nodes.filter((node) => node.kind === 'Rect'),
     });
 

@@ -4,6 +4,7 @@ import {
   GEORDI_BASELINE_FEATURES,
   GEORDI_KNOWN_FEATURES,
   GEORDI_NUMERIC_PROFILE,
+  GEORDI_STRICT_TEXT_FEATURES,
 } from '@flyingrobots/geordi-core';
 import { compile } from '../src/compile/compile';
 import { GeordiErrorCode } from '../src/errors';
@@ -71,7 +72,9 @@ describe('compile() golden path', () => {
     expect(ir.numericProfile).toBe(GEORDI_NUMERIC_PROFILE);
     expect(ir.requires).toEqual(GEORDI_BASELINE_FEATURES);
     expect(ir.requires).not.toEqual(GEORDI_KNOWN_FEATURES);
-    expect(ir.requires).not.toContain('text.glyphRuns');
+    for (const feature of GEORDI_STRICT_TEXT_FEATURES) {
+      expect(ir.requires).not.toContain(feature);
+    }
     expect(ir.scene.id).toBe('scene:terminal');
     expect(Array.isArray(ir.nodes)).toBe(true);
     expect(ir.nodes.length).toBe(2);
@@ -117,6 +120,9 @@ describe('compile() golden path', () => {
     expect(receipt.comparatorVersion).toBe('1');
     expect(receipt.featureRequirements).toEqual(GEORDI_BASELINE_FEATURES);
     expect(receipt.featureRequirements).not.toEqual(GEORDI_KNOWN_FEATURES);
+    for (const feature of GEORDI_STRICT_TEXT_FEATURES) {
+      expect(receipt.featureRequirements).not.toContain(feature);
+    }
     expect(receipt.featureRequirementsHash).toBe(
       sha256(GEORDI_BASELINE_FEATURES.join('\n')),
     );
