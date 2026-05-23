@@ -1,0 +1,106 @@
+{
+  "irVersion": "geordi-ir/1",
+  "nodes": [
+    {
+      "id": "background",
+      "kind": "Rect",
+      "props": {
+        "fill": "#101820",
+        "height": 360,
+        "width": 640,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "panel",
+      "kind": "Rect",
+      "props": {
+        "fill": "#f8fafc",
+        "height": 256,
+        "width": 528,
+        "x": 56,
+        "y": 52
+      }
+    },
+    {
+      "id": "accent-bar",
+      "kind": "Rect",
+      "props": {
+        "fill": "#2dd4bf",
+        "height": 12,
+        "width": 528,
+        "x": 56,
+        "y": 52
+      }
+    },
+    {
+      "id": "title-bar",
+      "kind": "Rect",
+      "props": {
+        "fill": "#0f172a",
+        "height": 24,
+        "width": 240,
+        "x": 96,
+        "y": 96
+      }
+    },
+    {
+      "id": "content-line-primary",
+      "kind": "Rect",
+      "props": {
+        "fill": "#cbd5e1",
+        "height": 16,
+        "width": 360,
+        "x": 96,
+        "y": 140
+      }
+    },
+    {
+      "id": "content-line-secondary",
+      "kind": "Rect",
+      "props": {
+        "fill": "#e2e8f0",
+        "height": 16,
+        "width": 304,
+        "x": 96,
+        "y": 170
+      }
+    },
+    {
+      "id": "button",
+      "kind": "Rect",
+      "props": {
+        "fill": "#2563eb",
+        "height": 40,
+        "width": 132,
+        "x": 96,
+        "y": 226
+      }
+    },
+    {
+      "id": "status-indicator",
+      "kind": "Rect",
+      "props": {
+        "fill": "#22c55e",
+        "height": 28,
+        "width": 28,
+        "x": 504,
+        "y": 92
+      }
+    }
+  ],
+  "numericProfile": "geordi-finite-binary64/1",
+  "requires": [
+    "geordi/core/1",
+    "layout.resolved",
+    "shape.rect",
+    "paint.solid"
+  ],
+  "scene": {
+    "height": 360,
+    "id": "render-everywhere:hello-panel",
+    "units": "px",
+    "width": 640
+  }
+}

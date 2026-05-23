@@ -33,10 +33,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `cbef665`.
   - Verification: `pnpm test:docs`, `git diff --cached --check`.
 
-- [ ] **Slice 2: Shared fixture root**
+- [x] **Slice 2: Shared fixture root**
   - Add `fixtures/render-everywhere/hello-panel`.
   - Add `fixture.json`, `scene.geordi.json`, `scene.geordi.json.receipt`, and `README.md`.
   - Keep the scene rectangle-only and declare only the features actually used.
+  - Done: current slice.
   - Verification: fixture JSON parses through the core JSON port.
 
 - [ ] **Slice 3: Fixture manifest validator**
