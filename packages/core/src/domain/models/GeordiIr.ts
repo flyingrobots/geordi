@@ -1,11 +1,16 @@
 import type { JsonObject, JsonValue } from './GeordiScene.js';
+import {
+  GEORDI_NUMERIC_PROFILE,
+  isFiniteGraphicsNumber,
+  type GeordiNumericProfile,
+} from './GeordiNumericProfile.js';
 
 export const GEORDI_IR_VERSION = 'geordi-ir/1' as const;
 export const GEORDI_IR_ARTIFACT_KEY = 'scene.geordi.json' as const;
 export const GEORDI_IR_RECEIPT_KEY = 'scene.geordi.json.receipt' as const;
 export const GEORDI_IR_HASH_ALGORITHM = 'sha256' as const;
 
-export interface GeordiIrSceneV1 extends JsonObject {
+export interface GeordiIrScene extends JsonObject {
   readonly id: string;
   readonly width: number;
   readonly height: number;
@@ -13,7 +18,7 @@ export interface GeordiIrSceneV1 extends JsonObject {
   readonly background?: string;
 }
 
-export interface GeordiIrNodeV1 extends JsonObject {
+export interface GeordiIrNode extends JsonObject {
   readonly id: string;
   readonly kind: string;
   readonly parentId?: string;
@@ -24,7 +29,7 @@ export interface GeordiIrNodeV1 extends JsonObject {
   readonly style?: JsonObject;
 }
 
-export interface GeordiIrBindingV1 extends JsonObject {
+export interface GeordiIrBinding extends JsonObject {
   readonly id: string;
   readonly targetNodeId: string;
   readonly targetProp: string;
@@ -32,26 +37,27 @@ export interface GeordiIrBindingV1 extends JsonObject {
   readonly when?: string;
 }
 
-export interface GeordiIrKeyframeV1 extends JsonObject {
+export interface GeordiIrKeyframe extends JsonObject {
   readonly t: number;
   readonly value: JsonValue;
 }
 
-export interface GeordiIrAnimationV1 extends JsonObject {
+export interface GeordiIrAnimation extends JsonObject {
   readonly id: string;
   readonly targetNodeId: string;
   readonly property: string;
-  readonly keyframes: readonly GeordiIrKeyframeV1[];
+  readonly keyframes: readonly GeordiIrKeyframe[];
   readonly easing?: string;
   readonly loop?: boolean;
 }
 
-export interface GeordiIrV1 extends JsonObject {
+export interface GeordiIr extends JsonObject {
   readonly irVersion: typeof GEORDI_IR_VERSION;
-  readonly scene: GeordiIrSceneV1;
-  readonly nodes: readonly GeordiIrNodeV1[];
-  readonly bindings?: readonly GeordiIrBindingV1[];
-  readonly animations?: readonly GeordiIrAnimationV1[];
+  readonly numericProfile: GeordiNumericProfile;
+  readonly scene: GeordiIrScene;
+  readonly nodes: readonly GeordiIrNode[];
+  readonly bindings?: readonly GeordiIrBinding[];
+  readonly animations?: readonly GeordiIrAnimation[];
 }
 
 export interface GeordiIrValidationIssue extends JsonObject {
@@ -64,11 +70,11 @@ export interface GeordiIrValidationResult {
   readonly issues: readonly GeordiIrValidationIssue[];
 }
 
-export function isGeordiIrV1(value: JsonValue | undefined): value is GeordiIrV1 {
-  return validateGeordiIrV1(value).ok;
+export function isGeordiIr(value: JsonValue | undefined): value is GeordiIr {
+  return validateGeordiIr(value).ok;
 }
 
-export function validateGeordiIrV1(value: JsonValue | undefined): GeordiIrValidationResult {
+export function validateGeordiIr(value: JsonValue | undefined): GeordiIrValidationResult {
   const issues: GeordiIrValidationIssue[] = [];
 
   if (!isJsonObject(value)) {
@@ -78,6 +84,14 @@ export function validateGeordiIrV1(value: JsonValue | undefined): GeordiIrValida
 
   if (property(value, 'irVersion') !== GEORDI_IR_VERSION) {
     pushIssue(issues, '$.irVersion', `IR version must be "${GEORDI_IR_VERSION}"`);
+  }
+
+  if (property(value, 'numericProfile') !== GEORDI_NUMERIC_PROFILE) {
+    pushIssue(
+      issues,
+      '$.numericProfile',
+      `IR numeric profile must be "${GEORDI_NUMERIC_PROFILE}"`,
+    );
   }
 
   validateScene(property(value, 'scene'), issues);
@@ -299,7 +313,7 @@ function isJsonArray(value: JsonValue | undefined): value is readonly JsonValue[
 }
 
 function isFiniteNumber(value: JsonValue | undefined): value is number {
-  return typeof value === 'number' && Number.isFinite(value);
+  return isFiniteGraphicsNumber(value);
 }
 
 function property(object: JsonObject, key: string): JsonValue | undefined {

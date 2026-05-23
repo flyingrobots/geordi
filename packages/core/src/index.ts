@@ -6,3 +6,4 @@
  */
 
 export * from './domain/models/index.js';
+export * from './ports/json.js';

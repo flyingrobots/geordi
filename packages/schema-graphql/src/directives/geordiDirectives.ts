@@ -75,7 +75,7 @@ export const geordiStyleDirective = new GraphQLDirective({
   },
 });
 
-export const GEORDI_V1_DIRECTIVES: readonly GraphQLDirective[] = [
+export const GEORDI_DIRECTIVES: readonly GraphQLDirective[] = [
   geordiSceneDirective,
   geordiNodeDirective,
   geordiBindDirective,
@@ -138,6 +138,6 @@ export function withGeordiDirectives(baseSchemaConfig: {
 }): GraphQLSchema {
   return new GraphQLSchema({
     ...baseSchemaConfig,
-    directives: [...GEORDI_V1_DIRECTIVES],
+    directives: [...GEORDI_DIRECTIVES],
   });
 }

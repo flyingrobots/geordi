@@ -83,7 +83,7 @@ export class GeordiGeneratorPlugin {
       source: sdl,
       filename: 'schema.graphql',
       options: {
-        target: 'geordi-ir-v1',
+        target: 'geordi-ir',
         emit: {
           irJson: true,
           tsTypes: true,

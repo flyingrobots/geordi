@@ -1,7 +1,7 @@
 import { type DocumentNode, type ObjectTypeDefinitionNode, Kind } from 'graphql';
 import { ParseError, GeordiErrorCode } from '@flyingrobots/geordi-compiler-core';
 import type { Diagnostic, SourceRef } from '@flyingrobots/geordi-compiler-core';
-import { validateGeordiDirectiveVersion } from '../directives/v1.js';
+import { validateGeordiDirectiveVersion } from '../directives/geordiDirectives.js';
 import {
   readOptionalStringArg,
   readRequiredIntArg,

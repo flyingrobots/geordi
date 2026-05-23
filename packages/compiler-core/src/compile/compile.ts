@@ -22,7 +22,7 @@ import { emitGeordiIrArtifact, emitReceiptArtifact, IR_ARTIFACT_KEY, IR_RECEIPT_
 import { emitTypesArtifact } from './emitTypes.js';
 
 const DEFAULT_OPTIONS: CompileOptions = {
-  target: 'geordi-ir-v1',
+  target: 'geordi-ir',
   emit: {
     irJson: true,
     tsTypes: true,

@@ -1,13 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
-import { parseJsonValue } from '../packages/compiler-core/dist/index.js';
+import { parseJsonValue } from '../packages/core/dist/index.js';
 
 const checks = [
   {
     packageName: '@flyingrobots/geordi-core',
     packageDir: 'packages/core',
-    exports: ['isGeordiScene', 'isRectNode'],
+    exports: ['GEORDI_NUMERIC_PROFILE', 'isGeordiScene', 'isRectNode', 'parseJsonValue'],
   },
   {
     packageName: '@flyingrobots/geordi-compiler-core',
@@ -22,7 +22,7 @@ const checks = [
   {
     packageName: '@flyingrobots/geordi-runtime-webgl',
     packageDir: 'packages/runtime-webgl',
-    exports: ['GeordiWebGLRenderer', 'renderGeordiToCanvas'],
+    exports: ['GEORDI_WEBGL_RUNTIME_PROFILE', 'GeordiWebGLRenderer', 'renderGeordiToCanvas'],
   },
   {
     packageName: '@flyingrobots/geordi-wesley-generator',

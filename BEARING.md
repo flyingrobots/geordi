@@ -1,8 +1,8 @@
 # Geordi Bearing
 
 **Date**: 2026-05-22
-**Branch baseline**: `main` at `16395d0`
-**Current head when written**: `16395d0`
+**Branch baseline**: `main` at `c4597a6`
+**Current head when written**: `c4597a6`
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
@@ -38,11 +38,15 @@ Completed:
 - The draw-ready runtime scene shape is explicitly named `PreparedGeordiScene`; compatibility
   aliases remain for the v0.1 migration, but `geordi-ir/1` is the documented renderer contract.
 - Compiler-emitted IR is covered end to end through runtime rendering.
+- `@flyingrobots/geordi-core` owns the canonical JSON port, including parse/stringify/normalize
+  behavior and custom JSON error types.
+- `geordi-ir/1` declares `numericProfile: "geordi-finite-binary64/1"`; compiler receipts include
+  that profile, and runtime-webgl rejects unsupported profile requirements before rendering.
 
 Still true:
 
-- The graphics numeric profile is only partially defined. JSON is deterministic, but geometry,
-  vectors, matrices, transforms, and runtime capability declaration are not fully specified.
+- Multi-step geometry, vector, matrix, transform, and animation operation-order rules still need to
+  be specified as those features are introduced.
 
 ## Immediate Moves
 
@@ -50,14 +54,13 @@ Still true:
    - GitHub Actions Dependabot PR #10 was mergeable and has been merged.
    - Conflicting npm Dependabot PR #8 should be recreated by Dependabot before any manual lockfile
      work.
-2. Define and enforce the graphics numeric profile.
-3. Move the canonical JSON port into core so IR validation, deterministic JSON, and numeric law
-   share the same package boundary.
+2. Add source maps and diagnostic UX improvements.
+3. Define the next explicit feature/capability profile beyond the v0 baseline.
 
 ## Recommended P0 Order
 
-1. Define and enforce the graphics numeric profile.
-2. Move canonical JSON ownership into `@flyingrobots/geordi-core`.
+1. Add source maps and diagnostic UX improvements.
+2. Define the next feature/capability profile beyond the v0 baseline.
 
 ## Dependency Work
 

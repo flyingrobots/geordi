@@ -21,15 +21,16 @@ Pure, framework-agnostic compilation engine.
 - Error taxonomy with stable `GEORDI_E_*` and `GEORDI_W_*` codes.
 - Compile orchestrator with parse, canonicalize, validate, and emit phases.
 - GraphQL SDL and canonical JSON input paths.
-- Deterministic JSON port for canonical parse/stringify boundaries.
+- Uses the core-owned deterministic JSON port for canonical parse/stringify boundaries.
 - Deterministic IR, receipt, and TypeScript type emission.
+- IR and receipt emission declare the v0 numeric profile.
 - Post-build public export smoke coverage.
 
 #### `@flyingrobots/geordi-schema-graphql`
 
 GraphQL SDL to canonical AST adapter.
 
-- Directive definitions for v1.
+- Directive definitions with an explicit directive version contract.
 - GraphQL parser wrapper with source naming.
 - Scene and node extraction.
 - Canonical AST transform.
@@ -49,6 +50,9 @@ Wesley GeneratorPlugin adapter scaffold.
 Core domain package.
 
 - Versioned `geordi-ir/1` constants, structural types, and validation.
+- Canonical JSON port with deterministic parse/stringify/normalize behavior and custom JSON
+  errors.
+- v0 numeric profile constant `geordi-finite-binary64/1` and graphics-number helpers.
 - Draw-ready runtime scene aliases named `PreparedGeordiScene` and `PreparedGeordiNode`.
 - Compatibility aliases for the older scene names remain during the v0.1 migration.
 
@@ -61,6 +65,8 @@ Canvas-backed WebGL-runtime scaffold.
 - `renderGeordiToCanvas()` is the primary public `geordi-ir/1` rendering API.
 - `renderPreparedSceneToCanvas()` renders draw-ready runtime scenes explicitly.
 - Runtime-bound IR validation and fail-loud prop lowering use custom runtime error types.
+- Runtime capability profile declares supported IR version, numeric profile, node kinds, and visual
+  features.
 - Compiler-emitted IR is rendered through the runtime contract in an integration test.
 
 ## Infrastructure
@@ -85,10 +91,10 @@ Latest full local gate during the core IR runtime-contract work:
 | --- | ---: | --- |
 | `@flyingrobots/geordi-compiler-core` | 73 | Green |
 | `@flyingrobots/geordi-schema-graphql` | 51 | Green |
-| `@flyingrobots/geordi-core` | 12 | Green |
-| `@flyingrobots/geordi-runtime-webgl` | 9 | Green |
+| `@flyingrobots/geordi-core` | 26 | Green |
+| `@flyingrobots/geordi-runtime-webgl` | 12 | Green |
 | `@flyingrobots/geordi-wesley-generator` | 3 | Green |
-| **Total package tests** | **148** | Green |
+| **Total package tests** | **165** | Green |
 
 Additional gates:
 
@@ -107,14 +113,12 @@ Immediate:
 1. Keep dependency hygiene clean.
    - GitHub Actions Dependabot update PR #10 has been merged.
    - npm/yarn Dependabot PR #8 was stale and conflicting; Dependabot has been asked to recreate it.
-2. Move the canonical JSON port into `@flyingrobots/geordi-core`.
-3. Define the graphics numeric profile for geometry, vectors, matrices, transforms, and runtime
-   capability requirements.
+2. Add source maps and diagnostic UX improvements.
+3. Define the next feature/capability profile beyond the v0 baseline.
 
 Short term:
 
-4. Add source maps and diagnostic UX improvements.
-5. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
+4. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
 
 ## Decision Log
 
@@ -132,7 +136,7 @@ Short term:
    - Why: standard, available, and compatible with current tooling.
    - Trade-off: slower than future alternatives such as BLAKE3.
 
-4. **Canonical JSON boundary**: all production JSON ingress/egress goes through the compiler-core
+4. **Canonical JSON boundary**: all production JSON ingress/egress goes through the core-owned
    JSON port.
    - Why: deterministic bytes, strict non-finite number rejection, and one place to define JSON law.
    - Trade-off: boundary code is stricter and less convenient than native `JSON.parse/stringify`.

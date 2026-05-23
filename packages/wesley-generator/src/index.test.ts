@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseJsonValue } from '@flyingrobots/geordi-compiler-core';
-import type { GeordiIrV1 } from '@flyingrobots/geordi-compiler-core';
+import type { GeordiIr } from '@flyingrobots/geordi-compiler-core';
 import { GeordiGenerationFailedError, GeordiGeneratorPlugin } from './index';
 
 const MINIMAL_SDL = `
@@ -69,7 +69,7 @@ describe('wesley-generator public API', () => {
       'types.ts',
     ]);
 
-    const ir = parseJsonValue(stringArtifact(output, 'scene.geordi.json')) as GeordiIrV1;
+    const ir = parseJsonValue(stringArtifact(output, 'scene.geordi.json')) as GeordiIr;
     expect(ir.irVersion).toBe('geordi-ir/1');
     expect(ir.scene.width).toBe(320);
     expect(ir.scene.height).toBe(200);

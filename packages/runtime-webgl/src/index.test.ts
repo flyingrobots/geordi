@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  isGeordiIrV1,
-  type GeordiIrV1,
+  GEORDI_NUMERIC_PROFILE,
+  isGeordiIr,
+  type GeordiIr,
   type PreparedGeordiScene,
 } from '@flyingrobots/geordi-core';
 import {
@@ -13,7 +14,9 @@ import {
   GeordiCanvasContextUnavailableError,
   GeordiRuntimeInvalidIrError,
   GeordiRuntimeInvalidNodePropsError,
+  GeordiRuntimeUnsupportedProfileError,
   GeordiWebGLRenderer,
+  GEORDI_WEBGL_RUNTIME_PROFILE,
   renderGeordiIrToCanvas,
   renderPreparedSceneToCanvas,
   renderGeordiToCanvas,
@@ -180,9 +183,10 @@ function makePreparedScene(): PreparedGeordiScene {
   };
 }
 
-function makeIr(): GeordiIrV1 {
+function makeIr(): GeordiIr {
   return {
     irVersion: 'geordi-ir/1',
+    numericProfile: GEORDI_NUMERIC_PROFILE,
     scene: {
       id: 'scene:runtime-ir',
       width: 100,
@@ -227,6 +231,15 @@ describe('runtime-webgl public API', () => {
     expect(GeordiWebGLRenderer).toBeTypeOf('function');
     expect(renderGeordiToCanvas).toBeTypeOf('function');
     expect(renderPreparedSceneToCanvas).toBeTypeOf('function');
+  });
+
+  it('exports a runtime capability profile', () => {
+    expect(GEORDI_WEBGL_RUNTIME_PROFILE).toEqual({
+      irVersion: 'geordi-ir/1',
+      numericProfile: GEORDI_NUMERIC_PROFILE,
+      nodeKinds: ['Rect', 'Text', 'Group', 'Image'],
+      visualFeatures: ['solid-fill', 'solid-stroke', 'opacity', 'corner-radius', 'text-fill'],
+    });
   });
 
   it('renders prepared scenes to a canvas context', () => {
@@ -291,13 +304,35 @@ describe('runtime-webgl public API', () => {
         width: 0,
         height: 50,
       },
-    } as object as GeordiIrV1;
+    } as object as GeordiIr;
 
     expect(() => renderGeordiToCanvas(invalidIr)).toThrow(GeordiRuntimeInvalidIrError);
   });
 
+  it('throws a custom error for unsupported runtime profile requirements', () => {
+    const unsupportedProfileIr = {
+      ...makeIr(),
+      numericProfile: 'geordi-fixed-point-px6/1',
+    } as object as GeordiIr;
+
+    expect(() => renderGeordiToCanvas(unsupportedProfileIr)).toThrow(
+      GeordiRuntimeUnsupportedProfileError,
+    );
+  });
+
+  it('throws a custom error for unsupported IR versions', () => {
+    const unsupportedVersionIr = {
+      ...makeIr(),
+      irVersion: 'geordi-ir/2',
+    } as object as GeordiIr;
+
+    expect(() => renderGeordiToCanvas(unsupportedVersionIr)).toThrow(
+      GeordiRuntimeUnsupportedProfileError,
+    );
+  });
+
   it('throws a custom error when required runtime node props are missing', () => {
-    const invalidIr: GeordiIrV1 = {
+    const invalidIr: GeordiIr = {
       ...makeIr(),
       nodes: [
         {
@@ -316,7 +351,7 @@ describe('runtime-webgl public API', () => {
   });
 
   it('throws a custom error when required string props are invalid', () => {
-    const invalidIr: GeordiIrV1 = {
+    const invalidIr: GeordiIr = {
       ...makeIr(),
       nodes: [
         {
@@ -386,7 +421,7 @@ describe('runtime-webgl public API', () => {
       format: 'canonical-ast-json',
       source,
       options: {
-        target: 'geordi-ir-v1',
+        target: 'geordi-ir',
         emit: {
           irJson: true,
           tsTypes: false,
@@ -401,7 +436,7 @@ describe('runtime-webgl public API', () => {
 
     const artifact = result.artifacts['scene.geordi.json'];
     const ir = parseJsonValue(String(artifact.content));
-    if (!isGeordiIrV1(ir)) {
+    if (!isGeordiIr(ir)) {
       throw new RuntimeContractTestError('Invalid IR artifact');
     }
 

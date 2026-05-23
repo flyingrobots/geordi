@@ -1,3 +1,3 @@
-export * from './directives/v1.js';
+export * from './directives/geordiDirectives.js';
 export { graphqlToCanonicalAst } from './adapter.js';
 export type { GraphqlToCanonicalAst } from './adapter.js';

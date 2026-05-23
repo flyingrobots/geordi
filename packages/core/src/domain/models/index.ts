@@ -57,17 +57,26 @@ export {
   GEORDI_IR_ARTIFACT_KEY,
   GEORDI_IR_RECEIPT_KEY,
   GEORDI_IR_HASH_ALGORITHM,
-  isGeordiIrV1,
-  validateGeordiIrV1,
+  isGeordiIr,
+  validateGeordiIr,
 } from './GeordiIr.js';
 
 export type {
-  GeordiIrSceneV1,
-  GeordiIrNodeV1,
-  GeordiIrBindingV1,
-  GeordiIrKeyframeV1,
-  GeordiIrAnimationV1,
-  GeordiIrV1,
+  GeordiIrScene,
+  GeordiIrNode,
+  GeordiIrBinding,
+  GeordiIrKeyframe,
+  GeordiIrAnimation,
+  GeordiIr,
   GeordiIrValidationIssue,
   GeordiIrValidationResult,
 } from './GeordiIr.js';
+
+export {
+  GEORDI_NUMERIC_PROFILE,
+  GeordiInvalidGraphicsNumberError,
+  isFiniteGraphicsNumber,
+  requireFiniteGraphicsNumber,
+} from './GeordiNumericProfile.js';
+
+export type { GeordiNumericProfile } from './GeordiNumericProfile.js';

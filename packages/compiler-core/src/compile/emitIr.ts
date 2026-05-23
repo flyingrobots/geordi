@@ -6,6 +6,7 @@ import {
   GEORDI_IR_HASH_ALGORITHM,
   GEORDI_IR_RECEIPT_KEY,
   GEORDI_IR_VERSION,
+  GEORDI_NUMERIC_PROFILE,
 } from '@flyingrobots/geordi-core';
 import { stringifyCanonicalJson } from '../ports/json.js';
 import { hashString } from '../canonical/hashing.js';
@@ -15,6 +16,7 @@ export const COMPARATOR_VERSION = '1' as const;
 export const IR_VERSION = GEORDI_IR_VERSION;
 export const IR_ARTIFACT_KEY = GEORDI_IR_ARTIFACT_KEY;
 export const IR_RECEIPT_KEY = GEORDI_IR_RECEIPT_KEY;
+export const NUMERIC_PROFILE = GEORDI_NUMERIC_PROFILE;
 
 /**
  * Phase 1: Topological sort by parentId DAG.
@@ -29,6 +31,7 @@ export function emitGeordiIrArtifact(ast: CanonicalSceneAst): Artifact {
   const content = stringifyCanonicalJson(
     {
       irVersion: IR_VERSION,
+      numericProfile: NUMERIC_PROFILE,
       scene: ast.scene,
       nodes: sorted,
       bindings: ast.bindings ?? [],
@@ -63,6 +66,7 @@ export function emitReceiptArtifact(
       irHash,
       irHashAlg: IR_HASH_ALG,
       irVersion: IR_VERSION,
+      numericProfile: NUMERIC_PROFILE,
       rulesetFingerprint,
     },
     { space: 2 },

@@ -118,6 +118,7 @@ See [`docs/ERROR_CODES.md`](./ERROR_CODES.md) for complete taxonomy.
 
 - **AST version**: `astVersion: "1"` (canonical AST)
 - **IR version**: `irVersion: "geordi-ir/1"` (output format)
+- **Numeric profile**: `numericProfile: "geordi-finite-binary64/1"` (finite binary64 graphics numbers)
 - **Directive version**: `v: "1"` (GraphQL directives)
 
 All versions are explicit and validated. Unknown versions → hard error.
@@ -126,7 +127,7 @@ All versions are explicit and validated. Unknown versions → hard error.
 
 Current limitations in v0.1:
 - GraphQL directive args use JSON strings for complex props (ugly but pragmatic)
-- Single output target (`geordi-ir-v1`)
+- Single output target (`geordi-ir`)
 - No binary packer (`.geordib` format)
 
 Planned for v0.2:

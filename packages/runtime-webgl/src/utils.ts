@@ -2,7 +2,7 @@
  * Utility functions for Geordi rendering
  */
 
-import type { GeordiIrV1, PreparedGeordiScene } from '@flyingrobots/geordi-core';
+import type { GeordiIr, PreparedGeordiScene } from '@flyingrobots/geordi-core';
 import { GeordiWebGLRenderer } from './WebGLRenderer.js';
 import { prepareGeordiIr } from './prepareGeordiIr.js';
 
@@ -22,7 +22,7 @@ export function renderPreparedSceneToCanvas(scene: PreparedGeordiScene): HTMLCan
 }
 
 /** Render public `geordi-ir/1` to a canvas element. */
-export function renderGeordiToCanvas(ir: GeordiIrV1): HTMLCanvasElement {
+export function renderGeordiToCanvas(ir: GeordiIr): HTMLCanvasElement {
   return renderPreparedSceneToCanvas(prepareGeordiIr(ir));
 }
 

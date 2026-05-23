@@ -11,6 +11,16 @@ export {
   GeordiRuntimeUnsupportedNodeKindError,
 } from './prepareGeordiIr.js';
 export {
+  assertSupportedRuntimeProfile,
+  GEORDI_WEBGL_RUNTIME_PROFILE,
+  GeordiRuntimeUnsupportedProfileError,
+} from './profile.js';
+export type {
+  GeordiRuntimeNodeKind,
+  GeordiRuntimeProfile,
+  GeordiRuntimeVisualFeature,
+} from './profile.js';
+export {
   renderGeordiIrToCanvas,
   renderGeordiToCanvas,
   renderPreparedSceneToCanvas,
