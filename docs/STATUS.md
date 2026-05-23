@@ -1,8 +1,8 @@
 # Geordi Compiler Status
 
-**Date**: 2026-05-22
+**Date**: 2026-05-23
 **Version**: 0.1.0-dev
-**Milestone**: First stabilization pass merged
+**Milestone**: Source-map and diagnostic UX work starting from `main` at `2dcf510`
 
 See [`../BEARING.md`](../BEARING.md) for the current operating map.
 
@@ -24,6 +24,8 @@ Pure, framework-agnostic compilation engine.
 - Uses the core-owned deterministic JSON port for canonical parse/stringify boundaries.
 - Deterministic IR, receipt, and TypeScript type emission.
 - IR and receipt emission declare the v0 numeric profile.
+- Current public IR API names are `GeordiIr`, `validateGeordiIr()`, and `isGeordiIr()`; versioning
+  remains in serialized contract values such as `irVersion: "geordi-ir/1"`.
 - Post-build public export smoke coverage.
 
 #### `@flyingrobots/geordi-schema-graphql`
@@ -53,6 +55,7 @@ Core domain package.
 - Canonical JSON port with deterministic parse/stringify/normalize behavior and custom JSON
   errors.
 - v0 numeric profile constant `geordi-finite-binary64/1` and graphics-number helpers.
+- Current `GeordiIr` structural types and validation for the `geordi-ir/1` payload contract.
 - Draw-ready runtime scene aliases named `PreparedGeordiScene` and `PreparedGeordiNode`.
 - Compatibility aliases for the older scene names remain during the v0.1 migration.
 
@@ -110,11 +113,9 @@ Additional gates:
 
 Immediate:
 
-1. Keep dependency hygiene clean.
-   - GitHub Actions Dependabot update PR #10 has been merged.
-   - npm/yarn Dependabot PR #8 was stale and conflicting; Dependabot has been asked to recreate it.
-2. Add source maps and diagnostic UX improvements.
-3. Define the next feature/capability profile beyond the v0 baseline.
+1. Add source maps and diagnostic UX improvements.
+2. Define the next feature/capability profile beyond the v0 baseline.
+3. Keep dependency hygiene clean; there are no open PRs at this refresh point.
 
 Short term:
 
