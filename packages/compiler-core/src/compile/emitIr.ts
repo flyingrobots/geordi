@@ -90,11 +90,15 @@ export function emitReceiptArtifact(
   const inputHash = hashString(input.source);
   const irHash = hashString(irContent);
   const sourceMapHash = hashString(sourceMapContent);
+  const featureRequirementsHash = hashString(FEATURE_REQUIREMENTS.join('\n'));
   const rulesetFingerprint = hashString([...ruleIds].sort().join('\n'));
 
   const content = stringifyCanonicalJson(
     {
       comparatorVersion: COMPARATOR_VERSION,
+      featureRequirements: [...FEATURE_REQUIREMENTS],
+      featureRequirementsHash,
+      featureRequirementsHashAlg: IR_HASH_ALG,
       inputHash,
       irHash,
       irHashAlg: IR_HASH_ALG,
