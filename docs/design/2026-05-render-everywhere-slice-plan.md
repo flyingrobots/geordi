@@ -68,7 +68,7 @@ pixel-identical browser/native claim until strict text exists.
   - Parse JSON through the core JSON port.
   - Validate `geordi-ir/1`.
   - Call `renderGeordiToCanvas()` and mount exactly one canvas.
-  - Done: current slice.
+  - Done: `7fd5579`.
   - Verification: browser harness renders the shared fixture manually and through a test path.
 
 - [ ] **Slice 7: Browser Playwright gate**
