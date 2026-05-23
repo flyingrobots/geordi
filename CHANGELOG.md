@@ -88,7 +88,8 @@
   rejection coverage.
 - **Capability profile**: add core validation coverage for baseline feature requirements,
   compiler golden coverage for emitted requirements and receipt hashes, runtime rejection coverage
-  for unsupported features, and package export smoke coverage for public capability symbols.
+  for missing, malformed, and unsupported feature requirements, and package export smoke coverage
+  for public capability symbols.
 - **`@flyingrobots/geordi-compiler-core`**: add source-location model, diagnostic formatter, and
   source-map artifact coverage.
 - **`@flyingrobots/geordi-schema-graphql`**: add exact GraphQL source-span tests and an e2e source

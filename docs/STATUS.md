@@ -103,9 +103,9 @@ Latest package test counts for the capability-profile branch:
 | `@flyingrobots/geordi-compiler-core` | 82 | Green |
 | `@flyingrobots/geordi-schema-graphql` | 55 | Green |
 | `@flyingrobots/geordi-core` | 30 | Green |
-| `@flyingrobots/geordi-runtime-webgl` | 13 | Green |
+| `@flyingrobots/geordi-runtime-webgl` | 15 | Green |
 | `@flyingrobots/geordi-wesley-generator` | 3 | Green |
-| **Total package tests** | **183** | Green |
+| **Total package tests** | **185** | Green |
 
 Additional gates:
 
