@@ -66,6 +66,42 @@ export class RenderFixtureInvalidManifestError extends Error {
   }
 }
 
+export class RenderFixturePixelProbeError extends Error {
+  public readonly actual: RenderFixtureRgba;
+  public readonly expected: RenderFixtureRgba;
+  public readonly fixtureId: string;
+  public readonly probeId: string;
+  public readonly x: number;
+  public readonly y: number;
+
+  constructor(fixtureId: string, probe: RenderFixturePixelProbe, actual: RenderFixtureRgba) {
+    super('Render fixture pixel probe failed');
+    this.name = new.target.name;
+    this.actual = actual;
+    this.expected = probe.rgba;
+    this.fixtureId = fixtureId;
+    this.probeId = probe.id;
+    this.x = probe.x;
+    this.y = probe.y;
+  }
+}
+
+export class RenderFixtureInvalidPixelSampleError extends Error {
+  public readonly channelIndex: number;
+  public readonly value: number | undefined;
+
+  constructor(channelIndex: number, value: number | undefined) {
+    super('Invalid render fixture pixel sample');
+    this.name = new.target.name;
+    this.channelIndex = channelIndex;
+    this.value = value;
+  }
+}
+
+export type RenderFixturePixelSampler = (
+  probe: RenderFixturePixelProbe,
+) => RenderFixtureRgba;
+
 export function parseRenderFixtureManifest(
   source: string,
   jsonPort: JsonPort = canonicalJsonPort,
@@ -123,6 +159,35 @@ export function validateRenderFixtureManifest(
   validatePixelProbes(property(value, 'pixelProbes'), canvas, '$.pixelProbes', issues);
 
   return { ok: issues.length === 0, issues };
+}
+
+export function assertRenderFixturePixelProbe(
+  fixtureId: string,
+  probe: RenderFixturePixelProbe,
+  actual: RenderFixtureRgba,
+): void {
+  if (!sameRgba(probe.rgba, actual)) {
+    throw new RenderFixturePixelProbeError(fixtureId, probe, actual);
+  }
+}
+
+export function assertRenderFixturePixelProbes(
+  fixtureId: string,
+  probes: readonly RenderFixturePixelProbe[],
+  sample: RenderFixturePixelSampler,
+): void {
+  for (const probe of probes) {
+    assertRenderFixturePixelProbe(fixtureId, probe, sample(probe));
+  }
+}
+
+export function renderFixtureRgbaFromBytes(bytes: ArrayLike<number>): RenderFixtureRgba {
+  return [
+    requireByteChannel(bytes, 0),
+    requireByteChannel(bytes, 1),
+    requireByteChannel(bytes, 2),
+    requireByteChannel(bytes, 3),
+  ];
 }
 
 function validateCanvas(
@@ -407,4 +472,23 @@ function pushIssue(
   message: string,
 ): void {
   issues.push({ path, message });
+}
+
+function sameRgba(left: RenderFixtureRgba, right: RenderFixtureRgba): boolean {
+  return (
+    left[0] === right[0] &&
+    left[1] === right[1] &&
+    left[2] === right[2] &&
+    left[3] === right[3]
+  );
+}
+
+function requireByteChannel(bytes: ArrayLike<number>, index: number): number {
+  const value = index < bytes.length ? bytes[index] : undefined;
+  const checked = byte(value);
+  if (checked === undefined) {
+    throw new RenderFixtureInvalidPixelSampleError(index, value);
+  }
+
+  return checked;
 }

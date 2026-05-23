@@ -9,12 +9,18 @@ import {
 } from '@flyingrobots/geordi-core';
 import {
   assertRenderFixtureManifest,
+  assertRenderFixturePixelProbe,
+  assertRenderFixturePixelProbes,
   isRenderFixtureManifest,
   parseRenderFixtureManifest,
   RENDER_FIXTURE_VERSION,
   RenderFixtureInvalidManifestError,
+  RenderFixtureInvalidPixelSampleError,
+  RenderFixturePixelProbeError,
+  renderFixtureRgbaFromBytes,
   validateRenderFixtureManifest,
   type RenderFixtureManifest,
+  type RenderFixturePixelProbe,
 } from './index.js';
 
 function makeManifest(): RenderFixtureManifest {
@@ -49,6 +55,46 @@ function fixtureManifestSource(): string {
     new URL('../../../fixtures/render-everywhere/hello-panel/fixture.json', import.meta.url),
     'utf8',
   );
+}
+
+class RenderFixtureTestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = new.target.name;
+  }
+}
+
+function makeProbe(): RenderFixturePixelProbe {
+  return {
+    id: 'background',
+    rgba: [16, 24, 32, 255],
+    x: 8,
+    y: 8,
+  };
+}
+
+function capturePixelProbeError(): RenderFixturePixelProbeError {
+  try {
+    assertRenderFixturePixelProbe('fixture:test', makeProbe(), [16, 24, 33, 255]);
+  } catch (error) {
+    if (error instanceof RenderFixturePixelProbeError) {
+      return error;
+    }
+  }
+
+  throw new RenderFixtureTestError('Expected RenderFixturePixelProbeError');
+}
+
+function captureInvalidPixelSampleError(): RenderFixtureInvalidPixelSampleError {
+  try {
+    renderFixtureRgbaFromBytes([1, 2, 3]);
+  } catch (error) {
+    if (error instanceof RenderFixtureInvalidPixelSampleError) {
+      return error;
+    }
+  }
+
+  throw new RenderFixtureTestError('Expected RenderFixtureInvalidPixelSampleError');
 }
 
 describe('render fixture manifest validation', () => {
@@ -165,5 +211,52 @@ describe('render fixture manifest validation', () => {
     expect(() => parseRenderFixtureManifest(invalidSource)).toThrow(
       RenderFixtureInvalidManifestError,
     );
+  });
+});
+
+describe('render fixture pixel probe assertions', () => {
+  it('accepts exact RGBA matches', () => {
+    expect(() =>
+      {
+        assertRenderFixturePixelProbe('fixture:test', makeProbe(), [16, 24, 32, 255]);
+      },
+    ).not.toThrow();
+  });
+
+  it('throws a custom error with fixture and coordinate context on mismatch', () => {
+    const error = capturePixelProbeError();
+
+    expect(error.fixtureId).toBe('fixture:test');
+    expect(error.probeId).toBe('background');
+    expect(error.x).toBe(8);
+    expect(error.y).toBe(8);
+    expect(error.expected).toEqual([16, 24, 32, 255]);
+    expect(error.actual).toEqual([16, 24, 33, 255]);
+  });
+
+  it('checks multiple probes through a shared sampler contract', () => {
+    const probe = makeProbe();
+
+    expect(() =>
+      {
+        assertRenderFixturePixelProbes('fixture:test', [probe], (sampledProbe) => sampledProbe.rgba);
+      },
+    ).not.toThrow();
+  });
+
+  it('converts byte buffers to RGBA tuples', () => {
+    expect(renderFixtureRgbaFromBytes(new Uint8ClampedArray([1, 2, 3, 4]))).toEqual([
+      1,
+      2,
+      3,
+      4,
+    ]);
+  });
+
+  it('throws a custom error for invalid pixel samples', () => {
+    const error = captureInvalidPixelSampleError();
+
+    expect(error.channelIndex).toBe(3);
+    expect(error.value).toBeUndefined();
   });
 });

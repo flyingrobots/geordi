@@ -48,10 +48,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: current slice.
   - Verification: unit tests for valid and invalid manifests.
 
-- [ ] **Slice 4: Pixel probe contract**
+- [x] **Slice 4: Pixel probe contract**
   - Add shared TypeScript probe records and probe assertion helpers.
   - Compare exact RGBA byte values at integer canvas coordinates.
   - Report fixture id, probe id, coordinate, expected RGBA, and actual RGBA on mismatch.
+  - Done: current slice.
   - Verification: helper tests for pass and fail paths.
 
 - [ ] **Slice 5: Browser harness scaffold**
