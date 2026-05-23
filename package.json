@@ -4,7 +4,8 @@
   "private": true,
   "packageManager": "pnpm@10.30.0",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
     "build": "turbo run build",

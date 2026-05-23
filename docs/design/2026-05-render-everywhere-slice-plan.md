@@ -55,11 +55,12 @@ pixel-identical browser/native claim until strict text exists.
   - Done: current slice.
   - Verification: helper tests for pass and fail paths.
 
-- [ ] **Slice 5: Browser harness scaffold**
+- [x] **Slice 5: Browser harness scaffold**
   - Add `examples/browser-render-everywhere` with Vite, strict TypeScript, and lint/typecheck/test
     scripts.
   - Import only public workspace package entrypoints.
   - Keep the DOM shell separate from scene rendering.
+  - Done: current slice.
   - Verification: package build, typecheck, and lint.
 
 - [ ] **Slice 6: Browser render smoke**

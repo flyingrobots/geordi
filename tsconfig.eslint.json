@@ -21,7 +21,8 @@
     "sourceMap": false
   },
   "include": [
-    "packages/**/*.ts"
+    "packages/**/*.ts",
+    "examples/**/*.ts"
   ],
   "exclude": [
     "**/coverage/**",
