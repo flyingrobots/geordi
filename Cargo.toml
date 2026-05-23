@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/geordi-ir"]
+members = ["crates/geordi-ir", "crates/geordi-renderer"]
 resolver = "3"
 
 [workspace.package]

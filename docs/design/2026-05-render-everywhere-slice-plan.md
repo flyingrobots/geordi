@@ -107,10 +107,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `b896d3c`.
   - Verification: valid fixture plus invalid version/profile/feature/number/prop tests.
 
-- [ ] **Slice 12: Rust runtime profile**
+- [x] **Slice 12: Rust runtime profile**
   - Add native runtime profile declarations.
   - Support only `geordi/core/1`, `layout.resolved`, `shape.rect`, and `paint.solid` for MVP.
   - Run profile checks before renderer preparation.
+  - Done: current slice.
   - Verification: profile subset and unsupported-feature tests.
 
 - [ ] **Slice 13: Native Rust app shell**

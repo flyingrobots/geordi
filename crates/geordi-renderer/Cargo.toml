@@ -1,0 +1,18 @@
+[package]
+name = "geordi-renderer"
+description = "Native Rust runtime profile and renderer for Geordi IR artifacts."
+edition.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+geordi-ir = { path = "../geordi-ir" }
