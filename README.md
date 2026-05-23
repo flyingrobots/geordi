@@ -22,7 +22,9 @@ Core compiler architecture is complete. The current implementation is focused on
 - Deterministic artifact emission
 - WebGL runtime scaffolding
 
-See [BEARING.md](BEARING.md) for the current operating map.
+See [BEARING.md](BEARING.md) for the current operating map. The active render-everywhere
+execution checklist is
+[`docs/design/2026-05-render-everywhere-slice-plan.md`](docs/design/2026-05-render-everywhere-slice-plan.md).
 
 ---
 
@@ -38,6 +40,14 @@ At runtime:
 - No layout thrashing
 - Deterministic subtree recomputation
 - Direct GPU draw calls
+
+## Render-Everywhere Demo Plan
+
+The current execution path builds toward one GPVue-authored scene compiling to one canonical
+Geordi IR artifact, then rendering that same artifact in a browser canvas and a native Rust
+application. The slice checklist lives in
+[`docs/design/2026-05-render-everywhere-slice-plan.md`](docs/design/2026-05-render-everywhere-slice-plan.md)
+and should be updated as slices land.
 
 ---
 

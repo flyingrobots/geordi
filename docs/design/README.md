@@ -10,6 +10,10 @@ semantics, while these documents define implementation slices.
 
 ## Active Slice Map: Render Everywhere
 
+The executable checklist for this sequence lives in
+[`2026-05-render-everywhere-slice-plan.md`](./2026-05-render-everywhere-slice-plan.md). Keep that
+checklist updated as slices land.
+
 | Slice | Working Title | Design Document |
 | ---: | --- | --- |
 | 1 | Render-everywhere design pack | [`2026-05-render-everywhere-demo.md`](./2026-05-render-everywhere-demo.md) |

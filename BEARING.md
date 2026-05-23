@@ -88,10 +88,16 @@ For the first version, the shared scene should use deterministic rectangle-only 
 runtime text can be added as a best-effort visual follow-up, but it must not be used for a
 pixel-identical cross-runtime claim until the strict text/font profile exists.
 
+The live execution checklist is
+[`docs/design/2026-05-render-everywhere-slice-plan.md`](./docs/design/2026-05-render-everywhere-slice-plan.md).
+As slices land, update that checklist from `- [ ]` to `- [x]` and keep this bearing aligned when
+the plan changes materially.
+
 ## Immediate Moves
 
-1. Land the render-everywhere design pack in [`docs/design/`](./docs/design/), covering the shared
-   fixture contract, browser harness, Rust native harness, and future GPVue compiler hook.
+1. Land the render-everywhere design pack and checklist in [`docs/design/`](./docs/design/),
+   covering the shared fixture contract, browser harness, Rust native harness, and future GPVue
+   compiler hook.
 2. Implement a shared render fixture with one canonical `scene.geordi.json`, receipt/hash metadata,
    runtime profile declaration, and deterministic pixel probes.
 3. Build the browser harness first, then the Rust IR parser/validator, then the native Rust render

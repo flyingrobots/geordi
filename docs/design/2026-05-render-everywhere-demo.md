@@ -226,6 +226,10 @@ No raw `Error`, no unclassified string throw, and no silent fallback.
 
 ## Slice Plan
 
+The live execution checklist for these slices is
+[`2026-05-render-everywhere-slice-plan.md`](./2026-05-render-everywhere-slice-plan.md). Update that
+checklist as each slice is implemented, verified, documented, and committed.
+
 ### Slice 1: Render-Everywhere Design Pack
 
 Update `BEARING.md` and design docs with the render-everywhere target, fixture contract, browser
