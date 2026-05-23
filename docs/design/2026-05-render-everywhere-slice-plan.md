@@ -114,11 +114,12 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `d0a58e2`.
   - Verification: profile subset and unsupported-feature tests.
 
-- [ ] **Slice 13: Native Rust app shell**
+- [x] **Slice 13: Native Rust app shell**
   - Add `examples/native-render-everywhere`.
   - Accept a fixture path argument.
   - Load and validate the fixture manifest and IR.
   - Open a native window and show fixture id/hash in title or logs.
+  - Done: current slice.
   - Verification: app starts and validates fixture without rendering claims beyond shell load.
 
 - [ ] **Slice 14: Rust rectangle renderer**

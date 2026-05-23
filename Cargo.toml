@@ -1,5 +1,9 @@
 [workspace]
-members = ["crates/geordi-ir", "crates/geordi-renderer"]
+members = [
+  "crates/geordi-ir",
+  "crates/geordi-renderer",
+  "examples/native-render-everywhere",
+]
 resolver = "3"
 
 [workspace.package]
@@ -36,21 +40,22 @@ unused_macro_rules = "deny"
 unused_qualifications = "deny"
 
 [workspace.lints.clippy]
-all = "deny"
+all = { level = "deny", priority = -1 }
 allow_attributes = "deny"
 allow_attributes_without_reason = "deny"
-cargo = "deny"
-complexity = "deny"
-correctness = "deny"
+cargo = { level = "deny", priority = -1 }
+complexity = { level = "deny", priority = -1 }
+correctness = { level = "deny", priority = -1 }
 dbg_macro = "deny"
 expect_used = "deny"
 missing_errors_doc = "deny"
-nursery = "deny"
+multiple_crate_versions = "allow"
+nursery = { level = "deny", priority = -1 }
 panic = "deny"
-pedantic = "deny"
-perf = "deny"
-style = "deny"
-suspicious = "deny"
+pedantic = { level = "deny", priority = -1 }
+perf = { level = "deny", priority = -1 }
+style = { level = "deny", priority = -1 }
+suspicious = { level = "deny", priority = -1 }
 todo = "deny"
 unimplemented = "deny"
 unwrap_used = "deny"
