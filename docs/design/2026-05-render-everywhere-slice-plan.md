@@ -85,10 +85,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `c50e4c1`.
   - Verification: Playwright or Vitest failure-path test.
 
-- [ ] **Slice 9: Cargo workspace scaffold**
+- [x] **Slice 9: Cargo workspace scaffold**
   - Add root `Cargo.toml` workspace support.
   - Add Rust formatting, test, and lint guidance without disturbing pnpm gates.
   - Do not claim native rendering yet.
+  - Done: current slice.
   - Verification: `cargo metadata`, `cargo fmt --check` once a crate exists.
 
 - [ ] **Slice 10: Rust IR crate**

@@ -25,6 +25,7 @@ Core compiler architecture is complete. The current implementation is focused on
 See [BEARING.md](BEARING.md) for the current operating map. The active render-everywhere
 execution checklist is
 [`docs/design/2026-05-render-everywhere-slice-plan.md`](docs/design/2026-05-render-everywhere-slice-plan.md).
+Rust workspace gates are tracked in [`docs/RUST_GATES.md`](docs/RUST_GATES.md).
 
 ---
 
@@ -166,6 +167,9 @@ geordi/
     schema-graphql/    # @flyingrobots/geordi-schema-graphql - GraphQL SDL adapter
     wesley-generator/  # @flyingrobots/geordi-wesley-generator - Wesley integration
     runtime-webgl/     # @flyingrobots/geordi-runtime-webgl - WebGL runtime
+
+  crates/              # Rust crates for native render-everywhere support
+  examples/            # Browser and native demo harnesses
 
   docs/
     ARCHITECTURE.md

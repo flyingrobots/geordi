@@ -3,6 +3,7 @@ node_modules/
 packages/*/pnpm-lock.yaml
 .pnp
 .pnp.js
+target/
 
 # Testing
 coverage/
