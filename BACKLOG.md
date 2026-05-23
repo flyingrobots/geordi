@@ -85,6 +85,31 @@ Acceptance criteria:
 
 ---
 
+### Define the strict text/font profile
+**Priority**: P0
+**Source**: v0 design laws, [`docs/design/2026-05-strict-text-font-profile.md`](./docs/design/2026-05-strict-text-font-profile.md)
+**Status**: Ready for implementation. The current baseline remains `text.raw-runtime-shaping`;
+strict text features must be known to the IR contract without being emitted by default until the
+compiler can lower text deterministically.
+
+The current renderer path lets the runtime shape raw text. That is useful for v0 rendering, but it
+cannot support a pixel-identical cross-runtime text claim because font lookup, glyph fallback,
+shaping, line breaking, and metrics vary by platform. Strict text needs an explicit profile that
+uses content-addressed fonts and precomputed glyph runs.
+
+Acceptance criteria:
+- Core owns strict text feature names for font packs, shaping profile, line-breaking profile,
+  fallback chain, glyph runs, and line boxes.
+- `GEORDI_BASELINE_FEATURES` continues to emit `text.raw-runtime-shaping` until strict text
+  lowering exists.
+- Compiler-core does not emit strict text requirements until it emits deterministic glyph runs and
+  font asset references.
+- Runtime profiles reject strict text requirements unless the runtime supports the full strict text
+  contract.
+- Receipts continue to record the exact feature requirements emitted by the compiler.
+
+---
+
 ## Completed Stabilization Work
 
 These P0 items were completed in the 2026-05-22 stabilization work and are retained here as
