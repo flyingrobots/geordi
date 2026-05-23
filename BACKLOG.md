@@ -185,6 +185,7 @@ Target package: `@flyingrobots/geordi-compiler-core`. Add `fast-check` as a dev 
 
 ### `emitTypes` test — CI-gated TSC typecheck
 **Issue**: [#5](https://github.com/flyingrobots/geordi/issues/5)
+**Status**: Implemented in `codex/execute-next-hit-list`; closes when the PR merges.
 
 `emitTypes.test.ts` shells out to `node_modules/.bin/tsc` with a hardcoded path that breaks
 under PNP or hoisted workspace setups. Fix by resolving via `require.resolve('typescript/bin/tsc')`
@@ -194,6 +195,7 @@ and gate the slow typecheck behind `process.env.CI || process.env.TSC_GATE` so l
 
 ### `emitTypes` test — Group-kind zero-props interface
 **Issue**: [#6](https://github.com/flyingrobots/geordi/issues/6)
+**Status**: Implemented in `codex/execute-next-hit-list`; closes when the PR merges.
 
 No test asserts that a scene containing only `Group` nodes emits a valid `GroupNode` interface
 with an empty `props` block. This is an edge case in `TypeEmitter.emitKindInterface` where
@@ -212,7 +214,8 @@ catches it and converts to a diagnostic but loses the GraphQL source location (`
 from the original `ParseError`. Propagate the location into `Diagnostic.details` so callers can
 report precise SDL error positions to users.
 
-Open GitHub-backed backlog after this reconciliation: #2, #3, #4, #5, and #6 remain active.
+Open GitHub-backed backlog after this reconciliation: #2, #3, and #4 remain active after the
+current PR merges.
 
 ---
 

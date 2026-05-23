@@ -25,10 +25,14 @@ Pure, framework-agnostic compilation engine.
 - Deterministic IR, receipt, source-map, and TypeScript type emission.
 - IR and receipt emission declare the v0 numeric profile, baseline feature requirements, and
   feature-requirement hash.
+- Compiler tests lock emitted IR and receipt requirements to the baseline set even as core knows
+  future feature names.
 - Current public IR API names are `GeordiIr`, `validateGeordiIr()`, and `isGeordiIr()`; versioning
   remains in serialized contract values such as `irVersion: "geordi-ir/1"`.
 - Canonical source-location model shared by AST source refs and diagnostics.
 - Deterministic diagnostic formatter for stable CLI/adapter output.
+- Type-emission tests cover Group-only scenes, and the generated-type `tsc` subprocess runs only in
+  CI or with `TSC_GATE=1`.
 - Post-build public export smoke coverage.
 
 #### `@flyingrobots/geordi-schema-graphql`
@@ -60,8 +64,8 @@ Core domain package.
 - Canonical JSON port with deterministic parse/stringify/normalize behavior and custom JSON
   errors.
 - v0 numeric profile constant `geordi-finite-binary64/1` and graphics-number helpers.
-- Baseline feature profile constants rooted at `geordi/core/1`, plus validation for
-  `geordi-ir/1` `requires`.
+- Known feature registry, baseline feature profile constants rooted at `geordi/core/1`, strict text
+  feature vocabulary, and validation for `geordi-ir/1` `requires`.
 - Current `GeordiIr` structural types and validation for the `geordi-ir/1` payload contract.
 - Draw-ready runtime scene aliases named `PreparedGeordiScene` and `PreparedGeordiNode`.
 - Compatibility aliases for the older scene names remain during the v0.1 migration.
@@ -75,9 +79,10 @@ Canvas-backed WebGL-runtime scaffold.
 - `renderGeordiToCanvas()` is the primary public `geordi-ir/1` rendering API.
 - `renderPreparedSceneToCanvas()` renders draw-ready runtime scenes explicitly.
 - Runtime-bound IR validation and fail-loud prop lowering use custom runtime error types.
-- Runtime capability profile declares supported IR version, numeric profile, feature requirements,
-  node kinds, and visual features.
-- Runtime profile checks reject missing or unsupported feature requirements before drawing.
+- Runtime capability profile declares supported IR version, numeric profile, supported feature
+  requirements, node kinds, and visual features.
+- Runtime profile checks render supported requirement subsets and reject missing, malformed,
+  unknown, or known-but-unsupported strict text requirements before drawing.
 - Compiler-emitted IR is rendered through the runtime contract in an integration test.
 
 ## Infrastructure
@@ -97,16 +102,16 @@ Canvas-backed WebGL-runtime scaffold.
 
 ## Test Status
 
-Latest package test counts after the capability-profile and design-pack merges:
+Latest package test counts after the next-slice hit list:
 
 | Package | Tests | Status |
 | --- | ---: | --- |
-| `@flyingrobots/geordi-compiler-core` | 82 | Green |
+| `@flyingrobots/geordi-compiler-core` | 84 | Green |
 | `@flyingrobots/geordi-schema-graphql` | 55 | Green |
-| `@flyingrobots/geordi-core` | 30 | Green |
-| `@flyingrobots/geordi-runtime-webgl` | 15 | Green |
+| `@flyingrobots/geordi-core` | 32 | Green |
+| `@flyingrobots/geordi-runtime-webgl` | 17 | Green |
 | `@flyingrobots/geordi-wesley-generator` | 3 | Green |
-| **Total package tests** | **185** | Green |
+| **Total package tests** | **191** | Green |
 
 Additional gates:
 
@@ -122,11 +127,11 @@ Additional gates:
 
 Immediate:
 
-1. Define the next strict text/font profile beyond `text.raw-runtime-shaping`.
-2. Split known feature vocabulary from compiler-emitted baseline requirements.
-3. Specify deterministic operation-order rules for future vector, matrix, transform, and animation
+1. Specify deterministic operation-order rules for future vector, matrix, transform, and animation
    math.
-4. Keep source-map, diagnostic formatter, and receipt behavior wired into future CLI/Wesley
+2. Move to the next GitHub-backed compiler backlog items: artifact builder (#3), identifier-map
+   API cleanup (#2), and validation fuzzing (#4).
+3. Keep source-map, diagnostic formatter, and receipt behavior wired into future CLI/Wesley
    entrypoints.
 
 Short term:

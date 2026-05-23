@@ -40,6 +40,11 @@
 - **`@flyingrobots/geordi-runtime-webgl`**: Add baseline feature requirements to
   `GEORDI_WEBGL_RUNTIME_PROFILE` and fail loudly when IR omits `requires` or asks for unsupported
   features.
+- **`@flyingrobots/geordi-core`**: Split known feature requirements from baseline emitted feature
+  requirements and add strict text feature vocabulary for future deterministic font/glyph work.
+- **`@flyingrobots/geordi-runtime-webgl`**: Rename the runtime profile feature field to
+  `supportedFeatureRequirements` and keep strict text requirements unsupported until the runtime
+  can honor the full strict text contract.
 - **Public API**: De-version the current IR TypeScript surface (`GeordiIr`,
   `validateGeordiIr()`, `isGeordiIr()`) and compiler target (`geordi-ir`) while preserving
   `irVersion: "geordi-ir/1"` as the serialized contract identity.
@@ -90,6 +95,12 @@
   compiler golden coverage for emitted requirements and receipt hashes, runtime rejection coverage
   for missing, malformed, and unsupported feature requirements, and package export smoke coverage
   for public capability symbols.
+- **Feature registry**: add core coverage proving strict text features are known but not baseline,
+  compiler coverage proving emitted IR and receipts stay locked to baseline requirements, and
+  runtime coverage for supported subsets plus known-but-unsupported strict text requirements.
+- **`@flyingrobots/geordi-compiler-core`**: add Group-only type-emission coverage and gate the
+  generated-type `tsc` subprocess behind CI or `TSC_GATE=1` while resolving TypeScript through the
+  package entrypoint.
 - **`@flyingrobots/geordi-compiler-core`**: add source-location model, diagnostic formatter, and
   source-map artifact coverage.
 - **`@flyingrobots/geordi-schema-graphql`**: add exact GraphQL source-span tests and an e2e source
