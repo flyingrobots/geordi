@@ -1,8 +1,8 @@
 # Geordi Bearing
 
 **Date**: 2026-05-23
-**Branch baseline**: `main` at `1719019`
-**Current branch when written**: `codex/execute-next-hit-list`
+**Branch baseline**: `main` at `654adba`
+**Current branch when written**: `codex/render-everywhere-design`
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
@@ -59,29 +59,74 @@ Completed:
 - Root `pnpm wesley` shells out to the installed Wesley CLI.
 - The next post-capability-profile slice sequence has a formal design pack in
   [`docs/design/`](./docs/design/).
+- The feature-registry split is complete: core distinguishes known features from emitted baseline
+  features, runtime profiles advertise `supportedFeatureRequirements`, compiler output remains
+  locked to the baseline feature set, and strict text features are known but unsupported by the
+  current browser runtime.
+- GitHub issues #5 and #6 are implemented in the merged feature-registry hit-list branch.
 
 Still true:
 
 - Multi-step geometry, vector, matrix, transform, and animation operation-order rules still need to
   be specified as those features are introduced.
+- There is no browser demo scaffold yet, and there is no Rust workspace or native runtime scaffold
+  yet. The current browser runtime API can render `geordi-ir/1` to a browser-created canvas, but it
+  is still a Canvas 2D proof of concept inside the `runtime-webgl` package.
+
+## Render-Everywhere Target
+
+The next credibility milestone is a render-everywhere demo:
+
+1. A GPVue-authored scene renders in a browser canvas.
+2. The same canonical `scene.geordi.json` artifact renders in a native Rust application.
+
+This should prove the platform boundary, not two separate demos. GPVue is the authoring frontend,
+Geordi IR is the portable artifact, and browser plus Rust runtimes are interchangeable consumers of
+the same bytes.
+
+For the first version, the shared scene should use deterministic rectangle-only UI geometry. Raw
+runtime text can be added as a best-effort visual follow-up, but it must not be used for a
+pixel-identical cross-runtime claim until the strict text/font profile exists.
 
 ## Immediate Moves
 
-1. Specify deterministic operation-order rules for future vector, matrix, transform, and animation
-   math before adding those features to any profile.
-2. Define the next strict text/font profile beyond `text.raw-runtime-shaping` so pixel-identical
-   text can become a real compliance claim.
-3. Keep source-map, diagnostic formatter, and receipt behavior wired into future CLI/Wesley
-   entrypoints.
+1. Land the render-everywhere design pack in [`docs/design/`](./docs/design/), covering the shared
+   fixture contract, browser harness, Rust native harness, and future GPVue compiler hook.
+2. Implement a shared render fixture with one canonical `scene.geordi.json`, receipt/hash metadata,
+   runtime profile declaration, and deterministic pixel probes.
+3. Build the browser harness first, then the Rust IR parser/validator, then the native Rust render
+   path. Do not let GPVue compiler work block the shared artifact/runtime proof.
+4. Keep strict text/font and matrix/vector operation-order laws on the roadmap, but do not include
+   them in the first render-everywhere demo claim.
 
 ## Recommended P0 Order
 
-1. Execute the strict text/font profile and feature-registry split described in
-   [`docs/design/`](./docs/design/).
-2. Close GitHub issues #6 and #5 as the first compiler test-hardening cleanup.
-3. Decide whether Wesley modernization should target `wesley-cli`/`wesley-core` 0.0.5 through a
-   CLI boundary, Rust workspace boundary, or future npm/WASM boundary.
-4. Keep dependency hygiene clean; there are no open PRs at the time this bearing was refreshed.
+1. Render-everywhere design pack: formalize the demo contract and slice sequence.
+2. Shared fixture root: add `fixtures/render-everywhere/hello-panel` with fixture manifest,
+   canonical IR, and receipt/hash metadata.
+3. Pixel probe contract: define typed probe records, expected RGBA values, and custom failure
+   errors.
+4. Browser harness scaffold: add a Vite-powered browser example that imports workspace packages.
+5. Browser render smoke: load the shared IR, call `renderGeordiToCanvas()`, and mount the canvas.
+6. Browser Playwright gate: assert canvas size, nonblank output, and exact rectangle color probes.
+7. Browser failure fixtures: prove unsupported feature requirements fail loudly in the harness.
+8. Rust workspace scaffold: add Cargo workspace support without disturbing the pnpm gates.
+9. Rust IR crate: deserialize canonical `geordi-ir/1` into typed Rust structs at the JSON boundary.
+10. Rust IR validation: enforce version, numeric profile, feature requirements, finite graphics
+    numbers, and Rect props with custom error types.
+11. Rust runtime profile: declare the native runtime's supported baseline subset.
+12. Rust native app shell: open a native window and load the shared fixture artifact.
+13. Rust rectangle renderer: render solid Rect nodes from the shared IR into the native surface.
+14. Rust offscreen smoke mode: run deterministic pixel probes without requiring an interactive
+    desktop window.
+15. Shared hash display: show the same artifact hash/profile in browser UI and Rust app logs/window
+    title.
+16. Render-everywhere README: document the two demo commands and the claim each one proves.
+17. GPVue fixture hook: add draft GPVue source fixtures and a fail-loud compiler port boundary.
+18. GPVue compiler MVP: lower the first GPVue fixture to the existing canonical IR artifact.
+19. End-to-end GPVue browser demo: compile GPVue, render in browser, and verify pixel probes.
+20. End-to-end GPVue native demo: compile once, render the emitted artifact in Rust, and verify the
+    same hash/probes.
 
 ## Dependency Work
 
