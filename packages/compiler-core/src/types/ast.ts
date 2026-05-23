@@ -1,4 +1,5 @@
 import type { JsonObject, JsonPrimitive, JsonValue } from './json.js';
+import type { SourceLocation } from './source.js';
 
 export interface CanonicalSceneAst extends JsonObject {
   kind: 'Scene';
@@ -21,11 +22,7 @@ export interface Scene extends JsonObject {
 
 export type NodeKind = 'Rect' | 'Text' | 'Image' | 'Group' | 'Line' | 'Ellipse' | 'Path';
 
-export interface SourceRef extends JsonObject {
-  file: string;
-  line: number;
-  column: number;
-}
+export type SourceRef = SourceLocation;
 
 export interface ShadowProps extends JsonObject {
   x?: number;
