@@ -88,7 +88,7 @@ function createStatusGrid(status: BrowserHarnessStatus): HTMLElement {
   appendStatus(grid, 'IR', status.irVersion);
   appendStatus(grid, 'Numeric', status.numericProfile);
   appendStatus(grid, 'Fixture', status.fixtureVersion);
-  appendStatus(grid, 'Features', String(status.supportedFeatureCount));
+  appendStatus(grid, 'Runtime Features', String(status.supportedFeatureCount));
   return grid;
 }
 

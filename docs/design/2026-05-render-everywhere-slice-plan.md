@@ -71,10 +71,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `7fd5579`.
   - Verification: browser harness renders the shared fixture manually and through a test path.
 
-- [ ] **Slice 7: Browser Playwright gate**
+- [x] **Slice 7: Browser Playwright gate**
   - Add Playwright test coverage for the browser harness.
   - Assert page load, canvas count, dimensions, nonblank output, and exact pixel probes.
   - Add a root or package script for the browser gate.
+  - Done: current slice.
   - Verification: `pnpm --filter <browser-harness-package> test:browser`.
 
 - [ ] **Slice 8: Browser failure fixture**
