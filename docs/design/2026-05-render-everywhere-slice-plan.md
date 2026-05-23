@@ -25,12 +25,13 @@ pixel-identical browser/native claim until strict text exists.
 
 ## Checklist
 
-- [ ] **Slice 1: Render-everywhere design pack**
+- [x] **Slice 1: Render-everywhere design pack**
   - Lock the render-everywhere target into `BEARING.md`.
   - Add design docs for the shared demo contract, browser harness, native Rust harness, and GPVue
     fixture pipeline.
   - Add this slice checklist and wire repo instructions to it.
-  - Verification: `pnpm test:docs`, `git diff --check`.
+  - Done: `cbef665`.
+  - Verification: `pnpm test:docs`, `git diff --cached --check`.
 
 - [ ] **Slice 2: Shared fixture root**
   - Add `fixtures/render-everywhere/hello-panel`.
