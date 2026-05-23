@@ -119,7 +119,7 @@ pixel-identical browser/native claim until strict text exists.
   - Accept a fixture path argument.
   - Load and validate the fixture manifest and IR.
   - Open a native window and show fixture id/hash in title or logs.
-  - Done: current slice.
+  - Done: `e0e7972`.
   - Verification: app starts and validates fixture without rendering claims beyond shell load.
 
 - [ ] **Slice 14: Rust rectangle renderer**
