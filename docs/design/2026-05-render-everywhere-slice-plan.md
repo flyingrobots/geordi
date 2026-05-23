@@ -104,7 +104,7 @@ pixel-identical browser/native claim until strict text exists.
     node kinds, and Rect props.
   - Reject unsupported features before drawing.
   - Use custom Rust error types.
-  - Done: current slice.
+  - Done: `b896d3c`.
   - Verification: valid fixture plus invalid version/profile/feature/number/prop tests.
 
 - [ ] **Slice 12: Rust runtime profile**
