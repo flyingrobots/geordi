@@ -111,7 +111,7 @@ pixel-identical browser/native claim until strict text exists.
   - Add native runtime profile declarations.
   - Support only `geordi/core/1`, `layout.resolved`, `shape.rect`, and `paint.solid` for MVP.
   - Run profile checks before renderer preparation.
-  - Done: current slice.
+  - Done: `d0a58e2`.
   - Verification: profile subset and unsupported-feature tests.
 
 - [ ] **Slice 13: Native Rust app shell**
