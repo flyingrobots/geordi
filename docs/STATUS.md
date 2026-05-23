@@ -22,10 +22,12 @@ Pure, framework-agnostic compilation engine.
 - Compile orchestrator with parse, canonicalize, validate, and emit phases.
 - GraphQL SDL and canonical JSON input paths.
 - Uses the core-owned deterministic JSON port for canonical parse/stringify boundaries.
-- Deterministic IR, receipt, and TypeScript type emission.
+- Deterministic IR, receipt, source-map, and TypeScript type emission.
 - IR and receipt emission declare the v0 numeric profile.
 - Current public IR API names are `GeordiIr`, `validateGeordiIr()`, and `isGeordiIr()`; versioning
   remains in serialized contract values such as `irVersion: "geordi-ir/1"`.
+- Canonical source-location model shared by AST source refs and diagnostics.
+- Deterministic diagnostic formatter for stable CLI/adapter output.
 - Post-build public export smoke coverage.
 
 #### `@flyingrobots/geordi-schema-graphql`
@@ -35,6 +37,7 @@ GraphQL SDL to canonical AST adapter.
 - Directive definitions with an explicit directive version contract.
 - GraphQL parser wrapper with source naming.
 - Scene and node extraction.
+- Exact GraphQL source spans and offsets for scene, node, and directive argument diagnostics.
 - Canonical AST transform.
 - End-to-end SDL compilation coverage through compiler-core.
 
@@ -45,7 +48,8 @@ Wesley GeneratorPlugin adapter scaffold.
 - Plugin lifecycle shape: `apiVersion`, `name`, `plan`, `generate`.
 - Compiler adapter injection via `graphqlToCanonicalAst`.
 - Public entrypoint contract test.
-- Still needs behavior coverage for `plan()` and `generate()`.
+- Root `pnpm wesley` script shells out to the installed Wesley CLI.
+- Behavior coverage for `plan()`, successful generation, and custom failure errors.
 
 #### `@flyingrobots/geordi-core`
 
@@ -92,12 +96,12 @@ Latest full local gate during the core IR runtime-contract work:
 
 | Package | Tests | Status |
 | --- | ---: | --- |
-| `@flyingrobots/geordi-compiler-core` | 73 | Green |
-| `@flyingrobots/geordi-schema-graphql` | 51 | Green |
+| `@flyingrobots/geordi-compiler-core` | 82 | Green |
+| `@flyingrobots/geordi-schema-graphql` | 55 | Green |
 | `@flyingrobots/geordi-core` | 26 | Green |
 | `@flyingrobots/geordi-runtime-webgl` | 12 | Green |
 | `@flyingrobots/geordi-wesley-generator` | 3 | Green |
-| **Total package tests** | **165** | Green |
+| **Total package tests** | **178** | Green |
 
 Additional gates:
 
@@ -113,8 +117,8 @@ Additional gates:
 
 Immediate:
 
-1. Add source maps and diagnostic UX improvements.
-2. Define the next feature/capability profile beyond the v0 baseline.
+1. Define the next feature/capability profile beyond the v0 baseline.
+2. Keep source-map and diagnostic formatter behavior wired into future CLI/Wesley entrypoints.
 3. Keep dependency hygiene clean; there are no open PRs at this refresh point.
 
 Short term:

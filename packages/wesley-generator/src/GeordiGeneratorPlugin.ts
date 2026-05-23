@@ -65,6 +65,7 @@ export class GeordiGeneratorPlugin {
     return {
       artifacts: [
         { path: 'scene.geordi.json', reason: 'Geordi IR scene' },
+        { path: 'scene.geordi.map.json', reason: 'Geordi IR source map' },
         { path: 'types.ts', reason: 'TypeScript types for scene artifacts' },
       ],
       metadata: {

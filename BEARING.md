@@ -47,6 +47,12 @@ Completed:
   identities remain explicit through values such as `irVersion: "geordi-ir/1"`.
 - GitHub issue #7 was closed after confirmation that typed diagnostics transport already preserves
   invalid-SDL diagnostic location details.
+- Source locations now have a canonical compiler-core model shared by AST `SourceRef` and
+  diagnostics. GraphQL extraction preserves source spans and offsets.
+- `scene.geordi.map.json` is emitted alongside IR JSON and receipts include `sourceMapHash`.
+- Compiler-core exposes a deterministic diagnostic formatter, and the Wesley generator uses it for
+  stable logging.
+- Root `pnpm wesley` shells out to the installed Wesley CLI.
 
 Still true:
 
@@ -55,14 +61,15 @@ Still true:
 
 ## Immediate Moves
 
-1. Add source maps and diagnostic UX improvements.
-2. Define the next explicit feature/capability profile beyond the v0 baseline.
+1. Define the next explicit feature/capability profile beyond the v0 baseline.
+2. Keep source-map and diagnostic formatter behavior wired into future CLI/Wesley entrypoints.
 3. Keep dependency hygiene clean; there are no open PRs at the time this bearing was refreshed.
 
 ## Recommended P0 Order
 
-1. Add source maps and diagnostic UX improvements.
-2. Define the next feature/capability profile beyond the v0 baseline.
+1. Define the next feature/capability profile beyond the v0 baseline.
+2. Decide whether Wesley modernization should target `wesley-cli`/`wesley-core` 0.0.5 through a
+   CLI boundary, Rust workspace boundary, or future npm/WASM boundary.
 
 ## Dependency Work
 

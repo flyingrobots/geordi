@@ -17,6 +17,8 @@ export const IR_VERSION = GEORDI_IR_VERSION;
 export const IR_ARTIFACT_KEY = GEORDI_IR_ARTIFACT_KEY;
 export const IR_RECEIPT_KEY = GEORDI_IR_RECEIPT_KEY;
 export const NUMERIC_PROFILE = GEORDI_NUMERIC_PROFILE;
+export const SOURCE_MAP_ARTIFACT_KEY = 'scene.geordi.map.json' as const;
+export const SOURCE_MAP_VERSION = 'geordi-source-map/1' as const;
 
 /**
  * Phase 1: Topological sort by parentId DAG.
@@ -26,7 +28,7 @@ export const NUMERIC_PROFILE = GEORDI_NUMERIC_PROFILE;
  * sourceRef and __typename are stripped.
  */
 export function emitGeordiIrArtifact(ast: CanonicalSceneAst): Artifact {
-  const sorted = topoSort(ast);
+  const sorted = topoSortNodes(ast).map((node) => sanitize(node));
 
   const content = stringifyCanonicalJson(
     {
@@ -48,15 +50,43 @@ export function emitGeordiIrArtifact(ast: CanonicalSceneAst): Artifact {
   };
 }
 
+export function emitSourceMapArtifact(ast: CanonicalSceneAst): Artifact {
+  const nodes = topoSortNodes(ast)
+    .filter((node) => node.sourceRef !== undefined)
+    .map((node) => ({
+      id: node.id,
+      source: node.sourceRef,
+    }));
+
+  const content = stringifyCanonicalJson(
+    {
+      irVersion: IR_VERSION,
+      nodes,
+      sourceFormat: ast.metadata?.sourceFormat,
+      version: SOURCE_MAP_VERSION,
+    },
+    { space: 2 },
+  );
+
+  return {
+    path: SOURCE_MAP_ARTIFACT_KEY,
+    content,
+    mediaType: 'application/json',
+    encoding: 'utf8',
+  };
+}
+
 export const IR_HASH_ALG = GEORDI_IR_HASH_ALGORITHM;
 
 export function emitReceiptArtifact(
   input: CompilerInput,
   irContent: string,
+  sourceMapContent: string,
   ruleIds: readonly string[],
 ): Artifact {
   const inputHash = hashString(input.source);
   const irHash = hashString(irContent);
+  const sourceMapHash = hashString(sourceMapContent);
   const rulesetFingerprint = hashString([...ruleIds].sort().join('\n'));
 
   const content = stringifyCanonicalJson(
@@ -68,6 +98,8 @@ export function emitReceiptArtifact(
       irVersion: IR_VERSION,
       numericProfile: NUMERIC_PROFILE,
       rulesetFingerprint,
+      sourceMapHash,
+      sourceMapHashAlg: IR_HASH_ALG,
     },
     { space: 2 },
   );
@@ -103,7 +135,7 @@ function sanitize(node: CanonicalSceneAst['nodes'][number]): SanitizedNode {
   return clean;
 }
 
-function topoSort(ast: CanonicalSceneAst): SanitizedNode[] {
+function topoSortNodes(ast: CanonicalSceneAst): CanonicalSceneAst['nodes'][number][] {
   const nodes = ast.nodes;
   if (nodes.length === 0) return [];
 
@@ -137,7 +169,7 @@ function topoSort(ast: CanonicalSceneAst): SanitizedNode[] {
   }
   sortReady(ready);
 
-  const result: SanitizedNode[] = [];
+  const result: CanonicalSceneAst['nodes'][number][] = [];
 
   // Use an index pointer instead of shift() to avoid O(n) array reindexing per dequeue.
   // Newly-ready children are collected per iteration, sorted once, then merged into the
@@ -145,7 +177,7 @@ function topoSort(ast: CanonicalSceneAst): SanitizedNode[] {
   let qi = 0;
   while (qi < ready.length) {
     const node = ready[qi++];
-    result.push(sanitize(node));
+    result.push(node);
 
     const newlyReady: CanonicalSceneAst['nodes'][number][] = [];
     for (const child of children.get(node.id) ?? []) {
@@ -175,7 +207,7 @@ function topoSort(ast: CanonicalSceneAst): SanitizedNode[] {
   }
   sortReady(remaining);
   for (const node of remaining) {
-    result.push(sanitize(node));
+    result.push(node);
   }
 
   return result;

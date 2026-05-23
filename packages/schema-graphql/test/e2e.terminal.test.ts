@@ -49,6 +49,11 @@ function irContent(result: CompileResult): string {
   return String(artifact.content);
 }
 
+function sourceMapContent(result: CompileResult): string {
+  const artifact = result.artifacts['scene.geordi.map.json'];
+  return String(artifact.content);
+}
+
 function parseIr(result: CompileResult): GeordiIr {
   return parseJsonValue(irContent(result)) as GeordiIr;
 }
@@ -122,6 +127,31 @@ describe('e2e: Terminal SDL fixture', () => {
     expect(ir.scene.width).toBe(800);
     expect(ir.scene.height).toBe(600);
     expect(ir.scene.units).toBe('px');
+  });
+
+  it('emits a source map from IR node ids to SDL field locations', async () => {
+    const result = await compile(makeInput(TERMINAL_SDL), DEPS);
+    expect(result.ok).toBe(true);
+
+    const sourceMap = parseJsonValue(sourceMapContent(result)) as {
+      readonly nodes?: readonly {
+        readonly id?: string;
+        readonly source?: {
+          readonly file?: string;
+          readonly line?: number;
+          readonly column?: number;
+        };
+      }[];
+    };
+    const ir = parseIr(result);
+    const titleNode = ir.nodes.find((node) => node.props.content === 'Terminal v0.3');
+    const titleMapping = sourceMap.nodes?.find((node) => node.id === titleNode?.id);
+
+    expect(titleMapping?.source).toMatchObject({
+      file: 'terminal.graphql',
+      line: 5,
+      column: 3,
+    });
   });
 
   it('metadata contains hashAlgorithm', async () => {

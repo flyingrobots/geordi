@@ -55,6 +55,7 @@ describe('wesley-generator public API', () => {
     const plan = plugin.plan({ sdl: MINIMAL_SDL }, context);
     expect(plan.artifacts.map((artifact) => artifact.path)).toEqual([
       'scene.geordi.json',
+      'scene.geordi.map.json',
       'types.ts',
     ]);
     expect(plan.metadata).toEqual({
@@ -66,6 +67,7 @@ describe('wesley-generator public API', () => {
     expect(Object.keys(output).sort()).toEqual([
       'scene.geordi.json',
       'scene.geordi.json.receipt',
+      'scene.geordi.map.json',
       'types.ts',
     ]);
 
