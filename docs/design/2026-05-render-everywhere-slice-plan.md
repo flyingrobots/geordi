@@ -129,10 +129,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `b425bec`.
   - Verification: visible native demo plus renderer tests where practical.
 
-- [ ] **Slice 15: Rust offscreen smoke mode**
+- [x] **Slice 15: Rust offscreen smoke mode**
   - Add `--smoke` mode for CI-safe native rendering.
   - Render to an offscreen buffer.
   - Run the same pixel probes from the shared fixture manifest.
+  - Done: current slice.
   - Verification: `cargo run -p <native-demo> -- --smoke <fixture>`.
 
 - [ ] **Slice 16: Shared hash display**

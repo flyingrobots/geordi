@@ -33,6 +33,7 @@ fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAp
 
     match args.mode {
         NativeMode::Check => Ok(()),
+        NativeMode::Smoke => run_smoke(&mut io::stdout().lock(), &loaded),
         NativeMode::Window => {
             open_fixture_window(&loaded)?;
             Ok(())
@@ -43,6 +44,7 @@ fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAp
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum NativeMode {
     Check,
+    Smoke,
     Window,
 }
 
@@ -59,6 +61,10 @@ impl NativeArgs {
             [flag, fixture_dir] if flag == OsStr::new("--check") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
                 mode: NativeMode::Check,
+            }),
+            [flag, fixture_dir] if flag == OsStr::new("--smoke") => Ok(Self {
+                fixture_dir: PathBuf::from(fixture_dir),
+                mode: NativeMode::Smoke,
             }),
             [fixture_dir] => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
@@ -122,6 +128,7 @@ enum NativeAppError {
     ManifestParse(NativeManifestParseError),
     ManifestValidation(NativeManifestValidationError),
     Output(NativeOutputError),
+    PixelProbe(NativePixelProbeError),
     Render(GeordiRenderError),
     RuntimeProfile(GeordiRuntimeUnsupportedProfileError),
     Window(NativeWindowError),
@@ -143,6 +150,7 @@ impl Error for NativeAppError {
             Self::ManifestParse(source) => Some(source),
             Self::ManifestValidation(source) => Some(source),
             Self::Output(source) => Some(source),
+            Self::PixelProbe(source) => Some(source),
             Self::Render(source) => Some(source),
             Self::RuntimeProfile(source) => Some(source),
             Self::Window(source) => Some(source),
@@ -192,6 +200,12 @@ impl From<NativeOutputError> for NativeAppError {
     }
 }
 
+impl From<NativePixelProbeError> for NativeAppError {
+    fn from(error: NativePixelProbeError) -> Self {
+        Self::PixelProbe(error)
+    }
+}
+
 impl From<GeordiRenderError> for NativeAppError {
     fn from(error: GeordiRenderError) -> Self {
         Self::Render(error)
@@ -215,7 +229,7 @@ struct NativeArgsError;
 
 impl Display for NativeArgsError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("Usage: native-render-everywhere [--check] <fixture-dir>")
+        formatter.write_str("Usage: native-render-everywhere [--check|--smoke] <fixture-dir>")
     }
 }
 
@@ -341,6 +355,41 @@ impl Error for NativeOutputError {
         Some(&self.source)
     }
 }
+
+#[derive(Debug)]
+struct NativePixelProbeError {
+    actual: Option<[u8; 4]>,
+    expected: [u8; 4],
+    fixture_id: String,
+    probe_id: String,
+    x: usize,
+    y: usize,
+}
+
+impl NativePixelProbeError {
+    fn new(fixture_id: &str, probe: &RenderFixturePixelProbe, actual: Option<[u8; 4]>) -> Self {
+        Self {
+            actual,
+            expected: probe.rgba,
+            fixture_id: fixture_id.to_owned(),
+            probe_id: probe.id.clone(),
+            x: probe.x,
+            y: probe.y,
+        }
+    }
+}
+
+impl Display for NativePixelProbeError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Native pixel probe failed for {}:{} at {},{} expected {:?} actual {:?}",
+            self.fixture_id, self.probe_id, self.x, self.y, self.expected, self.actual
+        )
+    }
+}
+
+impl Error for NativePixelProbeError {}
 
 #[derive(Debug)]
 struct NativeWindowError {
@@ -683,6 +732,27 @@ fn write_fixture_summary(
         .map_err(NativeOutputError::new)
 }
 
+fn run_smoke(writer: &mut impl Write, loaded: &LoadedFixture) -> Result<(), NativeAppError> {
+    assert_pixel_probes(loaded)?;
+    writeln!(writer, "smoke=passed").map_err(NativeOutputError::new)?;
+    Ok(())
+}
+
+fn assert_pixel_probes(loaded: &LoadedFixture) -> Result<(), NativePixelProbeError> {
+    for probe in &loaded.manifest.pixel_probes {
+        let actual = loaded.image.pixel_at(probe.x, probe.y);
+        if actual != Some(probe.rgba) {
+            return Err(NativePixelProbeError::new(
+                &loaded.manifest.id,
+                probe,
+                actual,
+            ));
+        }
+    }
+
+    Ok(())
+}
+
 fn open_fixture_window(loaded: &LoadedFixture) -> Result<(), NativeWindowError> {
     let width = loaded.manifest.canvas.width;
     let height = loaded.manifest.canvas.height;
@@ -742,17 +812,33 @@ fn short_hash(hash: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{NativeAppError, NativeArgs, NativeMode, load_fixture, run_from_env};
+    use super::{
+        NativeAppError, NativeArgs, NativeMode, assert_pixel_probes, load_fixture, run_smoke,
+        write_fixture_summary,
+    };
     use std::ffi::OsString;
     use std::path::{Path, PathBuf};
 
     #[test]
     fn check_mode_loads_and_reports_the_shared_fixture() -> Result<(), NativeAppError> {
-        run_from_env([
-            OsString::from("native-render-everywhere"),
-            OsString::from("--check"),
-            fixture_path("hello-panel").into_os_string(),
-        ])
+        let loaded = load_fixture(&fixture_path("hello-panel"))?;
+        let mut output = Vec::new();
+
+        write_fixture_summary(&mut output, &loaded)?;
+
+        assert!(!output.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn smoke_mode_renders_and_checks_the_shared_fixture() -> Result<(), NativeAppError> {
+        let loaded = load_fixture(&fixture_path("hello-panel"))?;
+        let mut output = Vec::new();
+
+        run_smoke(&mut output, &loaded)?;
+
+        assert!(!output.is_empty());
+        Ok(())
     }
 
     #[test]
@@ -760,6 +846,17 @@ mod tests {
         let result = load_fixture(&fixture_path("unsupported-strict-text"));
 
         assert!(matches!(result, Err(NativeAppError::RuntimeProfile(_))));
+    }
+
+    #[test]
+    fn pixel_probe_failures_are_custom_errors() -> Result<(), NativeAppError> {
+        let mut loaded = load_fixture(&fixture_path("hello-panel"))?;
+        loaded.manifest.pixel_probes[0].rgba = [0, 0, 0, 0];
+
+        let result = assert_pixel_probes(&loaded);
+
+        assert!(result.is_err());
+        Ok(())
     }
 
     #[test]
@@ -771,6 +868,22 @@ mod tests {
         ])?;
 
         assert_eq!(args.mode, NativeMode::Check);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("fixtures/render-everywhere/hello-panel")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn parses_smoke_mode_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--smoke"),
+            OsString::from("fixtures/render-everywhere/hello-panel"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::Smoke);
         assert_eq!(
             args.fixture_dir,
             PathBuf::from("fixtures/render-everywhere/hello-panel")
