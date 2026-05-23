@@ -31,6 +31,15 @@
 - **`@flyingrobots/geordi-runtime-webgl`**: Add `GEORDI_WEBGL_RUNTIME_PROFILE` and fail loudly
   with `GeordiRuntimeUnsupportedProfileError` when IR requests an unsupported IR version or
   numeric profile.
+- **`@flyingrobots/geordi-core`**: Add the baseline feature profile
+  (`GEORDI_CORE_PROFILE`, `GEORDI_BASELINE_FEATURES`) and require `geordi-ir/1` artifacts to
+  declare supported `requires` values.
+- **`@flyingrobots/geordi-compiler-core`**: Emit baseline feature requirements in
+  `scene.geordi.json`, record them in receipts, and add a deterministic
+  `featureRequirementsHash`.
+- **`@flyingrobots/geordi-runtime-webgl`**: Add baseline feature requirements to
+  `GEORDI_WEBGL_RUNTIME_PROFILE` and fail loudly when IR omits `requires` or asks for unsupported
+  features.
 - **Public API**: De-version the current IR TypeScript surface (`GeordiIr`,
   `validateGeordiIr()`, `isGeordiIr()`) and compiler target (`geordi-ir`) while preserving
   `irVersion: "geordi-ir/1"` as the serialized contract identity.
@@ -77,6 +86,9 @@
   spelling, and no hidden fixed-point scaling.
 - **`@flyingrobots/geordi-runtime-webgl`**: add runtime profile export and unsupported profile
   rejection coverage.
+- **Capability profile**: add core validation coverage for baseline feature requirements,
+  compiler golden coverage for emitted requirements and receipt hashes, runtime rejection coverage
+  for unsupported features, and package export smoke coverage for public capability symbols.
 - **`@flyingrobots/geordi-compiler-core`**: add source-location model, diagnostic formatter, and
   source-map artifact coverage.
 - **`@flyingrobots/geordi-schema-graphql`**: add exact GraphQL source-span tests and an e2e source

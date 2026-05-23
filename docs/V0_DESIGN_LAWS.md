@@ -14,7 +14,7 @@ It also defines the v0 design laws that keep Geordi from becoming a generic scen
 
 `geordi-ir/1` is the public renderer contract.
 
-`@flyingrobots/geordi-core` owns the versioned IR types, validation, canonical JSON rules, numeric profile, and compatibility constants. `@flyingrobots/geordi-compiler-core` emits `geordi-ir/1`. Renderers such as `@flyingrobots/geordi-runtime-webgl` accept validated `geordi-ir/1` directly and declare the runtime profile they support.
+`@flyingrobots/geordi-core` owns the versioned IR types, validation, canonical JSON rules, numeric profile, baseline feature profile, and compatibility constants. `@flyingrobots/geordi-compiler-core` emits `geordi-ir/1`. Renderers such as `@flyingrobots/geordi-runtime-webgl` accept validated `geordi-ir/1` directly and declare the runtime profile they support.
 
 A renderer may lower IR into an internal draw-ready cache, GPU command list, packed binary, atlas plan, or scene acceleration structure. That lowering is an implementation detail. It must not become a second public scene format unless it has its own version, validator, and explicit reason to exist.
 
@@ -67,7 +67,7 @@ Recommended top-level direction:
 interface GeordiIr {
   irVersion: 'geordi-ir/1';
   numericProfile: 'geordi-finite-binary64/1';
-  requires: string[];
+  requires: readonly GeordiFeatureRequirement[];
   scene: SceneFrame;
   assets?: AssetManifest;
   nodes: RenderNode[];
@@ -338,7 +338,7 @@ Every IR declares what it requires. Every runtime declares what it supports.
 
 ### Baseline Profile
 
-Recommended baseline profile:
+Current implemented baseline profile:
 
 ```text
 geordi/core/1
@@ -346,17 +346,23 @@ geordi/core/1
 
 Baseline features:
 
+- `geordi/core/1`
+- `layout.resolved`
+- `shape.group`
+- `shape.image`
 - `shape.rect`
-- `shape.roundRect`
+- `shape.text`
 - `paint.solid`
 - `stroke.solid`
-- `clip.rect`
-- `composite.sourceOver`
-- `alpha.premultiplied`
-- `text.glyphRuns`
-- `image.rgba8`
-- `layout.resolved`
-- `hit.geometry`
+- `paint.opacity`
+- `shape.cornerRadius`
+- `text.fill`
+- `text.raw-runtime-shaping`
+
+This baseline is intentionally honest about the current implementation. It allows raw runtime text
+shaping, so it is deterministic only under the numeric and JSON contracts, not yet under a strict
+pixel-identical font law. A future strict text profile should replace or extend
+`text.raw-runtime-shaping` with glyph-run and font-pack requirements.
 
 Optional profiles can extend this, for example:
 
@@ -458,6 +464,17 @@ compiler receipts include the profile, runtime-webgl declares and checks its sup
 and the core JSON port rejects non-finite numbers, canonicalizes `-0`, and does not round or
 fixed-point scale ordinary finite values.
 
+### P0: Define the baseline feature/capability profile
+
+Every IR must declare its required rendering capabilities, and every runtime must reject unsupported
+requirements before drawing.
+
+**Status**: Completed. `@flyingrobots/geordi-core` owns `GEORDI_CORE_PROFILE` and
+`GEORDI_BASELINE_FEATURES`; `geordi-ir/1` validates `requires`; `compiler-core` emits the baseline
+requirements in `scene.geordi.json` and records them plus `featureRequirementsHash` in receipts;
+`runtime-webgl` declares the same feature requirements in `GEORDI_WEBGL_RUNTIME_PROFILE` and
+rejects missing or unsupported requirements.
+
 ### P0: Validate GraphQL directive argument types at runtime
 
 Replace unsafe directive argument casts with typed extractors that emit source-located `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE` diagnostics.
@@ -504,15 +521,14 @@ These should be answered before locking the v0 IR schema:
 - Should v0 IR use `props.x/y/width/height` temporarily, or should it introduce an explicit `box` field before more runtimes exist?
 - Should `zIndex` remain in emitted IR as debug metadata, or be removed after draw order is resolved?
 - Should layout intent appear in renderable IR, or should renderable IR always contain resolved boxes and optional layout traces?
-- What exact compositor profile should `geordi/core/1` require for WebGL and future native backends?
+- What exact compositor profile should the next strict render-compliance profile require for WebGL
+  and future native backends?
 
 ## Recommended Next Step
 
 The first stabilization pass is merged. Continue in this order:
 
-1. Preserve typed diagnostics across adapter/compiler boundaries.
-2. Validate GraphQL directive argument types at runtime.
-3. Lower or explicitly reject every known Geordi directive.
-4. Expand package behavior tests beyond public entrypoint smoke.
-5. Add source maps and diagnostic UX improvements.
-6. Define the next feature/capability profile beyond the v0 baseline.
+1. Define the next strict text/font profile beyond `text.raw-runtime-shaping`.
+2. Specify deterministic operation-order rules for vector, matrix, transform, and animation math.
+3. Keep source-map, diagnostic formatter, and receipt behavior wired into future CLI/Wesley
+   entrypoints.
