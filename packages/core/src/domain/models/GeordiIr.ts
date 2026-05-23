@@ -1,5 +1,10 @@
 import type { JsonObject, JsonValue } from './GeordiScene.js';
 import {
+  GEORDI_CORE_PROFILE,
+  isGeordiFeatureRequirement,
+  type GeordiFeatureRequirement,
+} from './GeordiFeatureProfile.js';
+import {
   GEORDI_NUMERIC_PROFILE,
   isFiniteGraphicsNumber,
   type GeordiNumericProfile,
@@ -54,6 +59,7 @@ export interface GeordiIrAnimation extends JsonObject {
 export interface GeordiIr extends JsonObject {
   readonly irVersion: typeof GEORDI_IR_VERSION;
   readonly numericProfile: GeordiNumericProfile;
+  readonly requires: readonly GeordiFeatureRequirement[];
   readonly scene: GeordiIrScene;
   readonly nodes: readonly GeordiIrNode[];
   readonly bindings?: readonly GeordiIrBinding[];
@@ -95,6 +101,7 @@ export function validateGeordiIr(value: JsonValue | undefined): GeordiIrValidati
   }
 
   validateScene(property(value, 'scene'), issues);
+  validateRequires(property(value, 'requires'), issues);
   validateNodes(property(value, 'nodes'), issues);
   validateBindings(property(value, 'bindings'), issues);
   validateAnimations(property(value, 'animations'), issues);
@@ -113,6 +120,43 @@ function validateScene(value: JsonValue | undefined, issues: GeordiIrValidationI
   requirePositiveFiniteNumber(value, 'height', '$.scene.height', issues);
   optionalLiteral(value, 'units', 'px', '$.scene.units', issues);
   optionalString(value, 'background', '$.scene.background', issues);
+}
+
+function validateRequires(value: JsonValue | undefined, issues: GeordiIrValidationIssue[]): void {
+  if (!isJsonArray(value)) {
+    pushIssue(issues, '$.requires', 'IR requires must be an array');
+    return;
+  }
+
+  const seen = new Set<string>();
+  let hasCoreProfile = false;
+
+  for (let i = 0; i < value.length; i++) {
+    const requirement = value[i];
+    const path = `$.requires[${i}]`;
+
+    if (typeof requirement !== 'string') {
+      pushIssue(issues, path, 'IR requirement must be a string');
+      continue;
+    }
+
+    if (!isGeordiFeatureRequirement(requirement)) {
+      pushIssue(issues, path, 'IR requirement is not supported by this IR version');
+    }
+
+    if (seen.has(requirement)) {
+      pushIssue(issues, path, 'IR requirement must not be duplicated');
+    }
+    seen.add(requirement);
+
+    if (requirement === GEORDI_CORE_PROFILE) {
+      hasCoreProfile = true;
+    }
+  }
+
+  if (!hasCoreProfile) {
+    pushIssue(issues, '$.requires', `IR requirements must include "${GEORDI_CORE_PROFILE}"`);
+  }
 }
 
 function validateNodes(value: JsonValue | undefined, issues: GeordiIrValidationIssue[]): void {
