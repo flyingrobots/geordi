@@ -2,6 +2,7 @@ import type { CanonicalSceneAst } from '../types/ast.js';
 import type { CompilerInput } from '../types/compiler.js';
 import type { Artifact } from '../types/artifacts.js';
 import {
+  GEORDI_BASELINE_FEATURES,
   GEORDI_IR_ARTIFACT_KEY,
   GEORDI_IR_HASH_ALGORITHM,
   GEORDI_IR_RECEIPT_KEY,
@@ -17,6 +18,7 @@ export const IR_VERSION = GEORDI_IR_VERSION;
 export const IR_ARTIFACT_KEY = GEORDI_IR_ARTIFACT_KEY;
 export const IR_RECEIPT_KEY = GEORDI_IR_RECEIPT_KEY;
 export const NUMERIC_PROFILE = GEORDI_NUMERIC_PROFILE;
+export const FEATURE_REQUIREMENTS = GEORDI_BASELINE_FEATURES;
 export const SOURCE_MAP_ARTIFACT_KEY = 'scene.geordi.map.json' as const;
 export const SOURCE_MAP_VERSION = 'geordi-source-map/1' as const;
 
@@ -34,6 +36,7 @@ export function emitGeordiIrArtifact(ast: CanonicalSceneAst): Artifact {
     {
       irVersion: IR_VERSION,
       numericProfile: NUMERIC_PROFILE,
+      requires: [...FEATURE_REQUIREMENTS],
       scene: ast.scene,
       nodes: sorted,
       bindings: ast.bindings ?? [],
@@ -87,11 +90,15 @@ export function emitReceiptArtifact(
   const inputHash = hashString(input.source);
   const irHash = hashString(irContent);
   const sourceMapHash = hashString(sourceMapContent);
+  const featureRequirementsHash = hashString(FEATURE_REQUIREMENTS.join('\n'));
   const rulesetFingerprint = hashString([...ruleIds].sort().join('\n'));
 
   const content = stringifyCanonicalJson(
     {
       comparatorVersion: COMPARATOR_VERSION,
+      featureRequirements: [...FEATURE_REQUIREMENTS],
+      featureRequirementsHash,
+      featureRequirementsHashAlg: IR_HASH_ALG,
       inputHash,
       irHash,
       irHashAlg: IR_HASH_ALG,

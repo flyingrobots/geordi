@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  GEORDI_BASELINE_FEATURES,
   GEORDI_NUMERIC_PROFILE,
   isGeordiIr,
   type GeordiIr,
@@ -187,6 +188,7 @@ function makeIr(): GeordiIr {
   return {
     irVersion: 'geordi-ir/1',
     numericProfile: GEORDI_NUMERIC_PROFILE,
+    requires: GEORDI_BASELINE_FEATURES,
     scene: {
       id: 'scene:runtime-ir',
       width: 100,
@@ -237,6 +239,7 @@ describe('runtime-webgl public API', () => {
     expect(GEORDI_WEBGL_RUNTIME_PROFILE).toEqual({
       irVersion: 'geordi-ir/1',
       numericProfile: GEORDI_NUMERIC_PROFILE,
+      featureRequirements: GEORDI_BASELINE_FEATURES,
       nodeKinds: ['Rect', 'Text', 'Group', 'Image'],
       visualFeatures: ['solid-fill', 'solid-stroke', 'opacity', 'corner-radius', 'text-fill'],
     });
@@ -316,6 +319,37 @@ describe('runtime-webgl public API', () => {
     } as object as GeordiIr;
 
     expect(() => renderGeordiToCanvas(unsupportedProfileIr)).toThrow(
+      GeordiRuntimeUnsupportedProfileError,
+    );
+  });
+
+  it('throws a custom error for unsupported feature requirements', () => {
+    const unsupportedFeatureIr = {
+      ...makeIr(),
+      requires: [...GEORDI_BASELINE_FEATURES, 'effect.blur/1'],
+    } as object as GeordiIr;
+
+    expect(() => renderGeordiToCanvas(unsupportedFeatureIr)).toThrow(
+      GeordiRuntimeUnsupportedProfileError,
+    );
+  });
+
+  it('throws a custom error when feature requirements are missing', () => {
+    const missingFeatureIr = { ...makeIr() };
+    Reflect.deleteProperty(missingFeatureIr, 'requires');
+
+    expect(() => renderGeordiToCanvas(missingFeatureIr)).toThrow(
+      GeordiRuntimeUnsupportedProfileError,
+    );
+  });
+
+  it('throws a custom error when feature requirements are malformed', () => {
+    const malformedFeatureIr = {
+      ...makeIr(),
+      requires: ['geordi/core/1', 7],
+    } as object as GeordiIr;
+
+    expect(() => renderGeordiToCanvas(malformedFeatureIr)).toThrow(
       GeordiRuntimeUnsupportedProfileError,
     );
   });

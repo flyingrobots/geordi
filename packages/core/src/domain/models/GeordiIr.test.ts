@@ -4,11 +4,13 @@ import {
   isGeordiIr,
   validateGeordiIr,
 } from './GeordiIr';
+import { GEORDI_BASELINE_FEATURES } from './GeordiFeatureProfile';
 import { GEORDI_NUMERIC_PROFILE } from './GeordiNumericProfile';
 
 const VALID_IR = {
   irVersion: GEORDI_IR_VERSION,
   numericProfile: GEORDI_NUMERIC_PROFILE,
+  requires: GEORDI_BASELINE_FEATURES,
   scene: {
     id: 'scene:test',
     width: 320,
@@ -65,6 +67,32 @@ describe('Geordi IR contract', () => {
     expect(unsupportedResult.ok).toBe(false);
     expect(missingResult.issues.map((issue) => issue.path)).toContain('$.numericProfile');
     expect(unsupportedResult.issues.map((issue) => issue.path)).toContain('$.numericProfile');
+  });
+
+  it('rejects missing or malformed feature requirements', () => {
+    const missingRequirements = { ...VALID_IR };
+    Reflect.deleteProperty(missingRequirements, 'requires');
+
+    const missingResult = validateGeordiIr(missingRequirements);
+    const malformedResult = validateGeordiIr({
+      ...VALID_IR,
+      requires: ['geordi/core/1', 'effect.blur/1', 1, 'shape.rect', 'shape.rect'],
+    });
+    const missingCoreProfileResult = validateGeordiIr({
+      ...VALID_IR,
+      requires: ['shape.rect'],
+    });
+
+    expect(missingResult.ok).toBe(false);
+    expect(malformedResult.ok).toBe(false);
+    expect(missingCoreProfileResult.ok).toBe(false);
+    expect(missingResult.issues.map((issue) => issue.path)).toContain('$.requires');
+    expect(malformedResult.issues.map((issue) => issue.path)).toEqual([
+      '$.requires[1]',
+      '$.requires[2]',
+      '$.requires[4]',
+    ]);
+    expect(missingCoreProfileResult.issues.map((issue) => issue.path)).toContain('$.requires');
   });
 
   it('rejects non-finite scene dimensions and node z-index', () => {

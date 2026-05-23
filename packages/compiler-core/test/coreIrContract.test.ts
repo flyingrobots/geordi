@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { GEORDI_NUMERIC_PROFILE, validateGeordiIr } from '@flyingrobots/geordi-core';
+import {
+  GEORDI_BASELINE_FEATURES,
+  GEORDI_NUMERIC_PROFILE,
+  validateGeordiIr,
+} from '@flyingrobots/geordi-core';
 import type { GeordiIr } from '@flyingrobots/geordi-core';
 import { compile } from '../src/compile/compile';
 import { parseJsonValue, stringifyCanonicalJson } from '../src/ports/json';
@@ -52,5 +56,6 @@ describe('compiler-core to geordi-core IR contract', () => {
     const ir = parseJsonValue(String(artifact.content));
     expect(validateGeordiIr(ir)).toEqual({ ok: true, issues: [] });
     expect((ir as GeordiIr).numericProfile).toBe(GEORDI_NUMERIC_PROFILE);
+    expect((ir as GeordiIr).requires).toEqual(GEORDI_BASELINE_FEATURES);
   });
 });

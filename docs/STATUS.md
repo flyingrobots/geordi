@@ -2,7 +2,7 @@
 
 **Date**: 2026-05-23
 **Version**: 0.1.0-dev
-**Milestone**: Source-map and diagnostic UX work starting from `main` at `2dcf510`
+**Milestone**: Capability profile contract work starting from `main` at `fce5978`
 
 See [`../BEARING.md`](../BEARING.md) for the current operating map.
 
@@ -23,7 +23,8 @@ Pure, framework-agnostic compilation engine.
 - GraphQL SDL and canonical JSON input paths.
 - Uses the core-owned deterministic JSON port for canonical parse/stringify boundaries.
 - Deterministic IR, receipt, source-map, and TypeScript type emission.
-- IR and receipt emission declare the v0 numeric profile.
+- IR and receipt emission declare the v0 numeric profile, baseline feature requirements, and
+  feature-requirement hash.
 - Current public IR API names are `GeordiIr`, `validateGeordiIr()`, and `isGeordiIr()`; versioning
   remains in serialized contract values such as `irVersion: "geordi-ir/1"`.
 - Canonical source-location model shared by AST source refs and diagnostics.
@@ -59,6 +60,8 @@ Core domain package.
 - Canonical JSON port with deterministic parse/stringify/normalize behavior and custom JSON
   errors.
 - v0 numeric profile constant `geordi-finite-binary64/1` and graphics-number helpers.
+- Baseline feature profile constants rooted at `geordi/core/1`, plus validation for
+  `geordi-ir/1` `requires`.
 - Current `GeordiIr` structural types and validation for the `geordi-ir/1` payload contract.
 - Draw-ready runtime scene aliases named `PreparedGeordiScene` and `PreparedGeordiNode`.
 - Compatibility aliases for the older scene names remain during the v0.1 migration.
@@ -72,8 +75,9 @@ Canvas-backed WebGL-runtime scaffold.
 - `renderGeordiToCanvas()` is the primary public `geordi-ir/1` rendering API.
 - `renderPreparedSceneToCanvas()` renders draw-ready runtime scenes explicitly.
 - Runtime-bound IR validation and fail-loud prop lowering use custom runtime error types.
-- Runtime capability profile declares supported IR version, numeric profile, node kinds, and visual
-  features.
+- Runtime capability profile declares supported IR version, numeric profile, feature requirements,
+  node kinds, and visual features.
+- Runtime profile checks reject missing or unsupported feature requirements before drawing.
 - Compiler-emitted IR is rendered through the runtime contract in an integration test.
 
 ## Infrastructure
@@ -92,16 +96,16 @@ Canvas-backed WebGL-runtime scaffold.
 
 ## Test Status
 
-Latest full local gate during the core IR runtime-contract work:
+Latest package test counts for the capability-profile branch:
 
 | Package | Tests | Status |
 | --- | ---: | --- |
 | `@flyingrobots/geordi-compiler-core` | 82 | Green |
 | `@flyingrobots/geordi-schema-graphql` | 55 | Green |
-| `@flyingrobots/geordi-core` | 26 | Green |
-| `@flyingrobots/geordi-runtime-webgl` | 12 | Green |
+| `@flyingrobots/geordi-core` | 30 | Green |
+| `@flyingrobots/geordi-runtime-webgl` | 15 | Green |
 | `@flyingrobots/geordi-wesley-generator` | 3 | Green |
-| **Total package tests** | **178** | Green |
+| **Total package tests** | **185** | Green |
 
 Additional gates:
 
@@ -117,9 +121,11 @@ Additional gates:
 
 Immediate:
 
-1. Define the next feature/capability profile beyond the v0 baseline.
-2. Keep source-map and diagnostic formatter behavior wired into future CLI/Wesley entrypoints.
-3. Keep dependency hygiene clean; there are no open PRs at this refresh point.
+1. Define the next strict text/font profile beyond `text.raw-runtime-shaping`.
+2. Specify deterministic operation-order rules for future vector, matrix, transform, and animation
+   math.
+3. Keep source-map, diagnostic formatter, and receipt behavior wired into future CLI/Wesley
+   entrypoints.
 
 Short term:
 

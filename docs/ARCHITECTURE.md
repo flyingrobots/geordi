@@ -121,6 +121,7 @@ See [`docs/ERROR_CODES.md`](./ERROR_CODES.md) for complete taxonomy.
 - **IR version**: `irVersion: "geordi-ir/1"` (output format)
 - **Source map version**: `version: "geordi-source-map/1"` (IR node ID to source location map)
 - **Numeric profile**: `numericProfile: "geordi-finite-binary64/1"` (finite binary64 graphics numbers)
+- **Feature profile**: `requires: ["geordi/core/1", ...]` (explicit render capabilities)
 - **Directive version**: `v: "1"` (GraphQL directives)
 
 All versions are explicit and validated. Unknown versions → hard error.

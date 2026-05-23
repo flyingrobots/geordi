@@ -7,7 +7,15 @@ const checks = [
   {
     packageName: '@flyingrobots/geordi-core',
     packageDir: 'packages/core',
-    exports: ['GEORDI_NUMERIC_PROFILE', 'isGeordiScene', 'isRectNode', 'parseJsonValue'],
+    exports: [
+      'GEORDI_BASELINE_FEATURES',
+      'GEORDI_CORE_PROFILE',
+      'GEORDI_NUMERIC_PROFILE',
+      'isGeordiFeatureRequirement',
+      'isGeordiScene',
+      'isRectNode',
+      'parseJsonValue',
+    ],
   },
   {
     packageName: '@flyingrobots/geordi-compiler-core',
@@ -22,7 +30,13 @@ const checks = [
   {
     packageName: '@flyingrobots/geordi-runtime-webgl',
     packageDir: 'packages/runtime-webgl',
-    exports: ['GEORDI_WEBGL_RUNTIME_PROFILE', 'GeordiWebGLRenderer', 'renderGeordiToCanvas'],
+    exports: [
+      'GEORDI_WEBGL_RUNTIME_PROFILE',
+      'GeordiRuntimeUnsupportedProfileError',
+      'GeordiWebGLRenderer',
+      'assertSupportedRuntimeProfile',
+      'renderGeordiToCanvas',
+    ],
   },
   {
     packageName: '@flyingrobots/geordi-wesley-generator',
