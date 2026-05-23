@@ -96,7 +96,7 @@ pixel-identical browser/native claim until strict text exists.
   - Add `crates/geordi-ir`.
   - Define typed Rust structs for the rectangle-only `geordi-ir/1` subset.
   - Keep `serde_json::Value` contained at the JSON boundary.
-  - Done: current slice.
+  - Done: `5cb3aa3`.
   - Verification: unit test loads the shared fixture into typed structs.
 
 - [ ] **Slice 11: Rust IR validation**
