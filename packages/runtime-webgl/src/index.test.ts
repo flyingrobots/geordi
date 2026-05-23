@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   GEORDI_BASELINE_FEATURES,
+  GEORDI_CORE_PROFILE,
   GEORDI_NUMERIC_PROFILE,
+  GEORDI_STRICT_TEXT_FEATURES,
   isGeordiIr,
   type GeordiIr,
   type PreparedGeordiScene,
@@ -239,7 +241,7 @@ describe('runtime-webgl public API', () => {
     expect(GEORDI_WEBGL_RUNTIME_PROFILE).toEqual({
       irVersion: 'geordi-ir/1',
       numericProfile: GEORDI_NUMERIC_PROFILE,
-      featureRequirements: GEORDI_BASELINE_FEATURES,
+      supportedFeatureRequirements: GEORDI_BASELINE_FEATURES,
       nodeKinds: ['Rect', 'Text', 'Group', 'Image'],
       visualFeatures: ['solid-fill', 'solid-stroke', 'opacity', 'corner-radius', 'text-fill'],
     });
@@ -295,6 +297,24 @@ describe('runtime-webgl public API', () => {
     expect(context.font).toBe('400 12px Inter');
   });
 
+  it('renders IR that requires a supported feature subset', () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    installCanvasDocument(canvas);
+
+    const ir = makeIr();
+    const rendered = renderGeordiToCanvas({
+      ...ir,
+      requires: [GEORDI_CORE_PROFILE, 'layout.resolved', 'shape.rect', 'paint.solid'],
+      nodes: ir.nodes.filter((node) => node.kind === 'Rect'),
+    });
+
+    expect(rendered).toBe(canvas);
+    expect(canvas.width).toBe(100);
+    expect(canvas.height).toBe(50);
+    expect(context.calls.some((call) => call.name === 'fillText')).toBe(false);
+  });
+
   it('keeps the deprecated IR helper as a compatibility alias', () => {
     expect(renderGeordiIrToCanvas).toBe(renderGeordiToCanvas);
   });
@@ -330,6 +350,17 @@ describe('runtime-webgl public API', () => {
     } as object as GeordiIr;
 
     expect(() => renderGeordiToCanvas(unsupportedFeatureIr)).toThrow(
+      GeordiRuntimeUnsupportedProfileError,
+    );
+  });
+
+  it('throws a custom error for known strict text requirements until supported', () => {
+    const strictTextIr: GeordiIr = {
+      ...makeIr(),
+      requires: [...GEORDI_BASELINE_FEATURES, ...GEORDI_STRICT_TEXT_FEATURES],
+    };
+
+    expect(() => renderGeordiToCanvas(strictTextIr)).toThrow(
       GeordiRuntimeUnsupportedProfileError,
     );
   });

@@ -1,6 +1,11 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { GEORDI_BASELINE_FEATURES, GEORDI_NUMERIC_PROFILE } from '@flyingrobots/geordi-core';
+import {
+  GEORDI_BASELINE_FEATURES,
+  GEORDI_KNOWN_FEATURES,
+  GEORDI_NUMERIC_PROFILE,
+  GEORDI_STRICT_TEXT_FEATURES,
+} from '@flyingrobots/geordi-core';
 import { compile } from '../src/compile/compile';
 import { GeordiErrorCode } from '../src/errors';
 import { parseJsonValue, stringifyCanonicalJson } from '../src/ports/json';
@@ -66,6 +71,10 @@ describe('compile() golden path', () => {
     expect(ir.irVersion).toBe('geordi-ir/1');
     expect(ir.numericProfile).toBe(GEORDI_NUMERIC_PROFILE);
     expect(ir.requires).toEqual(GEORDI_BASELINE_FEATURES);
+    expect(ir.requires).not.toEqual(GEORDI_KNOWN_FEATURES);
+    for (const feature of GEORDI_STRICT_TEXT_FEATURES) {
+      expect(ir.requires).not.toContain(feature);
+    }
     expect(ir.scene.id).toBe('scene:terminal');
     expect(Array.isArray(ir.nodes)).toBe(true);
     expect(ir.nodes.length).toBe(2);
@@ -110,6 +119,10 @@ describe('compile() golden path', () => {
     const receipt = parseJsonValue(String(result.artifacts['scene.geordi.json.receipt'].content)) as JsonObject;
     expect(receipt.comparatorVersion).toBe('1');
     expect(receipt.featureRequirements).toEqual(GEORDI_BASELINE_FEATURES);
+    expect(receipt.featureRequirements).not.toEqual(GEORDI_KNOWN_FEATURES);
+    for (const feature of GEORDI_STRICT_TEXT_FEATURES) {
+      expect(receipt.featureRequirements).not.toContain(feature);
+    }
     expect(receipt.featureRequirementsHash).toBe(
       sha256(GEORDI_BASELINE_FEATURES.join('\n')),
     );

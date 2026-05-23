@@ -1,8 +1,8 @@
 # Geordi Bearing
 
 **Date**: 2026-05-23
-**Branch baseline**: `main` at `fce5978`
-**Current branch when written**: `p0/capability-profile-contract`
+**Branch baseline**: `main` at `1719019`
+**Current branch when written**: `codex/execute-next-hit-list`
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
@@ -57,6 +57,8 @@ Completed:
 - Compiler-core exposes a deterministic diagnostic formatter, and the Wesley generator uses it for
   stable logging.
 - Root `pnpm wesley` shells out to the installed Wesley CLI.
+- The next post-capability-profile slice sequence has a formal design pack in
+  [`docs/design/`](./docs/design/).
 
 Still true:
 
@@ -74,10 +76,12 @@ Still true:
 
 ## Recommended P0 Order
 
-1. Define the next strict text/font feature profile beyond the current v0 baseline.
-2. Decide whether Wesley modernization should target `wesley-cli`/`wesley-core` 0.0.5 through a
+1. Execute the strict text/font profile and feature-registry split described in
+   [`docs/design/`](./docs/design/).
+2. Close GitHub issues #6 and #5 as the first compiler test-hardening cleanup.
+3. Decide whether Wesley modernization should target `wesley-cli`/`wesley-core` 0.0.5 through a
    CLI boundary, Rust workspace boundary, or future npm/WASM boundary.
-3. Keep dependency hygiene clean; there are no open PRs at the time this bearing was refreshed.
+4. Keep dependency hygiene clean; there are no open PRs at the time this bearing was refreshed.
 
 ## Dependency Work
 

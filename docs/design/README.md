@@ -2,7 +2,7 @@
 
 **Status**: Draft
 **Date**: 2026-05-23
-**Baseline**: `main` after capability-profile merge `2dec0a5`
+**Baseline**: `main` after design-pack merge `1719019`
 
 This directory holds implementation design documents for the next post-capability-profile P0
 sequence. The design pack is intentionally separate from [`../V0_DESIGN_LAWS.md`](../V0_DESIGN_LAWS.md):

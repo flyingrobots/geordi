@@ -475,6 +475,18 @@ requirements in `scene.geordi.json` and records them plus `featureRequirementsHa
 `runtime-webgl` declares the same feature requirements in `GEORDI_WEBGL_RUNTIME_PROFILE` and
 rejects missing or unsupported requirements.
 
+### P0: Define the strict text/font profile
+
+Raw runtime text shaping is allowed in the current baseline only as an honest v0 rendering mode.
+It is not a pixel-identical cross-runtime compliance claim. Strict text needs a separate profile
+that requires content-addressed font packs, a declared shaping profile, a declared line-breaking
+profile, explicit fallback chains, glyph runs, and line boxes.
+
+**Status**: Ready for implementation. See
+[`docs/design/2026-05-strict-text-font-profile.md`](./design/2026-05-strict-text-font-profile.md)
+for the implementation plan. The compiler must keep emitting `text.raw-runtime-shaping` until it
+can lower text into deterministic glyph data.
+
 ### P0: Validate GraphQL directive argument types at runtime
 
 Replace unsafe directive argument casts with typed extractors that emit source-located `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE` diagnostics.

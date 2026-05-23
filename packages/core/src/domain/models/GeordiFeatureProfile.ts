@@ -15,12 +15,26 @@ export const GEORDI_BASELINE_FEATURES = [
   'text.raw-runtime-shaping',
 ] as const;
 
-export type GeordiFeatureRequirement = (typeof GEORDI_BASELINE_FEATURES)[number];
+export const GEORDI_STRICT_TEXT_FEATURES = [
+  'text.fontPack',
+  'text.shapingProfile',
+  'text.lineBreakProfile',
+  'text.fallbackChain',
+  'text.glyphRuns',
+  'text.lineBoxes',
+] as const;
 
-const GEORDI_BASELINE_FEATURE_SET = new Set<string>(GEORDI_BASELINE_FEATURES);
+export const GEORDI_KNOWN_FEATURES = [
+  ...GEORDI_BASELINE_FEATURES,
+  ...GEORDI_STRICT_TEXT_FEATURES,
+] as const;
+
+export type GeordiFeatureRequirement = (typeof GEORDI_KNOWN_FEATURES)[number];
+
+const GEORDI_KNOWN_FEATURE_SET = new Set<string>(GEORDI_KNOWN_FEATURES);
 
 export function isGeordiFeatureRequirement(
   value: string,
 ): value is GeordiFeatureRequirement {
-  return GEORDI_BASELINE_FEATURE_SET.has(value);
+  return GEORDI_KNOWN_FEATURE_SET.has(value);
 }

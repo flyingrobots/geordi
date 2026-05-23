@@ -55,6 +55,8 @@ export { isPreparedGeordiScene, isGeordiScene } from './GeordiScene.js';
 export {
   GEORDI_BASELINE_FEATURES,
   GEORDI_CORE_PROFILE,
+  GEORDI_KNOWN_FEATURES,
+  GEORDI_STRICT_TEXT_FEATURES,
   isGeordiFeatureRequirement,
 } from './GeordiFeatureProfile.js';
 
