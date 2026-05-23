@@ -1,6 +1,6 @@
 import { ParseError, GeordiErrorCode, parseJsonValue } from '@flyingrobots/geordi-compiler-core';
 import type { Diagnostic, JsonObject, JsonValue, NodeKind, SourceRef } from '@flyingrobots/geordi-compiler-core';
-import { isGeordiNodeKind } from '../directives/v1.js';
+import { isGeordiNodeKind } from '../directives/geordiDirectives.js';
 import {
   readOptionalBooleanArg,
   readOptionalFloatArg,

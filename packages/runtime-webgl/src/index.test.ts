@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   GEORDI_NUMERIC_PROFILE,
-  isGeordiIrV1,
-  type GeordiIrV1,
+  isGeordiIr,
+  type GeordiIr,
   type PreparedGeordiScene,
 } from '@flyingrobots/geordi-core';
 import {
@@ -183,7 +183,7 @@ function makePreparedScene(): PreparedGeordiScene {
   };
 }
 
-function makeIr(): GeordiIrV1 {
+function makeIr(): GeordiIr {
   return {
     irVersion: 'geordi-ir/1',
     numericProfile: GEORDI_NUMERIC_PROFILE,
@@ -304,7 +304,7 @@ describe('runtime-webgl public API', () => {
         width: 0,
         height: 50,
       },
-    } as object as GeordiIrV1;
+    } as object as GeordiIr;
 
     expect(() => renderGeordiToCanvas(invalidIr)).toThrow(GeordiRuntimeInvalidIrError);
   });
@@ -313,7 +313,7 @@ describe('runtime-webgl public API', () => {
     const unsupportedProfileIr = {
       ...makeIr(),
       numericProfile: 'geordi-fixed-point-px6/1',
-    } as object as GeordiIrV1;
+    } as object as GeordiIr;
 
     expect(() => renderGeordiToCanvas(unsupportedProfileIr)).toThrow(
       GeordiRuntimeUnsupportedProfileError,
@@ -324,7 +324,7 @@ describe('runtime-webgl public API', () => {
     const unsupportedVersionIr = {
       ...makeIr(),
       irVersion: 'geordi-ir/2',
-    } as object as GeordiIrV1;
+    } as object as GeordiIr;
 
     expect(() => renderGeordiToCanvas(unsupportedVersionIr)).toThrow(
       GeordiRuntimeUnsupportedProfileError,
@@ -332,7 +332,7 @@ describe('runtime-webgl public API', () => {
   });
 
   it('throws a custom error when required runtime node props are missing', () => {
-    const invalidIr: GeordiIrV1 = {
+    const invalidIr: GeordiIr = {
       ...makeIr(),
       nodes: [
         {
@@ -351,7 +351,7 @@ describe('runtime-webgl public API', () => {
   });
 
   it('throws a custom error when required string props are invalid', () => {
-    const invalidIr: GeordiIrV1 = {
+    const invalidIr: GeordiIr = {
       ...makeIr(),
       nodes: [
         {
@@ -421,7 +421,7 @@ describe('runtime-webgl public API', () => {
       format: 'canonical-ast-json',
       source,
       options: {
-        target: 'geordi-ir-v1',
+        target: 'geordi-ir',
         emit: {
           irJson: true,
           tsTypes: false,
@@ -436,7 +436,7 @@ describe('runtime-webgl public API', () => {
 
     const artifact = result.artifacts['scene.geordi.json'];
     const ir = parseJsonValue(String(artifact.content));
-    if (!isGeordiIrV1(ir)) {
+    if (!isGeordiIr(ir)) {
       throw new RuntimeContractTestError('Invalid IR artifact');
     }
 

@@ -112,7 +112,7 @@ All Geordi runtimes implement a shared contract:
 
 ```ts
 interface GeordiRuntime {
-  load(ir: GeordiIrV1): Promise<void>;
+  load(ir: GeordiIr): Promise<void>;
   render(): void;
   updateNode(id: string, props: JsonObject): void;
   hitTest(x: number, y: number): HitResult | null;

@@ -139,7 +139,7 @@ All compiler errors use stable, documented error codes. Never ignore or suppress
 
 **Severity**: Error
 **Message**: Unsupported emit target
-**Fix**: Use `target: 'geordi-ir-v1'` (only supported target in v0.1)
+**Fix**: Use `target: 'geordi-ir'` (only supported target in v0.1)
 
 ### `GEORDI_E_FEATURE_NOT_IMPLEMENTED`
 

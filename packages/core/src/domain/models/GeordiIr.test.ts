@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   GEORDI_IR_VERSION,
-  isGeordiIrV1,
-  validateGeordiIrV1,
+  isGeordiIr,
+  validateGeordiIr,
 } from './GeordiIr';
 import { GEORDI_NUMERIC_PROFILE } from './GeordiNumericProfile';
 
@@ -33,16 +33,16 @@ const VALID_IR = {
   animations: [],
 };
 
-describe('Geordi IR v1 contract', () => {
+describe('Geordi IR contract', () => {
   it('accepts a valid geordi-ir/1 document', () => {
-    const result = validateGeordiIrV1(VALID_IR);
+    const result = validateGeordiIr(VALID_IR);
 
     expect(result).toEqual({ ok: true, issues: [] });
-    expect(isGeordiIrV1(VALID_IR)).toBe(true);
+    expect(isGeordiIr(VALID_IR)).toBe(true);
   });
 
   it('rejects the wrong IR version', () => {
-    const result = validateGeordiIrV1({
+    const result = validateGeordiIr({
       ...VALID_IR,
       irVersion: 'geordi-ir/2',
     });
@@ -55,8 +55,8 @@ describe('Geordi IR v1 contract', () => {
     const missingProfile = { ...VALID_IR };
     Reflect.deleteProperty(missingProfile, 'numericProfile');
 
-    const missingResult = validateGeordiIrV1(missingProfile);
-    const unsupportedResult = validateGeordiIrV1({
+    const missingResult = validateGeordiIr(missingProfile);
+    const unsupportedResult = validateGeordiIr({
       ...VALID_IR,
       numericProfile: 'geordi-fixed-point-px6/1',
     });
@@ -68,7 +68,7 @@ describe('Geordi IR v1 contract', () => {
   });
 
   it('rejects non-finite scene dimensions and node z-index', () => {
-    const result = validateGeordiIrV1({
+    const result = validateGeordiIr({
       ...VALID_IR,
       scene: {
         id: 'scene:test',
@@ -94,7 +94,7 @@ describe('Geordi IR v1 contract', () => {
   });
 
   it('rejects non-positive scene dimensions', () => {
-    const result = validateGeordiIrV1({
+    const result = validateGeordiIr({
       ...VALID_IR,
       scene: {
         id: 'scene:test',
@@ -111,7 +111,7 @@ describe('Geordi IR v1 contract', () => {
   });
 
   it('rejects nodes without object props', () => {
-    const result = validateGeordiIrV1({
+    const result = validateGeordiIr({
       ...VALID_IR,
       nodes: [
         {

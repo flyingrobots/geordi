@@ -8,7 +8,7 @@
 
 ### Features
 
-- **`@flyingrobots/geordi-core`**: Add core-owned `geordi-ir/1` constants, versioned IR types,
+- **`@flyingrobots/geordi-core`**: Add core-owned `geordi-ir/1` constants, current `GeordiIr` types,
   and structural validation for scenes, nodes, bindings, animations, keyframes, and finite
   numeric fields.
 - **`@flyingrobots/geordi-compiler-core`**: Re-export IR types from
@@ -31,6 +31,9 @@
 - **`@flyingrobots/geordi-runtime-webgl`**: Add `GEORDI_WEBGL_RUNTIME_PROFILE` and fail loudly
   with `GeordiRuntimeUnsupportedProfileError` when IR requests an unsupported IR version or
   numeric profile.
+- **Public API**: De-version the current IR TypeScript surface (`GeordiIr`,
+  `validateGeordiIr()`, `isGeordiIr()`) and compiler target (`geordi-ir`) while preserving
+  `irVersion: "geordi-ir/1"` as the serialized contract identity.
 - **`@flyingrobots/geordi-compiler-core`**: Semantic validation engine — `validateCanonicalAst()` with two-tier rule registry; Tier 1 (structural: `sceneDimensions`, `nodeKindValid`, `duplicateId`, `danglingRef`, `cycleDetection`) gates Tier 2 (semantic: `requiredProps` per NodeKind); iterative Kahn's cycle detection passes 10k-node chains without stack overflow
 - **`@flyingrobots/geordi-compiler-core`**: Deterministic IR emitter — `emitGeordiIrArtifact()` replaces stub; two-phase topological sort (Kahn's on `parentId` DAG, tie-broken `zIndex ASC → kind ASC → id ASC` bytewise); strips `sourceRef` and `__typename`
 - **`@flyingrobots/geordi-compiler-core`**: Determinism certificate — `emitReceiptArtifact()` emits `scene.geordi.json.receipt` alongside IR containing `comparatorVersion`, `inputHash` (SHA-256 of `input.source`), `irHash` (SHA-256 of the emitted IR), `irHashAlg` (`"sha256"`), `irVersion`, and `rulesetFingerprint` (SHA-256 of sorted rule IDs)

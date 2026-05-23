@@ -30,7 +30,7 @@ Pure, framework-agnostic compilation engine.
 
 GraphQL SDL to canonical AST adapter.
 
-- Directive definitions for v1.
+- Directive definitions with an explicit directive version contract.
 - GraphQL parser wrapper with source naming.
 - Scene and node extraction.
 - Canonical AST transform.

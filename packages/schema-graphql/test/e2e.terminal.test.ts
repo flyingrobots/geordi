@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { compile, GeordiErrorCode, parseJsonValue } from '@flyingrobots/geordi-compiler-core';
 import { graphqlToCanonicalAst } from '../src/index';
-import type { CompilerInput, CompileResult, GeordiIrV1, ParseInputDeps } from '@flyingrobots/geordi-compiler-core';
+import type { CompilerInput, CompileResult, GeordiIr, ParseInputDeps } from '@flyingrobots/geordi-compiler-core';
 
 const TERMINAL_SDL = `
 type Terminal @geordi_scene(v: "1", width: 800, height: 600) {
@@ -35,7 +35,7 @@ function makeInput(sdl: string, filename = 'terminal.graphql'): CompilerInput {
     source: sdl,
     filename,
     options: {
-      target: 'geordi-ir-v1',
+      target: 'geordi-ir',
       emit: { irJson: true, tsTypes: true },
       strict: true,
       failOnWarnings: false,
@@ -49,8 +49,8 @@ function irContent(result: CompileResult): string {
   return String(artifact.content);
 }
 
-function parseIr(result: CompileResult): GeordiIrV1 {
-  return parseJsonValue(irContent(result)) as GeordiIrV1;
+function parseIr(result: CompileResult): GeordiIr {
+  return parseJsonValue(irContent(result)) as GeordiIr;
 }
 
 describe('e2e: Terminal SDL fixture', () => {

@@ -127,7 +127,7 @@ All versions are explicit and validated. Unknown versions → hard error.
 
 Current limitations in v0.1:
 - GraphQL directive args use JSON strings for complex props (ugly but pragmatic)
-- Single output target (`geordi-ir-v1`)
+- Single output target (`geordi-ir`)
 - No binary packer (`.geordib` format)
 
 Planned for v0.2:

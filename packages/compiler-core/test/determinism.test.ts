@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { compile } from '../src/compile/compile';
 import { parseJsonValue, stringifyCanonicalJson } from '../src/ports/json';
-import type { CompilerInput, GeordiIrV1 } from '../src/types';
+import type { CompilerInput, GeordiIr } from '../src/types';
 
 function sha256(content: string): string {
   return createHash('sha256').update(content, 'utf8').digest('hex');
@@ -39,7 +39,7 @@ const BASE_INPUT: CompilerInput = {
   }),
   filename: 'fixtures/determinism.json',
   options: {
-    target: 'geordi-ir-v1',
+    target: 'geordi-ir',
     emit: { irJson: true, tsTypes: false },
     strict: true,
     failOnWarnings: false,
@@ -172,7 +172,7 @@ describe('determinism', () => {
     const result = await compile(withReversedNodes);
     expect(result.ok).toBe(true);
 
-    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIr;
     expect(ir.nodes.map((n) => n.id)).toEqual(['node:z1', 'node:z2', 'node:z3']);
   });
 
@@ -235,7 +235,7 @@ describe('determinism', () => {
     const result = await compile(input);
     expect(result.ok).toBe(true);
 
-    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIr;
     const ids = ir.nodes.map((n) => n.id);
     expect(ids.indexOf('parent')).toBeLessThan(ids.indexOf('child'));
   });
@@ -259,7 +259,7 @@ describe('determinism', () => {
     const result = await compile(input);
     expect(result.ok).toBe(true);
 
-    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIr;
     expect(ir.nodes.map((n) => n.id)).toEqual(['n:a', 'n:z']);
   });
 });

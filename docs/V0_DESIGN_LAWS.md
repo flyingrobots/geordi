@@ -28,7 +28,7 @@ A renderer may lower IR into an internal draw-ready cache, GPU command list, pac
 ### Consequences
 
 - The draw-ready runtime scene model with `version`, `canvas`, lowercase `type`, `bounds`, and `style` is internal and named `PreparedGeordiScene`.
-- Runtime APIs should consume `GeordiIrV1`; `runtime-webgl` uses `renderGeordiToCanvas(ir)`.
+- Runtime APIs should consume `GeordiIr`; `runtime-webgl` uses `renderGeordiToCanvas(ir)`.
 - Canonical AST remains a compiler-facing interchange shape, not the runtime contract.
 - Renderers must fail loudly when IR requires unsupported features.
 - If a runtime needs preprocessing, expose it as `prepare(ir)` or an internal cache, not as a separate public input format.
@@ -64,7 +64,7 @@ The v0 IR should be small, explicit, and renderable:
 Recommended top-level direction:
 
 ```ts
-interface GeordiIrV1 {
+interface GeordiIr {
   irVersion: 'geordi-ir/1';
   numericProfile: 'geordi-finite-binary64/1';
   requires: string[];
@@ -75,7 +75,7 @@ interface GeordiIrV1 {
 }
 ```
 
-The current repo shape can evolve toward this without breaking the core idea. The important v0 law is that renderers consume `GeordiIrV1`, not a separate legacy scene graph.
+The current repo shape can evolve toward this without breaking the core idea. The important v0 law is that renderers consume `GeordiIr`, not a separate legacy scene graph.
 
 ## Numeric Law
 
@@ -341,7 +341,7 @@ Every IR declares what it requires. Every runtime declares what it supports.
 Recommended baseline profile:
 
 ```text
-geordi/core-v0
+geordi/core/1
 ```
 
 Baseline features:
@@ -360,11 +360,11 @@ Baseline features:
 
 Optional profiles can extend this, for example:
 
-- `layout.flex-v0`
+- `layout.flex/1`
 - `text.raw-runtime-shaping`
-- `effect.shadow-v1`
-- `effect.blur-v1`
-- `animation.keyframes-v1`
+- `effect.shadow/1`
+- `effect.blur/1`
+- `animation.keyframes/1`
 
 ### Failure Mode
 
@@ -504,7 +504,7 @@ These should be answered before locking the v0 IR schema:
 - Should v0 IR use `props.x/y/width/height` temporarily, or should it introduce an explicit `box` field before more runtimes exist?
 - Should `zIndex` remain in emitted IR as debug metadata, or be removed after draw order is resolved?
 - Should layout intent appear in renderable IR, or should renderable IR always contain resolved boxes and optional layout traces?
-- What exact compositor profile should `geordi/core-v0` require for WebGL and future native backends?
+- What exact compositor profile should `geordi/core/1` require for WebGL and future native backends?
 
 ## Recommended Next Step
 

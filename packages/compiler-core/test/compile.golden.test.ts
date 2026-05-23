@@ -4,7 +4,7 @@ import { GEORDI_NUMERIC_PROFILE } from '@flyingrobots/geordi-core';
 import { compile } from '../src/compile/compile';
 import { GeordiErrorCode } from '../src/errors';
 import { parseJsonValue, stringifyCanonicalJson } from '../src/ports/json';
-import type { GeordiIrV1, JsonObject } from '../src/types';
+import type { GeordiIr, JsonObject } from '../src/types';
 
 function sha256(s: string): string {
   return createHash('sha256').update(s, 'utf8').digest('hex');
@@ -46,7 +46,7 @@ describe('compile() golden path', () => {
       source: stringifyCanonicalJson(validCanonicalAst),
       filename: 'fixtures/valid.scene.json',
       options: {
-        target: 'geordi-ir-v1',
+        target: 'geordi-ir',
         emit: { irJson: true, tsTypes: true, jsonSchema: false, binaryPack: false },
         strict: true,
         failOnWarnings: false,
@@ -59,7 +59,7 @@ describe('compile() golden path', () => {
     expect(result.artifacts['scene.geordi.json']).toBeDefined();
     expect(result.artifacts['types.ts']).toBeDefined();
 
-    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIrV1;
+    const ir = parseJsonValue(String(result.artifacts['scene.geordi.json'].content)) as GeordiIr;
     expect(ir.irVersion).toBe('geordi-ir/1');
     expect(ir.numericProfile).toBe(GEORDI_NUMERIC_PROFILE);
     expect(ir.scene.id).toBe('scene:terminal');
@@ -81,7 +81,7 @@ describe('compile() golden path', () => {
     const result = await compile({
       format: 'canonical-ast-json',
       source,
-      options: { target: 'geordi-ir-v1', emit: { irJson: true, tsTypes: false } },
+      options: { target: 'geordi-ir', emit: { irJson: true, tsTypes: false } },
     });
 
     expect(result.ok).toBe(true);
@@ -111,7 +111,7 @@ describe('compile() golden path', () => {
     const result = await compile({
       format: 'canonical-ast-json',
       source,
-      options: { target: 'geordi-ir-v1', emit: { irJson: true, tsTypes: false } },
+      options: { target: 'geordi-ir', emit: { irJson: true, tsTypes: false } },
     });
 
     expect(result.ok).toBe(true);
@@ -130,7 +130,7 @@ describe('compile() golden path', () => {
     const input = {
       format: 'canonical-ast-json' as const,
       source,
-      options: { target: 'geordi-ir-v1' as const, emit: { irJson: true, tsTypes: false } },
+      options: { target: 'geordi-ir' as const, emit: { irJson: true, tsTypes: false } },
     };
 
     const r1 = await compile(input);
@@ -156,7 +156,7 @@ describe('compile() golden path', () => {
     const result = await compile({
       format: 'canonical-ast-json',
       source,
-      options: { target: 'geordi-ir-v1', emit: { jsonSchema: true } },
+      options: { target: 'geordi-ir', emit: { jsonSchema: true } },
     });
 
     expect(result.ok).toBe(false);
@@ -177,7 +177,7 @@ describe('compile() golden path', () => {
       format: 'canonical-ast-json',
       source,
       options: {
-        target: 'geordi-ir-v1',
+        target: 'geordi-ir',
         emit: { irJson: true, tsTypes: true, binaryPack: true },
       },
     });
@@ -194,7 +194,7 @@ describe('compile() golden path', () => {
       source: '   ',
       filename: 'fixtures/invalid.empty.json',
       options: {
-        target: 'geordi-ir-v1',
+        target: 'geordi-ir',
         emit: { irJson: true, tsTypes: true },
         strict: true,
         failOnWarnings: false,
