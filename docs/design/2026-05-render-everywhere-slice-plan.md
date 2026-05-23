@@ -89,7 +89,7 @@ pixel-identical browser/native claim until strict text exists.
   - Add root `Cargo.toml` workspace support.
   - Add Rust formatting, test, and lint guidance without disturbing pnpm gates.
   - Do not claim native rendering yet.
-  - Done: current slice.
+  - Done: `08d0ae4`.
   - Verification: `cargo metadata`, `cargo fmt --check` once a crate exists.
 
 - [ ] **Slice 10: Rust IR crate**
