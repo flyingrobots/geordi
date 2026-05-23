@@ -334,6 +334,26 @@ describe('runtime-webgl public API', () => {
     );
   });
 
+  it('throws a custom error when feature requirements are missing', () => {
+    const missingFeatureIr = { ...makeIr() };
+    Reflect.deleteProperty(missingFeatureIr, 'requires');
+
+    expect(() => renderGeordiToCanvas(missingFeatureIr)).toThrow(
+      GeordiRuntimeUnsupportedProfileError,
+    );
+  });
+
+  it('throws a custom error when feature requirements are malformed', () => {
+    const malformedFeatureIr = {
+      ...makeIr(),
+      requires: ['geordi/core/1', 7],
+    } as object as GeordiIr;
+
+    expect(() => renderGeordiToCanvas(malformedFeatureIr)).toThrow(
+      GeordiRuntimeUnsupportedProfileError,
+    );
+  });
+
   it('throws a custom error for unsupported IR versions', () => {
     const unsupportedVersionIr = {
       ...makeIr(),
