@@ -115,6 +115,28 @@ select {
   border: 1px solid #101820;
 }
 
+.bunny-demo {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #d9dde5;
+  padding-top: 16px;
+}
+
+.bunny-demo-label {
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: #314051;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.8125rem;
+}
+
+.bunny-demo canvas {
+  display: block;
+  width: min(100%, 512px);
+  border: 1px solid #101820;
+  background: #111827;
+}
+
 .harness-failure {
   display: grid;
   min-height: 100vh;

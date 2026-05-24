@@ -49,6 +49,26 @@ export function mountRenderedFixtureCanvas(
   slot.replaceChildren(canvas);
 }
 
+export function mountBunnyCanvas(
+  root: ParentNode | null,
+  canvas: HTMLCanvasElement,
+  reportText: string,
+): void {
+  if (root === null) {
+    throw new BrowserHarnessMountError();
+  }
+
+  const section = document.createElement('section');
+  section.className = 'bunny-demo';
+
+  const label = document.createElement('p');
+  label.className = 'bunny-demo-label';
+  label.textContent = reportText;
+
+  section.append(label, canvas);
+  root.append(section);
+}
+
 export function mountBrowserHarnessFailure(root: HTMLElement | null): void {
   if (root === null) {
     return;

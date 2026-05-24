@@ -134,9 +134,11 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Done: `cd4f7d3`.
   - Verification: `pnpm test:docs`, JSON parse check.
 
-- [ ] **Slice 16: Static browser bunny**
+- [x] **Slice 16: Static browser bunny**
   - Render one fixed bunny frame in the browser harness.
   - Report asset hash, mesh counts, camera profile, and frame metadata.
+  - Done: slice commit `Slice 16: Render static bunny in browser`.
+  - Verification: browser render-everywhere typecheck, lint, test.
 
 - [ ] **Slice 17: Static native bunny**
   - Render the same fixed bunny frame in the Rust harness.

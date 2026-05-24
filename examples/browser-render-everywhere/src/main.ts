@@ -1,22 +1,38 @@
 import './style.css';
 import {
+  mountBunnyCanvas,
   mountBrowserHarnessFailure,
   mountBrowserHarnessShell,
   mountRenderedFixtureCanvas,
 } from './domShell.js';
 import { createBrowserFetchText, renderBrowserFixture } from './browserRenderSmoke.js';
+import { STANFORD_BUNNY_ASSETS } from './bunnyAssets.js';
+import { renderBunnyFixtureFrame } from './bunnyRender.js';
 import { HELLO_PANEL_FIXTURE_ASSETS } from './fixtureAssets.js';
 import { createBrowserHarnessStatus } from './harnessModel.js';
 
 async function startBrowserHarness(): Promise<void> {
   const root = document.querySelector<HTMLElement>('#app');
+  const fetchText = createBrowserFetchText((url) => globalThis.fetch(url));
   const result = await renderBrowserFixture({
     assets: HELLO_PANEL_FIXTURE_ASSETS,
-    fetchText: createBrowserFetchText((url) => globalThis.fetch(url)),
+    fetchText,
   });
+  const bunny = await renderBunnyFixtureFrame(STANFORD_BUNNY_ASSETS, 0, fetchText);
 
   mountBrowserHarnessShell(root, createBrowserHarnessStatus(result.manifest, result.ir));
   mountRenderedFixtureCanvas(root, result.canvas);
+  mountBunnyCanvas(root, bunny.canvas, bunnyReportText(bunny.report));
+}
+
+function bunnyReportText(report: Awaited<ReturnType<typeof renderBunnyFixtureFrame>>['report']): string {
+  return [
+    report.rendererName,
+    `frame=${report.frameIndex}`,
+    `vertices=${report.vertexCount}`,
+    `faces=${report.faceCount}`,
+    `asset=${report.assetHash}`,
+  ].join(' ');
 }
 
 void startBrowserHarness().catch(() => {
