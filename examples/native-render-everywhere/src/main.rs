@@ -1,5 +1,7 @@
 //! Native Rust harness for the Geordi render-everywhere fixture.
 
+pub mod bunny;
+
 use geordi_ir::{
     GEORDI_CORE_PROFILE, GEORDI_IR_VERSION, GEORDI_NUMERIC_PROFILE, GeordiIr, GeordiIrLoadError,
     GeordiIrValidationError, load_geordi_ir, validate_geordi_ir,
@@ -30,13 +32,38 @@ fn main() -> Result<(), NativeAppError> {
 
 fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAppError> {
     let args = NativeArgs::parse(args)?;
-    let loaded = load_fixture(&args.fixture_dir)?;
-    write_fixture_summary(&mut io::stdout().lock(), &loaded)?;
 
     match args.mode {
-        NativeMode::Check => Ok(()),
-        NativeMode::Smoke => run_smoke(&mut io::stdout().lock(), &loaded),
+        NativeMode::BunnyCheck => {
+            let loaded = bunny::load_bunny_fixture(&args.fixture_dir, args.frame_index)?;
+            bunny::write_bunny_summary(&mut io::stdout().lock(), &loaded)?;
+            Ok(())
+        }
+        NativeMode::BunnySmoke => {
+            bunny::run_bunny_smoke(
+                &mut io::stdout().lock(),
+                &args.fixture_dir,
+                args.frame_index,
+            )?;
+            Ok(())
+        }
+        NativeMode::BunnyWindow => {
+            bunny::open_bunny_window(&args.fixture_dir)?;
+            Ok(())
+        }
+        NativeMode::Check => {
+            let loaded = load_fixture(&args.fixture_dir)?;
+            write_fixture_summary(&mut io::stdout().lock(), &loaded)?;
+            Ok(())
+        }
+        NativeMode::Smoke => {
+            let loaded = load_fixture(&args.fixture_dir)?;
+            write_fixture_summary(&mut io::stdout().lock(), &loaded)?;
+            run_smoke(&mut io::stdout().lock(), &loaded)
+        }
         NativeMode::Window => {
+            let loaded = load_fixture(&args.fixture_dir)?;
+            write_fixture_summary(&mut io::stdout().lock(), &loaded)?;
             open_fixture_window(&loaded)?;
             Ok(())
         }
@@ -45,6 +72,9 @@ fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAp
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum NativeMode {
+    BunnyCheck,
+    BunnySmoke,
+    BunnyWindow,
     Check,
     Smoke,
     Window,
@@ -53,6 +83,7 @@ enum NativeMode {
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct NativeArgs {
     fixture_dir: PathBuf,
+    frame_index: u64,
     mode: NativeMode,
 }
 
@@ -60,21 +91,62 @@ impl NativeArgs {
     fn parse(args: impl IntoIterator<Item = OsString>) -> Result<Self, NativeArgsError> {
         let values = args.into_iter().skip(1).collect::<Vec<_>>();
         match values.as_slice() {
+            [flag, fixture_dir] if flag == OsStr::new("--bunny-check") => Ok(Self {
+                fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
+                mode: NativeMode::BunnyCheck,
+            }),
+            [flag, fixture_dir] if flag == OsStr::new("--bunny-smoke") => Ok(Self {
+                fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
+                mode: NativeMode::BunnySmoke,
+            }),
+            [flag, fixture_dir] if flag == OsStr::new("--bunny-window") => Ok(Self {
+                fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
+                mode: NativeMode::BunnyWindow,
+            }),
+            [flag, frame_flag, frame_index, fixture_dir]
+                if flag == OsStr::new("--bunny-check") && frame_flag == OsStr::new("--frame") =>
+            {
+                Ok(Self {
+                    fixture_dir: PathBuf::from(fixture_dir),
+                    frame_index: parse_frame_index(frame_index)?,
+                    mode: NativeMode::BunnyCheck,
+                })
+            }
+            [flag, frame_flag, frame_index, fixture_dir]
+                if flag == OsStr::new("--bunny-smoke") && frame_flag == OsStr::new("--frame") =>
+            {
+                Ok(Self {
+                    fixture_dir: PathBuf::from(fixture_dir),
+                    frame_index: parse_frame_index(frame_index)?,
+                    mode: NativeMode::BunnySmoke,
+                })
+            }
             [flag, fixture_dir] if flag == OsStr::new("--check") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
                 mode: NativeMode::Check,
             }),
             [flag, fixture_dir] if flag == OsStr::new("--smoke") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
                 mode: NativeMode::Smoke,
             }),
             [fixture_dir] => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
                 mode: NativeMode::Window,
             }),
             _ => Err(NativeArgsError),
         }
     }
+}
+
+fn parse_frame_index(value: &OsStr) -> Result<u64, NativeArgsError> {
+    let text = value.to_str().ok_or(NativeArgsError)?;
+    text.parse::<u64>().map_err(|_error| NativeArgsError)
 }
 
 #[derive(Debug)]
@@ -155,6 +227,7 @@ enum NativeAppError {
     Args(NativeArgsError),
     ArtifactLoad(NativeArtifactLoadError),
     ArtifactValidation(NativeArtifactValidationError),
+    Bunny(bunny::NativeBunnyError),
     IrLoad(GeordiIrLoadError),
     IrValidation(GeordiIrValidationError),
     ManifestLoad(NativeManifestLoadError),
@@ -180,6 +253,7 @@ impl Error for NativeAppError {
             Self::Args(source) => Some(source),
             Self::ArtifactLoad(source) => Some(source),
             Self::ArtifactValidation(source) => Some(source),
+            Self::Bunny(source) => Some(source),
             Self::IrLoad(source) => Some(source),
             Self::IrValidation(source) => Some(source),
             Self::ManifestLoad(source) => Some(source),
@@ -210,6 +284,12 @@ impl From<NativeArtifactLoadError> for NativeAppError {
 impl From<NativeArtifactValidationError> for NativeAppError {
     fn from(error: NativeArtifactValidationError) -> Self {
         Self::ArtifactValidation(error)
+    }
+}
+
+impl From<bunny::NativeBunnyError> for NativeAppError {
+    fn from(error: bunny::NativeBunnyError) -> Self {
+        Self::Bunny(error)
     }
 }
 
@@ -284,7 +364,9 @@ struct NativeArgsError;
 
 impl Display for NativeArgsError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("Usage: native-render-everywhere [--check|--smoke] <fixture-dir>")
+        formatter.write_str(
+            "Usage: native-render-everywhere [--check|--smoke|--bunny-check|--bunny-smoke|--bunny-window] [--frame <index>] <fixture-dir>",
+        )
     }
 }
 
@@ -1286,6 +1368,7 @@ mod tests {
         ])?;
 
         assert_eq!(args.mode, NativeMode::Check);
+        assert_eq!(args.frame_index, 0);
         assert_eq!(
             args.fixture_dir,
             PathBuf::from("fixtures/render-everywhere/hello-panel")
@@ -1302,11 +1385,95 @@ mod tests {
         ])?;
 
         assert_eq!(args.mode, NativeMode::Smoke);
+        assert_eq!(args.frame_index, 0);
         assert_eq!(
             args.fixture_dir,
             PathBuf::from("fixtures/render-everywhere/hello-panel")
         );
         Ok(())
+    }
+
+    #[test]
+    fn parses_bunny_check_mode_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--bunny-check"),
+            OsString::from("fixtures/render-everywhere/assets/stanford-bunny"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::BunnyCheck);
+        assert_eq!(args.frame_index, 0);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn parses_bunny_smoke_mode_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--bunny-smoke"),
+            OsString::from("fixtures/render-everywhere/assets/stanford-bunny"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::BunnySmoke);
+        assert_eq!(args.frame_index, 0);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn parses_bunny_window_mode_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--bunny-window"),
+            OsString::from("fixtures/render-everywhere/assets/stanford-bunny"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::BunnyWindow);
+        assert_eq!(args.frame_index, 0);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn parses_bunny_fixed_frame_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--bunny-smoke"),
+            OsString::from("--frame"),
+            OsString::from("60"),
+            OsString::from("fixtures/render-everywhere/assets/stanford-bunny"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::BunnySmoke);
+        assert_eq!(args.frame_index, 60);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_invalid_bunny_fixed_frame_arguments() {
+        let result = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--bunny-check"),
+            OsString::from("--frame"),
+            OsString::from("-1"),
+            OsString::from("fixtures/render-everywhere/assets/stanford-bunny"),
+        ]);
+
+        assert!(result.is_err());
     }
 
     fn output_text(output: &[u8]) -> String {

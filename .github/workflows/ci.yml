@@ -25,8 +25,16 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
       - name: Install dependencies
         run: pnpm install
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere exec playwright install --with-deps chromium
 
       - name: Lint
         run: pnpm lint
@@ -51,3 +59,9 @@ jobs:
 
       - name: Verify package exports
         run: pnpm test:exports
+
+      - name: Verify bunny render gates
+        run: pnpm test:render-everywhere:bunny
+
+      - name: Verify browser render-everywhere gate
+        run: pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser

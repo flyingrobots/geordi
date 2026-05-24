@@ -8,11 +8,35 @@ This directory holds implementation design documents for P0 slice sequences. The
 intentionally separate from [`../V0_DESIGN_LAWS.md`](../V0_DESIGN_LAWS.md): the laws define product
 semantics, while these documents define implementation slices.
 
-## Active Slice Map: Render Everywhere
+## Active Slice Map: Bunny Mesh Render Everywhere
 
 The executable checklist for this sequence lives in
-[`2026-05-render-everywhere-slice-plan.md`](./2026-05-render-everywhere-slice-plan.md). Keep that
-checklist updated as slices land.
+[`2026-05-bunny-mesh-slice-plan.md`](./2026-05-bunny-mesh-slice-plan.md). Keep that checklist
+updated as slices land. Pause after slice 15 for a drift check.
+
+| Slice | Working Title | Design Document |
+| ---: | --- | --- |
+| 1 | Bunny design pack | [`2026-05-bunny-mesh-render-everywhere.md`](./2026-05-bunny-mesh-render-everywhere.md) |
+| 2 | Bunny slice checklist | [`2026-05-bunny-mesh-slice-plan.md`](./2026-05-bunny-mesh-slice-plan.md) |
+| 3 | Asset manifest schema | [`2026-05-bunny-mesh-asset-contract.md`](./2026-05-bunny-mesh-asset-contract.md) |
+| 4 | Stanford bunny manifest file | [`2026-05-bunny-mesh-asset-contract.md`](./2026-05-bunny-mesh-asset-contract.md) |
+| 5 | Mesh feature profile | [`2026-05-bunny-mesh-render-everywhere.md`](./2026-05-bunny-mesh-render-everywhere.md) |
+| 6 | Mesh fixture manifest shape | [`2026-05-bunny-mesh-render-everywhere.md`](./2026-05-bunny-mesh-render-everywhere.md) |
+| 7 | TypeScript asset hash validator | [`2026-05-bunny-mesh-asset-contract.md`](./2026-05-bunny-mesh-asset-contract.md) |
+| 8 | Rust asset hash validator | [`2026-05-bunny-mesh-asset-contract.md`](./2026-05-bunny-mesh-asset-contract.md) |
+| 9 | TypeScript PLY boundary | [`2026-05-bunny-mesh-asset-contract.md`](./2026-05-bunny-mesh-asset-contract.md) |
+| 10 | Rust PLY boundary | [`2026-05-bunny-mesh-asset-contract.md`](./2026-05-bunny-mesh-asset-contract.md) |
+| 11 | Mesh validation tests | [`2026-05-bunny-mesh-asset-contract.md`](./2026-05-bunny-mesh-asset-contract.md) |
+| 12 | Mesh bounds normalization law | [`2026-05-bunny-transform-playback-law.md`](./2026-05-bunny-transform-playback-law.md) |
+| 13 | Camera descriptor law | [`2026-05-bunny-transform-playback-law.md`](./2026-05-bunny-transform-playback-law.md) |
+| 14 | Projection descriptor law | [`2026-05-bunny-transform-playback-law.md`](./2026-05-bunny-transform-playback-law.md) |
+| 15 | Matrix/vector operation-order law | [`2026-05-bunny-transform-playback-law.md`](./2026-05-bunny-transform-playback-law.md) |
+| 16-30 | Rendering, rotation, docs, CI, hardening | [`2026-05-bunny-mesh-slice-plan.md`](./2026-05-bunny-mesh-slice-plan.md) |
+
+## Completed Slice Map: Render Everywhere
+
+The executable checklist for this sequence lives in
+[`2026-05-render-everywhere-slice-plan.md`](./2026-05-render-everywhere-slice-plan.md).
 
 | Slice | Working Title | Design Document |
 | ---: | --- | --- |

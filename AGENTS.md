@@ -21,8 +21,9 @@ claims back to files, commits, commands, or other inspectable evidence.
 
 ## Render-Everywhere Slice Tracking
 
-Follow the active render-everywhere slice checklist in
-[`docs/design/2026-05-render-everywhere-slice-plan.md`](docs/design/2026-05-render-everywhere-slice-plan.md).
+When `BEARING.md` names an active execution checklist, follow that checklist in order. The latest
+completed render-everywhere checklist is
+[`docs/design/2026-05-bunny-mesh-slice-plan.md`](docs/design/2026-05-bunny-mesh-slice-plan.md).
 
 When executing slices:
 

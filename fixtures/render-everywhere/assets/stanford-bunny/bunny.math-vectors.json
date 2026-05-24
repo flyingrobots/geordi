@@ -1,0 +1,185 @@
+{
+  "bounds": {
+    "center": [
+      -0.01671485,
+      0.10911365,
+      -0.0016035000000000008
+    ],
+    "extent": [
+      0.1552989,
+      0.1513987,
+      0.1201372
+    ],
+    "max": [
+      0.0609346,
+      0.184813,
+      0.0584651
+    ],
+    "maxExtent": 0.1552989,
+    "min": [
+      -0.0943643,
+      0.0334143,
+      -0.0616721
+    ]
+  },
+  "camera": {
+    "coordinateSystem": "right-handed",
+    "eye": [
+      0,
+      0.1,
+      0.35
+    ],
+    "target": [
+      0,
+      0.1,
+      0
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "viewMatrixColumnMajor": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      -0.1,
+      -0.35,
+      1
+    ]
+  },
+  "projection": {
+    "aspectRatio": 1,
+    "far": 10,
+    "kind": "perspective",
+    "matrixColumnMajor": [
+      2.414213562373095,
+      0,
+      0,
+      0,
+      0,
+      2.414213562373095,
+      0,
+      0,
+      0,
+      0,
+      -1.002002002002002,
+      -1,
+      0,
+      0,
+      -0.02002002002002002,
+      0
+    ],
+    "near": 0.01,
+    "verticalFovRadians": 0.7853981633974483,
+    "viewport": {
+      "height": 512,
+      "width": 512
+    }
+  },
+  "transform": {
+    "matrixConvention": {
+      "multiplyOrder": "projection * view * model * position",
+      "serialization": "column-major",
+      "shape": "mat4",
+      "vectorConvention": "column-vector"
+    },
+    "playback": {
+      "axis": [
+        3,
+        5,
+        2
+      ],
+      "kind": "fixed-rate-rotation",
+      "normalizedAxis": [
+        0.4866642633922876,
+        0.8111071056538126,
+        0.32444284226152503
+      ],
+      "radiansPerSecond": 0.7853981633974483,
+      "sampleRate": 60,
+      "sampledFrames": [
+        {
+          "angleRadians": 0,
+          "frameIndex": 0,
+          "modelMatrixColumnMajor": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "seconds": 0
+        },
+        {
+          "angleRadians": 0.19634954084936207,
+          "frameIndex": 15,
+          "modelMatrixColumnMajor": [
+            0.9853361350445706,
+            0.07088041630819576,
+            -0.15520524333734528,
+            0,
+            -0.05571090083706189,
+            0.993426543295842,
+            0.09999999301598786,
+            0,
+            0.16127304952579882,
+            -0.08988698270189863,
+            0.9828078824660483,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "seconds": 0.25
+        },
+        {
+          "angleRadians": 0.7853981633974483,
+          "frameIndex": 60,
+          "modelMatrixColumnMajor": [
+            0.7764762277476284,
+            0.3450314781390298,
+            -0.5272930369690171,
+            0,
+            -0.11379998960209367,
+            0.8997996883006609,
+            0.42120076365148795,
+            0,
+            0.6197856323837915,
+            -0.2670464379601972,
+            0.7379376463248057,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "seconds": 1
+        }
+      ]
+    }
+  },
+  "version": "geordi-bunny-math-vectors/1"
+}

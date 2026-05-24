@@ -1,8 +1,9 @@
 # Geordi Bearing
 
-**Date**: 2026-05-23
-**Branch baseline**: `main` at `654adba`
-**Current branch when written**: `codex/render-everywhere-design`
+**Date**: 2026-05-24
+**Branch baseline**: `main` at `b9d1398`
+**Current branch when refreshed**: `codex/bunny-rotation-milestone` closeout
+**Last verified bunny milestone commit**: `21cffd6` (`Fix: Sync browser renderer marker with mode`)
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
@@ -10,134 +11,164 @@ This file is the short-term operating map. Product rationale remains in
 
 ## Current Position
 
-The repo is past the first stabilization pass.
+The repo has cleared the first stabilization phase and the first render-everywhere proof.
 
 Completed:
 
-- CI now runs lint, typecheck, tests, package-name checks, documentation hygiene checks,
+- CI runs lint, typecheck, tests, package-name checks, documentation hygiene checks,
   placeholder-test checks, repo-sludge checks, and package export smoke tests.
-- ESLint 10 has a root flat config and type-aware package linting.
+- ESLint 10 is configured with strict root and package linting.
 - Public package entrypoints are smoke-tested after build.
-- The compiler uses the canonical JSON port for deterministic parse/stringify boundaries.
-- Canonicalization is implemented and wired into `compile()`.
-- Tracked generated Turbo logs and stale nested lockfiles are gone.
-- Turbo `test` outputs match command behavior.
-- Placeholder package tests have been replaced with minimal public API contract tests.
-- Dependabot is configured for grouped workspace and GitHub Actions updates.
-- Typed adapter diagnostics survive through `compile()` without internal-invariant wrapping.
-- GraphQL `@geordi_scene` and `@geordi_node` directive arguments are validated at runtime before
-  values enter the canonical AST.
-- Known but unlowered GraphQL directives fail loudly instead of disappearing from the pipeline.
-- `wesley-generator` and `runtime-webgl` have behavior-level package contract tests, not only
-  entrypoint smoke tests.
-- `@flyingrobots/geordi-core` owns versioned `geordi-ir/1` constants, types, and structural
-  validation.
-- `@flyingrobots/geordi-compiler-core` emits/re-exports the shared core IR contract.
-- `@flyingrobots/geordi-runtime-webgl` validates and renders typed `geordi-ir/1` through
-  `renderGeordiToCanvas()`.
-- The draw-ready runtime scene shape is explicitly named `PreparedGeordiScene`; compatibility
-  aliases remain for the v0.1 migration, but `geordi-ir/1` is the documented renderer contract.
-- Compiler-emitted IR is covered end to end through runtime rendering.
-- `@flyingrobots/geordi-core` owns the canonical JSON port, including parse/stringify/normalize
-  behavior and custom JSON error types.
-- `geordi-ir/1` declares `numericProfile: "geordi-finite-binary64/1"`; compiler receipts include
-  that profile, and runtime-webgl rejects unsupported numeric profiles before rendering.
-- `@flyingrobots/geordi-core` owns the baseline feature profile
-  (`GEORDI_BASELINE_FEATURES`, rooted at `geordi/core/1`), `geordi-ir/1` declares `requires`,
-  compiler output and receipts record those requirements, and runtime-webgl rejects missing or
-  unsupported feature requirements before rendering.
-- Public TypeScript API names are de-versioned for the current IR surface: use `GeordiIr`,
-  `validateGeordiIr()`, `isGeordiIr()`, and compiler target `geordi-ir`; payload/profile
-  identities remain explicit through values such as `irVersion: "geordi-ir/1"`.
-- GitHub issue #7 was closed after confirmation that typed diagnostics transport already preserves
-  invalid-SDL diagnostic location details.
-- Source locations now have a canonical compiler-core model shared by AST `SourceRef` and
-  diagnostics. GraphQL extraction preserves source spans and offsets.
-- `scene.geordi.map.json` is emitted alongside IR JSON and receipts include `sourceMapHash`.
-- Compiler-core exposes a deterministic diagnostic formatter, and the Wesley generator uses it for
-  stable logging.
-- Root `pnpm wesley` shells out to the installed Wesley CLI.
-- The next post-capability-profile slice sequence has a formal design pack in
-  [`docs/design/`](./docs/design/).
-- The feature-registry split is complete: core distinguishes known features from emitted baseline
-  features, runtime profiles advertise `supportedFeatureRequirements`, compiler output remains
-  locked to the baseline feature set, and strict text features are known but unsupported by the
-  current browser runtime.
-- GitHub issues #5 and #6 are implemented in the merged feature-registry hit-list branch.
+- Canonical JSON handling is owned by `@flyingrobots/geordi-core` and is wired through compiler
+  parse/stringify boundaries.
+- `geordi-ir/1` has shared TypeScript constants, types, structural validation, feature
+  requirements, and `numericProfile: "geordi-finite-binary64/1"`.
+- Compiler receipts include IR version, numeric profile, feature requirements, artifact hashes, and
+  source map hashes.
+- Runtime profile negotiation rejects unsupported numeric profiles or feature requirements before
+  rendering.
+- Public TypeScript API names are de-versioned around the current IR surface while payload identity
+  remains explicit through values such as `irVersion: "geordi-ir/1"`.
+- Source locations have a canonical compiler-core model shared by AST nodes, diagnostics, and
+  source maps.
+- The first rectangle-only render-everywhere milestone is implemented:
+  - a constrained GPVue source fixture compiles to one canonical `scene.geordi.json`;
+  - the same artifact renders in a browser canvas;
+  - the same artifact renders in a native Rust application;
+  - browser and native smoke paths report the same artifact hash, feature profile, and deterministic
+    pixel probes.
+- The Stanford bunny mesh milestone is implemented through slice 30:
+  - the bunny PLY is described by a canonical mesh asset manifest;
+  - TypeScript and Rust validate the asset hash and parse the supported ASCII PLY subset;
+  - the browser harness renders a static and live rotating bunny canvas;
+  - the browser harness can switch between the rectangle proof and the bunny proof with debug
+    metadata hidden behind disclosure panels;
+  - the native Rust harness renders static, fixed-frame, and live-window bunny paths;
+  - browser and native paths expose comparable sampled-frame metadata for frames such as `0`, `15`,
+    and `60`;
+  - focused CI gates validate TypeScript mesh parsing, browser bunny unit coverage, native Rust
+    tests, native clippy, bunny manifest validation, and native fixed-frame smoke without opening
+    interactive windows;
+  - the hardening pass tightened browser mesh-manifest checks, host elapsed-time validation,
+    playback descriptor validation, and TypeScript/Rust PLY parser strictness.
+- The completed rectangle proof is tracked in
+  [`docs/design/2026-05-render-everywhere-slice-plan.md`](./docs/design/2026-05-render-everywhere-slice-plan.md).
+- The completed bunny milestone checklist is
+  [`docs/design/2026-05-bunny-mesh-slice-plan.md`](./docs/design/2026-05-bunny-mesh-slice-plan.md).
 
 Still true:
 
-- Multi-step geometry, vector, matrix, transform, and animation operation-order rules still need to
-  be specified as those features are introduced.
-- The browser demo scaffold now renders the shared fixture into a browser canvas, and the Rust
-  workspace now includes a native renderer plus smoke harness for the same canonical artifact.
-  The current proof remains rectangle-only until stricter text, geometry, and transform profiles
-  are specified.
+- The current exact pixel-probe rendering claim is rectangle-only. The bunny proof currently claims
+  shared asset identity, shared parsed mesh metadata, deterministic sampled-frame metadata, and
+  coarse nonblank smoke checks, not pixel-identical 3D rasterization.
+- Text rendering remains deferred. No pixel-identical text claim is allowed until font identity,
+  shaping, fallback, line breaking, and measurement laws exist.
+- Full IR-level geometry, vector, matrix, transform, camera, projection, depth, rasterization, and
+  animation operation-order rules still need to be specified before Geordi can honestly claim broad
+  graphics determinism beyond the current demo harness contracts.
+- The native Rust path is currently a proof harness, not a full production runtime.
+- CodeRabbit review status can be operationally noisy when review credits are exhausted; GitHub
+  Actions CI remains the source of truth for repo gates unless explicitly stated otherwise.
 
-## Render-Everywhere Target
+## Next Credibility Milestone
 
-The next credibility milestone is a render-everywhere demo:
+The bunny milestone is closed for its stated claim boundary. The next credibility milestone should
+be strict text and font law.
 
-1. A GPVue-authored scene renders in a browser canvas.
-2. The same canonical `scene.geordi.json` artifact renders in a native Rust application.
+The target is not "draw some text." The target is an honest deterministic text contract:
 
-This should prove the platform boundary, not two separate demos. GPVue is the authoring frontend,
-Geordi IR is the portable artifact, and browser plus Rust runtimes are interchangeable consumers of
-the same bytes.
+1. Font identity is content-addressed, not runtime-selected by family name.
+2. The IR or fixture descriptor declares the exact font pack and fallback order.
+3. Shaping, glyph fallback, line breaking, and measurement have a normative implementation or
+   fixture-level precomputed representation.
+4. Browser and native harnesses reject missing fonts or unsupported text features before drawing.
+5. Initial smoke tests prove metadata equality and carefully scoped pixel probes for a tiny fixed
+   string, not broad typography parity.
 
-For the first version, the shared scene should use deterministic rectangle-only UI geometry. Raw
-runtime text can be added as a best-effort visual follow-up, but it must not be used for a
-pixel-identical cross-runtime claim until the strict text/font profile exists.
+This should start as design and harness law before it becomes a general Geordi IR feature. Text is
+the highest-risk next axis because platform font stacks and shaping engines diverge by default.
 
-The live execution checklist is
-[`docs/design/2026-05-render-everywhere-slice-plan.md`](./docs/design/2026-05-render-everywhere-slice-plan.md).
-As slices land, update that checklist from `- [ ]` to `- [x]` and keep this bearing aligned when
-the plan changes materially.
+## Bunny Rotation Result
+
+The bunny milestone did not introduce a general animation system. It implemented a narrow demo
+playback law:
+
+- A mesh demo has a deterministic playback descriptor.
+- The descriptor declares:
+  - asset identity by content hash;
+  - coordinate-system convention;
+  - camera parameters;
+  - projection parameters;
+  - material profile;
+  - rotation axis;
+  - rotation rate;
+  - fixed timestep or sampled frame indices for tests.
+- Live demos may advance using host time, but verification must use explicit frame indices, not
+  wall-clock time.
+- The core IR continues to represent a scene snapshot.
+- Time remains isolated to the mesh demo playback profile and harness descriptor.
+
+The first bunny proof uses `[3, 5, 2]` as the authored axis and normalizes it in the playback report.
+Browser and native smoke paths now agree on frame indices, seconds, angle, normalized axis, transform
+profile, mesh identity, and mesh counts.
+
+## Claim Boundaries
+
+The rectangle proof gave us exact pixel probes. The bunny proof must be more careful.
+
+Allowed claims:
+
+- same mesh bytes;
+- same asset hash;
+- same parsed mesh counts and bounds;
+- same declared camera/projection/material/rotation profile;
+- same deterministic sampled transform inputs;
+- browser and native demos both visibly render and rotate the bunny;
+- smoke tests can compare stable nonblank output, frame metadata, bounds, and selected coarse visual
+  invariants.
+
+Not allowed yet:
+
+- pixel-identical 3D rasterization across browser and native backends unless we implement a shared
+  deterministic software rasterizer or a stricter backend-independent raster law;
+- text rendering;
+- arbitrary animation curves;
+- CSS-like transitions;
+- general-purpose shader extensibility;
+- implicit runtime fallback behavior.
 
 ## Immediate Moves
 
-1. Land the render-everywhere design pack and checklist in [`docs/design/`](./docs/design/),
-   covering the shared fixture contract, browser harness, Rust native harness, and future GPVue
-   compiler hook.
-2. Implement a shared render fixture with one canonical `scene.geordi.json`, receipt/hash metadata,
-   runtime profile declaration, and deterministic pixel probes.
-3. Build the browser harness first, then the Rust IR parser/validator, then the native Rust render
-   path. Do not let GPVue compiler work block the shared artifact/runtime proof.
-4. Keep strict text/font and matrix/vector operation-order laws on the roadmap, but do not include
-   them in the first render-everywhere demo claim.
+Wrap the bunny branch with final docs/changelog polish, open the PR to `main`, and let CI be the
+merge gate.
 
-## Recommended P0 Order
+After the bunny PR lands, do not start text implementation by adding ad hoc canvas text. First write
+the strict text/font law, then choose a deliberately tiny first fixture. Keep the same discipline as
+the bunny milestone: manifest first, typed boundary parsing, custom errors, focused gates, then
+browser/native render proof.
 
-1. Render-everywhere design pack: formalize the demo contract and slice sequence.
-2. Shared fixture root: add `fixtures/render-everywhere/hello-panel` with fixture manifest,
-   canonical IR, and receipt/hash metadata.
-3. Pixel probe contract: define typed probe records, expected RGBA values, and custom failure
-   errors.
-4. Browser harness scaffold: add a Vite-powered browser example that imports workspace packages.
-5. Browser render smoke: load the shared IR, call `renderGeordiToCanvas()`, and mount the canvas.
-6. Browser Playwright gate: assert canvas size, nonblank output, and exact rectangle color probes.
-7. Browser failure fixtures: prove unsupported feature requirements fail loudly in the harness.
-8. Rust workspace scaffold: add Cargo workspace support without disturbing the pnpm gates.
-9. Rust IR crate: deserialize canonical `geordi-ir/1` into typed Rust structs at the JSON boundary.
-10. Rust IR validation: enforce version, numeric profile, feature requirements, finite graphics
-    numbers, and Rect props with custom error types.
-11. Rust runtime profile: declare the native runtime's supported baseline subset.
-12. Rust native app shell: open a native window and load the shared fixture artifact.
-13. Rust rectangle renderer: render solid Rect nodes from the shared IR into the native surface.
-14. Rust offscreen smoke mode: run deterministic pixel probes without requiring an interactive
-    desktop window.
-15. Shared hash display: show the same artifact hash/profile in browser UI and Rust app logs/window
-    title.
-16. Render-everywhere README: document the two demo commands and the claim each one proves.
-17. GPVue fixture hook: add draft GPVue source fixtures and a fail-loud compiler port boundary.
-18. GPVue compiler MVP: lower the first GPVue fixture to the existing canonical IR artifact.
-19. End-to-end GPVue browser demo: compile GPVue, render in browser, and verify pixel probes.
-20. End-to-end GPVue native demo: compile once, render the emitted artifact in Rust, and verify the
-    same hash/probes.
+## Remaining P0 Order
+
+1. Strict text/font design pack: font identity, font pack manifest, shaping, fallback, measurement,
+   line breaking, and claim boundaries.
+2. Text fixture slice checklist: define a small executable plan before implementation begins.
+3. Font asset boundary: content-addressed font files, fixture-local paths, hashes, licensing, and
+   failure modes.
+4. Text shaping/measurement boundary: choose normative implementation or precomputed fixture data.
+5. First text render-everywhere proof: one tiny fixed string, one font pack, browser and native
+   gates, explicit nonclaims.
+
+## Deferred Work
+
+- Full animation and transition semantics.
+- General shader/material extension.
+- Arbitrary mesh formats beyond the chosen Stanford bunny PLY.
+- Pixel-identical 3D rasterization across independent hardware backends.
+- Production-grade native runtime packaging.
 
 ## Dependency Work
 
-Open Dependabot state when this was refreshed: none.
+Open Dependabot state when this was refreshed: none known.
 
 Manual lockfile conflict resolution should still be avoided unless Dependabot cannot regenerate a
 clean branch.

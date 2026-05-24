@@ -18,8 +18,16 @@ export const RENDER_FIXTURE_HASH_HEX_LENGTH = 64 as const;
 export const RENDER_FIXTURE_SOURCE_KIND_NONE = 'none' as const;
 export const RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT = 'gpvue-draft' as const;
 export const RENDER_FIXTURE_SOURCE_KIND_GPVUE = 'gpvue' as const;
+export const RENDER_FIXTURE_MESH_ASSET_VERSION = 'geordi-mesh-asset/1' as const;
+export const RENDER_FIXTURE_MESH_FIXTURE_VERSION = 'geordi-mesh-render-fixture/1' as const;
+export const RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE =
+  'geordi-ascii-ply-triangle-mesh/1' as const;
 const WINDOWS_DRIVE_PREFIX_PATTERN = /^[A-Za-z]:/u;
 const URL_SCHEME_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u;
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
+const ASCII_PLY_INTEGER_TOKEN_PATTERN = /^(?:0|[1-9][0-9]*)$/u;
+const ASCII_PLY_NUMBER_TOKEN_PATTERN =
+  /^[+-]?(?:(?:[0-9]+(?:\.[0-9]*)?)|(?:\.[0-9]+))(?:[eE][+-]?[0-9]+)?$/u;
 
 export interface RenderFixtureManifestIssue extends JsonObject {
   readonly path: string;
@@ -29,6 +37,20 @@ export interface RenderFixtureManifestIssue extends JsonObject {
 export interface RenderFixtureManifestValidationResult {
   readonly ok: boolean;
   readonly issues: readonly RenderFixtureManifestIssue[];
+}
+
+export type RenderFixtureMeshAssetManifestIssue = RenderFixtureManifestIssue;
+
+export interface RenderFixtureMeshAssetManifestValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureMeshAssetManifestIssue[];
+}
+
+export type RenderFixtureMeshFixtureManifestIssue = RenderFixtureManifestIssue;
+
+export interface RenderFixtureMeshFixtureManifestValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureMeshFixtureManifestIssue[];
 }
 
 export interface RenderFixtureArtifactIssue extends JsonObject {
@@ -105,6 +127,111 @@ export interface RenderFixtureManifest extends JsonObject {
   readonly source: RenderFixtureSource;
 }
 
+export type RenderFixtureVector3 = readonly [number, number, number];
+
+export interface RenderFixtureMeshAssetFormat extends JsonObject {
+  readonly encoding: 'ascii';
+  readonly kind: 'ply';
+  readonly version: '1.0';
+}
+
+export interface RenderFixtureMeshAssetCounts extends JsonObject {
+  readonly faces: number;
+  readonly vertices: number;
+}
+
+export interface RenderFixtureMeshAssetBounds extends JsonObject {
+  readonly max: RenderFixtureVector3;
+  readonly min: RenderFixtureVector3;
+}
+
+export interface RenderFixtureMeshAssetSource extends JsonObject {
+  readonly attribution: string;
+  readonly retrieved: string;
+  readonly url: string;
+}
+
+export interface RenderFixtureMeshAssetManifest extends JsonObject {
+  readonly assetPath: string;
+  readonly assetVersion: typeof RENDER_FIXTURE_MESH_ASSET_VERSION;
+  readonly bounds: RenderFixtureMeshAssetBounds;
+  readonly counts: RenderFixtureMeshAssetCounts;
+  readonly faceProperty: 'vertex_indices';
+  readonly format: RenderFixtureMeshAssetFormat;
+  readonly id: string;
+  readonly meshProfile: typeof RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE;
+  readonly sha256: string;
+  readonly source: RenderFixtureMeshAssetSource;
+  readonly vertexProperties: readonly string[];
+}
+
+export interface RenderFixturePlyVertex extends JsonObject {
+  readonly position: RenderFixtureVector3;
+}
+
+export type RenderFixturePlyTriangleFace = readonly [number, number, number];
+
+export interface RenderFixturePlyMesh extends JsonObject {
+  readonly bounds: RenderFixtureMeshAssetBounds;
+  readonly faces: readonly RenderFixturePlyTriangleFace[];
+  readonly vertexProperties: readonly string[];
+  readonly vertices: readonly RenderFixturePlyVertex[];
+}
+
+export interface RenderFixtureMeshRuntimeProfile extends JsonObject {
+  readonly numericProfile: GeordiNumericProfile;
+  readonly requires: readonly GeordiFeatureRequirement[];
+}
+
+export interface RenderFixtureMeshCamera extends JsonObject {
+  readonly coordinateSystem: 'right-handed';
+  readonly eye: RenderFixtureVector3;
+  readonly target: RenderFixtureVector3;
+  readonly up: RenderFixtureVector3;
+}
+
+export interface RenderFixtureMeshProjection extends JsonObject {
+  readonly far: number;
+  readonly kind: 'perspective';
+  readonly near: number;
+  readonly verticalFovRadians: number;
+  readonly viewport: RenderFixtureCanvas;
+}
+
+export interface RenderFixtureMeshMaterial extends JsonObject {
+  readonly backgroundColor: string;
+  readonly color: string;
+  readonly kind: 'solid';
+}
+
+export interface RenderFixtureMeshPlayback extends JsonObject {
+  readonly axis: RenderFixtureVector3;
+  readonly kind: 'fixed-rate-rotation';
+  readonly radiansPerSecond: number;
+  readonly sampleRate: number;
+}
+
+export interface RenderFixtureMeshPlaybackFrame extends JsonObject {
+  readonly angleRadians: number;
+  readonly axis: RenderFixtureVector3;
+  readonly frameIndex: number;
+  readonly normalizedAxis: RenderFixtureVector3;
+  readonly radiansPerSecond: number;
+  readonly sampleRate: number;
+  readonly seconds: number;
+}
+
+export interface RenderFixtureMeshFixtureManifest extends JsonObject {
+  readonly assetManifestPath: string;
+  readonly camera: RenderFixtureMeshCamera;
+  readonly fixtureVersion: typeof RENDER_FIXTURE_MESH_FIXTURE_VERSION;
+  readonly id: string;
+  readonly material: RenderFixtureMeshMaterial;
+  readonly playback: RenderFixtureMeshPlayback;
+  readonly projection: RenderFixtureMeshProjection;
+  readonly runtimeProfile: RenderFixtureMeshRuntimeProfile;
+}
+
 export class RenderFixtureInvalidManifestError extends Error {
   public readonly issues: readonly RenderFixtureManifestIssue[];
 
@@ -112,6 +239,73 @@ export class RenderFixtureInvalidManifestError extends Error {
     super('Invalid render fixture manifest');
     this.name = new.target.name;
     this.issues = issues;
+  }
+}
+
+export class RenderFixtureInvalidMeshAssetManifestError extends Error {
+  public readonly issues: readonly RenderFixtureMeshAssetManifestIssue[];
+
+  constructor(issues: readonly RenderFixtureMeshAssetManifestIssue[]) {
+    super('Invalid render fixture mesh asset manifest');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
+
+export class RenderFixtureInvalidMeshFixtureManifestError extends Error {
+  public readonly issues: readonly RenderFixtureMeshFixtureManifestIssue[];
+
+  constructor(issues: readonly RenderFixtureMeshFixtureManifestIssue[]) {
+    super('Invalid render fixture mesh fixture manifest');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
+
+export class RenderFixturePlyHeaderError extends Error {
+  public readonly lineNumber: number;
+
+  constructor(lineNumber: number, message: string) {
+    super(message);
+    this.name = new.target.name;
+    this.lineNumber = lineNumber;
+  }
+}
+
+export class RenderFixturePlyVertexError extends Error {
+  public readonly lineNumber: number;
+
+  constructor(lineNumber: number) {
+    super('Invalid PLY vertex row');
+    this.name = new.target.name;
+    this.lineNumber = lineNumber;
+  }
+}
+
+export class RenderFixturePlyFaceError extends Error {
+  public readonly lineNumber: number;
+
+  constructor(lineNumber: number) {
+    super('Invalid PLY triangle face row');
+    this.name = new.target.name;
+    this.lineNumber = lineNumber;
+  }
+}
+
+export class RenderFixtureInvalidPlaybackFrameError extends Error {
+  public readonly frameIndex: number;
+
+  constructor(frameIndex: number) {
+    super('Invalid render fixture playback frame');
+    this.name = new.target.name;
+    this.frameIndex = frameIndex;
+  }
+}
+
+export class RenderFixtureInvalidMeshPlaybackError extends Error {
+  constructor() {
+    super('Render fixture mesh playback is invalid');
+    this.name = new.target.name;
   }
 }
 
@@ -170,6 +364,20 @@ export function parseRenderFixtureManifest(
   return assertRenderFixtureManifest(jsonPort.parse(source));
 }
 
+export function parseRenderFixtureMeshAssetManifest(
+  source: string,
+  jsonPort: JsonPort = canonicalJsonPort,
+): RenderFixtureMeshAssetManifest {
+  return assertRenderFixtureMeshAssetManifest(jsonPort.parse(source));
+}
+
+export function parseRenderFixtureMeshFixtureManifest(
+  source: string,
+  jsonPort: JsonPort = canonicalJsonPort,
+): RenderFixtureMeshFixtureManifest {
+  return assertRenderFixtureMeshFixtureManifest(jsonPort.parse(source));
+}
+
 export function assertRenderFixtureManifest(
   value: JsonValue | undefined,
 ): RenderFixtureManifest {
@@ -181,10 +389,44 @@ export function assertRenderFixtureManifest(
   throw new RenderFixtureInvalidManifestError(result.issues);
 }
 
+export function assertRenderFixtureMeshAssetManifest(
+  value: JsonValue | undefined,
+): RenderFixtureMeshAssetManifest {
+  const result = validateRenderFixtureMeshAssetManifest(value);
+  if (result.ok && isJsonObject(value)) {
+    return value as RenderFixtureMeshAssetManifest;
+  }
+
+  throw new RenderFixtureInvalidMeshAssetManifestError(result.issues);
+}
+
+export function assertRenderFixtureMeshFixtureManifest(
+  value: JsonValue | undefined,
+): RenderFixtureMeshFixtureManifest {
+  const result = validateRenderFixtureMeshFixtureManifest(value);
+  if (result.ok && isJsonObject(value)) {
+    return value as RenderFixtureMeshFixtureManifest;
+  }
+
+  throw new RenderFixtureInvalidMeshFixtureManifestError(result.issues);
+}
+
 export function isRenderFixtureManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureManifest {
   return validateRenderFixtureManifest(value).ok;
+}
+
+export function isRenderFixtureMeshAssetManifest(
+  value: JsonValue | undefined,
+): value is RenderFixtureMeshAssetManifest {
+  return validateRenderFixtureMeshAssetManifest(value).ok;
+}
+
+export function isRenderFixtureMeshFixtureManifest(
+  value: JsonValue | undefined,
+): value is RenderFixtureMeshFixtureManifest {
+  return validateRenderFixtureMeshFixtureManifest(value).ok;
 }
 
 export function validateRenderFixtureManifest(
@@ -219,6 +461,82 @@ export function validateRenderFixtureManifest(
   validateCanvas(canvas, '$.canvas', issues);
   validateRuntimeProfile(property(value, 'runtimeProfile'), '$.runtimeProfile', issues);
   validatePixelProbes(property(value, 'pixelProbes'), canvas, '$.pixelProbes', issues);
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function validateRenderFixtureMeshAssetManifest(
+  value: JsonValue | undefined,
+): RenderFixtureMeshAssetManifestValidationResult {
+  const issues: RenderFixtureMeshAssetManifestIssue[] = [];
+
+  if (!isJsonObject(value)) {
+    pushIssue(issues, '$', 'Mesh asset manifest must be an object');
+    return { ok: false, issues };
+  }
+
+  validateLiteral(
+    property(value, 'assetVersion'),
+    RENDER_FIXTURE_MESH_ASSET_VERSION,
+    '$.assetVersion',
+    'Mesh asset version',
+    issues,
+  );
+  validateNonEmptyString(property(value, 'id'), '$.id', 'Mesh asset id', issues);
+  validateLiteral(
+    property(value, 'meshProfile'),
+    RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE,
+    '$.meshProfile',
+    'Mesh profile',
+    issues,
+  );
+  validateRelativePath(property(value, 'assetPath'), '$.assetPath', 'Mesh asset path', issues);
+  validateArtifactHash(property(value, 'sha256'), '$.sha256', issues);
+  validateMeshAssetFormat(property(value, 'format'), '$.format', issues);
+  validateMeshAssetCounts(property(value, 'counts'), '$.counts', issues);
+  validateMeshAssetBounds(property(value, 'bounds'), '$.bounds', issues);
+  validateMeshAssetSource(property(value, 'source'), '$.source', issues);
+  validateVertexProperties(property(value, 'vertexProperties'), '$.vertexProperties', issues);
+  validateLiteral(
+    property(value, 'faceProperty'),
+    'vertex_indices',
+    '$.faceProperty',
+    'Face property',
+    issues,
+  );
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function validateRenderFixtureMeshFixtureManifest(
+  value: JsonValue | undefined,
+): RenderFixtureMeshFixtureManifestValidationResult {
+  const issues: RenderFixtureMeshFixtureManifestIssue[] = [];
+
+  if (!isJsonObject(value)) {
+    pushIssue(issues, '$', 'Mesh fixture manifest must be an object');
+    return { ok: false, issues };
+  }
+
+  validateLiteral(
+    property(value, 'fixtureVersion'),
+    RENDER_FIXTURE_MESH_FIXTURE_VERSION,
+    '$.fixtureVersion',
+    'Mesh fixture version',
+    issues,
+  );
+  validateNonEmptyString(property(value, 'id'), '$.id', 'Mesh fixture id', issues);
+  validateRelativePath(
+    property(value, 'assetManifestPath'),
+    '$.assetManifestPath',
+    'Mesh asset manifest path',
+    issues,
+  );
+  validateMeshRuntimeProfile(property(value, 'runtimeProfile'), '$.runtimeProfile', issues);
+  validateMeshCamera(property(value, 'camera'), '$.camera', issues);
+  validateMeshProjection(property(value, 'projection'), '$.projection', issues);
+  validateMeshMaterial(property(value, 'material'), '$.material', issues);
+  validateMeshPlayback(property(value, 'playback'), '$.playback', issues);
 
   return { ok: issues.length === 0, issues };
 }
@@ -289,6 +607,39 @@ export function assertRenderFixtureArtifact(
   }
 }
 
+export function createRenderFixtureMeshPlaybackFrame(
+  playback: RenderFixtureMeshPlayback,
+  frameIndex: number,
+): RenderFixtureMeshPlaybackFrame {
+  if (
+    finiteNumber(playback.radiansPerSecond) === undefined ||
+    playback.radiansPerSecond <= 0 ||
+    positiveInteger(playback.sampleRate) === undefined
+  ) {
+    throw new RenderFixtureInvalidMeshPlaybackError();
+  }
+
+  if (nonNegativeInteger(frameIndex) === undefined) {
+    throw new RenderFixtureInvalidPlaybackFrameError(frameIndex);
+  }
+
+  const normalizedAxis = normalizePlaybackAxis(playback.axis);
+  if (normalizedAxis === undefined) {
+    throw new RenderFixtureInvalidMeshPlaybackError();
+  }
+
+  const seconds = frameIndex / playback.sampleRate;
+  return {
+    angleRadians: seconds * playback.radiansPerSecond,
+    axis: playback.axis,
+    frameIndex,
+    normalizedAxis,
+    radiansPerSecond: playback.radiansPerSecond,
+    sampleRate: playback.sampleRate,
+    seconds,
+  };
+}
+
 export function assertRenderFixturePixelProbe(
   fixtureId: string,
   probe: RenderFixturePixelProbe,
@@ -318,6 +669,245 @@ export function renderFixtureRgbaFromBytes(bytes: ArrayLike<number>): RenderFixt
   ];
 }
 
+export function parseRenderFixtureAsciiPlyTriangleMesh(source: string): RenderFixturePlyMesh {
+  const lines = source.split(/\r?\n/u);
+  const header = parsePlyHeader(lines);
+  const vertices = parsePlyVertices(lines, header);
+  const faces = parsePlyFaces(lines, header, vertices.length);
+  assertNoTrailingPlyBody(lines, header.faceStartIndex + header.faceCount);
+
+  return {
+    bounds: boundsFromVertices(vertices),
+    faces,
+    vertexProperties: header.vertexProperties,
+    vertices,
+  };
+}
+
+interface PlyHeader {
+  readonly faceCount: number;
+  readonly faceStartIndex: number;
+  readonly vertexCount: number;
+  readonly vertexProperties: readonly string[];
+  readonly vertexStartIndex: number;
+}
+
+function parsePlyHeader(lines: readonly string[]): PlyHeader {
+  if (lineAt(lines, 0).trim() !== 'ply') {
+    throw new RenderFixturePlyHeaderError(1, 'PLY source must start with ply');
+  }
+
+  let faceCount: number | undefined;
+  let vertexCount: number | undefined;
+  let currentElement = '';
+  let facePropertyFound = false;
+  const vertexProperties: string[] = [];
+
+  for (let index = 1; index < lines.length; index++) {
+    const lineNumber = index + 1;
+    const line = lineAt(lines, index).trim();
+    if (line === 'end_header') {
+      if (vertexCount === undefined || faceCount === undefined || !facePropertyFound) {
+        throw new RenderFixturePlyHeaderError(lineNumber, 'PLY header is incomplete');
+      }
+
+      assertVertexPositionProperties(vertexProperties, lineNumber);
+      const vertexStartIndex = index + 1;
+      return {
+        faceCount,
+        faceStartIndex: vertexStartIndex + vertexCount,
+        vertexCount,
+        vertexProperties,
+        vertexStartIndex,
+      };
+    }
+
+    if (line.length === 0 || line.startsWith('comment ')) {
+      continue;
+    }
+
+    if (line === 'format ascii 1.0') {
+      continue;
+    }
+
+    const parts = line.split(/\s+/u);
+    if (parts[0] === 'element' && parts[1] === 'vertex' && parts.length === 3) {
+      vertexCount = parsePositiveIntegerToken(parts[2], lineNumber);
+      currentElement = 'vertex';
+      continue;
+    }
+
+    if (parts[0] === 'element' && parts[1] === 'face' && parts.length === 3) {
+      faceCount = parsePositiveIntegerToken(parts[2], lineNumber);
+      currentElement = 'face';
+      continue;
+    }
+
+    if (parts[0] === 'property' && currentElement === 'vertex') {
+      if (parts.length !== 3) {
+        throw new RenderFixturePlyHeaderError(lineNumber, 'PLY vertex property is unsupported');
+      }
+      const propertyName = parts.at(2);
+      if (propertyName === undefined) {
+        throw new RenderFixturePlyHeaderError(lineNumber, 'PLY vertex property is unsupported');
+      }
+      vertexProperties.push(propertyName);
+      continue;
+    }
+
+    if (line === 'property list uchar int vertex_indices' && currentElement === 'face') {
+      facePropertyFound = true;
+      continue;
+    }
+
+    throw new RenderFixturePlyHeaderError(lineNumber, 'PLY header line is unsupported');
+  }
+
+  throw new RenderFixturePlyHeaderError(lines.length, 'PLY header must end with end_header');
+}
+
+function parsePlyVertices(
+  lines: readonly string[],
+  header: PlyHeader,
+): readonly RenderFixturePlyVertex[] {
+  const vertices: RenderFixturePlyVertex[] = [];
+  for (let index = 0; index < header.vertexCount; index++) {
+    const lineIndex = header.vertexStartIndex + index;
+    const lineNumber = lineIndex + 1;
+    const fields = lineAt(lines, lineIndex).trim().split(/\s+/u);
+    if (fields.length !== header.vertexProperties.length) {
+      throw new RenderFixturePlyVertexError(lineNumber);
+    }
+
+    const x = parseFiniteNumberToken(fields[0], lineNumber, RenderFixturePlyVertexError);
+    const y = parseFiniteNumberToken(fields[1], lineNumber, RenderFixturePlyVertexError);
+    const z = parseFiniteNumberToken(fields[2], lineNumber, RenderFixturePlyVertexError);
+    vertices.push({ position: [x, y, z] });
+  }
+
+  return vertices;
+}
+
+function parsePlyFaces(
+  lines: readonly string[],
+  header: PlyHeader,
+  vertexCount: number,
+): readonly RenderFixturePlyTriangleFace[] {
+  const faces: RenderFixturePlyTriangleFace[] = [];
+  for (let index = 0; index < header.faceCount; index++) {
+    const lineIndex = header.faceStartIndex + index;
+    const lineNumber = lineIndex + 1;
+    const fields = lineAt(lines, lineIndex).trim().split(/\s+/u);
+    if (fields.length !== 4 || fields[0] !== '3') {
+      throw new RenderFixturePlyFaceError(lineNumber);
+    }
+
+    const a = parseFaceIndex(fields[1], vertexCount, lineNumber);
+    const b = parseFaceIndex(fields[2], vertexCount, lineNumber);
+    const c = parseFaceIndex(fields[3], vertexCount, lineNumber);
+    faces.push([a, b, c]);
+  }
+
+  return faces;
+}
+
+function assertVertexPositionProperties(properties: readonly string[], lineNumber: number): void {
+  if (properties[0] !== 'x' || properties[1] !== 'y' || properties[2] !== 'z') {
+    throw new RenderFixturePlyHeaderError(lineNumber, 'PLY vertex properties must begin x y z');
+  }
+}
+
+function parsePositiveIntegerToken(value: string | undefined, lineNumber: number): number {
+  if (value === undefined || !ASCII_PLY_INTEGER_TOKEN_PATTERN.test(value)) {
+    throw new RenderFixturePlyHeaderError(lineNumber, 'PLY element count must be a positive integer');
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new RenderFixturePlyHeaderError(lineNumber, 'PLY element count must be a positive integer');
+  }
+  return parsed;
+}
+
+function parseFiniteNumberToken(
+  value: string | undefined,
+  lineNumber: number,
+  ErrorClass: typeof RenderFixturePlyVertexError,
+): number {
+  if (value === undefined || !ASCII_PLY_NUMBER_TOKEN_PATTERN.test(value)) {
+    throw new ErrorClass(lineNumber);
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new ErrorClass(lineNumber);
+  }
+  return parsed;
+}
+
+function parseFaceIndex(
+  value: string | undefined,
+  vertexCount: number,
+  lineNumber: number,
+): number {
+  if (value === undefined || !ASCII_PLY_INTEGER_TOKEN_PATTERN.test(value)) {
+    throw new RenderFixturePlyFaceError(lineNumber);
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed >= vertexCount) {
+    throw new RenderFixturePlyFaceError(lineNumber);
+  }
+  return parsed;
+}
+
+function assertNoTrailingPlyBody(lines: readonly string[], bodyEndIndex: number): void {
+  for (let index = bodyEndIndex; index < lines.length; index++) {
+    if (lineAt(lines, index).trim().length > 0) {
+      throw new RenderFixturePlyFaceError(index + 1);
+    }
+  }
+}
+
+function boundsFromVertices(
+  vertices: readonly RenderFixturePlyVertex[],
+): RenderFixtureMeshAssetBounds {
+  if (vertices.length === 0) {
+    throw new RenderFixturePlyVertexError(0);
+  }
+
+  const min: [number, number, number] = [
+    Number.POSITIVE_INFINITY,
+    Number.POSITIVE_INFINITY,
+    Number.POSITIVE_INFINITY,
+  ];
+  const max: [number, number, number] = [
+    Number.NEGATIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+  ];
+  for (const vertex of vertices) {
+    const [x, y, z] = vertex.position;
+    min[0] = Math.min(min[0], x);
+    min[1] = Math.min(min[1], y);
+    min[2] = Math.min(min[2], z);
+    max[0] = Math.max(max[0], x);
+    max[1] = Math.max(max[1], y);
+    max[2] = Math.max(max[2], z);
+  }
+
+  return { max, min };
+}
+
+function lineAt(lines: readonly string[], index: number): string {
+  const line = lines.at(index);
+  if (line === undefined) {
+    throw new RenderFixturePlyHeaderError(index + 1, 'PLY source ended unexpectedly');
+  }
+
+  return line;
+}
+
 function validateCanvas(
   value: JsonValue | undefined,
   path: string,
@@ -330,6 +920,252 @@ function validateCanvas(
 
   validatePositiveInteger(property(value, 'width'), `${path}.width`, 'Canvas width', issues);
   validatePositiveInteger(property(value, 'height'), `${path}.height`, 'Canvas height', issues);
+}
+
+function validateMeshAssetFormat(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshAssetManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh asset format must be an object');
+    return;
+  }
+
+  validateLiteral(property(value, 'kind'), 'ply', `${path}.kind`, 'Mesh asset kind', issues);
+  validateLiteral(
+    property(value, 'encoding'),
+    'ascii',
+    `${path}.encoding`,
+    'Mesh asset encoding',
+    issues,
+  );
+  validateLiteral(property(value, 'version'), '1.0', `${path}.version`, 'PLY version', issues);
+}
+
+function validateMeshAssetCounts(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshAssetManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh asset counts must be an object');
+    return;
+  }
+
+  validatePositiveInteger(property(value, 'vertices'), `${path}.vertices`, 'Vertex count', issues);
+  validatePositiveInteger(property(value, 'faces'), `${path}.faces`, 'Face count', issues);
+}
+
+function validateMeshAssetBounds(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshAssetManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh asset bounds must be an object');
+    return;
+  }
+
+  validateVector3(property(value, 'min'), `${path}.min`, 'Mesh asset bounds min', issues);
+  validateVector3(property(value, 'max'), `${path}.max`, 'Mesh asset bounds max', issues);
+}
+
+function validateMeshAssetSource(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshAssetManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh asset source must be an object');
+    return;
+  }
+
+  validateNonEmptyString(property(value, 'url'), `${path}.url`, 'Mesh asset source URL', issues);
+  validateIsoDate(
+    property(value, 'retrieved'),
+    `${path}.retrieved`,
+    'Mesh asset retrieved date',
+    issues,
+  );
+  validateNonEmptyString(
+    property(value, 'attribution'),
+    `${path}.attribution`,
+    'Mesh asset attribution',
+    issues,
+  );
+}
+
+function validateMeshRuntimeProfile(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh runtime profile must be an object');
+    return;
+  }
+
+  validateLiteral(
+    property(value, 'numericProfile'),
+    GEORDI_NUMERIC_PROFILE,
+    `${path}.numericProfile`,
+    'Mesh numeric profile',
+    issues,
+  );
+  validateFeatureRequirements(property(value, 'requires'), `${path}.requires`, issues);
+}
+
+function validateMeshCamera(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh camera must be an object');
+    return;
+  }
+
+  validateLiteral(
+    property(value, 'coordinateSystem'),
+    'right-handed',
+    `${path}.coordinateSystem`,
+    'Camera coordinate system',
+    issues,
+  );
+  validateVector3(property(value, 'eye'), `${path}.eye`, 'Camera eye', issues);
+  validateVector3(property(value, 'target'), `${path}.target`, 'Camera target', issues);
+  validateVector3(property(value, 'up'), `${path}.up`, 'Camera up', issues);
+}
+
+function validateMeshProjection(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh projection must be an object');
+    return;
+  }
+
+  validateLiteral(
+    property(value, 'kind'),
+    'perspective',
+    `${path}.kind`,
+    'Projection kind',
+    issues,
+  );
+  validatePositiveFiniteNumber(
+    property(value, 'verticalFovRadians'),
+    `${path}.verticalFovRadians`,
+    'Projection vertical FOV',
+    issues,
+  );
+  const near = property(value, 'near');
+  const far = property(value, 'far');
+  validatePositiveFiniteNumber(near, `${path}.near`, 'Projection near', issues);
+  validatePositiveFiniteNumber(far, `${path}.far`, 'Projection far', issues);
+  const validNear = finiteNumber(near);
+  const validFar = finiteNumber(far);
+  if (
+    validNear !== undefined &&
+    validFar !== undefined &&
+    validNear > 0 &&
+    validFar > 0 &&
+    validNear >= validFar
+  ) {
+    pushIssue(issues, `${path}.near`, 'Projection near must be less than projection far');
+  }
+  validateCanvas(property(value, 'viewport'), `${path}.viewport`, issues);
+}
+
+function validateMeshMaterial(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh material must be an object');
+    return;
+  }
+
+  validateLiteral(property(value, 'kind'), 'solid', `${path}.kind`, 'Material kind', issues);
+  validateHexColor(property(value, 'color'), `${path}.color`, 'Material color', issues);
+  validateHexColor(
+    property(value, 'backgroundColor'),
+    `${path}.backgroundColor`,
+    'Material background color',
+    issues,
+  );
+}
+
+function validateMeshPlayback(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh playback must be an object');
+    return;
+  }
+
+  validateLiteral(
+    property(value, 'kind'),
+    'fixed-rate-rotation',
+    `${path}.kind`,
+    'Playback kind',
+    issues,
+  );
+  const axisValue = property(value, 'axis');
+  validateVector3(axisValue, `${path}.axis`, 'Playback axis', issues);
+  const axis = vector3FromJsonValue(axisValue);
+  if (axis !== undefined && vectorLength(axis) === 0) {
+    pushIssue(issues, `${path}.axis`, 'Playback axis must not be the zero vector');
+  }
+  validatePositiveFiniteNumber(
+    property(value, 'radiansPerSecond'),
+    `${path}.radiansPerSecond`,
+    'Playback radians per second',
+    issues,
+  );
+  validatePositiveInteger(
+    property(value, 'sampleRate'),
+    `${path}.sampleRate`,
+    'Playback sample rate',
+    issues,
+  );
+}
+
+function validateVertexProperties(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshAssetManifestIssue[],
+): void {
+  if (!isJsonArray(value)) {
+    pushIssue(issues, path, 'Vertex properties must be an array');
+    return;
+  }
+
+  const seen = new Set<string>();
+  for (let index = 0; index < value.length; index++) {
+    const propertyName = value[index];
+    const itemPath = `${path}[${index}]`;
+    if (typeof propertyName !== 'string' || propertyName.length === 0) {
+      pushIssue(issues, itemPath, 'Vertex property must be a non-empty string');
+      continue;
+    }
+
+    if (seen.has(propertyName)) {
+      pushIssue(issues, itemPath, 'Vertex property must not be duplicated');
+    }
+    seen.add(propertyName);
+  }
+
+  for (const requiredProperty of ['x', 'y', 'z']) {
+    if (!seen.has(requiredProperty)) {
+      pushIssue(issues, path, `Vertex properties must include "${requiredProperty}"`);
+    }
+  }
 }
 
 function validateRuntimeProfile(
@@ -605,6 +1441,57 @@ function isFixtureLocalRelativePath(value: string): boolean {
   );
 }
 
+function validateVector3(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureMeshAssetManifestIssue[],
+): void {
+  if (!isJsonArray(value)) {
+    pushIssue(issues, path, `${label} must be an array`);
+    return;
+  }
+
+  if (value.length !== 3) {
+    pushIssue(issues, path, `${label} must contain exactly three numbers`);
+    return;
+  }
+
+  for (let index = 0; index < value.length; index++) {
+    if (finiteNumber(value[index]) === undefined) {
+      pushIssue(issues, `${path}[${index}]`, `${label} coordinate must be finite`);
+    }
+  }
+}
+
+function vector3FromJsonValue(value: JsonValue | undefined): RenderFixtureVector3 | undefined {
+  if (!isJsonArray(value) || value.length !== 3) {
+    return undefined;
+  }
+
+  const first = finiteNumber(value[0]);
+  const second = finiteNumber(value[1]);
+  const third = finiteNumber(value[2]);
+  if (first === undefined || second === undefined || third === undefined) {
+    return undefined;
+  }
+
+  return [first, second, third];
+}
+
+function normalizePlaybackAxis(axis: RenderFixtureVector3): RenderFixtureVector3 | undefined {
+  const length = vectorLength(axis);
+  if (length === 0) {
+    return undefined;
+  }
+
+  return [axis[0] / length, axis[1] / length, axis[2] / length];
+}
+
+function vectorLength(axis: RenderFixtureVector3): number {
+  return Math.hypot(axis[0], axis[1], axis[2]);
+}
+
 function rejectPresent(
   value: JsonValue | undefined,
   path: string,
@@ -613,6 +1500,40 @@ function rejectPresent(
 ): void {
   if (value !== undefined) {
     pushIssue(issues, path, `${label} must not be present`);
+  }
+}
+
+function validateIsoDate(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureMeshAssetManifestIssue[],
+): void {
+  if (typeof value !== 'string' || !ISO_DATE_PATTERN.test(value)) {
+    pushIssue(issues, path, `${label} must be an ISO date`);
+  }
+}
+
+function validatePositiveFiniteNumber(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  const number = finiteNumber(value);
+  if (number === undefined || number <= 0) {
+    pushIssue(issues, path, `${label} must be positive and finite`);
+  }
+}
+
+function validateHexColor(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (typeof value !== 'string' || !/^#[0-9a-f]{6}$/u.test(value)) {
+    pushIssue(issues, path, `${label} must be lowercase #rrggbb`);
   }
 }
 
@@ -656,6 +1577,10 @@ function positiveInteger(value: JsonValue | undefined): number | undefined {
 
 function nonNegativeInteger(value: JsonValue | undefined): number | undefined {
   return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : undefined;
+}
+
+function finiteNumber(value: JsonValue | undefined): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
 function byte(value: JsonValue | undefined): number | undefined {

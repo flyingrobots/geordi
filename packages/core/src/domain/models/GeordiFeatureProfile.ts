@@ -24,9 +24,21 @@ export const GEORDI_STRICT_TEXT_FEATURES = [
   'text.lineBoxes',
 ] as const;
 
+export const GEORDI_MESH_FEATURES = [
+  'asset.mesh',
+  'mesh.triangle',
+  'transform.matrix4',
+  'camera.perspective',
+  'projection.perspective',
+  'depth.z-buffer',
+  'material.solid',
+  'playback.fixed-rate-rotation',
+] as const;
+
 export const GEORDI_KNOWN_FEATURES = [
   ...GEORDI_BASELINE_FEATURES,
   ...GEORDI_STRICT_TEXT_FEATURES,
+  ...GEORDI_MESH_FEATURES,
 ] as const;
 
 export type GeordiFeatureRequirement = (typeof GEORDI_KNOWN_FEATURES)[number];

@@ -1,0 +1,18 @@
+[package]
+name = "geordi-mesh"
+description = "Mesh asset contracts and parsing for Geordi render-everywhere demos."
+edition.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+sha2 = "0.10.9"

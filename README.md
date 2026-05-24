@@ -22,9 +22,9 @@ Core compiler architecture is complete. The current implementation is focused on
 - Deterministic artifact emission
 - WebGL runtime scaffolding
 
-See [BEARING.md](BEARING.md) for the current operating map. The active render-everywhere
-execution checklist is
-[`docs/design/2026-05-render-everywhere-slice-plan.md`](docs/design/2026-05-render-everywhere-slice-plan.md).
+See [BEARING.md](BEARING.md) for the current operating map. The completed bunny mesh
+render-everywhere execution checklist is
+[`docs/design/2026-05-bunny-mesh-slice-plan.md`](docs/design/2026-05-bunny-mesh-slice-plan.md).
 Rust workspace gates are tracked in [`docs/RUST_GATES.md`](docs/RUST_GATES.md).
 For a detailed source-to-rendering walkthrough, see
 [`docs/end-to-end.md`](docs/end-to-end.md).
@@ -46,11 +46,12 @@ At runtime:
 
 ## Render-Everywhere Demo Plan
 
-The current execution path builds toward one GPVue-authored scene compiling to one canonical
-Geordi IR artifact, then rendering that same artifact in a browser canvas and a native Rust
-application. The slice checklist lives in
-[`docs/design/2026-05-render-everywhere-slice-plan.md`](docs/design/2026-05-render-everywhere-slice-plan.md)
-and should be updated as slices land. The runnable demo guide lives in
+The first rectangle proof renders one GPVue-authored scene as one canonical Geordi IR artifact in a
+browser canvas and a native Rust application. The completed follow-on path proves a Stanford bunny
+mesh asset rendering and rotating in both browser and native harnesses from one checked-in asset
+manifest. The slice checklist lives in
+[`docs/design/2026-05-bunny-mesh-slice-plan.md`](docs/design/2026-05-bunny-mesh-slice-plan.md)
+and records the completed slice history. The runnable demo guide lives in
 [`docs/render-everywhere.md`](docs/render-everywhere.md).
 
 ---

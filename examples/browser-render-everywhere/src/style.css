@@ -62,12 +62,74 @@ select {
   white-space: nowrap;
 }
 
+.mode-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(112px, max-content));
+  justify-content: start;
+  width: max-content;
+  border: 1px solid #8aa3b8;
+  background: #d9dde5;
+}
+
+.mode-button {
+  min-height: 36px;
+  border: 0;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #314051;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.mode-button + .mode-button {
+  border-left: 1px solid #8aa3b8;
+}
+
+.mode-button[aria-pressed='true'] {
+  background: #14364f;
+  color: #ffffff;
+}
+
+.mode-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.demo-panel {
+  display: grid;
+  grid-template-rows: auto minmax(280px, 1fr);
+  gap: 16px;
+  min-height: 0;
+}
+
+.demo-panel[hidden] {
+  display: none;
+}
+
+.metadata-panel {
+  border: 1px solid #d9dde5;
+  background: #ffffff;
+}
+
+.metadata-panel summary {
+  padding: 10px 12px;
+  color: #52606d;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
 .status-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1px;
   margin: 0;
-  border: 1px solid #d9dde5;
+  border-top: 1px solid #d9dde5;
   background: #d9dde5;
 }
 
@@ -115,6 +177,22 @@ select {
   border: 1px solid #101820;
 }
 
+.bunny-report {
+  border-top: 1px solid #d9dde5;
+  overflow-wrap: anywhere;
+  margin: 0;
+  padding: 12px;
+  color: #314051;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+}
+
+.viewport-slot canvas[data-geordi-bunny-canvas='true'] {
+  width: min(100%, 512px);
+  background: #111827;
+}
+
 .harness-failure {
   display: grid;
   min-height: 100vh;
@@ -132,6 +210,14 @@ select {
   .harness-heading {
     align-items: start;
     flex-direction: column;
+  }
+
+  .mode-switch {
+    width: 100%;
+  }
+
+  .mode-button {
+    min-width: 0;
   }
 
   .status-grid {

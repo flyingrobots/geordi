@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/geordi-ir",
+  "crates/geordi-mesh",
   "crates/geordi-renderer",
   "examples/native-render-everywhere",
 ]

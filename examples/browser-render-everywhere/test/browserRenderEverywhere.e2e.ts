@@ -159,7 +159,7 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
 
   expect(artifactHash(compiledSceneSource)).toBe(manifest.artifactHash);
 
-  await page.route(/fixture\.json(?:\?.*)?$/u, async (route) => {
+  await page.route(/\/fixture\.json(?:\?.*)?$/u, async (route) => {
     if (route.request().url().includes('?import')) {
       await route.continue();
       return;
@@ -191,16 +191,98 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   await expect(page.getByRole('heading', { name: 'Geordi Render Everywhere' })).toBeVisible();
   expect(servedCompiledManifest).toBe(true);
   expect(servedCompiledScene).toBe(true);
-  await expect(page.getByText('browser-canvas').first()).toBeVisible();
-  await expect(page.getByText(manifest.id)).toBeVisible();
-  await expect(page.getByText(manifest.artifactHash)).toBeVisible();
-  await expect(page.getByText(manifest.runtimeProfile.irVersion)).toBeVisible();
-  await expect(page.getByText(manifest.runtimeProfile.numericProfile)).toBeVisible();
-  await expect(page.getByText(manifest.runtimeProfile.requires.join(', '))).toBeVisible();
+
+  const rectanglesButton = page.getByRole('button', { name: 'Rectangles' });
+  const bunnyButton = page.getByRole('button', { name: 'Bunny' });
+  const rendererMarker = page.locator('.harness-marker');
+  const rectanglePanel = page.locator('[data-geordi-demo-panel="rectangles"]');
+  const bunnyPanel = page.locator('[data-geordi-demo-panel="bunny"]');
+
+  await expect(rendererMarker).toHaveText('browser-canvas-wireframe-mesh');
+  await expect(bunnyButton).toHaveAttribute('aria-pressed', 'true');
+  await expect(rectanglesButton).toHaveAttribute('aria-pressed', 'false');
+  await expect(bunnyPanel).toBeVisible();
+  await expect(rectanglePanel).toBeHidden();
+
+  const bunnyReport = bunnyPanel.locator('[data-geordi-bunny-report="true"]');
+  await expect(bunnyReport).toBeHidden();
+  await expect(bunnyReport).toContainText('browser-canvas-wireframe-mesh');
+  await expect(bunnyReport).toContainText('transformProfile=geordi-fixed-rate-rotation/1');
+  await expect(bunnyReport).toContainText(
+    'normalizedAxis=0.4866642633922876,0.8111071056538126,0.32444284226152503',
+  );
+  await expect(bunnyReport).toContainText('vertices=1889');
+  await expect(bunnyReport).toContainText('faces=3851');
+  await expect(bunnyReport).toContainText(
+    'assetHash=sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6',
+  );
+  await expect(bunnyReport).toContainText(/frame=[1-9][0-9]*/u);
+
+  const bunnyEvaluation = await page.evaluate<CanvasEvaluation>(() => {
+    const canvases = document.querySelectorAll<HTMLCanvasElement>(
+      '[data-geordi-demo-panel="bunny"]:not([hidden]) canvas[data-geordi-bunny-canvas="true"]',
+    );
+    if (canvases.length !== 1) {
+      return {
+        canvasCount: canvases.length,
+        reason: 'canvas-count',
+      };
+    }
+
+    const canvas = canvases.item(0);
+    const context = canvas.getContext('2d');
+    if (context === null) {
+      return {
+        canvasCount: canvases.length,
+        reason: 'context-unavailable',
+      };
+    }
+
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let nonblank = false;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const alpha = pixels[index + 3] ?? 0;
+      const red = pixels[index] ?? 17;
+      const green = pixels[index + 1] ?? 24;
+      const blue = pixels[index + 2] ?? 39;
+      if (alpha > 0 && (red !== 17 || green !== 24 || blue !== 39)) {
+        nonblank = true;
+        break;
+      }
+    }
+
+    return {
+      canvasCount: canvases.length,
+      height: canvas.height,
+      nonblank,
+      samples: [],
+      width: canvas.width,
+    };
+  });
+
+  const bunnySnapshot = snapshotFromEvaluation(bunnyEvaluation);
+  expect(bunnySnapshot.canvasCount).toBe(1);
+  expect(bunnySnapshot.width).toBe(512);
+  expect(bunnySnapshot.height).toBe(512);
+  expect(bunnySnapshot.nonblank).toBe(true);
+
+  await rectanglesButton.click();
+  await expect(rectanglesButton).toHaveAttribute('aria-pressed', 'true');
+  await expect(bunnyButton).toHaveAttribute('aria-pressed', 'false');
+  await expect(rendererMarker).toHaveText('browser-canvas');
+  await expect(rectanglePanel).toBeVisible();
+  await expect(bunnyPanel).toBeHidden();
+
+  await rectanglePanel.getByText('Rectangle metadata').click();
+  await expect(rectanglePanel.getByText(manifest.id)).toBeVisible();
+  await expect(rectanglePanel.getByText(manifest.artifactHash)).toBeVisible();
+  await expect(rectanglePanel.getByText(manifest.runtimeProfile.irVersion)).toBeVisible();
+  await expect(rectanglePanel.getByText(manifest.runtimeProfile.numericProfile)).toBeVisible();
+  await expect(rectanglePanel.getByText(manifest.runtimeProfile.requires.join(', '))).toBeVisible();
 
   const evaluation = await page.evaluate<CanvasEvaluation, readonly ProbeInput[]>((probes) => {
     const canvases = document.querySelectorAll<HTMLCanvasElement>(
-      'canvas[data-geordi-render-canvas="true"]',
+      '[data-geordi-demo-panel="rectangles"]:not([hidden]) canvas[data-geordi-render-canvas="true"]',
     );
     if (canvases.length !== 1) {
       return {

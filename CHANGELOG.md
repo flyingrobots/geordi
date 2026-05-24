@@ -82,9 +82,29 @@
 - **Render-everywhere demos**: Add `pnpm test:render-everywhere:gpvue`, which compiles the GPVue
   fixture once, routes the browser gate to the emitted scene artifact, and runs the native Rust
   smoke against the same emitted artifact.
+- **Bunny mesh milestone**: Add known mesh feature requirements, Stanford bunny mesh asset and
+  fixture contracts, TypeScript and Rust SHA-256 helpers, ASCII PLY triangle parsers,
+  deterministic bounds/camera/projection/rotation law vectors, and browser/native wireframe
+  render-everywhere demos for static, fixed-frame, and live rotating bunny playback.
+- **Bunny mesh milestone**: Add the committed `bunny.fixture.json` render descriptor and have both
+  browser and native bunny demos load it for camera, projection, material colors, and fixed-rate
+  playback instead of carrying parallel render-intent constants.
+- **Native render-everywhere demo**: Reject URL-scheme paths anywhere the bunny fixture expects a
+  fixture-local relative path.
+- **Native render-everywhere demo**: Align bunny mesh asset validation with the TypeScript fixture
+  boundary for ISO retrieval dates and duplicate or empty vertex properties.
+- **Render fixtures**: Reject mesh fixture descriptors whose perspective projection has `near`
+  greater than or equal to `far`, matching the native bunny validator.
+- **Browser render-everywhere demo**: Keep the header renderer marker synchronized with the active
+  rectangle or bunny scene.
+- **Browser render-everywhere demo**: Add a scene switcher so the interactive browser harness can
+  show either the rectangle pixel-probe fixture or the rotating Stanford bunny, with debug metadata
+  hidden behind collapsed disclosure panels.
 
 ### Tests
 
+- **CI**: Install Chromium for Playwright and run the browser render-everywhere Playwright gate on
+  pull requests and pushes to `main`.
 - **`@flyingrobots/geordi-core`**: add `geordi-ir/1` validation coverage for valid IR, version
   mismatch, non-finite numbers, and malformed node props.
 - **`@flyingrobots/geordi-compiler-core`**: add a compiler-to-core contract test proving emitted
@@ -127,9 +147,18 @@
   construct coverage for the rectangle-only GPVue fixture compiler.
 - **Render-everywhere demos**: Add an end-to-end GPVue smoke path covering browser pixel probes and
   native Rust pixel probes against one compiled fixture artifact.
+- **Bunny mesh milestone**: Add cross-language coverage for Stanford bunny asset hash, vertex and
+  face counts, bounds, finite vertex coordinates, face index ranges, and malformed PLY failure
+  paths.
+- **Bunny mesh milestone**: Add focused browser and native gates for fixed-frame bunny metadata,
+  nonblank wireframe output, native clippy, manifest validation, and sampled smoke frames `0`, `15`,
+  and `60`.
 
 ### Bug Fixes
 
+- **Bunny mesh milestone**: harden browser mesh-manifest cross-checks, reject invalid browser
+  elapsed-time inputs, reject malformed mesh playback descriptors, and tighten TypeScript/Rust PLY
+  parsers so extra element-header fields and trailing body rows fail loudly.
 - `compiler-core/parseInput`: adapter-thrown `CompilerError` diagnostics are preserved instead of being wrapped as `GEORDI_E_INTERNAL_INVARIANT`; invalid GraphQL SDL keeps its source location through `compile()`
 - `compiler-core/errors`: add `DiagnosticsError` to carry collected diagnostics across adapter boundaries without losing error codes or locations
 - `schema-graphql/adapter`: missing-scene extraction now reports `GEORDI_E_SCENE_MISSING` through `compile()` without duplicate internal-invariant diagnostics
@@ -164,6 +193,8 @@
 
 - `docs/ERROR_CODES.md`: Added `GEORDI_E_INPUT_INVALID_JSON` and `GEORDI_E_INPUT_INVALID_SDL` entries
 - `docs/ERROR_CODES.md`: Corrected `GEORDI_E_REF_TARGET_NOT_FOUND` — `refKind` detail is `"animation"` only; bindings use `GEORDI_E_BIND_TARGET_NOT_FOUND`
+- Render-everywhere docs now describe the completed bunny milestone, browser/native bunny commands,
+  claim boundaries, and the browser scene switcher.
 
 ### Post-Sprint-3 PR Feedback (Round 5)
 
