@@ -147,7 +147,7 @@ pixel-identical browser/native claim until strict text exists.
   - Document the demo claim, non-claims, commands, fixture path, and expected output.
   - State that text is excluded from the first deterministic proof.
   - Link browser and native harness docs.
-  - Done: current slice.
+  - Done: `1318da1`.
   - Verification: `pnpm test:docs`.
 
 - [ ] **Slice 18: GPVue fixture hook**
