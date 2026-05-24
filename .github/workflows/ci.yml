@@ -25,6 +25,11 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
       - name: Install dependencies
         run: pnpm install
 
@@ -51,3 +56,6 @@ jobs:
 
       - name: Verify package exports
         run: pnpm test:exports
+
+      - name: Verify bunny render gates
+        run: pnpm test:render-everywhere:bunny

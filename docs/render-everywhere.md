@@ -384,15 +384,12 @@ cargo run -p native-render-everywhere -- --smoke fixtures/render-everywhere/hell
 Run the bunny gates:
 
 ```bash
-pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test
-pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser
-cargo test -p native-render-everywhere
-cargo clippy -p native-render-everywhere --all-targets -- -D warnings
-cargo run -p native-render-everywhere -- --bunny-check fixtures/render-everywhere/assets/stanford-bunny
-cargo run -p native-render-everywhere -- --bunny-smoke fixtures/render-everywhere/assets/stanford-bunny
-cargo run -p native-render-everywhere -- --bunny-smoke --frame 15 fixtures/render-everywhere/assets/stanford-bunny
-cargo run -p native-render-everywhere -- --bunny-smoke --frame 60 fixtures/render-everywhere/assets/stanford-bunny
+pnpm test:render-everywhere:bunny
 ```
+
+This gate intentionally avoids interactive windows. It runs the TypeScript mesh fixture tests,
+browser bunny unit tests, native Rust tests, native clippy, native bunny manifest validation, and
+native fixed-frame smoke samples for frames `0`, `15`, and `60`.
 
 Run the doc hygiene gate for this guide:
 

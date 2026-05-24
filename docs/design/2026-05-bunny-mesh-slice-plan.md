@@ -208,9 +208,11 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Done: slice commit `Slice 27: Update bunny demo guide`.
   - Verification: `pnpm test:docs`, `git diff --check`.
 
-- [ ] **Slice 28: CI gate wiring**
+- [x] **Slice 28: CI gate wiring**
   - Add focused package and Rust gates for mesh parsing and bunny fixture validation.
   - Avoid expensive interactive windows in CI.
+  - Done: slice commit `Slice 28: Wire bunny render gates`.
+  - Verification: `pnpm test:render-everywhere:bunny`, `pnpm test:docs`, `git diff --check`.
 
 - [ ] **Slice 29: Code Lawyer hardening**
   - Audit mesh parsing, path safety, transform determinism, and unsupported feature failures.
