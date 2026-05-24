@@ -154,7 +154,7 @@ pixel-identical browser/native claim until strict text exists.
   - Add draft `source.gpvue` support in fixture metadata.
   - Mark GPVue source as draft or not-yet-compiled.
   - Any compile attempt before compiler support must fail with a custom error.
-  - Done: current slice.
+  - Done: `ecf143d`.
   - Verification: manifest and failure-path tests.
 
 - [ ] **Slice 19: GPVue compiler MVP**
