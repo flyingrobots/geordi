@@ -172,9 +172,11 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Done: slice commit `Slice 21: Add native bunny fixed-frame CLI`.
   - Verification: native render-everywhere tests, clippy, and sampled frame smoke command.
 
-- [ ] **Slice 22: Browser live rotation**
+- [x] **Slice 22: Browser live rotation**
   - Add host-time presentation that maps elapsed time to deterministic frame indices.
   - Keep tests fixed-frame.
+  - Done: slice commit `Slice 22: Add browser bunny live rotation`.
+  - Verification: browser render-everywhere typecheck, lint, tests, and build.
 
 - [ ] **Slice 23: Native live rotation**
   - Add native live presentation that maps elapsed time to deterministic frame indices.

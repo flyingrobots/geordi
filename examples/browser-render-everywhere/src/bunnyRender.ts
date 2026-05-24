@@ -106,12 +106,11 @@ export async function renderBunnyFixtureFrame(
   }
 
   const mesh = parseRenderFixtureAsciiPlyTriangleMesh(plySource);
-  const report = createBunnyFrameReport(frameIndex, manifest, mesh);
   const canvas = document.createElement('canvas');
   canvas.width = BUNNY_RENDER_VIEWPORT_WIDTH;
   canvas.height = BUNNY_RENDER_VIEWPORT_HEIGHT;
   canvas.setAttribute('data-geordi-bunny-canvas', 'true');
-  renderBunnyWireframe(canvas, mesh, report.angleRadians);
+  const report = renderBunnyFrameToCanvas(canvas, manifest, mesh, frameIndex);
 
   return {
     canvas,
@@ -119,6 +118,18 @@ export async function renderBunnyFixtureFrame(
     mesh,
     report,
   };
+}
+
+export function renderBunnyFrameToCanvas(
+  canvas: HTMLCanvasElement,
+  manifest: RenderFixtureMeshAssetManifest,
+  mesh: RenderFixturePlyMesh,
+  frameIndex: number,
+): BunnyFrameReport {
+  const report = createBunnyFrameReport(frameIndex, manifest, mesh);
+  renderBunnyWireframe(canvas, mesh, report.angleRadians);
+
+  return report;
 }
 
 export function createBunnyFrameReport(
@@ -140,6 +151,10 @@ export function createBunnyFrameReport(
     seconds: playbackFrame.seconds,
     vertexCount: mesh.vertices.length,
   };
+}
+
+export function bunnyFrameIndexFromElapsedMs(elapsedMs: number): number {
+  return Math.floor((elapsedMs / 1000) * BUNNY_ROTATION_SAMPLE_RATE);
 }
 
 function renderBunnyWireframe(

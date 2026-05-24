@@ -5,6 +5,7 @@ import {
 } from '@flyingrobots/geordi-render-fixture';
 import {
   BUNNY_BROWSER_RENDERER_NAME,
+  bunnyFrameIndexFromElapsedMs,
   createBunnyFrameReport,
 } from './bunnyRender.js';
 
@@ -84,5 +85,12 @@ describe('bunny render report', () => {
     expect(frame0.angleRadians).toBe(0);
     expect(frame15.angleRadians).toBeCloseTo(Math.PI / 16);
     expect(frame60.angleRadians).toBeCloseTo(Math.PI / 4);
+  });
+
+  it('maps host elapsed time to deterministic frame indices', () => {
+    expect(bunnyFrameIndexFromElapsedMs(0)).toBe(0);
+    expect(bunnyFrameIndexFromElapsedMs(249)).toBe(14);
+    expect(bunnyFrameIndexFromElapsedMs(250)).toBe(15);
+    expect(bunnyFrameIndexFromElapsedMs(1000)).toBe(60);
   });
 });
