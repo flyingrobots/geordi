@@ -964,13 +964,25 @@ fn validate_manifest_path(
 ) {
     validate_manifest_non_empty(value, path, label, issues);
 
-    if value.starts_with('/') || value.contains("..") {
+    if !is_fixture_local_relative_path(value) {
         push_manifest_issue(
             issues,
             path,
             "Fixture path must be relative and fixture-local",
         );
     }
+}
+
+fn is_fixture_local_relative_path(value: &str) -> bool {
+    !value.starts_with('/')
+        && !value.contains('\\')
+        && !value.contains("..")
+        && !has_windows_drive_prefix(value)
+}
+
+fn has_windows_drive_prefix(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':'
 }
 
 fn validate_manifest_non_empty(
@@ -1153,8 +1165,8 @@ fn short_hash(hash: &str) -> String {
 mod tests {
     use super::{
         NativeAppError, NativeArgs, NativeMode, RenderFixtureSource, assert_pixel_probes,
-        load_fixture, load_manifest, load_receipt, run_smoke, validate_receipt_matches_manifest,
-        validate_scene_artifact_hash, write_fixture_summary,
+        load_fixture, load_manifest, load_receipt, run_smoke, validate_manifest_path,
+        validate_receipt_matches_manifest, validate_scene_artifact_hash, write_fixture_summary,
     };
     use std::ffi::OsString;
     use std::path::{Path, PathBuf};
@@ -1230,6 +1242,28 @@ mod tests {
 
         assert!(result.is_err());
         Ok(())
+    }
+
+    #[test]
+    fn manifest_paths_reject_windows_absolute_forms() {
+        let mut issues = Vec::new();
+
+        validate_manifest_path(
+            "C:\\tmp\\scene.geordi.json",
+            "$.scenePath",
+            "Scene path",
+            &mut issues,
+        );
+        validate_manifest_path(
+            "\\\\server\\share\\scene.geordi.json",
+            "$.receiptPath",
+            "Receipt path",
+            &mut issues,
+        );
+
+        assert_eq!(issues.len(), 2);
+        assert_eq!(issues[0].path, "$.scenePath");
+        assert_eq!(issues[1].path, "$.receiptPath");
     }
 
     #[test]

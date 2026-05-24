@@ -190,8 +190,8 @@ describe('render fixture manifest validation', () => {
       ...makeManifest(),
       artifactHash: 'sha256:not-a-hash',
       fixtureVersion: 'geordi-render-fixture/2',
-      receiptPath: '../receipt',
-      scenePath: '/scene.geordi.json',
+      receiptPath: '\\\\server\\share\\receipt',
+      scenePath: 'C:\\tmp\\scene.geordi.json',
     };
 
     const result = validateRenderFixtureManifest(invalid);

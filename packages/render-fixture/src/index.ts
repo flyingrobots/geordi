@@ -18,6 +18,7 @@ export const RENDER_FIXTURE_HASH_HEX_LENGTH = 64 as const;
 export const RENDER_FIXTURE_SOURCE_KIND_NONE = 'none' as const;
 export const RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT = 'gpvue-draft' as const;
 export const RENDER_FIXTURE_SOURCE_KIND_GPVUE = 'gpvue' as const;
+const WINDOWS_DRIVE_PREFIX_PATTERN = /^[A-Za-z]:/u;
 
 export interface RenderFixtureManifestIssue extends JsonObject {
   readonly path: string;
@@ -588,9 +589,18 @@ function validateRelativePath(
     return;
   }
 
-  if (value.startsWith('/') || value.includes('..')) {
+  if (!isFixtureLocalRelativePath(value)) {
     pushIssue(issues, path, `${label} must be a relative fixture-local path`);
   }
+}
+
+function isFixtureLocalRelativePath(value: string): boolean {
+  return (
+    !value.startsWith('/') &&
+    !value.includes('\\') &&
+    !value.includes('..') &&
+    !WINDOWS_DRIVE_PREFIX_PATTERN.test(value)
+  );
 }
 
 function rejectPresent(
