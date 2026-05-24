@@ -91,6 +91,8 @@
   playback instead of carrying parallel render-intent constants.
 - **Native render-everywhere demo**: Reject URL-scheme paths anywhere the bunny fixture expects a
   fixture-local relative path.
+- **Render fixtures**: Reject mesh fixture descriptors whose perspective projection has `near`
+  greater than or equal to `far`, matching the native bunny validator.
 - **Browser render-everywhere demo**: Add a scene switcher so the interactive browser harness can
   show either the rectangle pixel-probe fixture or the rotating Stanford bunny, with debug metadata
   hidden behind collapsed disclosure panels.

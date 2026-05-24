@@ -1289,6 +1289,18 @@ fn validate_mesh_projection(
     );
     validate_positive_finite(projection.near, "$.projection.near", "Projection near", issues);
     validate_positive_finite(projection.far, "$.projection.far", "Projection far", issues);
+    if projection.near.is_finite()
+        && projection.far.is_finite()
+        && projection.near > 0.0
+        && projection.far > 0.0
+        && projection.near >= projection.far
+    {
+        push_issue(
+            issues,
+            "$.projection.near",
+            "Projection near must be less than projection far",
+        );
+    }
     if projection.viewport.width == 0 {
         push_issue(
             issues,
@@ -1584,8 +1596,9 @@ fn push_issue(issues: &mut Vec<NativeBunnyManifestValidationIssue>, path: &str, 
 #[cfg(test)]
 mod tests {
     use super::{
-        BUNNY_RENDERER_NAME, NativeBunnyError, bunny_frame_index_from_elapsed_ms,
-        is_fixture_local_relative_path, load_bunny_fixture, run_bunny_smoke, write_bunny_summary,
+        BUNNY_RENDERER_NAME, BunnyMeshProjection, BunnyMeshViewport, NativeBunnyError,
+        bunny_frame_index_from_elapsed_ms, is_fixture_local_relative_path, load_bunny_fixture,
+        run_bunny_smoke, validate_mesh_projection, write_bunny_summary,
     };
     use std::path::{Path, PathBuf};
 
@@ -1667,6 +1680,28 @@ mod tests {
         assert!(!is_fixture_local_relative_path("https://example.invalid/bunny.mesh.json"));
         assert!(!is_fixture_local_relative_path("file://bunny.mesh.json"));
         assert!(is_fixture_local_relative_path("bunny.mesh.json"));
+    }
+
+    #[test]
+    fn mesh_projections_reject_near_planes_not_before_far_planes() {
+        let mut issues = Vec::new();
+
+        validate_mesh_projection(
+            &BunnyMeshProjection {
+                far: 1.0,
+                kind: "perspective".to_owned(),
+                near: 1.0,
+                vertical_fov_radians: std::f64::consts::FRAC_PI_4,
+                viewport: BunnyMeshViewport {
+                    height: 512,
+                    width: 512,
+                },
+            },
+            &mut issues,
+        );
+
+        assert_eq!(issues.len(), 1);
+        assert_eq!(issues[0].path, "$.projection.near");
     }
 
     fn output_text(output: &[u8]) -> String {

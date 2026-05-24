@@ -642,6 +642,22 @@ describe('render fixture mesh fixture manifest validation', () => {
     expect(result.issues.map((issue) => issue.path)).toEqual(['$.playback.axis']);
   });
 
+  it('rejects mesh projections whose near plane is not before the far plane', () => {
+    const invalid: JsonValue = {
+      ...makeMeshFixtureManifest(),
+      projection: {
+        ...makeMeshFixtureManifest().projection,
+        far: 1,
+        near: 1,
+      },
+    };
+
+    const result = validateRenderFixtureMeshFixtureManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual(['$.projection.near']);
+  });
+
   it('rejects invalid mesh fixture descriptor metadata', () => {
     const invalid: JsonValue = {
       ...makeMeshFixtureManifest(),

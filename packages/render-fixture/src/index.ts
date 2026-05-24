@@ -1061,8 +1061,21 @@ function validateMeshProjection(
     'Projection vertical FOV',
     issues,
   );
-  validatePositiveFiniteNumber(property(value, 'near'), `${path}.near`, 'Projection near', issues);
-  validatePositiveFiniteNumber(property(value, 'far'), `${path}.far`, 'Projection far', issues);
+  const near = property(value, 'near');
+  const far = property(value, 'far');
+  validatePositiveFiniteNumber(near, `${path}.near`, 'Projection near', issues);
+  validatePositiveFiniteNumber(far, `${path}.far`, 'Projection far', issues);
+  const validNear = finiteNumber(near);
+  const validFar = finiteNumber(far);
+  if (
+    validNear !== undefined &&
+    validFar !== undefined &&
+    validNear > 0 &&
+    validFar > 0 &&
+    validNear >= validFar
+  ) {
+    pushIssue(issues, `${path}.near`, 'Projection near must be less than projection far');
+  }
   validateCanvas(property(value, 'viewport'), `${path}.viewport`, issues);
 }
 
