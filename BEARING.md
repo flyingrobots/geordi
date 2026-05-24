@@ -3,6 +3,7 @@
 **Date**: 2026-05-24
 **Branch baseline**: `main` at `b9d1398`
 **Current branch when refreshed**: `codex/bunny-rotation-milestone` closeout
+**Last verified bunny milestone commit**: `21cffd6` (`Fix: Sync browser renderer marker with mode`)
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
