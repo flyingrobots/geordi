@@ -140,9 +140,12 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Done: slice commit `Slice 16: Render static bunny in browser`.
   - Verification: browser render-everywhere typecheck, lint, test.
 
-- [ ] **Slice 17: Static native bunny**
+- [x] **Slice 17: Static native bunny**
   - Render the same fixed bunny frame in the Rust harness.
   - Report asset hash, mesh counts, camera profile, and frame metadata.
+  - Done: slice commit `Slice 17: Render static bunny natively`.
+  - Verification: `cargo fmt --check`, `cargo test -p native-render-everywhere`,
+    `cargo clippy -p native-render-everywhere --all-targets -- -D warnings`.
 
 - [ ] **Slice 18: Static smoke gates**
   - Verify nonblank output, mesh metadata, and coarse visual invariants for one sampled frame.

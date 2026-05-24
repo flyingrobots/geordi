@@ -296,6 +296,7 @@ name = "native-render-everywhere"
 version = "0.1.0"
 dependencies = [
  "geordi-ir",
+ "geordi-mesh",
  "geordi-renderer",
  "minifb",
  "serde",

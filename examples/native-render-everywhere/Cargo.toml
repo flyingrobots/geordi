@@ -13,6 +13,7 @@ workspace = true
 
 [dependencies]
 geordi-ir = { path = "../../crates/geordi-ir" }
+geordi-mesh = { path = "../../crates/geordi-mesh" }
 geordi-renderer = { path = "../../crates/geordi-renderer" }
 minifb = { version = "0.28.0", default-features = false }
 serde = { version = "1.0.228", features = ["derive"] }
