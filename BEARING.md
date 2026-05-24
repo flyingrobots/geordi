@@ -38,6 +38,8 @@ Completed:
     pixel probes.
 - The completed rectangle proof is tracked in
   [`docs/design/2026-05-render-everywhere-slice-plan.md`](./docs/design/2026-05-render-everywhere-slice-plan.md).
+- The active bunny milestone checklist is
+  [`docs/design/2026-05-bunny-mesh-slice-plan.md`](./docs/design/2026-05-bunny-mesh-slice-plan.md).
 
 Still true:
 
@@ -128,7 +130,9 @@ Not allowed yet:
    - browser harness changes;
    - native Rust harness changes;
    - verification strategy and non-claims.
-2. Add a new slice checklist for the bunny milestone and link it from this bearing.
+2. Follow the bunny slice checklist in
+   [`docs/design/2026-05-bunny-mesh-slice-plan.md`](./docs/design/2026-05-bunny-mesh-slice-plan.md)
+   and pause after slice 15 for a drift check.
 3. Implement the mesh asset manifest first. Hashes, counts, bounds, source attribution, and license
    notes must be machine-checkable before rendering work begins.
 4. Build parsers and validators at the boundaries:

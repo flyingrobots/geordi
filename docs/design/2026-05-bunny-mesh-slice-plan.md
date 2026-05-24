@@ -1,0 +1,171 @@
+# Bunny Mesh Slice Plan
+
+**Status**: Active
+**Date**: 2026-05-24
+**Parent Design**: [`2026-05-bunny-mesh-render-everywhere.md`](./2026-05-bunny-mesh-render-everywhere.md)
+
+This is the execution checklist for the Stanford bunny mesh milestone. Update this checklist as
+slices land. A slice is not done until implementation, focused verification, documentation, and a
+commit are complete.
+
+The milestone target is:
+
+```text
+Stanford bunny PLY bytes
+-> canonical mesh asset manifest
+-> typed mesh parsing in TypeScript and Rust
+-> static browser and native render
+-> deterministic fixed-frame rotation playback
+-> live browser and native rotating demos
+```
+
+Pause after slice 15 for a drift check before static rendering starts.
+
+## Checklist
+
+- [x] **Slice 1: Bunny design pack**
+  - Refresh `BEARING.md` around the bunny mesh milestone.
+  - Add design documents for mesh asset identity, transform/playback law, and demo claim
+    boundaries.
+  - Done: `800005b`.
+  - Verification: `pnpm test:docs`, `git diff --check`.
+
+- [x] **Slice 2: Bunny slice checklist**
+  - Add this executable 30-slice checklist.
+  - Wire the active design map to the bunny milestone.
+  - Link the checklist from `BEARING.md`.
+
+- [ ] **Slice 3: Asset manifest schema**
+  - Add typed TypeScript contracts for `geordi-mesh-asset/1`.
+  - Validate version, ID, profile, path, hash, counts, bounds, source, and attribution.
+  - Use custom error types for all assertion failures.
+
+- [ ] **Slice 4: Stanford bunny manifest file**
+  - Add the bunny mesh asset manifest beside the committed PLY.
+  - Record SHA-256, format, profile, vertex count, face count, bounds, source, and attribution.
+  - Parse the manifest through the schema validator.
+
+- [ ] **Slice 5: Mesh feature profile**
+  - Add known feature requirements for mesh assets, triangle meshes, camera projection, depth,
+    solid material, and deterministic playback.
+  - Keep these out of the baseline emitted rectangle profile.
+  - Mirror the known features in Rust.
+
+- [ ] **Slice 6: Mesh fixture manifest shape**
+  - Extend render fixture contracts for a bunny fixture descriptor.
+  - Include asset manifest path, camera, projection, material, and playback descriptors.
+  - Keep this separate from the existing rectangle `scene.geordi.json` fixture contract.
+
+- [ ] **Slice 7: TypeScript asset hash validator**
+  - Add a Node-side hash helper for mesh asset bytes.
+  - Assert expected `sha256:` values with a custom hash mismatch error.
+  - Keep filesystem reads outside pure validators.
+
+- [ ] **Slice 8: Rust asset hash validator**
+  - Add a Rust hash helper for mesh asset bytes.
+  - Assert expected `sha256:` values with a custom hash mismatch error.
+  - Keep path validation fixture-local.
+
+- [ ] **Slice 9: TypeScript PLY boundary**
+  - Parse the supported ASCII PLY subset into typed mesh data.
+  - Reject unsupported headers, non-finite numbers, bad vertices, and bad faces with custom errors.
+  - Do not leak raw JSON or unchecked strings beyond the parser boundary.
+
+- [ ] **Slice 10: Rust PLY boundary**
+  - Parse the same supported ASCII PLY subset into typed Rust mesh data.
+  - Reject unsupported headers, non-finite numbers, bad vertices, and bad faces with custom errors.
+  - Keep parser output independent from renderer state.
+
+- [ ] **Slice 11: Mesh validation tests**
+  - Assert vertex count, face count, bounds, index ranges, finite numbers, and stable asset hash in
+    both languages.
+  - Include negative tests for malformed headers and invalid face data.
+
+- [ ] **Slice 12: Mesh bounds normalization law**
+  - Specify bounds computation, center, extent, and normalization behavior.
+  - Keep parser output unnormalized.
+  - Add deterministic test vectors.
+
+- [ ] **Slice 13: Camera descriptor law**
+  - Define eye, target, up, handedness, and view-matrix construction.
+  - Reject degenerate camera descriptors.
+  - Add deterministic test vectors.
+
+- [ ] **Slice 14: Projection descriptor law**
+  - Define vertical field of view, aspect, near/far planes, and projection-matrix construction.
+  - Reject invalid projection descriptors.
+  - Add deterministic test vectors.
+
+- [ ] **Slice 15: Matrix/vector operation-order law**
+  - Define matrix storage, vector convention, multiply order, axis normalization, and sampled
+    rotation composition.
+  - Add deterministic test vectors.
+  - Pause for drift check after this slice.
+
+- [ ] **Slice 16: Static browser bunny**
+  - Render one fixed bunny frame in the browser harness.
+  - Report asset hash, mesh counts, camera profile, and frame metadata.
+
+- [ ] **Slice 17: Static native bunny**
+  - Render the same fixed bunny frame in the Rust harness.
+  - Report asset hash, mesh counts, camera profile, and frame metadata.
+
+- [ ] **Slice 18: Static smoke gates**
+  - Verify nonblank output, mesh metadata, and coarse visual invariants for one sampled frame.
+  - Keep pixel-identical 3D claims out of scope.
+
+- [ ] **Slice 19: Rotation playback descriptor**
+  - Add fixed-rate rotation descriptor validation.
+  - Include frame index, sample rate, seconds, angle, authored axis, and normalized axis.
+
+- [ ] **Slice 20: Browser fixed-frame rotation**
+  - Render deterministic browser frames for frame 0 and at least two nonzero frames.
+  - Expose frame metadata to tests.
+
+- [ ] **Slice 21: Native fixed-frame rotation**
+  - Render deterministic native frames for frame 0 and at least two nonzero frames.
+  - Expose frame metadata to smoke output.
+
+- [ ] **Slice 22: Browser live rotation**
+  - Add host-time presentation that maps elapsed time to deterministic frame indices.
+  - Keep tests fixed-frame.
+
+- [ ] **Slice 23: Native live rotation**
+  - Add native live presentation that maps elapsed time to deterministic frame indices.
+  - Keep smoke mode fixed-frame.
+
+- [ ] **Slice 24: Cross-runtime frame report**
+  - Make browser and native reports comparable.
+  - Include frame index, seconds, angle, normalized axis, asset hash, and transform profile.
+
+- [ ] **Slice 25: Sampled-frame smoke tests**
+  - Verify at least two nonzero frames in browser and native smoke paths.
+  - Assert frame metadata and coarse visual invariants.
+
+- [ ] **Slice 26: Bunny fixture documentation**
+  - Document asset manifest, fixture manifest, commands, expected output, and attribution.
+
+- [ ] **Slice 27: Demo guide update**
+  - Extend render-everywhere documentation with bunny commands and claim boundaries.
+
+- [ ] **Slice 28: CI gate wiring**
+  - Add focused package and Rust gates for mesh parsing and bunny fixture validation.
+  - Avoid expensive interactive windows in CI.
+
+- [ ] **Slice 29: Code Lawyer hardening**
+  - Audit mesh parsing, path safety, transform determinism, and unsupported feature failures.
+  - Fix any findings one commit at a time.
+
+- [ ] **Slice 30: Bearing refresh**
+  - Mark the bunny milestone achieved or document remaining blockers.
+  - Choose the next target, likely strict text/font law.
+
+## Update Policy
+
+When a slice lands:
+
+- change that slice from `- [ ]` to `- [x]`;
+- add commit references;
+- keep later slices unchecked until implemented;
+- preserve one conceptual commit per slice;
+- stop after slice 15 for a drift check before render implementation begins.
