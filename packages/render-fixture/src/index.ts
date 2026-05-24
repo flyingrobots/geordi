@@ -25,6 +25,9 @@ export const RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE =
 const WINDOWS_DRIVE_PREFIX_PATTERN = /^[A-Za-z]:/u;
 const URL_SCHEME_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
+const ASCII_PLY_INTEGER_TOKEN_PATTERN = /^(?:0|[1-9][0-9]*)$/u;
+const ASCII_PLY_NUMBER_TOKEN_PATTERN =
+  /^[+-]?(?:(?:[0-9]+(?:\.[0-9]*)?)|(?:\.[0-9]+))(?:[eE][+-]?[0-9]+)?$/u;
 
 export interface RenderFixtureManifestIssue extends JsonObject {
   readonly path: string;
@@ -295,6 +298,13 @@ export class RenderFixtureInvalidPlaybackFrameError extends Error {
     super('Invalid render fixture playback frame');
     this.name = new.target.name;
     this.frameIndex = frameIndex;
+  }
+}
+
+export class RenderFixtureInvalidMeshPlaybackError extends Error {
+  constructor() {
+    super('Render fixture mesh playback is invalid');
+    this.name = new.target.name;
   }
 }
 
@@ -600,13 +610,21 @@ export function createRenderFixtureMeshPlaybackFrame(
   playback: RenderFixtureMeshPlayback,
   frameIndex: number,
 ): RenderFixtureMeshPlaybackFrame {
+  if (
+    finiteNumber(playback.radiansPerSecond) === undefined ||
+    playback.radiansPerSecond <= 0 ||
+    positiveInteger(playback.sampleRate) === undefined
+  ) {
+    throw new RenderFixtureInvalidMeshPlaybackError();
+  }
+
   if (nonNegativeInteger(frameIndex) === undefined) {
     throw new RenderFixtureInvalidPlaybackFrameError(frameIndex);
   }
 
   const normalizedAxis = normalizePlaybackAxis(playback.axis);
   if (normalizedAxis === undefined) {
-    throw new RenderFixtureInvalidPlaybackFrameError(frameIndex);
+    throw new RenderFixtureInvalidMeshPlaybackError();
   }
 
   const seconds = frameIndex / playback.sampleRate;
@@ -655,6 +673,7 @@ export function parseRenderFixtureAsciiPlyTriangleMesh(source: string): RenderFi
   const header = parsePlyHeader(lines);
   const vertices = parsePlyVertices(lines, header);
   const faces = parsePlyFaces(lines, header, vertices.length);
+  assertNoTrailingPlyBody(lines, header.faceStartIndex + header.faceCount);
 
   return {
     bounds: boundsFromVertices(vertices),
@@ -711,13 +730,13 @@ function parsePlyHeader(lines: readonly string[]): PlyHeader {
     }
 
     const parts = line.split(/\s+/u);
-    if (parts[0] === 'element' && parts[1] === 'vertex') {
+    if (parts[0] === 'element' && parts[1] === 'vertex' && parts.length === 3) {
       vertexCount = parsePositiveIntegerToken(parts[2], lineNumber);
       currentElement = 'vertex';
       continue;
     }
 
-    if (parts[0] === 'element' && parts[1] === 'face') {
+    if (parts[0] === 'element' && parts[1] === 'face' && parts.length === 3) {
       faceCount = parsePositiveIntegerToken(parts[2], lineNumber);
       currentElement = 'face';
       continue;
@@ -798,11 +817,14 @@ function assertVertexPositionProperties(properties: readonly string[], lineNumbe
 }
 
 function parsePositiveIntegerToken(value: string | undefined, lineNumber: number): number {
-  const parsed = Number(value);
-  if (value === undefined || !Number.isInteger(parsed) || parsed <= 0) {
+  if (value === undefined || !ASCII_PLY_INTEGER_TOKEN_PATTERN.test(value)) {
     throw new RenderFixturePlyHeaderError(lineNumber, 'PLY element count must be a positive integer');
   }
 
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new RenderFixturePlyHeaderError(lineNumber, 'PLY element count must be a positive integer');
+  }
   return parsed;
 }
 
@@ -811,11 +833,14 @@ function parseFiniteNumberToken(
   lineNumber: number,
   ErrorClass: typeof RenderFixturePlyVertexError,
 ): number {
-  const parsed = Number(value);
-  if (value === undefined || !Number.isFinite(parsed)) {
+  if (value === undefined || !ASCII_PLY_NUMBER_TOKEN_PATTERN.test(value)) {
     throw new ErrorClass(lineNumber);
   }
 
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new ErrorClass(lineNumber);
+  }
   return parsed;
 }
 
@@ -824,12 +849,23 @@ function parseFaceIndex(
   vertexCount: number,
   lineNumber: number,
 ): number {
-  const parsed = Number(value);
-  if (value === undefined || !Number.isInteger(parsed) || parsed < 0 || parsed >= vertexCount) {
+  if (value === undefined || !ASCII_PLY_INTEGER_TOKEN_PATTERN.test(value)) {
     throw new RenderFixturePlyFaceError(lineNumber);
   }
 
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed >= vertexCount) {
+    throw new RenderFixturePlyFaceError(lineNumber);
+  }
   return parsed;
+}
+
+function assertNoTrailingPlyBody(lines: readonly string[], bodyEndIndex: number): void {
+  for (let index = bodyEndIndex; index < lines.length; index++) {
+    if (lineAt(lines, index).trim().length > 0) {
+      throw new RenderFixturePlyFaceError(index + 1);
+    }
+  }
 }
 
 function boundsFromVertices(

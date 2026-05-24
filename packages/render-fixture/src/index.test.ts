@@ -32,6 +32,7 @@ import {
   RenderFixtureInvalidMeshAssetManifestError,
   RenderFixtureInvalidMeshFixtureManifestError,
   RenderFixtureInvalidManifestError,
+  RenderFixtureInvalidMeshPlaybackError,
   RenderFixtureInvalidPixelSampleError,
   RenderFixtureInvalidPlaybackFrameError,
   RenderFixturePlyFaceError,
@@ -584,6 +585,28 @@ describe('render fixture mesh fixture manifest validation', () => {
     ).toThrow(RenderFixtureInvalidPlaybackFrameError);
   });
 
+  it('rejects invalid fixed-rate playback descriptors with a custom error', () => {
+    expect(() =>
+      createRenderFixtureMeshPlaybackFrame(
+        {
+          ...makeMeshFixtureManifest().playback,
+          sampleRate: 0,
+        },
+        0,
+      ),
+    ).toThrow(RenderFixtureInvalidMeshPlaybackError);
+
+    expect(() =>
+      createRenderFixtureMeshPlaybackFrame(
+        {
+          ...makeMeshFixtureManifest().playback,
+          axis: [0, 0, 0],
+        },
+        0,
+      ),
+    ).toThrow(RenderFixtureInvalidMeshPlaybackError);
+  });
+
   it('rejects zero playback axes', () => {
     const invalid: JsonValue = {
       ...makeMeshFixtureManifest(),
@@ -740,6 +763,73 @@ property list uchar int vertex_indices
 end_header
 0 0 0
 4 0 0 0 0
+`),
+    ).toThrow(RenderFixturePlyFaceError);
+  });
+
+  it('rejects noncanonical PLY element lines with a custom error', () => {
+    expect(() =>
+      parseRenderFixtureAsciiPlyTriangleMesh(`ply
+format ascii 1.0
+element vertex 1 extra
+property float x
+property float y
+property float z
+element face 1
+property list uchar int vertex_indices
+end_header
+0 0 0
+3 0 0 0
+`),
+    ).toThrow(RenderFixturePlyHeaderError);
+  });
+
+  it('rejects nondecimal PLY numeric tokens with a custom error', () => {
+    expect(() =>
+      parseRenderFixtureAsciiPlyTriangleMesh(`ply
+format ascii 1.0
+element vertex 1
+property float x
+property float y
+property float z
+element face 1
+property list uchar int vertex_indices
+end_header
+0x1 0 0
+3 0 0 0
+`),
+    ).toThrow(RenderFixturePlyVertexError);
+
+    expect(() =>
+      parseRenderFixtureAsciiPlyTriangleMesh(`ply
+format ascii 1.0
+element vertex 1
+property float x
+property float y
+property float z
+element face 1
+property list uchar int vertex_indices
+end_header
+0 0 0
+3 0x0 0 0
+`),
+    ).toThrow(RenderFixturePlyFaceError);
+  });
+
+  it('rejects trailing nonempty PLY body lines with a custom error', () => {
+    expect(() =>
+      parseRenderFixtureAsciiPlyTriangleMesh(`ply
+format ascii 1.0
+element vertex 1
+property float x
+property float y
+property float z
+element face 1
+property list uchar int vertex_indices
+end_header
+0 0 0
+3 0 0 0
+not-part-of-the-declared-body
 `),
     ).toThrow(RenderFixturePlyFaceError);
   });

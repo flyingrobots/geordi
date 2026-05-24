@@ -6,6 +6,8 @@ import {
 import {
   BUNNY_BROWSER_RENDERER_NAME,
   BUNNY_TRANSFORM_PROFILE,
+  BunnyHarnessElapsedTimeError,
+  BunnyHarnessManifestMeshMismatchError,
   bunnyFrameIndexFromElapsedMs,
   createBunnyFrameReport,
   renderBunnyFrameToCanvas,
@@ -15,7 +17,7 @@ const TEST_MESH_MANIFEST: RenderFixtureMeshAssetManifest = {
   assetPath: 'bunny.ply',
   assetVersion: 'geordi-mesh-asset/1',
   bounds: {
-    max: [1, 1, 1],
+    max: [1, 1, 0],
     min: [0, 0, 0],
   },
   counts: {
@@ -137,6 +139,34 @@ describe('bunny render report', () => {
     expect(bunnyFrameIndexFromElapsedMs(249)).toBe(14);
     expect(bunnyFrameIndexFromElapsedMs(250)).toBe(15);
     expect(bunnyFrameIndexFromElapsedMs(1000)).toBe(60);
+  });
+
+  it('rejects nonfinite or negative host elapsed time with a custom error', () => {
+    expect(() => bunnyFrameIndexFromElapsedMs(Number.NaN)).toThrow(BunnyHarnessElapsedTimeError);
+    expect(() => bunnyFrameIndexFromElapsedMs(Number.POSITIVE_INFINITY)).toThrow(
+      BunnyHarnessElapsedTimeError,
+    );
+    expect(() => bunnyFrameIndexFromElapsedMs(-1)).toThrow(BunnyHarnessElapsedTimeError);
+  });
+
+  it('rejects manifest and mesh metadata mismatches before drawing', () => {
+    const mesh = parseRenderFixtureAsciiPlyTriangleMesh(TEST_PLY_SOURCE);
+    const context = new FakeBunnyCanvasContext2D();
+
+    expect(() =>
+      renderBunnyFrameToCanvas(
+        makeFakeCanvas(context),
+        {
+          ...TEST_MESH_MANIFEST,
+          counts: {
+            ...TEST_MESH_MANIFEST.counts,
+            vertices: 4,
+          },
+        },
+        mesh,
+        0,
+      ),
+    ).toThrow(BunnyHarnessManifestMeshMismatchError);
   });
 
   it('renders fixed sampled browser frames through the canvas path', () => {

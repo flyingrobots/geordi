@@ -94,6 +94,26 @@ export class BunnyHarnessMeshIndexError extends Error {
   }
 }
 
+export class BunnyHarnessManifestMeshMismatchError extends Error {
+  public readonly path: string;
+
+  constructor(path: string) {
+    super('Browser bunny manifest mesh mismatch');
+    this.name = new.target.name;
+    this.path = path;
+  }
+}
+
+export class BunnyHarnessElapsedTimeError extends Error {
+  public readonly elapsedMs: number;
+
+  constructor(elapsedMs: number) {
+    super('Browser bunny elapsed time failed');
+    this.name = new.target.name;
+    this.elapsedMs = elapsedMs;
+  }
+}
+
 export async function renderBunnyFixtureFrame(
   assets: BunnyFixtureAssets,
   frameIndex: number,
@@ -139,6 +159,7 @@ export function createBunnyFrameReport(
   manifest: RenderFixtureMeshAssetManifest,
   mesh: RenderFixturePlyMesh,
 ): BunnyFrameReport {
+  assertBunnyMeshMatchesManifest(manifest, mesh);
   const playbackFrame = createRenderFixtureMeshPlaybackFrame(BUNNY_PLAYBACK, frameIndex);
   return {
     angleRadians: playbackFrame.angleRadians,
@@ -157,7 +178,52 @@ export function createBunnyFrameReport(
 }
 
 export function bunnyFrameIndexFromElapsedMs(elapsedMs: number): number {
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) {
+    throw new BunnyHarnessElapsedTimeError(elapsedMs);
+  }
+
   return Math.floor((elapsedMs / 1000) * BUNNY_ROTATION_SAMPLE_RATE);
+}
+
+function assertBunnyMeshMatchesManifest(
+  manifest: RenderFixtureMeshAssetManifest,
+  mesh: RenderFixturePlyMesh,
+): void {
+  if (mesh.vertices.length !== manifest.counts.vertices) {
+    throw new BunnyHarnessManifestMeshMismatchError('$.counts.vertices');
+  }
+
+  if (mesh.faces.length !== manifest.counts.faces) {
+    throw new BunnyHarnessManifestMeshMismatchError('$.counts.faces');
+  }
+
+  if (!sameStringSequence(mesh.vertexProperties, manifest.vertexProperties)) {
+    throw new BunnyHarnessManifestMeshMismatchError('$.vertexProperties');
+  }
+
+  if (!sameVector3(mesh.bounds.min, manifest.bounds.min)) {
+    throw new BunnyHarnessManifestMeshMismatchError('$.bounds.min');
+  }
+
+  if (!sameVector3(mesh.bounds.max, manifest.bounds.max)) {
+    throw new BunnyHarnessManifestMeshMismatchError('$.bounds.max');
+  }
+}
+
+function sameStringSequence(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((value, index) => value === right[index]);
+}
+
+function sameVector3(left: RenderFixtureVector3, right: RenderFixtureVector3): boolean {
+  return (
+    Object.is(left[0], right[0]) &&
+    Object.is(left[1], right[1]) &&
+    Object.is(left[2], right[2])
+  );
 }
 
 function renderBunnyWireframe(

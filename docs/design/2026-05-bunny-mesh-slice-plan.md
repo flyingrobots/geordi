@@ -214,9 +214,13 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Done: slice commit `Slice 28: Wire bunny render gates`.
   - Verification: `pnpm test:render-everywhere:bunny`, `pnpm test:docs`, `git diff --check`.
 
-- [ ] **Slice 29: Code Lawyer hardening**
+- [x] **Slice 29: Code Lawyer hardening**
   - Audit mesh parsing, path safety, transform determinism, and unsupported feature failures.
   - Fix any findings one commit at a time.
+  - Done: slice commit `Slice 29: Harden bunny validation boundaries`.
+  - Verification: render-fixture typecheck, lint, and tests; browser render-everywhere
+    typecheck, lint, and tests; native render-everywhere tests and clippy; geordi-mesh tests;
+    `cargo fmt --check`, `pnpm test:docs`, `git diff --check`.
 
 - [ ] **Slice 30: Bearing refresh**
   - Mark the bunny milestone achieved or document remaining blockers.

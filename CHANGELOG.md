@@ -136,6 +136,9 @@
 
 ### Bug Fixes
 
+- **Bunny mesh milestone**: harden browser mesh-manifest cross-checks, reject invalid browser
+  elapsed-time inputs, reject malformed mesh playback descriptors, and tighten TypeScript/Rust PLY
+  parsers so extra element-header fields and trailing body rows fail loudly.
 - `compiler-core/parseInput`: adapter-thrown `CompilerError` diagnostics are preserved instead of being wrapped as `GEORDI_E_INTERNAL_INVARIANT`; invalid GraphQL SDL keeps its source location through `compile()`
 - `compiler-core/errors`: add `DiagnosticsError` to carry collected diagnostics across adapter boundaries without losing error codes or locations
 - `schema-graphql/adapter`: missing-scene extraction now reports `GEORDI_E_SCENE_MISSING` through `compile()` without duplicate internal-invariant diagnostics

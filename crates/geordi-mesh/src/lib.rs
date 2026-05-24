@@ -243,6 +243,7 @@ pub fn parse_ascii_ply_triangle_mesh(source: &str) -> Result<PlyMesh, PlyMeshPar
     let header = parse_ply_header(&lines)?;
     let vertices = parse_ply_vertices(&lines, &header)?;
     let faces = parse_ply_faces(&lines, &header, vertices.len())?;
+    reject_trailing_body_lines(&lines, header.face_start_index + header.face_count)?;
     let bounds = bounds_from_vertices(&vertices)?;
 
     Ok(PlyMesh {
@@ -294,13 +295,13 @@ fn parse_ply_header(lines: &[&str]) -> Result<PlyHeader, PlyHeaderError> {
         }
 
         let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.as_slice().get(0..2) == Some(&["element", "vertex"]) {
+        if parts.as_slice().get(0..2) == Some(&["element", "vertex"]) && parts.len() == 3 {
             vertex_count = Some(parse_positive_count(parts.get(2).copied(), line_number)?);
             current_element = "vertex";
             continue;
         }
 
-        if parts.as_slice().get(0..2) == Some(&["element", "face"]) {
+        if parts.as_slice().get(0..2) == Some(&["element", "face"]) && parts.len() == 3 {
             face_count = Some(parse_positive_count(parts.get(2).copied(), line_number)?);
             current_element = "face";
             continue;
@@ -476,6 +477,16 @@ fn parse_face_index(
     }
 }
 
+fn reject_trailing_body_lines(lines: &[&str], body_end_index: usize) -> Result<(), PlyFaceError> {
+    for (offset, line) in lines[body_end_index..].iter().enumerate() {
+        if !line.trim().is_empty() {
+            return Err(PlyFaceError::new(body_end_index + offset + 1));
+        }
+    }
+
+    Ok(())
+}
+
 fn line_at<'a>(lines: &'a [&str], index: usize) -> Result<&'a str, PlyHeaderError> {
     lines
         .get(index)
@@ -549,6 +560,15 @@ mod tests {
     }
 
     #[test]
+    fn rejects_noncanonical_ply_element_lines_with_a_custom_error() {
+        let result = parse_ascii_ply_triangle_mesh(
+            "ply\nformat ascii 1.0\nelement vertex 1 extra\nproperty float x\nproperty float y\nproperty float z\nelement face 1\nproperty list uchar int vertex_indices\nend_header\n0 0 0\n3 0 0 0\n",
+        );
+
+        assert!(matches!(result, Err(PlyMeshParseError::Header(_))));
+    }
+
+    #[test]
     fn rejects_malformed_vertices_with_a_custom_error() {
         let result = parse_ascii_ply_triangle_mesh(
             "ply\nformat ascii 1.0\nelement vertex 1\nproperty float x\nproperty float y\nproperty float z\nelement face 1\nproperty list uchar int vertex_indices\nend_header\n0 NaN 0\n3 0 0 0\n",
@@ -561,6 +581,15 @@ mod tests {
     fn rejects_non_triangle_faces_with_a_custom_error() {
         let result = parse_ascii_ply_triangle_mesh(
             "ply\nformat ascii 1.0\nelement vertex 1\nproperty float x\nproperty float y\nproperty float z\nelement face 1\nproperty list uchar int vertex_indices\nend_header\n0 0 0\n4 0 0 0 0\n",
+        );
+
+        assert!(matches!(result, Err(PlyMeshParseError::Face(_))));
+    }
+
+    #[test]
+    fn rejects_trailing_nonempty_ply_body_lines_with_a_custom_error() {
+        let result = parse_ascii_ply_triangle_mesh(
+            "ply\nformat ascii 1.0\nelement vertex 1\nproperty float x\nproperty float y\nproperty float z\nelement face 1\nproperty list uchar int vertex_indices\nend_header\n0 0 0\n3 0 0 0\nnot-part-of-the-declared-body\n",
         );
 
         assert!(matches!(result, Err(PlyMeshParseError::Face(_))));
