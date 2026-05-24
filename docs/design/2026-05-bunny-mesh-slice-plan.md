@@ -92,7 +92,7 @@ Pause after slice 15 for a drift check before static rendering starts.
     both languages.
   - Include negative tests for malformed headers and invalid face data.
 
-- [ ] **Slice 12: Mesh bounds normalization law**
+- [x] **Slice 12: Mesh bounds normalization law**
   - Specify bounds computation, center, extent, and normalization behavior.
   - Keep parser output unnormalized.
   - Add deterministic test vectors.
