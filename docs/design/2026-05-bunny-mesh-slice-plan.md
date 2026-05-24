@@ -184,9 +184,12 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Done: slice commit `Slice 23: Add native bunny live window mode`.
   - Verification: native render-everywhere tests and clippy.
 
-- [ ] **Slice 24: Cross-runtime frame report**
+- [x] **Slice 24: Cross-runtime frame report**
   - Make browser and native reports comparable.
   - Include frame index, seconds, angle, normalized axis, asset hash, and transform profile.
+  - Done: slice commit `Slice 24: Align bunny frame reports`.
+  - Verification: browser render-everywhere browser test; native render-everywhere tests and
+    clippy.
 
 - [ ] **Slice 25: Sampled-frame smoke tests**
   - Verify at least two nonzero frames in browser and native smoke paths.

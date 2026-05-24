@@ -35,9 +35,13 @@ function bunnyReportText(report: Awaited<ReturnType<typeof renderBunnyFixtureFra
   return [
     report.rendererName,
     `frame=${report.frameIndex}`,
+    `seconds=${report.seconds}`,
+    `angleRadians=${report.angleRadians}`,
+    `normalizedAxis=${report.normalizedAxis.join(',')}`,
+    `transformProfile=${report.transformProfile}`,
     `vertices=${report.vertexCount}`,
     `faces=${report.faceCount}`,
-    `asset=${report.assetHash}`,
+    `assetHash=${report.assetHash}`,
   ].join(' ');
 }
 

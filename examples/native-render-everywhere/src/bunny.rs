@@ -16,6 +16,7 @@ use std::time::Instant;
 
 const BUNNY_MANIFEST_PATH: &str = "bunny.mesh.json";
 const BUNNY_RENDERER_NAME: &str = "rust-software-wireframe-mesh";
+const BUNNY_TRANSFORM_PROFILE: &str = "geordi-fixed-rate-rotation/1";
 const BUNNY_ASSET_VERSION: &str = "geordi-mesh-asset/1";
 const BUNNY_MESH_PROFILE: &str = "geordi-ascii-ply-triangle-mesh/1";
 const BUNNY_HASH_PREFIX: &str = "sha256:";
@@ -482,6 +483,7 @@ struct BunnyFrameReport {
     frame_index: u64,
     normalized_axis: [f64; 3],
     seconds: f64,
+    transform_profile: &'static str,
     vertex_count: usize,
 }
 
@@ -554,6 +556,12 @@ pub fn write_bunny_summary(
         loaded.report.normalized_axis[0],
         loaded.report.normalized_axis[1],
         loaded.report.normalized_axis[2]
+    )
+    .map_err(NativeBunnyOutputError::new)?;
+    writeln!(
+        writer,
+        "transformProfile={}",
+        loaded.report.transform_profile
     )
     .map_err(NativeBunnyOutputError::new)?;
     writeln!(writer, "cameraEye=0,0.1,0.35").map_err(NativeBunnyOutputError::new)?;
@@ -733,6 +741,7 @@ fn create_bunny_frame_report(
         frame_index,
         normalized_axis: normalize_vector3(BUNNY_ROTATION_AXIS),
         seconds,
+        transform_profile: BUNNY_TRANSFORM_PROFILE,
         vertex_count: mesh.vertices.len(),
     }
 }
@@ -1098,6 +1107,7 @@ mod tests {
         assert!(text.contains("vertices=1889"));
         assert!(text.contains("faces=3851"));
         assert!(text.contains("frameIndex=0"));
+        assert!(text.contains("transformProfile=geordi-fixed-rate-rotation/1"));
         assert_eq!(loaded.report.vertex_count, 1889);
         assert_eq!(loaded.report.face_count, 3851);
         assert!(loaded.image.non_background_pixels() > 0);

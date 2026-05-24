@@ -5,6 +5,7 @@ import {
 } from '@flyingrobots/geordi-render-fixture';
 import {
   BUNNY_BROWSER_RENDERER_NAME,
+  BUNNY_TRANSFORM_PROFILE,
   bunnyFrameIndexFromElapsedMs,
   createBunnyFrameReport,
 } from './bunnyRender.js';
@@ -59,6 +60,7 @@ describe('bunny render report', () => {
     const report = createBunnyFrameReport(15, TEST_MESH_MANIFEST, mesh);
 
     expect(report.rendererName).toBe(BUNNY_BROWSER_RENDERER_NAME);
+    expect(report.transformProfile).toBe(BUNNY_TRANSFORM_PROFILE);
     expect(report.axis).toEqual([3, 5, 2]);
     expect(report.frameIndex).toBe(15);
     expect(report.sampleRate).toBe(60);

@@ -11,6 +11,7 @@ import type { BrowserHarnessFetchText } from './browserRenderSmoke.js';
 import type { BunnyFixtureAssets } from './bunnyAssets.js';
 
 export const BUNNY_BROWSER_RENDERER_NAME = 'browser-canvas-wireframe-mesh' as const;
+export const BUNNY_TRANSFORM_PROFILE = 'geordi-fixed-rate-rotation/1' as const;
 export const BUNNY_RENDER_VIEWPORT_HEIGHT = 512 as const;
 export const BUNNY_RENDER_VIEWPORT_WIDTH = 512 as const;
 export const BUNNY_ROTATION_RADIANS_PER_SECOND = Math.PI / 4;
@@ -46,6 +47,7 @@ export interface BunnyFrameReport {
   readonly rendererName: typeof BUNNY_BROWSER_RENDERER_NAME;
   readonly sampleRate: number;
   readonly seconds: number;
+  readonly transformProfile: typeof BUNNY_TRANSFORM_PROFILE;
   readonly vertexCount: number;
 }
 
@@ -149,6 +151,7 @@ export function createBunnyFrameReport(
     rendererName: BUNNY_BROWSER_RENDERER_NAME,
     sampleRate: playbackFrame.sampleRate,
     seconds: playbackFrame.seconds,
+    transformProfile: BUNNY_TRANSFORM_PROFILE,
     vertexCount: mesh.vertices.length,
   };
 }
