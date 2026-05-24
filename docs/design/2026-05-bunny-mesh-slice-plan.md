@@ -52,8 +52,11 @@ Pause after slice 15 for a drift check before static rendering starts.
     solid material, and deterministic playback.
   - Keep these out of the baseline emitted rectangle profile.
   - Mirror the known features in Rust.
+  - Done: `869a566`.
+  - Verification: `pnpm --filter @flyingrobots/geordi-core typecheck`, `test`;
+    `cargo test -p geordi-ir`.
 
-- [ ] **Slice 6: Mesh fixture manifest shape**
+- [x] **Slice 6: Mesh fixture manifest shape**
   - Extend render fixture contracts for a bunny fixture descriptor.
   - Include asset manifest path, camera, projection, material, and playback descriptors.
   - Keep this separate from the existing rectangle `scene.geordi.json` fixture contract.

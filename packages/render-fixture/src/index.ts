@@ -19,6 +19,7 @@ export const RENDER_FIXTURE_SOURCE_KIND_NONE = 'none' as const;
 export const RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT = 'gpvue-draft' as const;
 export const RENDER_FIXTURE_SOURCE_KIND_GPVUE = 'gpvue' as const;
 export const RENDER_FIXTURE_MESH_ASSET_VERSION = 'geordi-mesh-asset/1' as const;
+export const RENDER_FIXTURE_MESH_FIXTURE_VERSION = 'geordi-mesh-render-fixture/1' as const;
 export const RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE =
   'geordi-ascii-ply-triangle-mesh/1' as const;
 const WINDOWS_DRIVE_PREFIX_PATTERN = /^[A-Za-z]:/u;
@@ -40,6 +41,13 @@ export type RenderFixtureMeshAssetManifestIssue = RenderFixtureManifestIssue;
 export interface RenderFixtureMeshAssetManifestValidationResult {
   readonly ok: boolean;
   readonly issues: readonly RenderFixtureMeshAssetManifestIssue[];
+}
+
+export type RenderFixtureMeshFixtureManifestIssue = RenderFixtureManifestIssue;
+
+export interface RenderFixtureMeshFixtureManifestValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureMeshFixtureManifestIssue[];
 }
 
 export interface RenderFixtureArtifactIssue extends JsonObject {
@@ -154,6 +162,49 @@ export interface RenderFixtureMeshAssetManifest extends JsonObject {
   readonly vertexProperties: readonly string[];
 }
 
+export interface RenderFixtureMeshRuntimeProfile extends JsonObject {
+  readonly numericProfile: GeordiNumericProfile;
+  readonly requires: readonly GeordiFeatureRequirement[];
+}
+
+export interface RenderFixtureMeshCamera extends JsonObject {
+  readonly coordinateSystem: 'right-handed';
+  readonly eye: RenderFixtureVector3;
+  readonly target: RenderFixtureVector3;
+  readonly up: RenderFixtureVector3;
+}
+
+export interface RenderFixtureMeshProjection extends JsonObject {
+  readonly far: number;
+  readonly kind: 'perspective';
+  readonly near: number;
+  readonly verticalFovRadians: number;
+  readonly viewport: RenderFixtureCanvas;
+}
+
+export interface RenderFixtureMeshMaterial extends JsonObject {
+  readonly color: string;
+  readonly kind: 'solid';
+}
+
+export interface RenderFixtureMeshPlayback extends JsonObject {
+  readonly axis: RenderFixtureVector3;
+  readonly kind: 'fixed-rate-rotation';
+  readonly radiansPerSecond: number;
+  readonly sampleRate: number;
+}
+
+export interface RenderFixtureMeshFixtureManifest extends JsonObject {
+  readonly assetManifestPath: string;
+  readonly camera: RenderFixtureMeshCamera;
+  readonly fixtureVersion: typeof RENDER_FIXTURE_MESH_FIXTURE_VERSION;
+  readonly id: string;
+  readonly material: RenderFixtureMeshMaterial;
+  readonly playback: RenderFixtureMeshPlayback;
+  readonly projection: RenderFixtureMeshProjection;
+  readonly runtimeProfile: RenderFixtureMeshRuntimeProfile;
+}
+
 export class RenderFixtureInvalidManifestError extends Error {
   public readonly issues: readonly RenderFixtureManifestIssue[];
 
@@ -169,6 +220,16 @@ export class RenderFixtureInvalidMeshAssetManifestError extends Error {
 
   constructor(issues: readonly RenderFixtureMeshAssetManifestIssue[]) {
     super('Invalid render fixture mesh asset manifest');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
+
+export class RenderFixtureInvalidMeshFixtureManifestError extends Error {
+  public readonly issues: readonly RenderFixtureMeshFixtureManifestIssue[];
+
+  constructor(issues: readonly RenderFixtureMeshFixtureManifestIssue[]) {
+    super('Invalid render fixture mesh fixture manifest');
     this.name = new.target.name;
     this.issues = issues;
   }
@@ -236,6 +297,13 @@ export function parseRenderFixtureMeshAssetManifest(
   return assertRenderFixtureMeshAssetManifest(jsonPort.parse(source));
 }
 
+export function parseRenderFixtureMeshFixtureManifest(
+  source: string,
+  jsonPort: JsonPort = canonicalJsonPort,
+): RenderFixtureMeshFixtureManifest {
+  return assertRenderFixtureMeshFixtureManifest(jsonPort.parse(source));
+}
+
 export function assertRenderFixtureManifest(
   value: JsonValue | undefined,
 ): RenderFixtureManifest {
@@ -258,6 +326,17 @@ export function assertRenderFixtureMeshAssetManifest(
   throw new RenderFixtureInvalidMeshAssetManifestError(result.issues);
 }
 
+export function assertRenderFixtureMeshFixtureManifest(
+  value: JsonValue | undefined,
+): RenderFixtureMeshFixtureManifest {
+  const result = validateRenderFixtureMeshFixtureManifest(value);
+  if (result.ok && isJsonObject(value)) {
+    return value as RenderFixtureMeshFixtureManifest;
+  }
+
+  throw new RenderFixtureInvalidMeshFixtureManifestError(result.issues);
+}
+
 export function isRenderFixtureManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureManifest {
@@ -268,6 +347,12 @@ export function isRenderFixtureMeshAssetManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureMeshAssetManifest {
   return validateRenderFixtureMeshAssetManifest(value).ok;
+}
+
+export function isRenderFixtureMeshFixtureManifest(
+  value: JsonValue | undefined,
+): value is RenderFixtureMeshFixtureManifest {
+  return validateRenderFixtureMeshFixtureManifest(value).ok;
 }
 
 export function validateRenderFixtureManifest(
@@ -345,6 +430,39 @@ export function validateRenderFixtureMeshAssetManifest(
     'Face property',
     issues,
   );
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function validateRenderFixtureMeshFixtureManifest(
+  value: JsonValue | undefined,
+): RenderFixtureMeshFixtureManifestValidationResult {
+  const issues: RenderFixtureMeshFixtureManifestIssue[] = [];
+
+  if (!isJsonObject(value)) {
+    pushIssue(issues, '$', 'Mesh fixture manifest must be an object');
+    return { ok: false, issues };
+  }
+
+  validateLiteral(
+    property(value, 'fixtureVersion'),
+    RENDER_FIXTURE_MESH_FIXTURE_VERSION,
+    '$.fixtureVersion',
+    'Mesh fixture version',
+    issues,
+  );
+  validateNonEmptyString(property(value, 'id'), '$.id', 'Mesh fixture id', issues);
+  validateRelativePath(
+    property(value, 'assetManifestPath'),
+    '$.assetManifestPath',
+    'Mesh asset manifest path',
+    issues,
+  );
+  validateMeshRuntimeProfile(property(value, 'runtimeProfile'), '$.runtimeProfile', issues);
+  validateMeshCamera(property(value, 'camera'), '$.camera', issues);
+  validateMeshProjection(property(value, 'projection'), '$.projection', issues);
+  validateMeshMaterial(property(value, 'material'), '$.material', issues);
+  validateMeshPlayback(property(value, 'playback'), '$.playback', issues);
 
   return { ok: issues.length === 0, issues };
 }
@@ -528,6 +646,122 @@ function validateMeshAssetSource(
     property(value, 'attribution'),
     `${path}.attribution`,
     'Mesh asset attribution',
+    issues,
+  );
+}
+
+function validateMeshRuntimeProfile(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh runtime profile must be an object');
+    return;
+  }
+
+  validateLiteral(
+    property(value, 'numericProfile'),
+    GEORDI_NUMERIC_PROFILE,
+    `${path}.numericProfile`,
+    'Mesh numeric profile',
+    issues,
+  );
+  validateFeatureRequirements(property(value, 'requires'), `${path}.requires`, issues);
+}
+
+function validateMeshCamera(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh camera must be an object');
+    return;
+  }
+
+  validateLiteral(
+    property(value, 'coordinateSystem'),
+    'right-handed',
+    `${path}.coordinateSystem`,
+    'Camera coordinate system',
+    issues,
+  );
+  validateVector3(property(value, 'eye'), `${path}.eye`, 'Camera eye', issues);
+  validateVector3(property(value, 'target'), `${path}.target`, 'Camera target', issues);
+  validateVector3(property(value, 'up'), `${path}.up`, 'Camera up', issues);
+}
+
+function validateMeshProjection(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh projection must be an object');
+    return;
+  }
+
+  validateLiteral(
+    property(value, 'kind'),
+    'perspective',
+    `${path}.kind`,
+    'Projection kind',
+    issues,
+  );
+  validatePositiveFiniteNumber(
+    property(value, 'verticalFovRadians'),
+    `${path}.verticalFovRadians`,
+    'Projection vertical FOV',
+    issues,
+  );
+  validatePositiveFiniteNumber(property(value, 'near'), `${path}.near`, 'Projection near', issues);
+  validatePositiveFiniteNumber(property(value, 'far'), `${path}.far`, 'Projection far', issues);
+  validateCanvas(property(value, 'viewport'), `${path}.viewport`, issues);
+}
+
+function validateMeshMaterial(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh material must be an object');
+    return;
+  }
+
+  validateLiteral(property(value, 'kind'), 'solid', `${path}.kind`, 'Material kind', issues);
+  validateHexColor(property(value, 'color'), `${path}.color`, 'Material color', issues);
+}
+
+function validateMeshPlayback(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureMeshFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Mesh playback must be an object');
+    return;
+  }
+
+  validateLiteral(
+    property(value, 'kind'),
+    'fixed-rate-rotation',
+    `${path}.kind`,
+    'Playback kind',
+    issues,
+  );
+  validateVector3(property(value, 'axis'), `${path}.axis`, 'Playback axis', issues);
+  validatePositiveFiniteNumber(
+    property(value, 'radiansPerSecond'),
+    `${path}.radiansPerSecond`,
+    'Playback radians per second',
+    issues,
+  );
+  validatePositiveInteger(
+    property(value, 'sampleRate'),
+    `${path}.sampleRate`,
+    'Playback sample rate',
     issues,
   );
 }
@@ -879,6 +1113,29 @@ function validateIsoDate(
 ): void {
   if (typeof value !== 'string' || !ISO_DATE_PATTERN.test(value)) {
     pushIssue(issues, path, `${label} must be an ISO date`);
+  }
+}
+
+function validatePositiveFiniteNumber(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  const number = finiteNumber(value);
+  if (number === undefined || number <= 0) {
+    pushIssue(issues, path, `${label} must be positive and finite`);
+  }
+}
+
+function validateHexColor(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (typeof value !== 'string' || !/^#[0-9a-f]{6}$/u.test(value)) {
+    pushIssue(issues, path, `${label} must be lowercase #rrggbb`);
   }
 }
 

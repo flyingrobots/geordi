@@ -12,27 +12,34 @@ import {
   assertRenderFixtureArtifact,
   assertRenderFixtureManifest,
   assertRenderFixtureMeshAssetManifest,
+  assertRenderFixtureMeshFixtureManifest,
   assertRenderFixturePixelProbe,
   assertRenderFixturePixelProbes,
   isRenderFixtureMeshAssetManifest,
+  isRenderFixtureMeshFixtureManifest,
   isRenderFixtureManifest,
   parseRenderFixtureMeshAssetManifest,
+  parseRenderFixtureMeshFixtureManifest,
   parseRenderFixtureManifest,
   RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE,
+  RENDER_FIXTURE_MESH_FIXTURE_VERSION,
   RENDER_FIXTURE_MESH_ASSET_VERSION,
   RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
   RENDER_FIXTURE_VERSION,
   RenderFixtureArtifactValidationError,
   RenderFixtureInvalidMeshAssetManifestError,
+  RenderFixtureInvalidMeshFixtureManifestError,
   RenderFixtureInvalidManifestError,
   RenderFixtureInvalidPixelSampleError,
   RenderFixturePixelProbeError,
   renderFixtureRgbaFromBytes,
   validateRenderFixtureArtifact,
   validateRenderFixtureMeshAssetManifest,
+  validateRenderFixtureMeshFixtureManifest,
   validateRenderFixtureManifest,
   type RenderFixtureManifest,
   type RenderFixtureMeshAssetManifest,
+  type RenderFixtureMeshFixtureManifest,
   type RenderFixturePixelProbe,
 } from './index.js';
 
@@ -121,6 +128,54 @@ function makeMeshAssetManifest(): RenderFixtureMeshAssetManifest {
       url: 'https://graphics.stanford.edu/pub/3Dscanrep/bunny.tar.gz',
     },
     vertexProperties: ['x', 'y', 'z', 'confidence', 'intensity'],
+  };
+}
+
+function makeMeshFixtureManifest(): RenderFixtureMeshFixtureManifest {
+  return {
+    assetManifestPath: 'assets/stanford-bunny/bunny.mesh.json',
+    camera: {
+      coordinateSystem: 'right-handed',
+      eye: [0, 0.1, 0.35],
+      target: [0, 0.1, 0],
+      up: [0, 1, 0],
+    },
+    fixtureVersion: RENDER_FIXTURE_MESH_FIXTURE_VERSION,
+    id: 'render-everywhere:stanford-bunny',
+    material: {
+      color: '#d1d5db',
+      kind: 'solid',
+    },
+    playback: {
+      axis: [3, 5, 2],
+      kind: 'fixed-rate-rotation',
+      radiansPerSecond: 0.7853981633974483,
+      sampleRate: 60,
+    },
+    projection: {
+      far: 10,
+      kind: 'perspective',
+      near: 0.01,
+      verticalFovRadians: 0.7853981633974483,
+      viewport: {
+        height: 512,
+        width: 512,
+      },
+    },
+    runtimeProfile: {
+      numericProfile: GEORDI_NUMERIC_PROFILE,
+      requires: [
+        GEORDI_CORE_PROFILE,
+        'asset.mesh',
+        'mesh.triangle',
+        'transform.matrix4',
+        'camera.perspective',
+        'projection.perspective',
+        'depth.z-buffer',
+        'material.solid',
+        'playback.fixed-rate-rotation',
+      ],
+    },
   };
 }
 
@@ -469,6 +524,109 @@ describe('render fixture mesh asset manifest validation', () => {
         ),
       ),
     ).toThrow(RenderFixtureInvalidMeshAssetManifestError);
+  });
+});
+
+describe('render fixture mesh fixture manifest validation', () => {
+  it('accepts a typed valid mesh fixture manifest object', () => {
+    const manifest = makeMeshFixtureManifest();
+
+    expect(validateRenderFixtureMeshFixtureManifest(manifest)).toEqual({
+      ok: true,
+      issues: [],
+    });
+    expect(isRenderFixtureMeshFixtureManifest(manifest)).toBe(true);
+    expect(assertRenderFixtureMeshFixtureManifest(manifest)).toBe(manifest);
+  });
+
+  it('parses mesh fixture manifests through the canonical JSON port', () => {
+    const source = canonicalJsonPort.stringify(makeMeshFixtureManifest(), { space: 2 });
+
+    const parsed = parseRenderFixtureMeshFixtureManifest(source);
+
+    expect(parsed.id).toBe('render-everywhere:stanford-bunny');
+    expect(parsed.playback.axis).toEqual([3, 5, 2]);
+  });
+
+  it('rejects invalid mesh fixture descriptor metadata', () => {
+    const invalid: JsonValue = {
+      ...makeMeshFixtureManifest(),
+      assetManifestPath: '../bunny.mesh.json',
+      camera: {
+        coordinateSystem: 'left-handed',
+        eye: [0, 0, Number.NaN],
+        target: [0, 0],
+        up: [0, 1, 0],
+      },
+      fixtureVersion: 'geordi-mesh-render-fixture/2',
+      material: {
+        color: '#D1D5DB',
+        kind: 'shader',
+      },
+      playback: {
+        axis: [0, 1],
+        kind: 'timeline',
+        radiansPerSecond: -1,
+        sampleRate: 0,
+      },
+      projection: {
+        far: 0,
+        kind: 'orthographic',
+        near: Number.POSITIVE_INFINITY,
+        verticalFovRadians: 0,
+        viewport: {
+          height: 0,
+          width: -1,
+        },
+      },
+      runtimeProfile: {
+        numericProfile: 'geordi-float-anything/1',
+        requires: ['asset.mesh', 'mesh.triangle', 'effect.blur/1'],
+      },
+    };
+
+    const result = validateRenderFixtureMeshFixtureManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual([
+      '$.fixtureVersion',
+      '$.assetManifestPath',
+      '$.runtimeProfile.numericProfile',
+      '$.runtimeProfile.requires[2]',
+      '$.runtimeProfile.requires',
+      '$.camera.coordinateSystem',
+      '$.camera.eye[2]',
+      '$.camera.target',
+      '$.projection.kind',
+      '$.projection.verticalFovRadians',
+      '$.projection.near',
+      '$.projection.far',
+      '$.projection.viewport.width',
+      '$.projection.viewport.height',
+      '$.material.kind',
+      '$.material.color',
+      '$.playback.kind',
+      '$.playback.axis',
+      '$.playback.radiansPerSecond',
+      '$.playback.sampleRate',
+    ]);
+  });
+
+  it('throws a custom error for invalid mesh fixture manifests', () => {
+    expect(() =>
+      parseRenderFixtureMeshFixtureManifest(
+        canonicalJsonPort.stringify(
+          {
+            ...makeMeshFixtureManifest(),
+            playback: {
+              ...makeMeshFixtureManifest().playback,
+              sampleRate: 0,
+            },
+          },
+          { space: 2 },
+        ),
+      ),
+    ).toThrow(RenderFixtureInvalidMeshFixtureManifestError);
   });
 });
 
