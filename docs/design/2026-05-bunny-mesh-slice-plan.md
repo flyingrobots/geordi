@@ -97,7 +97,7 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Keep parser output unnormalized.
   - Add deterministic test vectors.
 
-- [ ] **Slice 13: Camera descriptor law**
+- [x] **Slice 13: Camera descriptor law**
   - Define eye, target, up, handedness, and view-matrix construction.
   - Reject degenerate camera descriptors.
   - Add deterministic test vectors.

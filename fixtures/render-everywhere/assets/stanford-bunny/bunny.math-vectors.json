@@ -22,5 +22,41 @@
       -0.0616721
     ]
   },
+  "camera": {
+    "coordinateSystem": "right-handed",
+    "eye": [
+      0,
+      0.1,
+      0.35
+    ],
+    "target": [
+      0,
+      0.1,
+      0
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "viewMatrixColumnMajor": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      -0.1,
+      -0.35,
+      1
+    ]
+  },
   "version": "geordi-bunny-math-vectors/1"
 }
