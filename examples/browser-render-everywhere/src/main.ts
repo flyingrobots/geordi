@@ -27,8 +27,8 @@ async function startBrowserHarness(): Promise<void> {
 
   mountBrowserHarnessShell(root, createBrowserHarnessStatus(result.manifest, result.ir));
   mountRenderedFixtureCanvas(root, result.canvas);
-  mountBunnyCanvas(root, bunny.canvas, bunnyReportText(bunny.report));
-  startBunnyLiveRotation(bunny);
+  const bunnyReport = mountBunnyCanvas(root, bunny.canvas, bunnyReportText(bunny.report));
+  startBunnyLiveRotation(bunny, bunnyReport);
 }
 
 function bunnyReportText(report: Awaited<ReturnType<typeof renderBunnyFixtureFrame>>['report']): string {
@@ -45,11 +45,17 @@ function bunnyReportText(report: Awaited<ReturnType<typeof renderBunnyFixtureFra
   ].join(' ');
 }
 
-function startBunnyLiveRotation(bunny: BunnyRenderResult): void {
-  const startMs = globalThis.performance.now();
+function startBunnyLiveRotation(
+  bunny: BunnyRenderResult,
+  reportElement: HTMLParagraphElement,
+): void {
+  let startMs: number | undefined;
   const tick = (nowMs: number): void => {
-    const frameIndex = bunnyFrameIndexFromElapsedMs(nowMs - startMs);
-    renderBunnyFrameToCanvas(bunny.canvas, bunny.manifest, bunny.mesh, frameIndex);
+    const anchorMs = startMs ?? nowMs;
+    startMs = anchorMs;
+    const frameIndex = bunnyFrameIndexFromElapsedMs(nowMs - anchorMs);
+    const report = renderBunnyFrameToCanvas(bunny.canvas, bunny.manifest, bunny.mesh, frameIndex);
+    reportElement.textContent = bunnyReportText(report);
     void globalThis.requestAnimationFrame(tick);
   };
 

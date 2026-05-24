@@ -53,7 +53,7 @@ export function mountBunnyCanvas(
   root: ParentNode | null,
   canvas: HTMLCanvasElement,
   reportText: string,
-): void {
+): HTMLParagraphElement {
   if (root === null) {
     throw new BrowserHarnessMountError();
   }
@@ -63,10 +63,12 @@ export function mountBunnyCanvas(
 
   const label = document.createElement('p');
   label.className = 'bunny-demo-label';
+  label.setAttribute('data-geordi-bunny-report', 'true');
   label.textContent = reportText;
 
   section.append(label, canvas);
   root.append(section);
+  return label;
 }
 
 export function mountBrowserHarnessFailure(root: HTMLElement | null): void {

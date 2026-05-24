@@ -197,20 +197,18 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   await expect(page.getByText(manifest.runtimeProfile.irVersion)).toBeVisible();
   await expect(page.getByText(manifest.runtimeProfile.numericProfile)).toBeVisible();
   await expect(page.getByText(manifest.runtimeProfile.requires.join(', '))).toBeVisible();
-  await expect(page.getByText('browser-canvas-wireframe-mesh')).toBeVisible();
-  await expect(page.getByText('transformProfile=geordi-fixed-rate-rotation/1')).toBeVisible();
-  await expect(page.getByText('frame=0')).toBeVisible();
-  await expect(page.getByText('angleRadians=0')).toBeVisible();
-  await expect(
-    page.getByText('normalizedAxis=0.4866642633922876,0.8111071056538126,0.32444284226152503'),
-  ).toBeVisible();
-  await expect(page.getByText('vertices=1889')).toBeVisible();
-  await expect(page.getByText('faces=3851')).toBeVisible();
-  await expect(
-    page.getByText(
-      'assetHash=sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6',
-    ),
-  ).toBeVisible();
+  const bunnyReport = page.locator('[data-geordi-bunny-report="true"]');
+  await expect(bunnyReport).toContainText('browser-canvas-wireframe-mesh');
+  await expect(bunnyReport).toContainText('transformProfile=geordi-fixed-rate-rotation/1');
+  await expect(bunnyReport).toContainText(
+    'normalizedAxis=0.4866642633922876,0.8111071056538126,0.32444284226152503',
+  );
+  await expect(bunnyReport).toContainText('vertices=1889');
+  await expect(bunnyReport).toContainText('faces=3851');
+  await expect(bunnyReport).toContainText(
+    'assetHash=sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6',
+  );
+  await expect(bunnyReport).toContainText(/frame=[1-9][0-9]*/u);
 
   const evaluation = await page.evaluate<CanvasEvaluation, readonly ProbeInput[]>((probes) => {
     const canvases = document.querySelectorAll<HTMLCanvasElement>(
