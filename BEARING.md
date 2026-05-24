@@ -2,7 +2,7 @@
 
 **Date**: 2026-05-24
 **Branch baseline**: `main` at `b9d1398`
-**Current branch when refreshed**: `codex/bunny-rotation-milestone` at `f243bc9`
+**Current branch when refreshed**: `codex/bunny-rotation-milestone` at `09397d8`
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
@@ -36,16 +36,21 @@ Completed:
   - the same artifact renders in a native Rust application;
   - browser and native smoke paths report the same artifact hash, feature profile, and deterministic
     pixel probes.
-- The Stanford bunny mesh milestone is implemented through slice 25:
+- The Stanford bunny mesh milestone is implemented through slice 30:
   - the bunny PLY is described by a canonical mesh asset manifest;
   - TypeScript and Rust validate the asset hash and parse the supported ASCII PLY subset;
   - the browser harness renders a static and live rotating bunny canvas;
   - the native Rust harness renders static, fixed-frame, and live-window bunny paths;
   - browser and native paths expose comparable sampled-frame metadata for frames such as `0`, `15`,
-    and `60`.
+    and `60`;
+  - focused CI gates validate TypeScript mesh parsing, browser bunny unit coverage, native Rust
+    tests, native clippy, bunny manifest validation, and native fixed-frame smoke without opening
+    interactive windows;
+  - the hardening pass tightened browser mesh-manifest checks, host elapsed-time validation,
+    playback descriptor validation, and TypeScript/Rust PLY parser strictness.
 - The completed rectangle proof is tracked in
   [`docs/design/2026-05-render-everywhere-slice-plan.md`](./docs/design/2026-05-render-everywhere-slice-plan.md).
-- The active bunny milestone checklist is
+- The completed bunny milestone checklist is
   [`docs/design/2026-05-bunny-mesh-slice-plan.md`](./docs/design/2026-05-bunny-mesh-slice-plan.md).
 
 Still true:
@@ -55,33 +60,35 @@ Still true:
   coarse nonblank smoke checks, not pixel-identical 3D rasterization.
 - Text rendering remains deferred. No pixel-identical text claim is allowed until font identity,
   shaping, fallback, line breaking, and measurement laws exist.
-- Multi-step geometry, vector, matrix, transform, camera, projection, depth, rasterization, and
+- Full IR-level geometry, vector, matrix, transform, camera, projection, depth, rasterization, and
   animation operation-order rules still need to be specified before Geordi can honestly claim broad
-  graphics determinism.
+  graphics determinism beyond the current demo harness contracts.
 - The native Rust path is currently a proof harness, not a full production runtime.
 - CodeRabbit review status can be operationally noisy when review credits are exhausted; GitHub
   Actions CI remains the source of truth for repo gates unless explicitly stated otherwise.
 
 ## Next Credibility Milestone
 
-The active goal is closing the mesh render-everywhere proof using the Stanford bunny asset already checked in at
-[`fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply`](./fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply).
+The bunny milestone is closed for its stated claim boundary. The next credibility milestone should
+be strict text and font law.
 
-The demo now shows:
+The target is not "draw some text." The target is an honest deterministic text contract:
 
-1. The Stanford bunny mesh loaded from one canonical asset manifest.
-2. The same mesh rendered in the browser.
-3. The same mesh rendered in native Rust.
-4. The bunny rotating at a fixed rate about one explicitly declared arbitrary axis.
-5. Browser and native demos reporting the same asset hash, mesh profile, transform schedule, and
-   sampled-frame metadata.
+1. Font identity is content-addressed, not runtime-selected by family name.
+2. The IR or fixture descriptor declares the exact font pack and fallback order.
+3. Shaping, glyph fallback, line breaking, and measurement have a normative implementation or
+   fixture-level precomputed representation.
+4. Browser and native harnesses reject missing fonts or unsupported text features before drawing.
+5. Initial smoke tests prove metadata equality and carefully scoped pixel probes for a tiny fixed
+   string, not broad typography parity.
 
-This is intentionally harder than the rectangle proof. It introduces assets, mesh parsing,
-projection, depth, transforms, time sampling, and cross-runtime rasterization differences.
+This should start as design and harness law before it becomes a general Geordi IR feature. Text is
+the highest-risk next axis because platform font stacks and shaping engines diverge by default.
 
-## Bunny Rotation Law
+## Bunny Rotation Result
 
-The target is not a general animation system yet. The initial law should be narrow:
+The bunny milestone did not introduce a general animation system. It implemented a narrow demo
+playback law:
 
 - A mesh demo has a deterministic playback descriptor.
 - The descriptor declares:
@@ -95,13 +102,12 @@ The target is not a general animation system yet. The initial law should be narr
   - fixed timestep or sampled frame indices for tests.
 - Live demos may advance using host time, but verification must use explicit frame indices, not
   wall-clock time.
-- The core IR may continue to represent a scene snapshot. If time is introduced, it should first be
-  isolated to a mesh-demo playback profile or harness descriptor rather than leaking an undeclared
-  animation model into all of Geordi.
+- The core IR continues to represent a scene snapshot.
+- Time remains isolated to the mesh demo playback profile and harness descriptor.
 
-For the first bunny proof, pick one arbitrary axis and freeze it in the spec. Prefer a simple
-integer vector such as `[3, 5, 2]` as the authored axis, then define exactly where normalization
-occurs. Do not let each runtime silently invent math conventions.
+The first bunny proof uses `[3, 5, 2]` as the authored axis and normalizes it in the playback report.
+Browser and native smoke paths now agree on frame indices, seconds, angle, normalized axis, transform
+profile, mesh identity, and mesh counts.
 
 ## Claim Boundaries
 
@@ -130,27 +136,27 @@ Not allowed yet:
 
 ## Immediate Moves
 
-Follow the active bunny slice checklist in
+Pause for inspection after the completed bunny slice checklist:
 [`docs/design/2026-05-bunny-mesh-slice-plan.md`](./docs/design/2026-05-bunny-mesh-slice-plan.md).
-The repo is paused after slice 25. The remaining milestone work is documentation, demo-guide
-alignment, CI wiring, Code Lawyer hardening, and the final bearing refresh.
 
-Keep text rendering explicitly out of scope until after the bunny milestone lands.
+Do not start text implementation by adding ad hoc canvas text. First write the strict text/font law,
+then choose a deliberately tiny first fixture. Keep the same discipline as the bunny milestone:
+manifest first, typed boundary parsing, custom errors, focused gates, then browser/native render
+proof.
 
 ## Remaining P0 Order
 
-1. Bunny fixture documentation: document asset manifests, commands, expected output, attribution,
-   and troubleshooting.
-2. Demo guide update: extend the render-everywhere guide with bunny commands and claim boundaries.
-3. CI gate wiring: add focused package and Rust gates for mesh parsing and bunny fixture validation
-   without launching interactive windows.
-4. Review hardening: run a Code Lawyer pass over mesh parsing, transform determinism, fixture path
-   safety, and unsupported feature failures.
-5. Bearing refresh: close this milestone or set the next target, likely strict text/font law.
+1. Strict text/font design pack: font identity, font pack manifest, shaping, fallback, measurement,
+   line breaking, and claim boundaries.
+2. Text fixture slice checklist: define a small executable plan before implementation begins.
+3. Font asset boundary: content-addressed font files, fixture-local paths, hashes, licensing, and
+   failure modes.
+4. Text shaping/measurement boundary: choose normative implementation or precomputed fixture data.
+5. First text render-everywhere proof: one tiny fixed string, one font pack, browser and native
+   gates, explicit nonclaims.
 
 ## Deferred Work
 
-- Strict text and font rendering.
 - Full animation and transition semantics.
 - General shader/material extension.
 - Arbitrary mesh formats beyond the chosen Stanford bunny PLY.

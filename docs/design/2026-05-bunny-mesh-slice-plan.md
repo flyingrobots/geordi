@@ -1,6 +1,6 @@
 # Bunny Mesh Slice Plan
 
-**Status**: Active
+**Status**: Complete
 **Date**: 2026-05-24
 **Parent Design**: [`2026-05-bunny-mesh-render-everywhere.md`](./2026-05-bunny-mesh-render-everywhere.md)
 
@@ -222,9 +222,11 @@ Pause after slice 15 for a drift check before static rendering starts.
     typecheck, lint, and tests; native render-everywhere tests and clippy; geordi-mesh tests;
     `cargo fmt --check`, `pnpm test:docs`, `git diff --check`.
 
-- [ ] **Slice 30: Bearing refresh**
+- [x] **Slice 30: Bearing refresh**
   - Mark the bunny milestone achieved or document remaining blockers.
   - Choose the next target, likely strict text/font law.
+  - Done: slice commit `Slice 30: Refresh bearing after bunny milestone`.
+  - Verification: `pnpm test:docs`, `git diff --check`.
 
 ## Update Policy
 
