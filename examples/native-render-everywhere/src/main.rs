@@ -22,6 +22,7 @@ const FIXTURE_MANIFEST_PATH: &str = "fixture.json";
 const RENDER_FIXTURE_VERSION: &str = "geordi-render-fixture/1";
 const HASH_PREFIX: &str = "sha256:";
 const HASH_HEX_LENGTH: usize = 64;
+const NATIVE_RENDERER_NAME: &str = "rust-software-rectangles";
 fn main() -> Result<(), NativeAppError> {
     run_from_env(env::args_os())
 }
@@ -718,9 +719,21 @@ fn write_fixture_summary(
     loaded: &LoadedFixture,
 ) -> Result<(), NativeOutputError> {
     writeln!(writer, "Geordi native fixture loaded").map_err(NativeOutputError::new)?;
-    writeln!(writer, "id={}", loaded.manifest.id).map_err(NativeOutputError::new)?;
+    writeln!(writer, "rendererName={NATIVE_RENDERER_NAME}").map_err(NativeOutputError::new)?;
+    writeln!(writer, "fixtureId={}", loaded.manifest.id).map_err(NativeOutputError::new)?;
+    writeln!(writer, "fixtureVersion={}", loaded.manifest.fixture_version)
+        .map_err(NativeOutputError::new)?;
     writeln!(writer, "artifactHash={}", loaded.manifest.artifact_hash)
         .map_err(NativeOutputError::new)?;
+    writeln!(writer, "irVersion={}", loaded.ir.ir_version).map_err(NativeOutputError::new)?;
+    writeln!(writer, "numericProfile={}", loaded.ir.numeric_profile)
+        .map_err(NativeOutputError::new)?;
+    writeln!(
+        writer,
+        "featureRequirements={}",
+        loaded.ir.requires.join(", ")
+    )
+    .map_err(NativeOutputError::new)?;
     writeln!(
         writer,
         "canvas={}x{}",
@@ -728,8 +741,12 @@ fn write_fixture_summary(
     )
     .map_err(NativeOutputError::new)?;
     writeln!(writer, "scene={}", loaded.ir.scene.id).map_err(NativeOutputError::new)?;
-    writeln!(writer, "requirements={}", loaded.ir.requires.join(","))
-        .map_err(NativeOutputError::new)
+    writeln!(
+        writer,
+        "shortHash={}",
+        short_hash(&loaded.manifest.artifact_hash)
+    )
+    .map_err(NativeOutputError::new)
 }
 
 fn run_smoke(writer: &mut impl Write, loaded: &LoadedFixture) -> Result<(), NativeAppError> {
@@ -798,7 +815,8 @@ fn minifb_buffer(image: &RenderedImage) -> Result<Vec<u32>, NativeWindowError> {
 
 fn window_title(loaded: &LoadedFixture) -> String {
     format!(
-        "Geordi Native - {} - {}",
+        "Geordi Native - {} - {} - {}",
+        NATIVE_RENDERER_NAME,
         loaded.manifest.id,
         short_hash(&loaded.manifest.artifact_hash)
     )
@@ -826,7 +844,18 @@ mod tests {
 
         write_fixture_summary(&mut output, &loaded)?;
 
-        assert!(!output.is_empty());
+        let text = output_text(&output);
+        assert!(text.contains("rendererName=rust-software-rectangles"));
+        assert!(text.contains("fixtureId=render-everywhere:hello-panel"));
+        assert!(text.contains(
+            "artifactHash=sha256:30623d6141ba69c382c14c09eca9adedd40cb02644ff4ee9621de101da6b0082"
+        ));
+        assert!(text.contains("irVersion=geordi-ir/1"));
+        assert!(text.contains("numericProfile=geordi-finite-binary64/1"));
+        assert!(text.contains(
+            "featureRequirements=geordi/core/1, layout.resolved, shape.rect, paint.solid"
+        ));
+        assert!(text.contains("shortHash=30623d6141ba"));
         Ok(())
     }
 
@@ -889,6 +918,10 @@ mod tests {
             PathBuf::from("fixtures/render-everywhere/hello-panel")
         );
         Ok(())
+    }
+
+    fn output_text(output: &[u8]) -> String {
+        String::from_utf8_lossy(output).into_owned()
     }
 
     fn fixture_path(path: &str) -> PathBuf {

@@ -10,12 +10,12 @@ import { createBrowserHarnessStatus } from './harnessModel.js';
 
 async function startBrowserHarness(): Promise<void> {
   const root = document.querySelector<HTMLElement>('#app');
-  mountBrowserHarnessShell(root, createBrowserHarnessStatus());
-
   const result = await renderBrowserFixture({
     assets: HELLO_PANEL_FIXTURE_ASSETS,
     fetchText: createBrowserFetchText((url) => globalThis.fetch(url)),
   });
+
+  mountBrowserHarnessShell(root, createBrowserHarnessStatus(result.manifest, result.ir));
   mountRenderedFixtureCanvas(root, result.canvas);
 }
 

@@ -99,6 +99,12 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Geordi Render Everywhere' })).toBeVisible();
+  await expect(page.getByText('browser-canvas').first()).toBeVisible();
+  await expect(page.getByText(manifest.id)).toBeVisible();
+  await expect(page.getByText(manifest.artifactHash)).toBeVisible();
+  await expect(page.getByText(manifest.runtimeProfile.irVersion)).toBeVisible();
+  await expect(page.getByText(manifest.runtimeProfile.numericProfile)).toBeVisible();
+  await expect(page.getByText(manifest.runtimeProfile.requires.join(', '))).toBeVisible();
 
   const evaluation = await page.evaluate<CanvasEvaluation, readonly ProbeInput[]>((probes) => {
     const canvases = document.querySelectorAll<HTMLCanvasElement>(

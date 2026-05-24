@@ -136,10 +136,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `6d7201b`.
   - Verification: `cargo run -p <native-demo> -- --smoke <fixture>`.
 
-- [ ] **Slice 16: Shared hash display**
+- [x] **Slice 16: Shared hash display**
   - Browser UI displays fixture id, artifact hash, IR version, numeric profile, feature
     requirements, and renderer name.
   - Rust app logs the same fields and includes a short hash in the window title.
+  - Done: current slice.
   - Verification: tests assert reported hash matches manifest.
 
 - [ ] **Slice 17: Render-everywhere README**

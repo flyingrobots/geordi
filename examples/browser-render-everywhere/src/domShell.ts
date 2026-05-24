@@ -63,11 +63,11 @@ export function mountBrowserHarnessFailure(root: HTMLElement | null): void {
 function createShell(status: BrowserHarnessStatus): HTMLElement {
   const shell = document.createElement('section');
   shell.className = 'harness-shell';
-  shell.append(createHeading(), createStatusGrid(status), createViewportSlot());
+  shell.append(createHeading(status), createStatusGrid(status), createViewportSlot());
   return shell;
 }
 
-function createHeading(): HTMLElement {
+function createHeading(status: BrowserHarnessStatus): HTMLElement {
   const heading = document.createElement('header');
   heading.className = 'harness-heading';
 
@@ -76,7 +76,7 @@ function createHeading(): HTMLElement {
 
   const marker = document.createElement('span');
   marker.className = 'harness-marker';
-  marker.textContent = 'Browser Canvas';
+  marker.textContent = status.rendererName;
 
   heading.append(title, marker);
   return heading;
@@ -85,9 +85,13 @@ function createHeading(): HTMLElement {
 function createStatusGrid(status: BrowserHarnessStatus): HTMLElement {
   const grid = document.createElement('dl');
   grid.className = 'status-grid';
+  appendStatus(grid, 'Renderer', status.rendererName);
+  appendStatus(grid, 'Fixture ID', status.fixtureId);
+  appendStatus(grid, 'Artifact Hash', status.artifactHash);
   appendStatus(grid, 'IR', status.irVersion);
   appendStatus(grid, 'Numeric', status.numericProfile);
   appendStatus(grid, 'Fixture', status.fixtureVersion);
+  appendStatus(grid, 'Feature Requirements', status.featureRequirements.join(', '));
   appendStatus(grid, 'Runtime Features', String(status.supportedFeatureCount));
   return grid;
 }
