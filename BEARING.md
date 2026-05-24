@@ -69,9 +69,10 @@ Still true:
 
 - Multi-step geometry, vector, matrix, transform, and animation operation-order rules still need to
   be specified as those features are introduced.
-- There is no browser demo scaffold yet, and there is no Rust workspace or native runtime scaffold
-  yet. The current browser runtime API can render `geordi-ir/1` to a browser-created canvas, but it
-  is still a Canvas 2D proof of concept inside the `runtime-webgl` package.
+- The browser demo scaffold now renders the shared fixture into a browser canvas, and the Rust
+  workspace now includes a native renderer plus smoke harness for the same canonical artifact.
+  The current proof remains rectangle-only until stricter text, geometry, and transform profiles
+  are specified.
 
 ## Render-Everywhere Target
 
