@@ -61,7 +61,7 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Include asset manifest path, camera, projection, material, and playback descriptors.
   - Keep this separate from the existing rectangle `scene.geordi.json` fixture contract.
 
-- [ ] **Slice 7: TypeScript asset hash validator**
+- [x] **Slice 7: TypeScript asset hash validator**
   - Add a Node-side hash helper for mesh asset bytes.
   - Assert expected `sha256:` values with a custom hash mismatch error.
   - Keep filesystem reads outside pure validators.
