@@ -55,8 +55,8 @@ The asset contract is:
 
 Both runtimes must validate the manifest and PLY bytes before rendering. A missing file, malformed
 manifest, URL-scheme or non-fixture-local path, hash mismatch, unsupported PLY header, nonfinite
-vertex, malformed face, bad face index, invalid perspective depth range, or zero rotation axis is a
-hard failure.
+vertex, malformed face, bad face index, invalid perspective depth range, invalid retrieval date,
+duplicate or empty vertex property, or zero rotation axis is a hard failure.
 
 ## Commands
 

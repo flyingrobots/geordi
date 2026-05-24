@@ -1431,12 +1431,13 @@ fn validate_source(
         "Source attribution",
         issues,
     );
-    validate_non_empty(
-        &source.retrieved,
-        "$.source.retrieved",
-        "Source retrieval date",
-        issues,
-    );
+    if !is_iso_date(&source.retrieved) {
+        push_issue(
+            issues,
+            "$.source.retrieved",
+            "Source retrieval date must be YYYY-MM-DD",
+        );
+    }
     validate_non_empty(&source.url, "$.source.url", "Source URL", issues);
 }
 
@@ -1444,15 +1445,36 @@ fn validate_vertex_properties(
     properties: &[String],
     issues: &mut Vec<NativeBunnyManifestValidationIssue>,
 ) {
-    let starts_with_position = properties
-        .get(0..3)
-        .is_some_and(|slice| slice == ["x", "y", "z"]);
-    if !starts_with_position {
-        push_issue(
-            issues,
-            "$.vertexProperties",
-            "Vertex properties must begin with x, y, z",
-        );
+    let mut seen: Vec<&str> = Vec::new();
+    for (index, property) in properties.iter().enumerate() {
+        if property.is_empty() {
+            push_issue(
+                issues,
+                &format!("$.vertexProperties[{index}]"),
+                "Vertex property must be a non-empty string",
+            );
+            continue;
+        }
+
+        if seen.contains(&property.as_str()) {
+            push_issue(
+                issues,
+                &format!("$.vertexProperties[{index}]"),
+                "Vertex property must not be duplicated",
+            );
+        }
+        seen.push(property.as_str());
+    }
+
+    for required_property in ["x", "y", "z"] {
+        if !seen.contains(&required_property) {
+            push_issue(
+                issues,
+                "$.vertexProperties",
+                "Vertex properties must include x, y, and z",
+            );
+            return;
+        }
     }
 }
 
@@ -1562,6 +1584,16 @@ fn is_hex_color(value: &str) -> bool {
             .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(byte))
 }
 
+fn is_iso_date(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    bytes.len() == 10
+        && bytes[0..4].iter().all(u8::is_ascii_digit)
+        && bytes[4] == b'-'
+        && bytes[5..7].iter().all(u8::is_ascii_digit)
+        && bytes[7] == b'-'
+        && bytes[8..10].iter().all(u8::is_ascii_digit)
+}
+
 fn is_zero_vector3(vector: [f64; 3]) -> bool {
     vector_bits(vector) == [0.0_f64.to_bits(), 0.0_f64.to_bits(), 0.0_f64.to_bits()]
 }
@@ -1596,9 +1628,10 @@ fn push_issue(issues: &mut Vec<NativeBunnyManifestValidationIssue>, path: &str, 
 #[cfg(test)]
 mod tests {
     use super::{
-        BUNNY_RENDERER_NAME, BunnyMeshProjection, BunnyMeshViewport, NativeBunnyError,
-        bunny_frame_index_from_elapsed_ms, is_fixture_local_relative_path, load_bunny_fixture,
-        run_bunny_smoke, validate_mesh_projection, write_bunny_summary,
+        BUNNY_RENDERER_NAME, BunnyMeshAssetSource, BunnyMeshProjection, BunnyMeshViewport,
+        NativeBunnyError, bunny_frame_index_from_elapsed_ms, is_fixture_local_relative_path,
+        load_bunny_fixture, run_bunny_smoke, validate_mesh_projection, validate_source,
+        validate_vertex_properties, write_bunny_summary,
     };
     use std::path::{Path, PathBuf};
 
@@ -1702,6 +1735,51 @@ mod tests {
 
         assert_eq!(issues.len(), 1);
         assert_eq!(issues[0].path, "$.projection.near");
+    }
+
+    #[test]
+    fn mesh_asset_sources_reject_non_iso_retrieved_dates() {
+        let mut issues = Vec::new();
+
+        validate_source(
+            &BunnyMeshAssetSource {
+                attribution: "Stanford".to_owned(),
+                retrieved: "May 23, 2026".to_owned(),
+                url: "https://example.invalid/bunny.tar.gz".to_owned(),
+            },
+            &mut issues,
+        );
+
+        assert_eq!(issues.len(), 1);
+        assert_eq!(issues[0].path, "$.source.retrieved");
+    }
+
+    #[test]
+    fn mesh_vertex_properties_reject_empty_duplicate_and_missing_position_properties() {
+        let mut duplicate_issues = Vec::new();
+        validate_vertex_properties(
+            &[
+                "x".to_owned(),
+                "y".to_owned(),
+                "z".to_owned(),
+                "x".to_owned(),
+                String::new(),
+            ],
+            &mut duplicate_issues,
+        );
+
+        assert_eq!(duplicate_issues.len(), 2);
+        assert_eq!(duplicate_issues[0].path, "$.vertexProperties[3]");
+        assert_eq!(duplicate_issues[1].path, "$.vertexProperties[4]");
+
+        let mut missing_issues = Vec::new();
+        validate_vertex_properties(
+            &["x".to_owned(), "y".to_owned(), "confidence".to_owned()],
+            &mut missing_issues,
+        );
+
+        assert_eq!(missing_issues.len(), 1);
+        assert_eq!(missing_issues[0].path, "$.vertexProperties");
     }
 
     fn output_text(output: &[u8]) -> String {

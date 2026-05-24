@@ -91,6 +91,8 @@
   playback instead of carrying parallel render-intent constants.
 - **Native render-everywhere demo**: Reject URL-scheme paths anywhere the bunny fixture expects a
   fixture-local relative path.
+- **Native render-everywhere demo**: Align bunny mesh asset validation with the TypeScript fixture
+  boundary for ISO retrieval dates and duplicate or empty vertex properties.
 - **Render fixtures**: Reject mesh fixture descriptors whose perspective projection has `near`
   greater than or equal to `far`, matching the native bunny validator.
 - **Browser render-everywhere demo**: Keep the header renderer marker synchronized with the active
