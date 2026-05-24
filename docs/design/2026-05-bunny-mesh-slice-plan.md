@@ -35,12 +35,14 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Wire the active design map to the bunny milestone.
   - Link the checklist from `BEARING.md`.
 
-- [ ] **Slice 3: Asset manifest schema**
+- [x] **Slice 3: Asset manifest schema**
   - Add typed TypeScript contracts for `geordi-mesh-asset/1`.
   - Validate version, ID, profile, path, hash, counts, bounds, source, and attribution.
   - Use custom error types for all assertion failures.
+  - Done: `bcc65cd`.
+  - Verification: `pnpm --filter @flyingrobots/geordi-render-fixture typecheck`, `lint`, `test`.
 
-- [ ] **Slice 4: Stanford bunny manifest file**
+- [x] **Slice 4: Stanford bunny manifest file**
   - Add the bunny mesh asset manifest beside the committed PLY.
   - Record SHA-256, format, profile, vertex count, face count, bounds, source, and attribution.
   - Parse the manifest through the schema validator.

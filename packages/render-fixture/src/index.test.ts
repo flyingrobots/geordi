@@ -131,6 +131,16 @@ function fixtureManifestSource(): string {
   );
 }
 
+function bunnyMeshAssetManifestSource(): string {
+  return readFileSync(
+    new URL(
+      '../../../fixtures/render-everywhere/assets/stanford-bunny/bunny.mesh.json',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
 class RenderFixtureTestError extends Error {
   constructor(message: string) {
     super(message);
@@ -363,6 +373,16 @@ describe('render fixture manifest validation', () => {
 });
 
 describe('render fixture mesh asset manifest validation', () => {
+  it('accepts the committed Stanford bunny mesh asset manifest', () => {
+    const manifest = parseRenderFixtureMeshAssetManifest(bunnyMeshAssetManifestSource());
+
+    expect(manifest.id).toBe('render-everywhere:stanford-bunny');
+    expect(manifest.assetPath).toBe('bun_zipper_res3.ply');
+    expect(manifest.counts).toEqual({ faces: 3851, vertices: 1889 });
+    expect(manifest.bounds.min).toEqual([-0.0943643, 0.0334143, -0.0616721]);
+    expect(manifest.bounds.max).toEqual([0.0609346, 0.184813, 0.0584651]);
+  });
+
   it('accepts a typed valid mesh asset manifest object', () => {
     const manifest = makeMeshAssetManifest();
 

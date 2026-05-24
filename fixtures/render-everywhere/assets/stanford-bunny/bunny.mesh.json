@@ -1,0 +1,41 @@
+{
+  "assetPath": "bun_zipper_res3.ply",
+  "assetVersion": "geordi-mesh-asset/1",
+  "bounds": {
+    "max": [
+      0.0609346,
+      0.184813,
+      0.0584651
+    ],
+    "min": [
+      -0.0943643,
+      0.0334143,
+      -0.0616721
+    ]
+  },
+  "counts": {
+    "faces": 3851,
+    "vertices": 1889
+  },
+  "faceProperty": "vertex_indices",
+  "format": {
+    "encoding": "ascii",
+    "kind": "ply",
+    "version": "1.0"
+  },
+  "id": "render-everywhere:stanford-bunny",
+  "meshProfile": "geordi-ascii-ply-triangle-mesh/1",
+  "sha256": "sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6",
+  "source": {
+    "attribution": "Stanford Computer Graphics Laboratory Stanford 3D Scanning Repository",
+    "retrieved": "2026-05-23",
+    "url": "https://graphics.stanford.edu/pub/3Dscanrep/bunny.tar.gz"
+  },
+  "vertexProperties": [
+    "x",
+    "y",
+    "z",
+    "confidence",
+    "intensity"
+  ]
+}

@@ -1,6 +1,7 @@
 # Stanford Bunny Render Asset
 
 **Asset path**: `fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply`
+**Asset manifest**: `fixtures/render-everywhere/assets/stanford-bunny/bunny.mesh.json`
 **Source archive**: `https://graphics.stanford.edu/pub/3Dscanrep/bunny.tar.gz`
 **Retrieved**: 2026-05-23
 
@@ -28,6 +29,11 @@ normalized for repository hygiene.
 - Vertices: 1889
 - Faces: 3851
 - Reconstruction: zipper output, resolution 3 decimation
+- Bounds min: `[-0.0943643, 0.0334143, -0.0616721]`
+- Bounds max: `[0.0609346, 0.184813, 0.0584651]`
+
+The `bunny.mesh.json` manifest records these values in the `geordi-mesh-asset/1` schema. Runtimes
+should validate the manifest and the PLY bytes before using the mesh in a render-everywhere demo.
 
 ## Usage Boundary
 
