@@ -8,6 +8,7 @@ import {
 import { createBrowserFetchText, renderBrowserFixture } from './browserRenderSmoke.js';
 import { STANFORD_BUNNY_ASSETS } from './bunnyAssets.js';
 import {
+  BUNNY_BROWSER_RENDERER_NAME,
   bunnyFrameIndexFromElapsedMs,
   renderBunnyFixtureFrame,
   renderBunnyFrameToCanvas,
@@ -25,7 +26,9 @@ async function startBrowserHarness(): Promise<void> {
   });
   const bunny = await renderBunnyFixtureFrame(STANFORD_BUNNY_ASSETS, 0, fetchText);
 
-  const shell = mountBrowserHarnessShell(root, createBrowserHarnessStatus(result.manifest, result.ir));
+  const shell = mountBrowserHarnessShell(root, createBrowserHarnessStatus(result.manifest, result.ir), {
+    bunnyRendererName: BUNNY_BROWSER_RENDERER_NAME,
+  });
   mountRenderedFixtureCanvas(shell.rectangleCanvasSlot, result.canvas);
   const bunnyReport = mountBunnyCanvas(
     shell.bunnyCanvasSlot,

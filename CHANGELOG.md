@@ -93,6 +93,8 @@
   fixture-local relative path.
 - **Render fixtures**: Reject mesh fixture descriptors whose perspective projection has `near`
   greater than or equal to `far`, matching the native bunny validator.
+- **Browser render-everywhere demo**: Keep the header renderer marker synchronized with the active
+  rectangle or bunny scene.
 - **Browser render-everywhere demo**: Add a scene switcher so the interactive browser harness can
   show either the rectangle pixel-probe fixture or the rotating Stanford bunny, with debug metadata
   hidden behind collapsed disclosure panels.

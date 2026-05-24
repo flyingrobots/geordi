@@ -194,10 +194,11 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
 
   const rectanglesButton = page.getByRole('button', { name: 'Rectangles' });
   const bunnyButton = page.getByRole('button', { name: 'Bunny' });
+  const rendererMarker = page.locator('.harness-marker');
   const rectanglePanel = page.locator('[data-geordi-demo-panel="rectangles"]');
   const bunnyPanel = page.locator('[data-geordi-demo-panel="bunny"]');
 
-  await expect(page.getByText('browser-canvas').first()).toBeVisible();
+  await expect(rendererMarker).toHaveText('browser-canvas-wireframe-mesh');
   await expect(bunnyButton).toHaveAttribute('aria-pressed', 'true');
   await expect(rectanglesButton).toHaveAttribute('aria-pressed', 'false');
   await expect(bunnyPanel).toBeVisible();
@@ -268,6 +269,7 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   await rectanglesButton.click();
   await expect(rectanglesButton).toHaveAttribute('aria-pressed', 'true');
   await expect(bunnyButton).toHaveAttribute('aria-pressed', 'false');
+  await expect(rendererMarker).toHaveText('browser-canvas');
   await expect(rectanglePanel).toBeVisible();
   await expect(bunnyPanel).toBeHidden();
 

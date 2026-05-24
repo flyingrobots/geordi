@@ -8,6 +8,10 @@ export interface BrowserHarnessShellMount {
   readonly rectangleCanvasSlot: HTMLElement;
 }
 
+export interface BrowserHarnessShellOptions {
+  readonly bunnyRendererName: string;
+}
+
 export class BrowserHarnessMountError extends Error {
   constructor() {
     super('Browser harness mount failed');
@@ -39,20 +43,31 @@ interface DemoPanelSet {
   readonly rectangles: HTMLElement;
 }
 
+interface HeadingMount {
+  readonly element: HTMLElement;
+  readonly marker: HTMLElement;
+}
+
 interface ModeSwitch {
   readonly buttons: ModeButtonSet;
   readonly element: HTMLElement;
 }
 
+interface RendererNameSet {
+  readonly bunny: string;
+  readonly rectangles: string;
+}
+
 export function mountBrowserHarnessShell(
   root: HTMLElement | null,
   status: BrowserHarnessStatus,
+  options: BrowserHarnessShellOptions,
 ): BrowserHarnessShellMount {
   if (root === null) {
     throw new BrowserHarnessMountError();
   }
 
-  const build = createShell(status);
+  const build = createShell(status, options);
   root.replaceChildren(build.shell);
   return build.mount;
 }
@@ -88,27 +103,35 @@ export function mountBrowserHarnessFailure(root: HTMLElement | null): void {
   root.replaceChildren(failure);
 }
 
-function createShell(status: BrowserHarnessStatus): BrowserHarnessShellBuild {
+function createShell(
+  status: BrowserHarnessStatus,
+  options: BrowserHarnessShellOptions,
+): BrowserHarnessShellBuild {
   const shell = document.createElement('section');
   shell.className = 'harness-shell';
 
   const modeSwitch = createModeSwitch();
+  const heading = createHeading(status);
   const rectanglePanel = createRectanglePanel(status);
   const bunnyPanel = createBunnyPanel();
   const panels: DemoPanelSet = {
     bunny: bunnyPanel.panel,
     rectangles: rectanglePanel.panel,
   };
+  const rendererNames: RendererNameSet = {
+    bunny: options.bunnyRendererName,
+    rectangles: status.rendererName,
+  };
 
   modeSwitch.buttons.rectangles.addEventListener('click', () => {
-    setActiveMode('rectangles', modeSwitch.buttons, panels);
+    setActiveMode('rectangles', modeSwitch.buttons, panels, heading.marker, rendererNames);
   });
   modeSwitch.buttons.bunny.addEventListener('click', () => {
-    setActiveMode('bunny', modeSwitch.buttons, panels);
+    setActiveMode('bunny', modeSwitch.buttons, panels, heading.marker, rendererNames);
   });
-  setActiveMode('bunny', modeSwitch.buttons, panels);
+  setActiveMode('bunny', modeSwitch.buttons, panels, heading.marker, rendererNames);
 
-  shell.append(createHeading(status), modeSwitch.element, rectanglePanel.panel, bunnyPanel.panel);
+  shell.append(heading.element, modeSwitch.element, rectanglePanel.panel, bunnyPanel.panel);
   return {
     mount: {
       bunnyCanvasSlot: bunnyPanel.canvasSlot,
@@ -119,7 +142,7 @@ function createShell(status: BrowserHarnessStatus): BrowserHarnessShellBuild {
   };
 }
 
-function createHeading(status: BrowserHarnessStatus): HTMLElement {
+function createHeading(status: BrowserHarnessStatus): HeadingMount {
   const heading = document.createElement('header');
   heading.className = 'harness-heading';
 
@@ -131,7 +154,10 @@ function createHeading(status: BrowserHarnessStatus): HTMLElement {
   marker.textContent = status.rendererName;
 
   heading.append(title, marker);
-  return heading;
+  return {
+    element: heading,
+    marker,
+  };
 }
 
 function createStatusGrid(status: BrowserHarnessStatus): HTMLElement {
@@ -217,6 +243,8 @@ function setActiveMode(
   mode: BrowserHarnessMode,
   buttons: ModeButtonSet,
   panels: DemoPanelSet,
+  marker: HTMLElement,
+  rendererNames: RendererNameSet,
 ): void {
   const rectanglesActive = mode === 'rectangles';
 
@@ -224,6 +252,7 @@ function setActiveMode(
   buttons.bunny.setAttribute('aria-pressed', String(!rectanglesActive));
   panels.rectangles.hidden = !rectanglesActive;
   panels.bunny.hidden = rectanglesActive;
+  marker.textContent = rectanglesActive ? rendererNames.rectangles : rendererNames.bunny;
 }
 
 function appendStatus(grid: HTMLElement, label: string, value: string): void {
