@@ -19,6 +19,7 @@ export const RENDER_FIXTURE_SOURCE_KIND_NONE = 'none' as const;
 export const RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT = 'gpvue-draft' as const;
 export const RENDER_FIXTURE_SOURCE_KIND_GPVUE = 'gpvue' as const;
 const WINDOWS_DRIVE_PREFIX_PATTERN = /^[A-Za-z]:/u;
+const URL_SCHEME_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u;
 
 export interface RenderFixtureManifestIssue extends JsonObject {
   readonly path: string;
@@ -599,7 +600,8 @@ function isFixtureLocalRelativePath(value: string): boolean {
     !value.startsWith('/') &&
     !value.includes('\\') &&
     !value.includes('..') &&
-    !WINDOWS_DRIVE_PREFIX_PATTERN.test(value)
+    !WINDOWS_DRIVE_PREFIX_PATTERN.test(value) &&
+    !URL_SCHEME_PATTERN.test(value)
   );
 }
 

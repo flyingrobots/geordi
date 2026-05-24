@@ -147,7 +147,7 @@ specific. Do not collapse everything into a generic string error.
 The native example binary should accept a fixture path:
 
 ```bash
-cargo run -p geordi-native-render-everywhere -- fixtures/render-everywhere/hello-panel/fixture.json
+cargo run -p native-render-everywhere -- fixtures/render-everywhere/hello-panel/fixture.json
 ```
 
 Flow:
@@ -180,7 +180,7 @@ CI should not require an interactive desktop window.
 Add a mode such as:
 
 ```bash
-cargo run -p geordi-native-render-everywhere -- --smoke fixtures/render-everywhere/hello-panel/fixture.json
+cargo run -p native-render-everywhere -- --smoke fixtures/render-everywhere/hello-panel/fixture.json
 ```
 
 Smoke mode should:
@@ -241,7 +241,7 @@ Once the native renderer exists, CI should run:
 cargo fmt --check
 cargo test
 cargo clippy --workspace --all-targets -- -D warnings
-cargo run -p geordi-native-render-everywhere -- --smoke fixtures/render-everywhere/hello-panel/fixture.json
+cargo run -p native-render-everywhere -- --smoke fixtures/render-everywhere/hello-panel/fixture.json
 ```
 
 ## Acceptance Criteria

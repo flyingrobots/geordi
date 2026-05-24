@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 
 import { stringifyCanonicalJson } from '@flyingrobots/geordi-core';
 import { compileGpvueSource } from '@flyingrobots/geordi-gpvue';
@@ -39,6 +39,16 @@ class RenderEverywhereSourceKindError extends Error {
   }
 }
 
+class RenderEverywhereFixturePathError extends Error {
+  public readonly fixturePath: string;
+
+  constructor(fixturePath: string) {
+    super('Render-everywhere fixture path escapes the temporary directory');
+    this.name = new.target.name;
+    this.fixturePath = fixturePath;
+  }
+}
+
 async function main(): Promise<void> {
   const manifest = parseRenderFixtureManifest(await readFile(MANIFEST_PATH, 'utf8'));
   const source = await readFile(SOURCE_PATH, 'utf8');
@@ -64,7 +74,7 @@ async function main(): Promise<void> {
       `${stringifyCanonicalJson(manifest, { space: 2 })}\n`,
       'utf8',
     );
-    await writeFile(join(tempDir, sourceArtifact), source, 'utf8');
+    await writeFixtureLocalFile(tempDir, sourceArtifact, source);
     await writeFile(join(tempDir, SCENE_ARTIFACT), compiled.artifacts.ir.content, 'utf8');
     await writeFile(join(tempDir, RECEIPT_ARTIFACT), compiled.artifacts.receipt.content, 'utf8');
     await writeFile(join(tempDir, SOURCE_MAP_ARTIFACT), compiled.artifacts.sourceMap.content, 'utf8');
@@ -77,6 +87,21 @@ async function main(): Promise<void> {
   } finally {
     await rm(tempDir, { force: true, recursive: true });
   }
+}
+
+async function writeFixtureLocalFile(
+  tempDir: string,
+  fixturePath: string,
+  content: string,
+): Promise<void> {
+  const tempRoot = resolve(tempDir);
+  const targetPath = resolve(tempRoot, fixturePath);
+  if (targetPath === tempRoot || !targetPath.startsWith(`${tempRoot}${sep}`)) {
+    throw new RenderEverywhereFixturePathError(fixturePath);
+  }
+
+  await mkdir(dirname(targetPath), { recursive: true });
+  await writeFile(targetPath, content, 'utf8');
 }
 
 function run(command: string, args: readonly string[], env: NodeJS.ProcessEnv): void {

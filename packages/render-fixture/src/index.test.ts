@@ -234,7 +234,7 @@ describe('render fixture manifest validation', () => {
       source: {
         compiler: '@flyingrobots/geordi-gpvue',
         kind: 'gpvue-draft',
-        path: '../source.gpvue',
+        path: 'file://source.gpvue',
       },
     };
 
@@ -245,6 +245,31 @@ describe('render fixture manifest validation', () => {
       '$.source.path',
       '$.source.compiler',
     ]);
+  });
+
+  it('rejects nonlocal source path forms', () => {
+    const invalidPaths = [
+      '../source.gpvue',
+      '/tmp/source.gpvue',
+      'C:\\tmp\\source.gpvue',
+      '\\\\server\\share\\source.gpvue',
+      'https://example.test/source.gpvue',
+    ];
+
+    for (const sourcePath of invalidPaths) {
+      const invalid: JsonValue = {
+        ...makeManifest(),
+        source: {
+          kind: RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
+          path: sourcePath,
+        },
+      };
+
+      const result = validateRenderFixtureManifest(invalid);
+
+      expect(result.ok).toBe(false);
+      expect(result.issues.map((issue) => issue.path)).toEqual(['$.source.path']);
+    }
   });
 
   it('rejects invalid probes', () => {
