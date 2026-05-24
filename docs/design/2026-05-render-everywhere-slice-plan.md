@@ -140,7 +140,7 @@ pixel-identical browser/native claim until strict text exists.
   - Browser UI displays fixture id, artifact hash, IR version, numeric profile, feature
     requirements, and renderer name.
   - Rust app logs the same fields and includes a short hash in the window title.
-  - Done: current slice.
+  - Done: `a132cf5`.
   - Verification: tests assert reported hash matches manifest.
 
 - [ ] **Slice 17: Render-everywhere README**

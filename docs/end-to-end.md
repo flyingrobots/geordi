@@ -1200,4 +1200,3 @@ Explicit feature requirements.
 Renderers either prove support or fail before drawing.
 Supported feature subsets produce deterministic pixels.
 ```
-
