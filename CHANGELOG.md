@@ -99,6 +99,8 @@
 
 ### Tests
 
+- **CI**: Install Chromium for Playwright and run the browser render-everywhere Playwright gate on
+  pull requests and pushes to `main`.
 - **`@flyingrobots/geordi-core`**: add `geordi-ir/1` validation coverage for valid IR, version
   mismatch, non-finite numbers, and malformed node props.
 - **`@flyingrobots/geordi-compiler-core`**: add a compiler-to-core contract test proving emitted

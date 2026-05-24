@@ -159,7 +159,7 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
 
   expect(artifactHash(compiledSceneSource)).toBe(manifest.artifactHash);
 
-  await page.route(/fixture\.json(?:\?.*)?$/u, async (route) => {
+  await page.route(/\/fixture\.json(?:\?.*)?$/u, async (route) => {
     if (route.request().url().includes('?import')) {
       await route.continue();
       return;
