@@ -107,7 +107,7 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Reject invalid projection descriptors.
   - Add deterministic test vectors.
 
-- [ ] **Slice 15: Matrix/vector operation-order law**
+- [x] **Slice 15: Matrix/vector operation-order law**
   - Define matrix storage, vector convention, multiply order, axis normalization, and sampled
     rotation composition.
   - Add deterministic test vectors.
