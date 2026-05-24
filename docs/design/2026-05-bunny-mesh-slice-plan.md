@@ -198,8 +198,10 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Verification: browser render-everywhere typecheck, lint, and tests; native
     render-everywhere tests and clippy.
 
-- [ ] **Slice 26: Bunny fixture documentation**
+- [x] **Slice 26: Bunny fixture documentation**
   - Document asset manifest, fixture manifest, commands, expected output, and attribution.
+  - Done: slice commit `Slice 26: Document bunny fixture contract`.
+  - Verification: `pnpm test:docs`, `git diff --check`.
 
 - [ ] **Slice 27: Demo guide update**
   - Extend render-everywhere documentation with bunny commands and claim boundaries.
