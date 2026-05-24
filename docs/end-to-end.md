@@ -8,15 +8,26 @@ The important distinction is that Geordi is not a UI framework. It is a portable
 
 ## Current Status
 
-The repository currently has two paths that are intentionally converging:
+The repository currently has three paths that are intentionally converging:
 
 1. The compiler path:
    GraphQL SDL, or canonical AST JSON, is parsed into a canonical AST and emitted as Geordi IR.
 
 2. The render-everywhere path:
-   A shared rectangle-only fixture already renders in a browser canvas and in a native Rust application, then both paths check deterministic pixel probes.
+   A shared rectangle-only fixture renders in a browser canvas and in a native Rust application,
+   then both paths check deterministic pixel probes.
 
-The GPVue path is planned but not implemented yet. The near-term target is:
+3. The mesh render-everywhere path:
+   A checked-in Stanford bunny PLY asset is validated by hash, parsed in TypeScript and Rust,
+   rendered as a wireframe in browser and native harnesses, and sampled at deterministic rotation
+   frames.
+
+The broader GPVue SDK is still planned. A constrained GPVue fixture compiler exists for the current
+rectangle proof, while the bunny proof is intentionally asset-driven rather than core IR-driven.
+That separation is important: the bunny path is proving asset identity, mesh parsing, camera,
+projection, and playback law without pretending Geordi has a general mesh IR yet.
+
+The rectangle proof follows this path:
 
 ```text
 GPVue source
@@ -29,8 +40,23 @@ GPVue source
 -> same exact pixel probes
 ```
 
-Today, the browser/native proof uses the fixture at
-`fixtures/render-everywhere/hello-panel/scene.geordi.json`. That fixture is hand-authored while the GPVue compiler path is being built.
+The bunny proof follows this path:
+
+```text
+Stanford bunny PLY bytes
+-> bunny.mesh.json
+-> TypeScript and Rust mesh parsers
+-> deterministic fixed-rate playback frame
+-> browser canvas wireframe render
+-> native Rust wireframe render
+-> same asset hash
+-> same parsed mesh counts and bounds
+-> same sampled-frame report
+```
+
+Today, the rectangle browser/native proof uses the fixture at
+`fixtures/render-everywhere/hello-panel/scene.geordi.json`. The bunny proof uses the asset bundle at
+`fixtures/render-everywhere/assets/stanford-bunny`.
 
 ## One-Screen Pipeline
 
@@ -50,6 +76,11 @@ flowchart TD
   Native["Rust Runtime<br/>geordi-ir + geordi-renderer"]
   Canvas["HTMLCanvasElement<br/>pixel probes"]
   Image["RGBA8 Image Buffer<br/>pixel probes"]
+  MeshAsset["Stanford bunny PLY<br/>content-addressed asset"]
+  MeshManifest["bunny.mesh.json<br/>asset hash, counts, bounds"]
+  Playback["fixed-rate playback frame<br/>axis, seconds, angle"]
+  BrowserMesh["Browser mesh harness<br/>Canvas wireframe"]
+  NativeMesh["Native mesh harness<br/>Rust software wireframe"]
 
   Author --> Adapter --> Ast --> Normalize --> Validate --> Emit
   Emit --> Ir
@@ -58,11 +89,16 @@ flowchart TD
   Emit --> Types
   Ir --> Browser --> Canvas
   Ir --> Native --> Image
+  MeshAsset --> MeshManifest --> BrowserMesh
+  MeshAsset --> MeshManifest --> NativeMesh
+  Playback --> BrowserMesh
+  Playback --> NativeMesh
 ```
 
-The central promise is that all downstream renderers consume the same IR artifact. A renderer may
-have a smaller feature profile than the IR supports. If the IR requires a feature the renderer does
-not support, the renderer must fail loudly before drawing.
+The central promise is that downstream renderers consume explicit artifacts with explicit contracts.
+For the rectangle proof, the artifact is Geordi IR. For the bunny proof, the artifact is a mesh asset
+manifest plus a narrow playback law. A renderer may have a smaller feature profile than an artifact
+requires. If a renderer does not support a required feature, it must fail loudly before drawing.
 
 ## Vocabulary
 
@@ -85,6 +121,15 @@ not support, the renderer must fail loudly before drawing.
 `Render Fixture`
 : A test/demo bundle containing a manifest, IR artifact, receipt, and pixel probes. Fixtures are
   used to prove that a renderer draws expected pixels.
+
+`Mesh Asset Manifest`
+: A content-addressed description of a mesh asset. The bunny manifest records asset path, SHA-256,
+  format, mesh profile, vertex count, face count, bounds, source, attribution, and vertex property
+  names.
+
+`Playback Frame`
+: A deterministic sample of an otherwise live presentation. For the bunny proof, a frame index maps
+  to seconds, rotation angle, authored axis, normalized axis, sample rate, and transform profile.
 
 `Pixel Probe`
 : A deterministic assertion that pixel `(x, y)` must equal exact RGBA bytes. Pixel probes are the
@@ -691,17 +736,72 @@ The browser gate checks:
 - output is nonblank
 - every fixture pixel probe matches exact RGBA bytes
 
+### Browser Bunny Mesh Path
+
+The same browser demo also mounts a second canvas for the Stanford bunny. This canvas is deliberately
+not treated as a Geordi IR pixel-perfect proof yet. It is a mesh harness proof:
+
+1. Vite serves `bunny.mesh.json` and `bun_zipper_res3.ply` as static assets.
+2. The browser harness fetches both assets through the same fetch boundary used by the rectangle
+   fixture.
+3. `@flyingrobots/geordi-render-fixture` validates the mesh manifest and parses the supported ASCII
+   PLY subset.
+4. The harness hashes the fetched PLY bytes with WebCrypto and compares the result to the manifest
+   SHA-256.
+5. A deterministic playback frame computes seconds, angle, authored axis, normalized axis, and
+   transform profile.
+6. A Canvas 2D wireframe renderer draws the sampled frame.
+7. `requestAnimationFrame` is presentation glue only. Tests use explicit frame indices.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Page as Browser Page
+  participant Assets as Vite-served bunny assets
+  participant Fixture as render-fixture package
+  participant Playback as Playback Frame Law
+  participant Canvas as Bunny Canvas
+  participant Gate as Vitest or Playwright
+
+  Page->>Assets: fetch bunny.mesh.json
+  Page->>Fixture: parseRenderFixtureMeshAssetManifest()
+  Page->>Assets: fetch bun_zipper_res3.ply
+  Page->>Page: SHA-256 fetched PLY source
+  Page->>Fixture: parseRenderFixtureAsciiPlyTriangleMesh()
+  Page->>Playback: createRenderFixtureMeshPlaybackFrame(frameIndex)
+  Playback-->>Page: seconds, angle, normalizedAxis
+  Page->>Canvas: render wireframe frame
+  Gate->>Canvas: assert nonblank and frame metadata
+```
+
+The browser bunny report contains the fields that make the native report comparable:
+
+```text
+rendererName=browser-canvas-wireframe-mesh
+frame=0
+seconds=0
+angleRadians=0
+normalizedAxis=0.4866642633922876,0.8111071056538126,0.32444284226152503
+transformProfile=geordi-fixed-rate-rotation/1
+vertices=1889
+faces=3851
+assetHash=sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6
+```
+
 ## Native Rust Rendering Path
 
 The Rust path uses:
 
 - `crates/geordi-ir` for typed IR loading and validation
 - `crates/geordi-renderer` for runtime profile checks and rectangle rendering
+- `crates/geordi-mesh` for bunny asset hashing and ASCII PLY parsing
 - `examples/native-render-everywhere` as the native app harness
 - `minifb` for the native window shell
 
-The Rust MVP is deliberately narrower than the TypeScript IR. It is rectangle-only so the first
-native proof can be exact and explainable.
+The Rust IR renderer is deliberately narrower than the TypeScript IR. It is rectangle-only so the
+first native proof can be exact and explainable. The native bunny path is a separate mesh harness
+inside the same example application. That separation keeps the core IR snapshot model honest while
+the mesh playback law is still being proven.
 
 ```mermaid
 flowchart TD
@@ -825,6 +925,100 @@ Expected success includes:
 smoke=passed
 ```
 
+### Native Bunny Mesh Path
+
+The native bunny path uses the same asset manifest and PLY bytes as the browser path. It does not
+load `scene.geordi.json`; it loads `bunny.mesh.json`, checks the PLY hash, parses the PLY through
+`geordi-mesh`, computes a deterministic playback frame, and renders an RGBA8 wireframe buffer.
+
+```mermaid
+flowchart TD
+  AssetDir["fixtures/render-everywhere/assets/stanford-bunny"]
+  Manifest["bunny.mesh.json"]
+  Ply["bun_zipper_res3.ply"]
+  Hash["assert_mesh_asset_sha256()"]
+  Parse["parse_ascii_ply_triangle_mesh()"]
+  Frame["create_bunny_frame_report()<br/>frame -> seconds -> angle"]
+  Render["render_bunny_wireframe()<br/>mesh + angle -> RGBA8"]
+  Smoke["--bunny-smoke<br/>nonblank smoke"]
+  Window["--bunny-window<br/>live minifb presentation"]
+
+  AssetDir --> Manifest
+  AssetDir --> Ply
+  Manifest --> Hash
+  Ply --> Hash --> Parse --> Frame --> Render
+  Render --> Smoke
+  Render --> Window
+```
+
+```mermaid
+classDiagram
+  class BunnyMeshAssetManifest {
+    +asset_path: String
+    +asset_version: String
+    +mesh_profile: String
+    +sha256: String
+    +counts: BunnyMeshAssetCounts
+    +bounds: BunnyMeshAssetBounds
+    +vertex_properties: Vec~String~
+  }
+
+  class PlyMesh {
+    +vertices: Vec~PlyVertex~
+    +faces: Vec~[usize; 3]~
+    +bounds: PlyMeshBounds
+    +vertex_properties: Vec~String~
+  }
+
+  class BunnyFrameReport {
+    +frame_index: u64
+    +seconds: f64
+    +angle_radians: f64
+    +normalized_axis: [f64; 3]
+    +asset_hash: String
+    +transform_profile: String
+  }
+
+  class BunnyImage {
+    +width: usize
+    +height: usize
+    +rgba: Vec~u8~
+    +non_background_pixels()
+  }
+
+  BunnyMeshAssetManifest --> PlyMesh : validates counts and bounds
+  PlyMesh --> BunnyFrameReport : sampled with playback frame
+  BunnyFrameReport --> BunnyImage : render wireframe
+```
+
+The fixed-frame native smoke commands are:
+
+```bash
+cargo run -p native-render-everywhere -- --bunny-smoke fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke --frame 15 fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke --frame 60 fixtures/render-everywhere/assets/stanford-bunny
+```
+
+The live native window command is:
+
+```bash
+cargo run -p native-render-everywhere -- --bunny-window fixtures/render-everywhere/assets/stanford-bunny
+```
+
+Expected bunny smoke output includes:
+
+```text
+rendererName=rust-software-wireframe-mesh
+fixtureId=render-everywhere:stanford-bunny
+vertices=1889
+faces=3851
+frameIndex=60
+seconds=1
+angleRadians=0.7853981633974483
+transformProfile=geordi-fixed-rate-rotation/1
+smoke=passed
+```
+
 ## Render Fixture Contract
 
 Render fixtures are the bridge between "the renderer ran" and "the renderer drew the expected
@@ -888,6 +1082,104 @@ The same fixture powers both:
 - Rust `--smoke` mode
 
 That shared contract is the first concrete proof that Geordi can render everywhere.
+
+## Mesh Asset And Playback Contract
+
+The bunny proof adds a second kind of fixture contract. It is not a `scene.geordi.json` render
+fixture. It is a mesh asset plus a narrow playback law. The point is to prove that Geordi can carry
+real graphics assets through explicit boundaries before the core IR grows a generalized mesh node.
+
+```mermaid
+erDiagram
+  MESH_ASSET_MANIFEST ||--|| MESH_ASSET_BYTES : identifies
+  MESH_ASSET_MANIFEST ||--|| MESH_COUNTS : declares
+  MESH_ASSET_MANIFEST ||--|| MESH_BOUNDS : declares
+  MESH_ASSET_MANIFEST ||--|| MESH_SOURCE : attributes
+  MESH_ASSET_MANIFEST ||--o{ VERTEX_PROPERTY : declares
+  MESH_PLAYBACK ||--|| PLAYBACK_AXIS : declares
+  MESH_PLAYBACK ||--o{ PLAYBACK_FRAME : samples
+  PLAYBACK_FRAME ||--|| FRAME_REPORT : emits
+
+  MESH_ASSET_MANIFEST {
+    string assetVersion
+    string id
+    string meshProfile
+    string assetPath
+    string sha256
+    string faceProperty
+  }
+
+  MESH_ASSET_BYTES {
+    string path
+    string encoding
+    string format
+  }
+
+  MESH_COUNTS {
+    number vertices
+    number faces
+  }
+
+  MESH_BOUNDS {
+    number min
+    number max
+  }
+
+  MESH_SOURCE {
+    string url
+    string retrieved
+    string attribution
+  }
+
+  VERTEX_PROPERTY {
+    string name
+  }
+
+  MESH_PLAYBACK {
+    string kind
+    number radiansPerSecond
+    number sampleRate
+  }
+
+  PLAYBACK_AXIS {
+    number x
+    number y
+    number z
+  }
+
+  PLAYBACK_FRAME {
+    number frameIndex
+    number seconds
+    number angleRadians
+  }
+
+  FRAME_REPORT {
+    string rendererName
+    string assetHash
+    string transformProfile
+  }
+```
+
+The manifest is intentionally strict. It rejects:
+
+- missing or malformed `sha256:` identity;
+- nonlocal asset paths;
+- unsupported mesh format or encoding;
+- missing `x`, `y`, `z` vertex properties;
+- nonpositive vertex or face counts;
+- nonfinite bounds;
+- zero rotation axes.
+
+The playback law is also intentionally narrow:
+
+```text
+seconds = frameIndex / sampleRate
+angleRadians = seconds * radiansPerSecond
+normalizedAxis = axis / length(axis)
+```
+
+This makes frame `15` and frame `60` meaningful across runtimes. Host time is only a live
+presentation source. Tests and CI use frame indices.
 
 ## End-to-End Data Model
 
@@ -995,6 +1287,13 @@ Runtime and boundary failures are custom error types:
 - `GeordiIrValidationError`
 - `GeordiRenderError`
 - `NativePixelProbeError`
+- `RenderFixtureInvalidMeshAssetManifestError`
+- `RenderFixtureInvalidPlaybackFrameError`
+- `RenderFixturePlyHeaderError`
+- `RenderFixturePlyVertexError`
+- `RenderFixturePlyFaceError`
+- `MeshAssetHashMismatchError`
+- `NativeBunnyError`
 
 The rule is that callers should see a Geordi-specific error or diagnostic, not a raw throw from a
 dependency boundary.
@@ -1021,6 +1320,7 @@ flowchart TD
 ```mermaid
 flowchart LR
   IR["scene.geordi.json"]
+  Mesh["bunny.mesh.json + bun_zipper_res3.ply"]
 
   subgraph Browser["Browser Runtime"]
     BValidate["validateGeordiIr()"]
@@ -1028,6 +1328,7 @@ flowchart LR
     BPrepare["prepareGeordiIr()"]
     BDraw["Canvas 2D draw calls"]
     BProbe["Playwright getImageData()"]
+    BMesh["browser bunny wireframe canvas"]
   end
 
   subgraph Rust["Rust Runtime"]
@@ -1036,18 +1337,23 @@ flowchart LR
     RProfile["GEORDI_NATIVE_RUNTIME_PROFILE"]
     RDraw["RGBA8 software renderer"]
     RProbe["--smoke pixel_at()"]
+    RMesh["native bunny wireframe buffer"]
   end
 
   IR --> BValidate --> BProfile --> BPrepare --> BDraw --> BProbe
   IR --> RLoad --> RValidate --> RProfile --> RDraw --> RProbe
+  Mesh --> BMesh
+  Mesh --> RMesh
 ```
 
 They are not implemented the same way:
 
-- Browser path draws into an `HTMLCanvasElement`.
-- Rust path draws into an explicit RGBA8 buffer and can show it in a native window.
+- Browser rectangle and bunny paths draw into `HTMLCanvasElement` instances.
+- Rust rectangle and bunny paths draw into explicit RGBA8 buffers and can show them in native
+  windows.
 - Browser path currently supports a broader TypeScript baseline profile.
-- Rust path intentionally supports a smaller rectangle-only MVP.
+- Rust IR rendering intentionally supports a smaller rectangle-only MVP.
+- The bunny path is a parallel mesh harness, not a general mesh IR runtime.
 
 They are expected to agree on:
 
@@ -1057,8 +1363,13 @@ They are expected to agree on:
 - canvas dimensions
 - artifact hash
 - pixel probes for supported features
+- bunny asset hash
+- bunny mesh counts and bounds
+- bunny sampled-frame metadata
 
-That is platform agnosticism with a testable contract, not just a slogan.
+That is platform agnosticism with a testable contract, not just a slogan. The rectangle proof uses
+exact pixel probes. The bunny proof uses shared asset identity plus deterministic sampled-frame
+metadata and nonblank render smoke until a cross-backend 3D raster law exists.
 
 ## What Happens In The Current Render-Everywhere Demo
 
@@ -1086,6 +1397,20 @@ The native window:
 cargo run -p native-render-everywhere -- fixtures/render-everywhere/hello-panel
 ```
 
+The native bunny smoke gates:
+
+```bash
+cargo run -p native-render-everywhere -- --bunny-smoke fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke --frame 15 fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke --frame 60 fixtures/render-everywhere/assets/stanford-bunny
+```
+
+The native bunny live window:
+
+```bash
+cargo run -p native-render-everywhere -- --bunny-window fixtures/render-everywhere/assets/stanford-bunny
+```
+
 The shared fixture path:
 
 ```text
@@ -1099,6 +1424,22 @@ fixture.json
 scene.geordi.json
 scene.geordi.json.receipt
 README.md
+```
+
+The bunny asset path:
+
+```text
+fixtures/render-everywhere/assets/stanford-bunny
+```
+
+That folder contains:
+
+```text
+README.md
+STANFORD_RECONSTRUCTION_README.txt
+bun_zipper_res3.ply
+bunny.math-vectors.json
+bunny.mesh.json
 ```
 
 ## What Is Most Interesting Architecturally
@@ -1142,18 +1483,28 @@ The Rust renderer does not call the browser renderer. It loads the same IR artif
 validates it independently, and renders pixels independently. That is what makes it a meaningful
 platform-agnostic proof.
 
+### 6. Mesh Assets Are Boundary Contracts
+
+The bunny work is valuable because it proves a different kind of determinism. The renderer is no
+longer drawing only hand-authored rectangles. It is consuming a real asset with a source, a content
+hash, a declared mesh profile, parsed numeric data, bounds, camera assumptions, projection
+assumptions, and fixed-rate playback metadata. Every one of those facts crosses a boundary, and each
+boundary either validates or fails loudly.
+
 ## Current Limitations
 
 The current repo does not yet claim:
 
-- GPVue source compilation
+- a general GPVue application SDK
 - full browser/native parity for text
 - deterministic font shaping
 - binary `.geordi` packing
 - WebGPU, Metal, Vulkan, or wgpu rendering
 - GPU shader parity
 - full CSS layout semantics
-- runtime animation semantics
+- general runtime animation semantics
+- pixel-identical 3D rasterization across browser and native backends
+- general mesh nodes inside core Geordi IR
 
 The current repo does claim:
 
@@ -1166,6 +1517,12 @@ The current repo does claim:
 - native Rust rectangle rendering for the render-everywhere MVP subset
 - exact browser pixel probes for the shared fixture
 - exact Rust offscreen pixel probes for the shared fixture
+- Stanford bunny asset identity by SHA-256
+- TypeScript and Rust parsing of the supported ASCII PLY triangle subset
+- browser and native wireframe bunny rendering
+- browser and native fixed-frame and live rotating bunny presentations
+- comparable bunny frame reports for sampled frames
+- nonblank smoke coverage for static and nonzero bunny frames
 - loud failure for unsupported runtime requirements
 
 ## Target End State
