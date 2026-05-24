@@ -4,6 +4,7 @@ import {
   GEORDI_IR_VERSION,
   GEORDI_NUMERIC_PROFILE,
   isGeordiFeatureRequirement,
+  type GeordiIr,
   type GeordiFeatureRequirement,
   type GeordiNumericProfile,
   type JsonObject,
@@ -26,6 +27,22 @@ export interface RenderFixtureManifestIssue extends JsonObject {
 export interface RenderFixtureManifestValidationResult {
   readonly ok: boolean;
   readonly issues: readonly RenderFixtureManifestIssue[];
+}
+
+export interface RenderFixtureArtifactIssue extends JsonObject {
+  readonly path: string;
+  readonly message: string;
+}
+
+export interface RenderFixtureArtifactValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureArtifactIssue[];
+}
+
+export interface RenderFixtureArtifactValidationInput {
+  readonly artifactHash: string;
+  readonly ir: GeordiIr;
+  readonly manifest: RenderFixtureManifest;
 }
 
 export interface RenderFixtureCanvas extends JsonObject {
@@ -96,6 +113,18 @@ export class RenderFixtureInvalidManifestError extends Error {
   }
 }
 
+export class RenderFixtureArtifactValidationError extends Error {
+  public readonly fixtureId: string;
+  public readonly issues: readonly RenderFixtureArtifactIssue[];
+
+  constructor(fixtureId: string, issues: readonly RenderFixtureArtifactIssue[]) {
+    super('Render fixture artifact validation failed');
+    this.name = new.target.name;
+    this.fixtureId = fixtureId;
+    this.issues = issues;
+  }
+}
+
 export class RenderFixturePixelProbeError extends Error {
   public readonly actual: RenderFixtureRgba;
   public readonly expected: RenderFixtureRgba;
@@ -125,20 +154,6 @@ export class RenderFixtureInvalidPixelSampleError extends Error {
     this.name = new.target.name;
     this.channelIndex = channelIndex;
     this.value = value;
-  }
-}
-
-export class RenderFixtureSourceCompileUnavailableError extends Error {
-  public readonly fixtureId: string;
-  public readonly sourceKind: RenderFixtureSourceKind;
-  public readonly sourcePath: string | undefined;
-
-  constructor(fixtureId: string, source: RenderFixtureSource) {
-    super('Render fixture source compile unavailable');
-    this.name = new.target.name;
-    this.fixtureId = fixtureId;
-    this.sourceKind = source.kind;
-    this.sourcePath = source.kind === RENDER_FIXTURE_SOURCE_KIND_NONE ? undefined : source.path;
   }
 }
 
@@ -206,6 +221,72 @@ export function validateRenderFixtureManifest(
   return { ok: issues.length === 0, issues };
 }
 
+export function validateRenderFixtureArtifact(
+  input: RenderFixtureArtifactValidationInput,
+): RenderFixtureArtifactValidationResult {
+  const issues: RenderFixtureArtifactIssue[] = [];
+  const { artifactHash, ir, manifest } = input;
+
+  if (artifactHash !== manifest.artifactHash) {
+    pushArtifactIssue(
+      issues,
+      '$.artifactHash',
+      'Fixture artifact hash must match the loaded scene bytes',
+    );
+  }
+
+  if (!sameString(manifest.runtimeProfile.irVersion, ir.irVersion)) {
+    pushArtifactIssue(
+      issues,
+      '$.runtimeProfile.irVersion',
+      'Runtime profile IR version must match the IR artifact',
+    );
+  }
+
+  if (!sameString(manifest.runtimeProfile.numericProfile, ir.numericProfile)) {
+    pushArtifactIssue(
+      issues,
+      '$.runtimeProfile.numericProfile',
+      'Runtime profile numeric profile must match the IR artifact',
+    );
+  }
+
+  if (!sameRequirements(manifest.runtimeProfile.requires, ir.requires)) {
+    pushArtifactIssue(
+      issues,
+      '$.runtimeProfile.requires',
+      'Runtime profile requirements must match the IR artifact',
+    );
+  }
+
+  if (!sceneDimensionMatchesCanvas(ir.scene.width, manifest.canvas.width)) {
+    pushArtifactIssue(
+      issues,
+      '$.canvas.width',
+      'Fixture canvas width must match the IR scene width',
+    );
+  }
+
+  if (!sceneDimensionMatchesCanvas(ir.scene.height, manifest.canvas.height)) {
+    pushArtifactIssue(
+      issues,
+      '$.canvas.height',
+      'Fixture canvas height must match the IR scene height',
+    );
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function assertRenderFixtureArtifact(
+  input: RenderFixtureArtifactValidationInput,
+): void {
+  const result = validateRenderFixtureArtifact(input);
+  if (!result.ok) {
+    throw new RenderFixtureArtifactValidationError(input.manifest.id, result.issues);
+  }
+}
+
 export function assertRenderFixturePixelProbe(
   fixtureId: string,
   probe: RenderFixturePixelProbe,
@@ -233,10 +314,6 @@ export function renderFixtureRgbaFromBytes(bytes: ArrayLike<number>): RenderFixt
     requireByteChannel(bytes, 2),
     requireByteChannel(bytes, 3),
   ];
-}
-
-export function compileRenderFixtureSource(manifest: RenderFixtureManifest): never {
-  throw new RenderFixtureSourceCompileUnavailableError(manifest.id, manifest.source);
 }
 
 function validateCanvas(
@@ -597,6 +674,43 @@ function pushIssue(
   message: string,
 ): void {
   issues.push({ path, message });
+}
+
+function pushArtifactIssue(
+  issues: RenderFixtureArtifactIssue[],
+  path: string,
+  message: string,
+): void {
+  issues.push({ path, message });
+}
+
+function sameRequirements(
+  left: readonly GeordiFeatureRequirement[],
+  right: readonly GeordiFeatureRequirement[],
+): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  for (let index = 0; index < left.length; index++) {
+    if (left[index] !== right[index]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function sameString(left: string, right: string): boolean {
+  return left === right;
+}
+
+function sceneDimensionMatchesCanvas(sceneDimension: number, canvasDimension: number): boolean {
+  return (
+    Number.isFinite(sceneDimension) &&
+    Number.isInteger(sceneDimension) &&
+    sceneDimension === canvasDimension
+  );
 }
 
 function sameRgba(left: RenderFixtureRgba, right: RenderFixtureRgba): boolean {

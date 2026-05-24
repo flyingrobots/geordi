@@ -4,6 +4,12 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ES2022",
     "moduleResolution": "bundler",
+    "paths": {
+      "@flyingrobots/geordi-core": ["../../packages/core/src/index.ts"],
+      "@flyingrobots/geordi-gpvue": ["../../packages/gpvue/src/index.ts"],
+      "@flyingrobots/geordi-render-fixture": ["../../packages/render-fixture/src/index.ts"],
+      "@flyingrobots/geordi-runtime-webgl": ["../../packages/runtime-webgl/src/index.ts"]
+    },
     "resolveJsonModule": true,
     "allowImportingTsExtensions": false,
     "noEmit": true,

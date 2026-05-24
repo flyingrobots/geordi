@@ -5,22 +5,24 @@ import {
   GEORDI_CORE_PROFILE,
   GEORDI_IR_VERSION,
   GEORDI_NUMERIC_PROFILE,
+  type GeordiIr,
   type JsonValue,
 } from '@flyingrobots/geordi-core';
 import {
+  assertRenderFixtureArtifact,
   assertRenderFixtureManifest,
   assertRenderFixturePixelProbe,
   assertRenderFixturePixelProbes,
-  compileRenderFixtureSource,
   isRenderFixtureManifest,
   parseRenderFixtureManifest,
   RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
   RENDER_FIXTURE_VERSION,
+  RenderFixtureArtifactValidationError,
   RenderFixtureInvalidManifestError,
   RenderFixtureInvalidPixelSampleError,
   RenderFixturePixelProbeError,
-  RenderFixtureSourceCompileUnavailableError,
   renderFixtureRgbaFromBytes,
+  validateRenderFixtureArtifact,
   validateRenderFixtureManifest,
   type RenderFixtureManifest,
   type RenderFixturePixelProbe,
@@ -53,6 +55,33 @@ function makeManifest(): RenderFixtureManifest {
     source: {
       kind: RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
       path: 'source.gpvue',
+    },
+  };
+}
+
+function makeIr(): GeordiIr {
+  return {
+    irVersion: GEORDI_IR_VERSION,
+    nodes: [
+      {
+        id: 'background',
+        kind: 'Rect',
+        props: {
+          fill: '#101820',
+          height: 360,
+          width: 640,
+          x: 0,
+          y: 0,
+        },
+      },
+    ],
+    numericProfile: GEORDI_NUMERIC_PROFILE,
+    requires: [GEORDI_CORE_PROFILE, 'layout.resolved', 'shape.rect', 'paint.solid'],
+    scene: {
+      height: 360,
+      id: 'render-everywhere:hello-panel',
+      units: 'px',
+      width: 640,
     },
   };
 }
@@ -104,16 +133,27 @@ function captureInvalidPixelSampleError(): RenderFixtureInvalidPixelSampleError 
   throw new RenderFixtureTestError('Expected RenderFixtureInvalidPixelSampleError');
 }
 
-function captureSourceCompileError(): RenderFixtureSourceCompileUnavailableError {
+function captureArtifactValidationError(): RenderFixtureArtifactValidationError {
   try {
-    compileRenderFixtureSource(makeManifest());
+    assertRenderFixtureArtifact({
+      artifactHash: 'sha256:0000000000000000000000000000000000000000000000000000000000000000',
+      ir: {
+        ...makeIr(),
+        requires: [GEORDI_CORE_PROFILE, 'layout.resolved'],
+        scene: {
+          ...makeIr().scene,
+          width: 641,
+        },
+      },
+      manifest: makeManifest(),
+    });
   } catch (error) {
-    if (error instanceof RenderFixtureSourceCompileUnavailableError) {
+    if (error instanceof RenderFixtureArtifactValidationError) {
       return error;
     }
   }
 
-  throw new RenderFixtureTestError('Expected RenderFixtureSourceCompileUnavailableError');
+  throw new RenderFixtureTestError('Expected RenderFixtureArtifactValidationError');
 }
 
 describe('render fixture manifest validation', () => {
@@ -257,12 +297,28 @@ describe('render fixture manifest validation', () => {
     );
   });
 
-  it('fails draft GPVue compile attempts with a custom error', () => {
-    const error = captureSourceCompileError();
+});
+
+describe('render fixture artifact validation', () => {
+  it('accepts matching manifest, artifact hash, and IR metadata', () => {
+    expect(
+      validateRenderFixtureArtifact({
+        artifactHash: makeManifest().artifactHash,
+        ir: makeIr(),
+        manifest: makeManifest(),
+      }),
+    ).toEqual({ ok: true, issues: [] });
+  });
+
+  it('reports hash, runtime profile, and canvas mismatches before rendering', () => {
+    const error = captureArtifactValidationError();
 
     expect(error.fixtureId).toBe('render-everywhere:hello-panel');
-    expect(error.sourceKind).toBe('gpvue-draft');
-    expect(error.sourcePath).toBe('source.gpvue');
+    expect(error.issues.map((issue) => issue.path)).toEqual([
+      '$.artifactHash',
+      '$.runtimeProfile.requires',
+      '$.canvas.width',
+    ]);
   });
 });
 

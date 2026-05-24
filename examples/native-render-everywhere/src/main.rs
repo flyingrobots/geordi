@@ -10,6 +10,7 @@ use geordi_renderer::{
 };
 use minifb::{Key, Window, WindowOptions};
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use std::env;
 use std::error::Error;
 use std::ffi::{OsStr, OsString};
@@ -99,6 +100,19 @@ struct RenderFixtureManifest {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct RenderFixtureReceipt {
+    artifact_hash: String,
+    artifact_hash_alg: String,
+    artifact_path: String,
+    fixture_id: String,
+    fixture_version: String,
+    ir_version: String,
+    numeric_profile: String,
+    requires: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct RenderFixtureCanvas {
     height: usize,
     width: usize,
@@ -139,6 +153,8 @@ enum RenderFixtureSource {
 #[derive(Debug)]
 enum NativeAppError {
     Args(NativeArgsError),
+    ArtifactLoad(NativeArtifactLoadError),
+    ArtifactValidation(NativeArtifactValidationError),
     IrLoad(GeordiIrLoadError),
     IrValidation(GeordiIrValidationError),
     ManifestLoad(NativeManifestLoadError),
@@ -146,6 +162,7 @@ enum NativeAppError {
     ManifestValidation(NativeManifestValidationError),
     Output(NativeOutputError),
     PixelProbe(NativePixelProbeError),
+    ReceiptParse(NativeReceiptParseError),
     Render(GeordiRenderError),
     RuntimeProfile(GeordiRuntimeUnsupportedProfileError),
     Window(NativeWindowError),
@@ -161,6 +178,8 @@ impl Error for NativeAppError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Args(source) => Some(source),
+            Self::ArtifactLoad(source) => Some(source),
+            Self::ArtifactValidation(source) => Some(source),
             Self::IrLoad(source) => Some(source),
             Self::IrValidation(source) => Some(source),
             Self::ManifestLoad(source) => Some(source),
@@ -168,6 +187,7 @@ impl Error for NativeAppError {
             Self::ManifestValidation(source) => Some(source),
             Self::Output(source) => Some(source),
             Self::PixelProbe(source) => Some(source),
+            Self::ReceiptParse(source) => Some(source),
             Self::Render(source) => Some(source),
             Self::RuntimeProfile(source) => Some(source),
             Self::Window(source) => Some(source),
@@ -178,6 +198,18 @@ impl Error for NativeAppError {
 impl From<NativeArgsError> for NativeAppError {
     fn from(error: NativeArgsError) -> Self {
         Self::Args(error)
+    }
+}
+
+impl From<NativeArtifactLoadError> for NativeAppError {
+    fn from(error: NativeArtifactLoadError) -> Self {
+        Self::ArtifactLoad(error)
+    }
+}
+
+impl From<NativeArtifactValidationError> for NativeAppError {
+    fn from(error: NativeArtifactValidationError) -> Self {
+        Self::ArtifactValidation(error)
     }
 }
 
@@ -223,6 +255,12 @@ impl From<NativePixelProbeError> for NativeAppError {
     }
 }
 
+impl From<NativeReceiptParseError> for NativeAppError {
+    fn from(error: NativeReceiptParseError) -> Self {
+        Self::ReceiptParse(error)
+    }
+}
+
 impl From<GeordiRenderError> for NativeAppError {
     fn from(error: GeordiRenderError) -> Self {
         Self::Render(error)
@@ -251,6 +289,76 @@ impl Display for NativeArgsError {
 }
 
 impl Error for NativeArgsError {}
+
+#[derive(Debug)]
+struct NativeArtifactLoadError {
+    path: PathBuf,
+    source: io::Error,
+}
+
+impl NativeArtifactLoadError {
+    const fn new(path: PathBuf, source: io::Error) -> Self {
+        Self { path, source }
+    }
+}
+
+impl Display for NativeArtifactLoadError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Native fixture artifact load failed: {}",
+            self.path.display()
+        )
+    }
+}
+
+impl Error for NativeArtifactLoadError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.source)
+    }
+}
+
+#[derive(Debug)]
+struct NativeArtifactValidationError {
+    issues: Vec<NativeArtifactValidationIssue>,
+}
+
+impl NativeArtifactValidationError {
+    const fn new(issues: Vec<NativeArtifactValidationIssue>) -> Self {
+        Self { issues }
+    }
+}
+
+impl Display for NativeArtifactValidationError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        if let Some(issue) = self.issues.first() {
+            write!(
+                formatter,
+                "Native fixture artifact validation failed at {}: {}",
+                issue.path, issue.message
+            )
+        } else {
+            formatter.write_str("Native fixture artifact validation failed")
+        }
+    }
+}
+
+impl Error for NativeArtifactValidationError {}
+
+#[derive(Debug)]
+struct NativeArtifactValidationIssue {
+    path: String,
+    message: String,
+}
+
+impl NativeArtifactValidationIssue {
+    fn new(path: &str, message: &str) -> Self {
+        Self {
+            path: path.to_owned(),
+            message: message.to_owned(),
+        }
+    }
+}
 
 #[derive(Debug)]
 struct NativeManifestLoadError {
@@ -303,6 +411,34 @@ impl Display for NativeManifestParseError {
 }
 
 impl Error for NativeManifestParseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.source)
+    }
+}
+
+#[derive(Debug)]
+struct NativeReceiptParseError {
+    path: PathBuf,
+    source: serde_json::Error,
+}
+
+impl NativeReceiptParseError {
+    const fn new(path: PathBuf, source: serde_json::Error) -> Self {
+        Self { path, source }
+    }
+}
+
+impl Display for NativeReceiptParseError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Native fixture receipt parse failed: {}",
+            self.path.display()
+        )
+    }
+}
+
+impl Error for NativeReceiptParseError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         Some(&self.source)
     }
@@ -452,7 +588,13 @@ fn load_fixture(fixture_dir: &Path) -> Result<LoadedFixture, NativeAppError> {
     let manifest = load_manifest(&fixture_dir.join(FIXTURE_MANIFEST_PATH))?;
     validate_manifest(&manifest)?;
 
-    let ir = load_geordi_ir(fixture_dir.join(&manifest.scene_path))?;
+    let scene_path = fixture_dir.join(&manifest.scene_path);
+    let scene_bytes = load_artifact_bytes(&scene_path)?;
+    validate_scene_artifact_hash(&manifest, &scene_bytes)?;
+    let receipt = load_receipt(&fixture_dir.join(&manifest.receipt_path))?;
+    validate_receipt_matches_manifest(&manifest, &receipt)?;
+
+    let ir = load_geordi_ir(scene_path)?;
     validate_geordi_ir(&ir)?;
     validate_manifest_matches_ir(&manifest, &ir)?;
     assert_native_runtime_profile(&ir)?;
@@ -465,12 +607,24 @@ fn load_fixture(fixture_dir: &Path) -> Result<LoadedFixture, NativeAppError> {
     })
 }
 
+fn load_artifact_bytes(path: &Path) -> Result<Vec<u8>, NativeArtifactLoadError> {
+    fs::read(path).map_err(|error| NativeArtifactLoadError::new(path.to_path_buf(), error))
+}
+
 fn load_manifest(path: &Path) -> Result<RenderFixtureManifest, NativeAppError> {
     let source = fs::read_to_string(path)
         .map_err(|error| NativeManifestLoadError::new(path.to_path_buf(), error))?;
 
     serde_json::from_str(&source)
         .map_err(|error| NativeManifestParseError::new(path.to_path_buf(), error).into())
+}
+
+fn load_receipt(path: &Path) -> Result<RenderFixtureReceipt, NativeAppError> {
+    let source = fs::read_to_string(path)
+        .map_err(|error| NativeArtifactLoadError::new(path.to_path_buf(), error))?;
+
+    serde_json::from_str(&source)
+        .map_err(|error| NativeReceiptParseError::new(path.to_path_buf(), error).into())
 }
 
 fn validate_manifest(
@@ -560,6 +714,95 @@ fn validate_manifest_matches_ir(
         Ok(())
     } else {
         Err(NativeManifestValidationError::new(issues))
+    }
+}
+
+fn validate_scene_artifact_hash(
+    manifest: &RenderFixtureManifest,
+    scene_bytes: &[u8],
+) -> Result<(), NativeArtifactValidationError> {
+    let actual_hash = sha256_artifact_hash(scene_bytes);
+
+    if actual_hash == manifest.artifact_hash {
+        Ok(())
+    } else {
+        Err(NativeArtifactValidationError::new(vec![
+            NativeArtifactValidationIssue::new(
+                "$.artifactHash",
+                "Artifact hash must match the loaded scene bytes",
+            ),
+        ]))
+    }
+}
+
+fn validate_receipt_matches_manifest(
+    manifest: &RenderFixtureManifest,
+    receipt: &RenderFixtureReceipt,
+) -> Result<(), NativeArtifactValidationError> {
+    let mut issues = Vec::new();
+
+    validate_artifact_literal(
+        &receipt.artifact_hash,
+        &manifest.artifact_hash,
+        "$.artifactHash",
+        "Receipt artifact hash",
+        &mut issues,
+    );
+    validate_artifact_literal(
+        &receipt.artifact_hash_alg,
+        "sha256",
+        "$.artifactHashAlg",
+        "Receipt artifact hash algorithm",
+        &mut issues,
+    );
+    validate_artifact_literal(
+        &receipt.artifact_path,
+        &manifest.scene_path,
+        "$.artifactPath",
+        "Receipt artifact path",
+        &mut issues,
+    );
+    validate_artifact_literal(
+        &receipt.fixture_id,
+        &manifest.id,
+        "$.fixtureId",
+        "Receipt fixture id",
+        &mut issues,
+    );
+    validate_artifact_literal(
+        &receipt.fixture_version,
+        &manifest.fixture_version,
+        "$.fixtureVersion",
+        "Receipt fixture version",
+        &mut issues,
+    );
+    validate_artifact_literal(
+        &receipt.ir_version,
+        &manifest.runtime_profile.ir_version,
+        "$.irVersion",
+        "Receipt IR version",
+        &mut issues,
+    );
+    validate_artifact_literal(
+        &receipt.numeric_profile,
+        &manifest.runtime_profile.numeric_profile,
+        "$.numericProfile",
+        "Receipt numeric profile",
+        &mut issues,
+    );
+
+    if receipt.requires != manifest.runtime_profile.requires {
+        push_artifact_issue(
+            &mut issues,
+            "$.requires",
+            "Receipt requirements must match the fixture runtime profile",
+        );
+    }
+
+    if issues.is_empty() {
+        Ok(())
+    } else {
+        Err(NativeArtifactValidationError::new(issues))
     }
 }
 
@@ -757,6 +1000,41 @@ fn push_manifest_issue(issues: &mut Vec<NativeManifestValidationIssue>, path: &s
     issues.push(NativeManifestValidationIssue::new(path, message));
 }
 
+fn validate_artifact_literal(
+    value: &str,
+    expected: &str,
+    path: &str,
+    label: &str,
+    issues: &mut Vec<NativeArtifactValidationIssue>,
+) {
+    if value != expected {
+        push_artifact_issue(issues, path, &format!("{label} must be {expected}"));
+    }
+}
+
+fn push_artifact_issue(issues: &mut Vec<NativeArtifactValidationIssue>, path: &str, message: &str) {
+    issues.push(NativeArtifactValidationIssue::new(path, message));
+}
+
+fn sha256_artifact_hash(bytes: &[u8]) -> String {
+    let digest = Sha256::digest(bytes);
+    let mut hash = String::with_capacity(HASH_PREFIX.len() + HASH_HEX_LENGTH);
+    hash.push_str(HASH_PREFIX);
+    for byte in digest {
+        push_hex_byte(&mut hash, byte);
+    }
+
+    hash
+}
+
+fn push_hex_byte(target: &mut String, byte: u8) {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    let high = usize::from(byte >> 4);
+    let low = usize::from(byte & 0x0f);
+    target.push(char::from(HEX[high]));
+    target.push(char::from(HEX[low]));
+}
+
 fn write_fixture_summary(
     writer: &mut impl Write,
     loaded: &LoadedFixture,
@@ -875,7 +1153,8 @@ fn short_hash(hash: &str) -> String {
 mod tests {
     use super::{
         NativeAppError, NativeArgs, NativeMode, RenderFixtureSource, assert_pixel_probes,
-        load_fixture, run_smoke, write_fixture_summary,
+        load_fixture, load_manifest, load_receipt, run_smoke, validate_receipt_matches_manifest,
+        validate_scene_artifact_hash, write_fixture_summary,
     };
     use std::ffi::OsString;
     use std::path::{Path, PathBuf};
@@ -928,6 +1207,29 @@ mod tests {
         let result = load_fixture(&fixture_path("unsupported-strict-text"));
 
         assert!(matches!(result, Err(NativeAppError::RuntimeProfile(_))));
+    }
+
+    #[test]
+    fn artifact_hash_mismatch_is_a_custom_error() -> Result<(), NativeAppError> {
+        let manifest = load_manifest(&fixture_path("hello-panel").join("fixture.json"))?;
+        let result = validate_scene_artifact_hash(&manifest, b"not the fixture scene");
+
+        assert!(result.is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn receipt_hash_mismatch_is_a_custom_error() -> Result<(), NativeAppError> {
+        let manifest = load_manifest(&fixture_path("hello-panel").join("fixture.json"))?;
+        let mut receipt =
+            load_receipt(&fixture_path("hello-panel").join("scene.geordi.json.receipt"))?;
+        receipt.artifact_hash =
+            "sha256:0000000000000000000000000000000000000000000000000000000000000000".to_owned();
+
+        let result = validate_receipt_matches_manifest(&manifest, &receipt);
+
+        assert!(result.is_err());
+        Ok(())
     }
 
     #[test]

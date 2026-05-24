@@ -43,10 +43,11 @@ Run the Playwright browser gate:
 pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser
 ```
 
-The Playwright gate compiles `source.gpvue` and routes the page's `scene.geordi.json` request to the
-emitted artifact. When `GEORDI_RENDER_EVERYWHERE_COMPILED_SCENE` is set, the gate uses that file
-instead; this is how the root render-everywhere smoke shares one compiled artifact with the native
-Rust harness.
+The Playwright gate compiles `source.gpvue` and routes the page's `fixture.json` and
+`scene.geordi.json` requests to the emitted manifest and scene artifact. When
+`GEORDI_RENDER_EVERYWHERE_COMPILED_MANIFEST` and `GEORDI_RENDER_EVERYWHERE_COMPILED_SCENE` are set,
+the gate uses those files instead; this is how the root render-everywhere smoke shares one temporary
+fixture directory with the native Rust harness.
 
 Run typecheck, lint, and build:
 
@@ -74,9 +75,10 @@ The page should show:
 This harness does not define its own scene. It consumes the same checked-in artifact as the native
 Rust harness.
 
-The GPVue source is a compiler input, not a browser runtime input. The browser harness still renders
-the checked-in `scene.geordi.json` artifact directly until the end-to-end GPVue slice wires the
-compile step into the demo path.
+The GPVue source is a compiler input, not a browser runtime input. The interactive browser harness
+renders the checked-in `scene.geordi.json` artifact directly. The root
+`pnpm test:render-everywhere:gpvue` smoke command compiles GPVue into a temporary fixture directory,
+then routes this browser gate to the emitted manifest and scene artifact.
 
 The current browser implementation renders through Canvas 2D. The package remains named
 `@flyingrobots/geordi-runtime-webgl` because the runtime package will grow into the WebGL path, but

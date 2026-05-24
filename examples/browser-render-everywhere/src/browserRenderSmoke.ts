@@ -7,6 +7,7 @@ import {
   type JsonValue,
 } from '@flyingrobots/geordi-core';
 import {
+  assertRenderFixtureArtifact,
   parseRenderFixtureManifest,
   type RenderFixtureManifest,
 } from '@flyingrobots/geordi-render-fixture';
@@ -37,9 +38,12 @@ export type BrowserHarnessFetchText = (url: string) => Promise<string>;
 
 export type BrowserHarnessRenderer = (ir: GeordiIr) => HTMLCanvasElement;
 
+export type BrowserHarnessArtifactHasher = (source: string) => Promise<string>;
+
 export interface BrowserRenderFixtureOptions {
   readonly assets: BrowserRenderFixtureAssets;
   readonly fetchText: BrowserHarnessFetchText;
+  readonly hashArtifact?: BrowserHarnessArtifactHasher;
   readonly jsonPort?: JsonPort;
   readonly render?: BrowserHarnessRenderer;
 }
@@ -53,6 +57,13 @@ export class BrowserHarnessFetchError extends Error {
     this.name = new.target.name;
     this.status = status;
     this.url = url;
+  }
+}
+
+export class BrowserHarnessArtifactHashError extends Error {
+  constructor() {
+    super('Browser harness artifact hash failed');
+    this.name = new.target.name;
   }
 }
 
@@ -93,10 +104,18 @@ export async function loadBrowserRenderFixture(
   options: BrowserRenderFixtureOptions,
 ): Promise<Readonly<Omit<BrowserRenderFixtureResult, 'canvas'>>> {
   const jsonPort = options.jsonPort ?? canonicalJsonPort;
+  const hashArtifact = options.hashArtifact ?? sha256ArtifactHash;
   const manifestSource = await options.fetchText(options.assets.manifestUrl);
   const manifest = parseRenderFixtureManifest(manifestSource, jsonPort);
   const sceneSource = await options.fetchText(options.assets.sceneUrl);
   const ir = assertBrowserHarnessGeordiIr(jsonPort.parse(sceneSource));
+  const artifactHash = await hashArtifact(sceneSource);
+
+  assertRenderFixtureArtifact({
+    artifactHash,
+    ir,
+    manifest,
+  });
 
   return { ir, manifest };
 }
@@ -120,4 +139,19 @@ function assertBrowserHarnessGeordiIr(value: JsonValue): GeordiIr {
   }
 
   throw new BrowserHarnessInvalidIrError(result.issues);
+}
+
+async function sha256ArtifactHash(source: string): Promise<string> {
+  try {
+    const bytes = new TextEncoder().encode(source);
+    const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+
+    return `sha256:${hexFromBytes(new Uint8Array(digest))}`;
+  } catch {
+    throw new BrowserHarnessArtifactHashError();
+  }
+}
+
+function hexFromBytes(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }

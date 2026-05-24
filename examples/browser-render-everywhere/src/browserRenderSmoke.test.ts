@@ -1,6 +1,8 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, afterEach } from 'vitest';
 import { canonicalJsonPort, type JsonObject, type JsonValue } from '@flyingrobots/geordi-core';
+import { RenderFixtureArtifactValidationError } from '@flyingrobots/geordi-render-fixture';
 import { GeordiRuntimeUnsupportedProfileError } from '@flyingrobots/geordi-runtime-webgl';
 import {
   BrowserHarnessFetchError,
@@ -130,8 +132,21 @@ function fixtureSceneObject(): JsonObject {
   throw new BrowserRenderSmokeJsonShapeError();
 }
 
-function isJsonObjectValue(value: JsonValue): value is JsonObject {
+function fixtureSceneMetadata(): JsonObject {
+  const scene = jsonProperty(fixtureSceneObject(), 'scene');
+  if (isJsonObjectValue(scene)) {
+    return scene;
+  }
+
+  throw new BrowserRenderSmokeJsonShapeError();
+}
+
+function isJsonObjectValue(value: JsonValue | undefined): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function jsonProperty(object: JsonObject, key: string): JsonValue | undefined {
+  return object[key];
 }
 
 function makeCanvas(context: CanvasRenderingContext2D | null): HTMLCanvasElement {
@@ -175,6 +190,10 @@ function makeFixtureFetchText(options: FixtureFetchTextOptions = {}): BrowserHar
   };
 }
 
+function sha256ArtifactHash(source: string): Promise<string> {
+  return Promise.resolve(`sha256:${createHash('sha256').update(source).digest('hex')}`);
+}
+
 describe('browser render smoke', () => {
   it('loads and renders the shared hello-panel fixture to one canvas', async () => {
     const context = new FakeCanvasContext2D();
@@ -187,6 +206,7 @@ describe('browser render smoke', () => {
         sceneUrl: 'scene.geordi.json',
       },
       fetchText: makeFixtureFetchText(),
+      hashArtifact: sha256ArtifactHash,
     });
 
     expect(result.manifest.id).toBe('render-everywhere:hello-panel');
@@ -214,8 +234,40 @@ describe('browser render smoke', () => {
           sceneUrl: 'scene.geordi.json',
         },
         fetchText: makeFixtureFetchText({ sceneSource: invalidSceneSource }),
+        hashArtifact: sha256ArtifactHash,
       }),
     ).rejects.toBeInstanceOf(BrowserHarnessInvalidIrError);
+  });
+
+  it('rejects scene bytes that do not match the fixture manifest before drawing', async () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    const mismatchedSceneSource = canonicalJsonPort.stringify(
+      {
+        ...fixtureSceneObject(),
+        scene: {
+          ...fixtureSceneMetadata(),
+          width: 641,
+        },
+      } satisfies JsonValue,
+      { space: 2 },
+    );
+    installCanvasDocument(canvas);
+
+    await expect(
+      renderBrowserFixture({
+        assets: {
+          manifestUrl: 'fixture.json',
+          sceneUrl: 'scene.geordi.json',
+        },
+        fetchText: makeFixtureFetchText({ sceneSource: mismatchedSceneSource }),
+        hashArtifact: sha256ArtifactHash,
+      }),
+    ).rejects.toBeInstanceOf(RenderFixtureArtifactValidationError);
+
+    expect(canvas.width).toBe(0);
+    expect(canvas.height).toBe(0);
+    expect(context.calls).toHaveLength(0);
   });
 
   it('rejects unsupported fixture requirements before drawing', async () => {
@@ -230,6 +282,7 @@ describe('browser render smoke', () => {
           sceneUrl: 'scene.geordi.json',
         },
         fetchText: makeFixtureFetchText({ fixtureName: UNSUPPORTED_STRICT_TEXT_FIXTURE }),
+        hashArtifact: sha256ArtifactHash,
       }),
     ).rejects.toBeInstanceOf(GeordiRuntimeUnsupportedProfileError);
 

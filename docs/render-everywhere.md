@@ -48,9 +48,10 @@ fixtures/render-everywhere/hello-panel/source.gpvue
 ```
 
 The manifest marks that source as compiler-backed by `@flyingrobots/geordi-gpvue`. The compiler can
-reproduce the checked-in `scene.geordi.json`, receipt, and source map from this source, but the
-browser and native harnesses still consume the checked-in artifact directly until the final
-end-to-end slice wires the compile step into the demo path.
+reproduce the checked-in `scene.geordi.json`, receipt, and source map from this source. The
+interactive browser and native demos consume the checked-in artifact directly. The root GPVue smoke
+command compiles this source into a temporary fixture directory and points both runtime gates at the
+emitted files.
 
 Run the GPVue compiler gate:
 
@@ -61,7 +62,7 @@ pnpm --filter @flyingrobots/geordi-gpvue test
 Expected result:
 
 ```text
-5 passed
+6 passed
 ```
 
 Run the full GPVue render-everywhere smoke:
@@ -87,9 +88,10 @@ canvas=640x360
 
 ## Non-Claims
 
-This demo does not yet run GPVue compilation as part of the browser/native demo command path. The
-compiler can reproduce the fixture artifact, but the runtime harnesses still load the checked-in
-`scene.geordi.json` directly until the final end-to-end slice.
+The interactive browser and native demo commands do not compile GPVue while serving the page or
+opening the native window. They load the checked-in `scene.geordi.json` directly. The root smoke
+command, `pnpm test:render-everywhere:gpvue`, is the compile-then-render path that emits a temporary
+fixture directory and feeds both runtime gates from it.
 
 This demo does not claim deterministic text. Text is excluded from the first deterministic
 browser/native proof because portable text requires a strict font pack, a shaping law, and a

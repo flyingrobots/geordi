@@ -186,6 +186,13 @@ export class GpvueDuplicateNodeIdError extends Error {
   }
 }
 
+class GpvueInternalCaptureError extends Error {
+  constructor() {
+    super('GPVue parser capture failed');
+    this.name = new.target.name;
+  }
+}
+
 export function compileGpvueSource(input: GpvueCompileInput): GpvueCompileResult {
   const parsed = parseGpvueSource(input);
   const irContent = withTrailingNewline(
@@ -330,6 +337,7 @@ function parseRects(
   const lineStarts = lineStartsFor(input.source);
   const pattern = /<Rect\b([^>]*)\/>/gu;
   let cursor = 0;
+  rejectUnsupportedSceneTags(input.filename, sceneBody);
   let match = pattern.exec(sceneBody);
 
   while (match !== null) {
@@ -383,6 +391,25 @@ function parseRects(
   }
 
   return rects;
+}
+
+function rejectUnsupportedSceneTags(filename: string, sceneBody: string): void {
+  const pattern = /<\/?([A-Za-z][A-Za-z0-9-]*)\b[^>]*>/gu;
+  let match = pattern.exec(sceneBody);
+
+  while (match !== null) {
+    const tagSource = requiredCapture(match, 0);
+    const tagName = requiredCapture(match, 1);
+    if (tagName !== 'Rect') {
+      throw new GpvueUnsupportedConstructError(filename, `tag:${tagName}`);
+    }
+
+    if (!tagSource.endsWith('/>')) {
+      throw new GpvueUnsupportedConstructError(filename, 'tag:Rect.nonSelfClosing');
+    }
+
+    match = pattern.exec(sceneBody);
+  }
 }
 
 function parseAttributes(filename: string, tagName: string, source: string): ReadonlyMap<string, string> {
@@ -586,13 +613,14 @@ function offsetPosition(lineStarts: readonly number[], offset: number): OffsetPo
   let lineIndex = 0;
   for (let index = 0; index < lineStarts.length; index++) {
     const nextIndex = index + 1;
-    if (nextIndex >= lineStarts.length || offset < lineStarts[nextIndex]) {
+    const nextLineStart = lineStarts.at(nextIndex);
+    if (nextLineStart === undefined || offset < nextLineStart) {
       lineIndex = index;
       break;
     }
   }
 
-  const lineStart = lineStarts[lineIndex];
+  const lineStart = lineStarts.at(lineIndex) ?? 0;
   return {
     column: offset - lineStart + 1,
     line: lineIndex + 1,
@@ -617,5 +645,10 @@ function withTrailingNewline(source: string): string {
 }
 
 function requiredCapture(match: RegExpExecArray, index: number): string {
-  return match[index];
+  const value = match.at(index);
+  if (value === undefined) {
+    throw new GpvueInternalCaptureError();
+  }
+
+  return value;
 }

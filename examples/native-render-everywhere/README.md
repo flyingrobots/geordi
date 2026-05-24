@@ -20,9 +20,9 @@ The same fixture also contains constrained GPVue source at:
 fixtures/render-everywhere/hello-panel/source.gpvue
 ```
 
-The harness deserializes JSON at the Rust boundary, validates the supported rectangle-only IR
-profile, renders to a native image buffer, and can either open a window or run offscreen pixel
-probes.
+The harness deserializes JSON at the Rust boundary, validates the artifact hash and receipt against
+the loaded scene bytes, validates the supported rectangle-only IR profile, renders to a native image
+buffer, and can either open a window or run offscreen pixel probes.
 
 ## Commands
 

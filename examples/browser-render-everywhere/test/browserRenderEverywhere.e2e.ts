@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import {
   parseRenderFixtureManifest,
@@ -69,12 +69,33 @@ class BrowserGateCompiledScenePathError extends Error {
   }
 }
 
+class BrowserGateCompiledManifestPathError extends Error {
+  public readonly path: string;
+
+  constructor(path: string) {
+    super('Browser gate compiled manifest path failed');
+    this.name = new.target.name;
+    this.path = path;
+  }
+}
+
 function loadManifest(): RenderFixtureManifest {
-  return parseRenderFixtureManifest(
-    readFileSync(
-      new URL('../../../fixtures/render-everywhere/hello-panel/fixture.json', import.meta.url),
-      'utf8',
-    ),
+  return parseRenderFixtureManifest(loadManifestSource());
+}
+
+function loadManifestSource(): string {
+  const { GEORDI_RENDER_EVERYWHERE_COMPILED_MANIFEST: overridePath } = process.env;
+  if (overridePath !== undefined && overridePath.length > 0) {
+    try {
+      return readFileSync(overridePath, 'utf8');
+    } catch {
+      throw new BrowserGateCompiledManifestPathError(overridePath);
+    }
+  }
+
+  return readFileSync(
+    new URL('../../../fixtures/render-everywhere/hello-panel/fixture.json', import.meta.url),
+    'utf8',
   );
 }
 
@@ -132,9 +153,25 @@ function sampleForProbe(
 test('renders the shared hello-panel fixture with exact browser pixel probes', async ({ page }) => {
   const manifest = loadManifest();
   const compiledSceneSource = loadCompiledSceneSource();
+  const manifestSource = loadManifestSource();
+  let servedCompiledManifest = false;
   let servedCompiledScene = false;
 
   expect(artifactHash(compiledSceneSource)).toBe(manifest.artifactHash);
+
+  await page.route(/fixture\.json(?:\?.*)?$/u, async (route) => {
+    if (route.request().url().includes('?import')) {
+      await route.continue();
+      return;
+    }
+
+    servedCompiledManifest = true;
+    await route.fulfill({
+      body: manifestSource,
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
 
   await page.route(/scene\.geordi\.json(?:\?.*)?$/u, async (route) => {
     if (route.request().url().includes('?import')) {
@@ -152,6 +189,7 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Geordi Render Everywhere' })).toBeVisible();
+  expect(servedCompiledManifest).toBe(true);
   expect(servedCompiledScene).toBe(true);
   await expect(page.getByText('browser-canvas').first()).toBeVisible();
   await expect(page.getByText(manifest.id)).toBeVisible();
