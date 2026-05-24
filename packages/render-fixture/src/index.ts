@@ -199,6 +199,7 @@ export interface RenderFixtureMeshProjection extends JsonObject {
 }
 
 export interface RenderFixtureMeshMaterial extends JsonObject {
+  readonly backgroundColor: string;
   readonly color: string;
   readonly kind: 'solid';
 }
@@ -1077,6 +1078,12 @@ function validateMeshMaterial(
 
   validateLiteral(property(value, 'kind'), 'solid', `${path}.kind`, 'Material kind', issues);
   validateHexColor(property(value, 'color'), `${path}.color`, 'Material color', issues);
+  validateHexColor(
+    property(value, 'backgroundColor'),
+    `${path}.backgroundColor`,
+    'Material background color',
+    issues,
+  );
 }
 
 function validateMeshPlayback(

@@ -45,6 +45,7 @@ The bunny proof follows this path:
 ```text
 Stanford bunny PLY bytes
 -> bunny.mesh.json
+-> bunny.fixture.json
 -> TypeScript and Rust mesh parsers
 -> deterministic fixed-rate playback frame
 -> browser canvas wireframe render
@@ -78,6 +79,7 @@ flowchart TD
   Image["RGBA8 Image Buffer<br/>pixel probes"]
   MeshAsset["Stanford bunny PLY<br/>content-addressed asset"]
   MeshManifest["bunny.mesh.json<br/>asset hash, counts, bounds"]
+  MeshFixture["bunny.fixture.json<br/>camera, projection, material, playback"]
   Playback["fixed-rate playback frame<br/>axis, seconds, angle"]
   BrowserMesh["Browser mesh harness<br/>Canvas wireframe"]
   NativeMesh["Native mesh harness<br/>Rust software wireframe"]
@@ -89,16 +91,20 @@ flowchart TD
   Emit --> Types
   Ir --> Browser --> Canvas
   Ir --> Native --> Image
-  MeshAsset --> MeshManifest --> BrowserMesh
-  MeshAsset --> MeshManifest --> NativeMesh
+  MeshAsset --> MeshManifest --> MeshFixture
+  MeshFixture --> Playback
+  MeshFixture --> BrowserMesh
+  MeshFixture --> NativeMesh
   Playback --> BrowserMesh
   Playback --> NativeMesh
 ```
 
 The central promise is that downstream renderers consume explicit artifacts with explicit contracts.
-For the rectangle proof, the artifact is Geordi IR. For the bunny proof, the artifact is a mesh asset
-manifest plus a narrow playback law. A renderer may have a smaller feature profile than an artifact
-requires. If a renderer does not support a required feature, it must fail loudly before drawing.
+For the rectangle proof, the artifact is Geordi IR. For the bunny proof, the artifacts are a mesh
+asset manifest plus a mesh fixture descriptor. The fixture descriptor owns the render intent: camera,
+projection, material colors, and fixed-rate playback. A renderer may have a smaller feature profile
+than an artifact requires. If a renderer does not support a required feature, it must fail loudly
+before drawing.
 
 ## Vocabulary
 
@@ -742,15 +748,16 @@ The same browser demo can switch from the rectangle fixture to the Stanford bunn
 canvas is deliberately not treated as a Geordi IR pixel-perfect proof yet. It is a mesh harness
 proof:
 
-1. Vite serves `bunny.mesh.json` and `bun_zipper_res3.ply` as static assets.
-2. The browser harness fetches both assets through the same fetch boundary used by the rectangle
+1. Vite serves `bunny.fixture.json`, `bunny.mesh.json`, and `bun_zipper_res3.ply` as static
+   assets.
+2. The browser harness fetches those assets through the same fetch boundary used by the rectangle
    fixture.
-3. `@flyingrobots/geordi-render-fixture` validates the mesh manifest and parses the supported ASCII
-   PLY subset.
+3. `@flyingrobots/geordi-render-fixture` validates the mesh fixture descriptor, validates the mesh
+   manifest, and parses the supported ASCII PLY subset.
 4. The harness hashes the fetched PLY bytes with WebCrypto and compares the result to the manifest
    SHA-256.
 5. A deterministic playback frame computes seconds, angle, authored axis, normalized axis, and
-   transform profile.
+   transform profile from the descriptor playback law.
 6. A Canvas 2D wireframe renderer draws the sampled frame.
 7. `requestAnimationFrame` is presentation glue only. Tests use explicit frame indices.
 8. The interactive page keeps the live report behind a collapsed `Bunny metadata` disclosure so the
@@ -766,6 +773,8 @@ sequenceDiagram
   participant Canvas as Bunny Canvas
   participant Gate as Vitest or Playwright
 
+  Page->>Assets: fetch bunny.fixture.json
+  Page->>Fixture: parseRenderFixtureMeshFixtureManifest()
   Page->>Assets: fetch bunny.mesh.json
   Page->>Fixture: parseRenderFixtureMeshAssetManifest()
   Page->>Assets: fetch bun_zipper_res3.ply
@@ -782,6 +791,7 @@ interactive harness, these fields are available under `Bunny metadata`:
 
 ```text
 rendererName=browser-canvas-wireframe-mesh
+fixtureId=render-everywhere:stanford-bunny
 frame=0
 seconds=0
 angleRadians=0
@@ -931,13 +941,15 @@ smoke=passed
 
 ### Native Bunny Mesh Path
 
-The native bunny path uses the same asset manifest and PLY bytes as the browser path. It does not
-load `scene.geordi.json`; it loads `bunny.mesh.json`, checks the PLY hash, parses the PLY through
+The native bunny path uses the same fixture descriptor, asset manifest, and PLY bytes as the browser
+path. It does not load `scene.geordi.json`; it loads `bunny.fixture.json`, follows its
+`assetManifestPath` to `bunny.mesh.json`, checks the PLY hash, parses the PLY through
 `geordi-mesh`, computes a deterministic playback frame, and renders an RGBA8 wireframe buffer.
 
 ```mermaid
 flowchart TD
   AssetDir["fixtures/render-everywhere/assets/stanford-bunny"]
+  Fixture["bunny.fixture.json"]
   Manifest["bunny.mesh.json"]
   Ply["bun_zipper_res3.ply"]
   Hash["assert_mesh_asset_sha256()"]
@@ -947,7 +959,7 @@ flowchart TD
   Smoke["--bunny-smoke<br/>nonblank smoke"]
   Window["--bunny-window<br/>live minifb presentation"]
 
-  AssetDir --> Manifest
+  AssetDir --> Fixture --> Manifest
   AssetDir --> Ply
   Manifest --> Hash
   Ply --> Hash --> Parse --> Frame --> Render

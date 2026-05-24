@@ -1,0 +1,62 @@
+{
+  "assetManifestPath": "bunny.mesh.json",
+  "camera": {
+    "coordinateSystem": "right-handed",
+    "eye": [
+      0,
+      0.1,
+      0.35
+    ],
+    "target": [
+      0,
+      0.1,
+      0
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ]
+  },
+  "fixtureVersion": "geordi-mesh-render-fixture/1",
+  "id": "render-everywhere:stanford-bunny",
+  "material": {
+    "backgroundColor": "#111827",
+    "color": "#d1d5db",
+    "kind": "solid"
+  },
+  "playback": {
+    "axis": [
+      3,
+      5,
+      2
+    ],
+    "kind": "fixed-rate-rotation",
+    "radiansPerSecond": 0.7853981633974483,
+    "sampleRate": 60
+  },
+  "projection": {
+    "far": 10,
+    "kind": "perspective",
+    "near": 0.01,
+    "verticalFovRadians": 0.7853981633974483,
+    "viewport": {
+      "height": 512,
+      "width": 512
+    }
+  },
+  "runtimeProfile": {
+    "numericProfile": "geordi-finite-binary64/1",
+    "requires": [
+      "geordi/core/1",
+      "asset.mesh",
+      "mesh.triangle",
+      "transform.matrix4",
+      "camera.perspective",
+      "projection.perspective",
+      "depth.z-buffer",
+      "material.solid",
+      "playback.fixed-rate-rotation"
+    ]
+  }
+}

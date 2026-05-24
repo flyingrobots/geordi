@@ -86,6 +86,9 @@
   fixture contracts, TypeScript and Rust SHA-256 helpers, ASCII PLY triangle parsers,
   deterministic bounds/camera/projection/rotation law vectors, and browser/native wireframe
   render-everywhere demos for static, fixed-frame, and live rotating bunny playback.
+- **Bunny mesh milestone**: Add the committed `bunny.fixture.json` render descriptor and have both
+  browser and native bunny demos load it for camera, projection, material colors, and fixed-rate
+  playback instead of carrying parallel render-intent constants.
 - **Browser render-everywhere demo**: Add a scene switcher so the interactive browser harness can
   show either the rectangle pixel-probe fixture or the rotating Stanford bunny, with debug metadata
   hidden behind collapsed disclosure panels.

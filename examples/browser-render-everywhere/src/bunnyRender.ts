@@ -2,8 +2,11 @@ import {
   createRenderFixtureMeshPlaybackFrame,
   parseRenderFixtureAsciiPlyTriangleMesh,
   parseRenderFixtureMeshAssetManifest,
+  parseRenderFixtureMeshFixtureManifest,
   type RenderFixtureMeshAssetManifest,
-  type RenderFixtureMeshPlayback,
+  type RenderFixtureMeshCamera,
+  type RenderFixtureMeshFixtureManifest,
+  type RenderFixtureMeshProjection,
   type RenderFixturePlyMesh,
   type RenderFixtureVector3,
 } from '@flyingrobots/geordi-render-fixture';
@@ -12,23 +15,6 @@ import type { BunnyFixtureAssets } from './bunnyAssets.js';
 
 export const BUNNY_BROWSER_RENDERER_NAME = 'browser-canvas-wireframe-mesh' as const;
 export const BUNNY_TRANSFORM_PROFILE = 'geordi-fixed-rate-rotation/1' as const;
-export const BUNNY_RENDER_VIEWPORT_HEIGHT = 512 as const;
-export const BUNNY_RENDER_VIEWPORT_WIDTH = 512 as const;
-export const BUNNY_ROTATION_RADIANS_PER_SECOND = Math.PI / 4;
-export const BUNNY_ROTATION_SAMPLE_RATE = 60 as const;
-
-const BUNNY_BACKGROUND_COLOR = '#111827';
-const BUNNY_MATERIAL_COLOR = '#d1d5db';
-const BUNNY_CAMERA_EYE = [0, 0.1, 0.35] as const;
-const BUNNY_VERTICAL_FOV_RADIANS = Math.PI / 4;
-const BUNNY_FOCAL_LENGTH = 1 / Math.tan(BUNNY_VERTICAL_FOV_RADIANS / 2);
-const BUNNY_ROTATION_AXIS = [3, 5, 2] as const;
-const BUNNY_PLAYBACK: RenderFixtureMeshPlayback = {
-  axis: BUNNY_ROTATION_AXIS,
-  kind: 'fixed-rate-rotation',
-  radiansPerSecond: BUNNY_ROTATION_RADIANS_PER_SECOND,
-  sampleRate: BUNNY_ROTATION_SAMPLE_RATE,
-};
 
 interface ProjectedPoint {
   readonly visible: boolean;
@@ -36,11 +22,28 @@ interface ProjectedPoint {
   readonly y: number;
 }
 
+interface CameraBasis {
+  readonly eye: RenderFixtureVector3;
+  readonly forward: RenderFixtureVector3;
+  readonly right: RenderFixtureVector3;
+  readonly up: RenderFixtureVector3;
+}
+
+interface BunnyRenderContext {
+  readonly axis: RenderFixtureVector3;
+  readonly backgroundColor: string;
+  readonly camera: CameraBasis;
+  readonly focalLength: number;
+  readonly materialColor: string;
+  readonly projection: RenderFixtureMeshProjection;
+}
+
 export interface BunnyFrameReport {
   readonly angleRadians: number;
   readonly axis: RenderFixtureVector3;
   readonly assetHash: string;
   readonly faceCount: number;
+  readonly fixtureId: string;
   readonly frameIndex: number;
   readonly normalizedAxis: RenderFixtureVector3;
   readonly radiansPerSecond: number;
@@ -53,6 +56,7 @@ export interface BunnyFrameReport {
 
 export interface BunnyRenderResult {
   readonly canvas: HTMLCanvasElement;
+  readonly fixture: RenderFixtureMeshFixtureManifest;
   readonly manifest: RenderFixtureMeshAssetManifest;
   readonly mesh: RenderFixturePlyMesh;
   readonly report: BunnyFrameReport;
@@ -104,6 +108,18 @@ export class BunnyHarnessManifestMeshMismatchError extends Error {
   }
 }
 
+export class BunnyHarnessFixtureAssetMismatchError extends Error {
+  public readonly expected: string;
+  public readonly actual: string;
+
+  constructor(expected: string, actual: string) {
+    super('Browser bunny fixture asset manifest mismatch');
+    this.name = new.target.name;
+    this.expected = expected;
+    this.actual = actual;
+  }
+}
+
 export class BunnyHarnessElapsedTimeError extends Error {
   public readonly elapsedMs: number;
 
@@ -114,11 +130,37 @@ export class BunnyHarnessElapsedTimeError extends Error {
   }
 }
 
+export class BunnyHarnessPlaybackSampleRateError extends Error {
+  public readonly sampleRate: number;
+
+  constructor(sampleRate: number) {
+    super('Browser bunny playback sample rate failed');
+    this.name = new.target.name;
+    this.sampleRate = sampleRate;
+  }
+}
+
+export class BunnyHarnessVectorNormalizationError extends Error {
+  constructor() {
+    super('Browser bunny vector normalization failed');
+    this.name = new.target.name;
+  }
+}
+
 export async function renderBunnyFixtureFrame(
   assets: BunnyFixtureAssets,
   frameIndex: number,
   fetchText: BrowserHarnessFetchText,
 ): Promise<BunnyRenderResult> {
+  const fixtureSource = await fetchText(assets.fixtureUrl);
+  const fixture = parseRenderFixtureMeshFixtureManifest(fixtureSource);
+  if (fixture.assetManifestPath !== assets.assetManifestPath) {
+    throw new BunnyHarnessFixtureAssetMismatchError(
+      fixture.assetManifestPath,
+      assets.assetManifestPath,
+    );
+  }
+
   const manifestSource = await fetchText(assets.manifestUrl);
   const manifest = parseRenderFixtureMeshAssetManifest(manifestSource);
   const plySource = await fetchText(assets.plyUrl);
@@ -129,13 +171,14 @@ export async function renderBunnyFixtureFrame(
 
   const mesh = parseRenderFixtureAsciiPlyTriangleMesh(plySource);
   const canvas = document.createElement('canvas');
-  canvas.width = BUNNY_RENDER_VIEWPORT_WIDTH;
-  canvas.height = BUNNY_RENDER_VIEWPORT_HEIGHT;
+  canvas.width = fixture.projection.viewport.width;
+  canvas.height = fixture.projection.viewport.height;
   canvas.setAttribute('data-geordi-bunny-canvas', 'true');
-  const report = renderBunnyFrameToCanvas(canvas, manifest, mesh, frameIndex);
+  const report = renderBunnyFrameToCanvas(canvas, fixture, manifest, mesh, frameIndex);
 
   return {
     canvas,
+    fixture,
     manifest,
     mesh,
     report,
@@ -144,28 +187,31 @@ export async function renderBunnyFixtureFrame(
 
 export function renderBunnyFrameToCanvas(
   canvas: HTMLCanvasElement,
+  fixture: RenderFixtureMeshFixtureManifest,
   manifest: RenderFixtureMeshAssetManifest,
   mesh: RenderFixturePlyMesh,
   frameIndex: number,
 ): BunnyFrameReport {
-  const report = createBunnyFrameReport(frameIndex, manifest, mesh);
-  renderBunnyWireframe(canvas, mesh, report.angleRadians);
+  const report = createBunnyFrameReport(frameIndex, fixture, manifest, mesh);
+  renderBunnyWireframe(canvas, mesh, fixture, report.angleRadians);
 
   return report;
 }
 
 export function createBunnyFrameReport(
   frameIndex: number,
+  fixture: RenderFixtureMeshFixtureManifest,
   manifest: RenderFixtureMeshAssetManifest,
   mesh: RenderFixturePlyMesh,
 ): BunnyFrameReport {
   assertBunnyMeshMatchesManifest(manifest, mesh);
-  const playbackFrame = createRenderFixtureMeshPlaybackFrame(BUNNY_PLAYBACK, frameIndex);
+  const playbackFrame = createRenderFixtureMeshPlaybackFrame(fixture.playback, frameIndex);
   return {
     angleRadians: playbackFrame.angleRadians,
     axis: playbackFrame.axis,
     assetHash: manifest.sha256,
     faceCount: mesh.faces.length,
+    fixtureId: fixture.id,
     frameIndex: playbackFrame.frameIndex,
     normalizedAxis: playbackFrame.normalizedAxis,
     radiansPerSecond: playbackFrame.radiansPerSecond,
@@ -177,12 +223,15 @@ export function createBunnyFrameReport(
   };
 }
 
-export function bunnyFrameIndexFromElapsedMs(elapsedMs: number): number {
+export function bunnyFrameIndexFromElapsedMs(elapsedMs: number, sampleRate: number): number {
   if (!Number.isFinite(elapsedMs) || elapsedMs < 0) {
     throw new BunnyHarnessElapsedTimeError(elapsedMs);
   }
+  if (!Number.isInteger(sampleRate) || sampleRate <= 0) {
+    throw new BunnyHarnessPlaybackSampleRateError(sampleRate);
+  }
 
-  return Math.floor((elapsedMs / 1000) * BUNNY_ROTATION_SAMPLE_RATE);
+  return Math.floor((elapsedMs / 1000) * sampleRate);
 }
 
 function assertBunnyMeshMatchesManifest(
@@ -229,6 +278,7 @@ function sameVector3(left: RenderFixtureVector3, right: RenderFixtureVector3): b
 function renderBunnyWireframe(
   canvas: HTMLCanvasElement,
   mesh: RenderFixturePlyMesh,
+  fixture: RenderFixtureMeshFixtureManifest,
   angleRadians: number,
 ): void {
   const context = canvas.getContext('2d');
@@ -236,16 +286,17 @@ function renderBunnyWireframe(
     throw new BunnyHarnessCanvasContextError();
   }
 
-  context.fillStyle = BUNNY_BACKGROUND_COLOR;
+  const renderContext = createBunnyRenderContext(fixture);
+  context.fillStyle = renderContext.backgroundColor;
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.strokeStyle = BUNNY_MATERIAL_COLOR;
+  context.strokeStyle = renderContext.materialColor;
   context.lineWidth = 1;
   context.beginPath();
 
   for (const face of mesh.faces) {
-    const first = projectPosition(vertexPosition(mesh, face[0]), angleRadians);
-    const second = projectPosition(vertexPosition(mesh, face[1]), angleRadians);
-    const third = projectPosition(vertexPosition(mesh, face[2]), angleRadians);
+    const first = projectPosition(vertexPosition(mesh, face[0]), renderContext, angleRadians);
+    const second = projectPosition(vertexPosition(mesh, face[1]), renderContext, angleRadians);
+    const third = projectPosition(vertexPosition(mesh, face[2]), renderContext, angleRadians);
     drawProjectedEdge(context, first, second);
     drawProjectedEdge(context, second, third);
     drawProjectedEdge(context, third, first);
@@ -278,15 +329,16 @@ function drawProjectedEdge(
 
 function projectPosition(
   position: RenderFixtureVector3,
+  context: BunnyRenderContext,
   angleRadians: number,
 ): ProjectedPoint {
-  const rotated = rotateAroundAxis(position, normalizeVector3(BUNNY_ROTATION_AXIS), angleRadians);
-  const cameraX = rotated[0] - BUNNY_CAMERA_EYE[0];
-  const cameraY = rotated[1] - BUNNY_CAMERA_EYE[1];
-  const cameraZ = rotated[2] - BUNNY_CAMERA_EYE[2];
-  const depth = -cameraZ;
+  const rotated = rotateAroundAxis(position, context.axis, angleRadians);
+  const delta = subtractVector3(rotated, context.camera.eye);
+  const cameraX = dotVector3(delta, context.camera.right);
+  const cameraY = dotVector3(delta, context.camera.up);
+  const depth = dotVector3(delta, context.camera.forward);
 
-  if (depth <= 0) {
+  if (depth < context.projection.near || depth > context.projection.far) {
     return {
       visible: false,
       x: 0,
@@ -294,13 +346,37 @@ function projectPosition(
     };
   }
 
-  const xNdc = (BUNNY_FOCAL_LENGTH * cameraX) / depth;
-  const yNdc = (BUNNY_FOCAL_LENGTH * cameraY) / depth;
+  const xNdc = (context.focalLength * cameraX) / depth;
+  const yNdc = (context.focalLength * cameraY) / depth;
 
   return {
     visible: true,
-    x: ((xNdc + 1) / 2) * BUNNY_RENDER_VIEWPORT_WIDTH,
-    y: ((1 - yNdc) / 2) * BUNNY_RENDER_VIEWPORT_HEIGHT,
+    x: ((xNdc + 1) / 2) * context.projection.viewport.width,
+    y: ((1 - yNdc) / 2) * context.projection.viewport.height,
+  };
+}
+
+function createBunnyRenderContext(fixture: RenderFixtureMeshFixtureManifest): BunnyRenderContext {
+  return {
+    axis: normalizeVector3(fixture.playback.axis),
+    backgroundColor: fixture.material.backgroundColor,
+    camera: createCameraBasis(fixture.camera),
+    focalLength: 1 / Math.tan(fixture.projection.verticalFovRadians / 2),
+    materialColor: fixture.material.color,
+    projection: fixture.projection,
+  };
+}
+
+function createCameraBasis(camera: RenderFixtureMeshCamera): CameraBasis {
+  const forward = normalizeVector3(subtractVector3(camera.target, camera.eye));
+  const right = normalizeVector3(crossVector3(forward, camera.up));
+  const up = normalizeVector3(crossVector3(right, forward));
+
+  return {
+    eye: camera.eye,
+    forward,
+    right,
+    up,
   };
 }
 
@@ -324,7 +400,33 @@ function rotateAroundAxis(
 
 function normalizeVector3(vector: RenderFixtureVector3): RenderFixtureVector3 {
   const length = Math.hypot(vector[0], vector[1], vector[2]);
+  if (!Number.isFinite(length) || length <= 0) {
+    throw new BunnyHarnessVectorNormalizationError();
+  }
+
   return [vector[0] / length, vector[1] / length, vector[2] / length];
+}
+
+function subtractVector3(
+  left: RenderFixtureVector3,
+  right: RenderFixtureVector3,
+): RenderFixtureVector3 {
+  return [left[0] - right[0], left[1] - right[1], left[2] - right[2]];
+}
+
+function dotVector3(left: RenderFixtureVector3, right: RenderFixtureVector3): number {
+  return left[0] * right[0] + left[1] * right[1] + left[2] * right[2];
+}
+
+function crossVector3(
+  left: RenderFixtureVector3,
+  right: RenderFixtureVector3,
+): RenderFixtureVector3 {
+  return [
+    left[1] * right[2] - left[2] * right[1],
+    left[2] * right[0] - left[0] * right[2],
+    left[0] * right[1] - left[1] * right[0],
+  ];
 }
 
 async function sha256ArtifactHash(source: string): Promise<string> {

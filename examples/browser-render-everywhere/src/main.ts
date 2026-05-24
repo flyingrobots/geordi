@@ -39,6 +39,7 @@ async function startBrowserHarness(): Promise<void> {
 function bunnyReportText(report: Awaited<ReturnType<typeof renderBunnyFixtureFrame>>['report']): string {
   return [
     report.rendererName,
+    `fixtureId=${report.fixtureId}`,
     `frame=${report.frameIndex}`,
     `seconds=${report.seconds}`,
     `angleRadians=${report.angleRadians}`,
@@ -58,8 +59,17 @@ function startBunnyLiveRotation(
   const tick = (nowMs: number): void => {
     const anchorMs = startMs ?? nowMs;
     startMs = anchorMs;
-    const frameIndex = bunnyFrameIndexFromElapsedMs(nowMs - anchorMs);
-    const report = renderBunnyFrameToCanvas(bunny.canvas, bunny.manifest, bunny.mesh, frameIndex);
+    const frameIndex = bunnyFrameIndexFromElapsedMs(
+      nowMs - anchorMs,
+      bunny.fixture.playback.sampleRate,
+    );
+    const report = renderBunnyFrameToCanvas(
+      bunny.canvas,
+      bunny.fixture,
+      bunny.manifest,
+      bunny.mesh,
+      frameIndex,
+    );
     reportElement.textContent = bunnyReportText(report);
     void globalThis.requestAnimationFrame(tick);
   };

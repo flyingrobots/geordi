@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   parseRenderFixtureAsciiPlyTriangleMesh,
   type RenderFixtureMeshAssetManifest,
+  type RenderFixtureMeshFixtureManifest,
 } from '@flyingrobots/geordi-render-fixture';
 import {
   BUNNY_BROWSER_RENDERER_NAME,
   BUNNY_TRANSFORM_PROFILE,
   BunnyHarnessElapsedTimeError,
   BunnyHarnessManifestMeshMismatchError,
+  BunnyHarnessPlaybackSampleRateError,
   bunnyFrameIndexFromElapsedMs,
   createBunnyFrameReport,
   renderBunnyFrameToCanvas,
@@ -39,6 +41,53 @@ const TEST_MESH_MANIFEST: RenderFixtureMeshAssetManifest = {
     url: 'https://example.invalid/bunny.ply',
   },
   vertexProperties: ['x', 'y', 'z'],
+};
+
+const TEST_MESH_FIXTURE: RenderFixtureMeshFixtureManifest = {
+  assetManifestPath: 'bunny.ply.json',
+  camera: {
+    coordinateSystem: 'right-handed',
+    eye: [0, 0.1, 0.35],
+    target: [0, 0.1, 0],
+    up: [0, 1, 0],
+  },
+  fixtureVersion: 'geordi-mesh-render-fixture/1',
+  id: 'render-everywhere:stanford-bunny',
+  material: {
+    backgroundColor: '#111827',
+    color: '#d1d5db',
+    kind: 'solid',
+  },
+  playback: {
+    axis: [3, 5, 2],
+    kind: 'fixed-rate-rotation',
+    radiansPerSecond: Math.PI / 4,
+    sampleRate: 60,
+  },
+  projection: {
+    far: 10,
+    kind: 'perspective',
+    near: 0.01,
+    verticalFovRadians: Math.PI / 4,
+    viewport: {
+      height: 512,
+      width: 512,
+    },
+  },
+  runtimeProfile: {
+    numericProfile: 'geordi-finite-binary64/1',
+    requires: [
+      'geordi/core/1',
+      'asset.mesh',
+      'mesh.triangle',
+      'transform.matrix4',
+      'camera.perspective',
+      'projection.perspective',
+      'depth.z-buffer',
+      'material.solid',
+      'playback.fixed-rate-rotation',
+    ],
+  },
 };
 
 const TEST_PLY_SOURCE = `ply
@@ -102,10 +151,11 @@ describe('bunny render report', () => {
   it('derives deterministic fixed-rate frame metadata', () => {
     const mesh = parseRenderFixtureAsciiPlyTriangleMesh(TEST_PLY_SOURCE);
 
-    const report = createBunnyFrameReport(15, TEST_MESH_MANIFEST, mesh);
+    const report = createBunnyFrameReport(15, TEST_MESH_FIXTURE, TEST_MESH_MANIFEST, mesh);
 
     expect(report.rendererName).toBe(BUNNY_BROWSER_RENDERER_NAME);
     expect(report.transformProfile).toBe(BUNNY_TRANSFORM_PROFILE);
+    expect(report.fixtureId).toBe(TEST_MESH_FIXTURE.id);
     expect(report.axis).toEqual([3, 5, 2]);
     expect(report.frameIndex).toBe(15);
     expect(report.sampleRate).toBe(60);
@@ -122,9 +172,9 @@ describe('bunny render report', () => {
 
   it('exposes deterministic sampled frame metadata for browser rendering', () => {
     const mesh = parseRenderFixtureAsciiPlyTriangleMesh(TEST_PLY_SOURCE);
-    const frame0 = createBunnyFrameReport(0, TEST_MESH_MANIFEST, mesh);
-    const frame15 = createBunnyFrameReport(15, TEST_MESH_MANIFEST, mesh);
-    const frame60 = createBunnyFrameReport(60, TEST_MESH_MANIFEST, mesh);
+    const frame0 = createBunnyFrameReport(0, TEST_MESH_FIXTURE, TEST_MESH_MANIFEST, mesh);
+    const frame15 = createBunnyFrameReport(15, TEST_MESH_FIXTURE, TEST_MESH_MANIFEST, mesh);
+    const frame60 = createBunnyFrameReport(60, TEST_MESH_FIXTURE, TEST_MESH_MANIFEST, mesh);
     const frames = [frame0, frame15, frame60];
 
     expect(frames.map((frame) => frame.frameIndex)).toEqual([0, 15, 60]);
@@ -135,18 +185,24 @@ describe('bunny render report', () => {
   });
 
   it('maps host elapsed time to deterministic frame indices', () => {
-    expect(bunnyFrameIndexFromElapsedMs(0)).toBe(0);
-    expect(bunnyFrameIndexFromElapsedMs(249)).toBe(14);
-    expect(bunnyFrameIndexFromElapsedMs(250)).toBe(15);
-    expect(bunnyFrameIndexFromElapsedMs(1000)).toBe(60);
+    expect(bunnyFrameIndexFromElapsedMs(0, TEST_MESH_FIXTURE.playback.sampleRate)).toBe(0);
+    expect(bunnyFrameIndexFromElapsedMs(249, TEST_MESH_FIXTURE.playback.sampleRate)).toBe(14);
+    expect(bunnyFrameIndexFromElapsedMs(250, TEST_MESH_FIXTURE.playback.sampleRate)).toBe(15);
+    expect(bunnyFrameIndexFromElapsedMs(1000, TEST_MESH_FIXTURE.playback.sampleRate)).toBe(60);
   });
 
   it('rejects nonfinite or negative host elapsed time with a custom error', () => {
-    expect(() => bunnyFrameIndexFromElapsedMs(Number.NaN)).toThrow(BunnyHarnessElapsedTimeError);
-    expect(() => bunnyFrameIndexFromElapsedMs(Number.POSITIVE_INFINITY)).toThrow(
+    expect(() => bunnyFrameIndexFromElapsedMs(Number.NaN, 60)).toThrow(
       BunnyHarnessElapsedTimeError,
     );
-    expect(() => bunnyFrameIndexFromElapsedMs(-1)).toThrow(BunnyHarnessElapsedTimeError);
+    expect(() => bunnyFrameIndexFromElapsedMs(Number.POSITIVE_INFINITY, 60)).toThrow(
+      BunnyHarnessElapsedTimeError,
+    );
+    expect(() => bunnyFrameIndexFromElapsedMs(-1, 60)).toThrow(BunnyHarnessElapsedTimeError);
+  });
+
+  it('rejects invalid playback sample rates with a custom error', () => {
+    expect(() => bunnyFrameIndexFromElapsedMs(0, 0)).toThrow(BunnyHarnessPlaybackSampleRateError);
   });
 
   it('rejects manifest and mesh metadata mismatches before drawing', () => {
@@ -156,6 +212,7 @@ describe('bunny render report', () => {
     expect(() =>
       renderBunnyFrameToCanvas(
         makeFakeCanvas(context),
+        TEST_MESH_FIXTURE,
         {
           ...TEST_MESH_MANIFEST,
           counts: {
@@ -175,15 +232,23 @@ describe('bunny render report', () => {
     const context15 = new FakeBunnyCanvasContext2D();
     const context60 = new FakeBunnyCanvasContext2D();
 
-    const frame0 = renderBunnyFrameToCanvas(makeFakeCanvas(context0), TEST_MESH_MANIFEST, mesh, 0);
+    const frame0 = renderBunnyFrameToCanvas(
+      makeFakeCanvas(context0),
+      TEST_MESH_FIXTURE,
+      TEST_MESH_MANIFEST,
+      mesh,
+      0,
+    );
     const frame15 = renderBunnyFrameToCanvas(
       makeFakeCanvas(context15),
+      TEST_MESH_FIXTURE,
       TEST_MESH_MANIFEST,
       mesh,
       15,
     );
     const frame60 = renderBunnyFrameToCanvas(
       makeFakeCanvas(context60),
+      TEST_MESH_FIXTURE,
       TEST_MESH_MANIFEST,
       mesh,
       60,

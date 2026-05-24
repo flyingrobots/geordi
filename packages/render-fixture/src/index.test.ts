@@ -140,7 +140,7 @@ function makeMeshAssetManifest(): RenderFixtureMeshAssetManifest {
 
 function makeMeshFixtureManifest(): RenderFixtureMeshFixtureManifest {
   return {
-    assetManifestPath: 'assets/stanford-bunny/bunny.mesh.json',
+    assetManifestPath: 'bunny.mesh.json',
     camera: {
       coordinateSystem: 'right-handed',
       eye: [0, 0.1, 0.35],
@@ -150,6 +150,7 @@ function makeMeshFixtureManifest(): RenderFixtureMeshFixtureManifest {
     fixtureVersion: RENDER_FIXTURE_MESH_FIXTURE_VERSION,
     id: 'render-everywhere:stanford-bunny',
     material: {
+      backgroundColor: '#111827',
       color: '#d1d5db',
       kind: 'solid',
     },
@@ -197,6 +198,16 @@ function bunnyMeshAssetManifestSource(): string {
   return readFileSync(
     new URL(
       '../../../fixtures/render-everywhere/assets/stanford-bunny/bunny.mesh.json',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
+function bunnyMeshFixtureManifestSource(): string {
+  return readFileSync(
+    new URL(
+      '../../../fixtures/render-everywhere/assets/stanford-bunny/bunny.fixture.json',
       import.meta.url,
     ),
     'utf8',
@@ -565,6 +576,15 @@ describe('render fixture mesh fixture manifest validation', () => {
     expect(parsed.playback.axis).toEqual([3, 5, 2]);
   });
 
+  it('parses the committed Stanford bunny mesh fixture descriptor', () => {
+    const parsed = parseRenderFixtureMeshFixtureManifest(bunnyMeshFixtureManifestSource());
+
+    expect(parsed.assetManifestPath).toBe('bunny.mesh.json');
+    expect(parsed.id).toBe('render-everywhere:stanford-bunny');
+    expect(parsed.material.backgroundColor).toBe('#111827');
+    expect(parsed.playback.radiansPerSecond).toBe(0.7853981633974483);
+  });
+
   it('derives deterministic fixed-rate playback frame metadata', () => {
     const frame = createRenderFixtureMeshPlaybackFrame(makeMeshFixtureManifest().playback, 15);
 
@@ -634,6 +654,7 @@ describe('render fixture mesh fixture manifest validation', () => {
       },
       fixtureVersion: 'geordi-mesh-render-fixture/2',
       material: {
+        backgroundColor: '#11182g',
         color: '#D1D5DB',
         kind: 'shader',
       },
@@ -679,6 +700,7 @@ describe('render fixture mesh fixture manifest validation', () => {
       '$.projection.viewport.height',
       '$.material.kind',
       '$.material.color',
+      '$.material.backgroundColor',
       '$.playback.kind',
       '$.playback.axis',
       '$.playback.radiansPerSecond',

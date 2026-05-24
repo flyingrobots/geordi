@@ -14,23 +14,26 @@ use std::path::{Path, PathBuf};
 use std::string::FromUtf8Error;
 use std::time::Instant;
 
-const BUNNY_MANIFEST_PATH: &str = "bunny.mesh.json";
+const BUNNY_FIXTURE_PATH: &str = "bunny.fixture.json";
 const BUNNY_RENDERER_NAME: &str = "rust-software-wireframe-mesh";
 const BUNNY_TRANSFORM_PROFILE: &str = "geordi-fixed-rate-rotation/1";
+const BUNNY_FIXTURE_VERSION: &str = "geordi-mesh-render-fixture/1";
 const BUNNY_ASSET_VERSION: &str = "geordi-mesh-asset/1";
 const BUNNY_MESH_PROFILE: &str = "geordi-ascii-ply-triangle-mesh/1";
 const BUNNY_HASH_PREFIX: &str = "sha256:";
 const BUNNY_HASH_HEX_LENGTH: usize = 64;
-const BUNNY_RENDER_WIDTH: usize = 512;
-const BUNNY_RENDER_HEIGHT: usize = 512;
-const BUNNY_BACKGROUND_RGBA: [u8; 4] = [17, 24, 39, 255];
-const BUNNY_MATERIAL_RGBA: [u8; 4] = [209, 213, 219, 255];
-const BUNNY_CAMERA_EYE: [f64; 3] = [0.0, 0.1, 0.35];
-const BUNNY_VERTICAL_FOV_RADIANS: f64 = std::f64::consts::FRAC_PI_4;
-const BUNNY_ROTATION_AXIS: [f64; 3] = [3.0, 5.0, 2.0];
-const BUNNY_ROTATION_RADIANS_PER_SECOND: f64 = std::f64::consts::FRAC_PI_4;
-const BUNNY_ROTATION_SAMPLE_RATE_MILLIS: u128 = 60;
-const BUNNY_ROTATION_SAMPLE_RATE: f64 = 60.0;
+const BUNNY_NUMERIC_PROFILE: &str = "geordi-finite-binary64/1";
+const BUNNY_RUNTIME_REQUIREMENTS: [&str; 9] = [
+    "geordi/core/1",
+    "asset.mesh",
+    "mesh.triangle",
+    "transform.matrix4",
+    "camera.perspective",
+    "projection.perspective",
+    "depth.z-buffer",
+    "material.solid",
+    "playback.fixed-rate-rotation",
+];
 
 /// Native bunny harness error boundary.
 #[derive(Debug)]
@@ -378,6 +381,69 @@ impl Error for NativeBunnyWindowError {
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct BunnyMeshFixtureManifest {
+    asset_manifest_path: String,
+    camera: BunnyMeshCamera,
+    fixture_version: String,
+    id: String,
+    material: BunnyMeshMaterial,
+    playback: BunnyMeshPlayback,
+    projection: BunnyMeshProjection,
+    runtime_profile: BunnyMeshRuntimeProfile,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct BunnyMeshRuntimeProfile {
+    numeric_profile: String,
+    requires: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct BunnyMeshCamera {
+    coordinate_system: String,
+    eye: [f64; 3],
+    target: [f64; 3],
+    up: [f64; 3],
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct BunnyMeshProjection {
+    far: f64,
+    kind: String,
+    near: f64,
+    vertical_fov_radians: f64,
+    viewport: BunnyMeshViewport,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct BunnyMeshViewport {
+    height: usize,
+    width: usize,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct BunnyMeshMaterial {
+    background_color: String,
+    color: String,
+    kind: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct BunnyMeshPlayback {
+    axis: [f64; 3],
+    kind: String,
+    radians_per_second: f64,
+    sample_rate: u64,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct BunnyMeshAssetManifest {
     asset_path: String,
     asset_version: String,
@@ -425,10 +491,11 @@ struct BunnyMeshAssetSource {
 /// Loaded native bunny fixture.
 #[derive(Debug)]
 pub struct LoadedBunnyFixture {
+    fixture: BunnyMeshFixtureManifest,
     image: BunnyImage,
-    manifest: BunnyMeshAssetManifest,
     mesh: PlyMesh,
     report: BunnyFrameReport,
+    style: BunnyRenderStyle,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -467,12 +534,18 @@ impl BunnyImage {
         self.rgba[offset..offset + color.len()].copy_from_slice(&color);
     }
 
-    fn non_background_pixels(&self) -> usize {
+    fn non_background_pixels(&self, background: [u8; 4]) -> usize {
         self.rgba
-            .chunks_exact(BUNNY_BACKGROUND_RGBA.len())
-            .filter(|pixel| *pixel != BUNNY_BACKGROUND_RGBA)
+            .chunks_exact(background.len())
+            .filter(|pixel| *pixel != background)
             .count()
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct BunnyRenderStyle {
+    background: [u8; 4],
+    material: [u8; 4],
 }
 
 #[derive(Debug, PartialEq)]
@@ -494,6 +567,25 @@ struct ProjectedPoint {
     y: f64,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct CameraBasis {
+    eye: [f64; 3],
+    forward: [f64; 3],
+    right: [f64; 3],
+    up: [f64; 3],
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct ProjectionContext {
+    axis: [f64; 3],
+    camera: CameraBasis,
+    far: f64,
+    focal_length: f64,
+    height: f64,
+    near: f64,
+    width: f64,
+}
+
 /// Load and render one native bunny frame.
 ///
 /// # Errors
@@ -504,9 +596,15 @@ pub fn load_bunny_fixture(
     asset_dir: &Path,
     frame_index: u64,
 ) -> Result<LoadedBunnyFixture, NativeBunnyError> {
-    let manifest_path = asset_dir.join(BUNNY_MANIFEST_PATH);
+    let fixture_path = asset_dir.join(BUNNY_FIXTURE_PATH);
+    let fixture = load_bunny_fixture_manifest(&fixture_path)?;
+    validate_bunny_fixture_manifest(&fixture)?;
+    let style = bunny_render_style(&fixture)?;
+
+    let manifest_path = asset_dir.join(&fixture.asset_manifest_path);
     let manifest = load_bunny_manifest(&manifest_path)?;
     validate_bunny_manifest(&manifest)?;
+    validate_bunny_fixture_matches_manifest(&fixture, &manifest)?;
 
     let asset_path = asset_dir.join(&manifest.asset_path);
     let asset_bytes = fs::read(&asset_path)
@@ -517,14 +615,15 @@ pub fn load_bunny_fixture(
     let mesh = parse_ascii_ply_triangle_mesh(&asset_source)?;
     validate_bunny_mesh_matches_manifest(&manifest, &mesh)?;
 
-    let report = create_bunny_frame_report(frame_index, &asset_hash, &mesh);
-    let image = render_bunny_wireframe(&mesh, report.angle_radians);
+    let report = create_bunny_frame_report(frame_index, &asset_hash, &mesh, &fixture);
+    let image = render_bunny_wireframe(&mesh, &fixture, style, report.angle_radians);
 
     Ok(LoadedBunnyFixture {
+        fixture,
         image,
-        manifest,
         mesh,
         report,
+        style,
     })
 }
 
@@ -539,7 +638,7 @@ pub fn write_bunny_summary(
 ) -> Result<(), NativeBunnyError> {
     writeln!(writer, "Geordi native bunny fixture loaded").map_err(NativeBunnyOutputError::new)?;
     writeln!(writer, "rendererName={BUNNY_RENDERER_NAME}").map_err(NativeBunnyOutputError::new)?;
-    writeln!(writer, "fixtureId={}", loaded.manifest.id).map_err(NativeBunnyOutputError::new)?;
+    writeln!(writer, "fixtureId={}", loaded.fixture.id).map_err(NativeBunnyOutputError::new)?;
     writeln!(writer, "assetHash={}", loaded.report.asset_hash)
         .map_err(NativeBunnyOutputError::new)?;
     writeln!(writer, "vertices={}", loaded.report.vertex_count)
@@ -564,10 +663,16 @@ pub fn write_bunny_summary(
         loaded.report.transform_profile
     )
     .map_err(NativeBunnyOutputError::new)?;
-    writeln!(writer, "cameraEye=0,0.1,0.35").map_err(NativeBunnyOutputError::new)?;
     writeln!(
         writer,
-        "viewport={BUNNY_RENDER_WIDTH}x{BUNNY_RENDER_HEIGHT}"
+        "cameraEye={},{},{}",
+        loaded.fixture.camera.eye[0], loaded.fixture.camera.eye[1], loaded.fixture.camera.eye[2]
+    )
+    .map_err(NativeBunnyOutputError::new)?;
+    writeln!(
+        writer,
+        "viewport={}x{}",
+        loaded.fixture.projection.viewport.width, loaded.fixture.projection.viewport.height
     )
     .map_err(NativeBunnyOutputError::new)?;
     Ok(())
@@ -585,7 +690,7 @@ pub fn run_bunny_smoke(
 ) -> Result<(), NativeBunnyError> {
     let loaded = load_bunny_fixture(asset_dir, frame_index)?;
     write_bunny_summary(writer, &loaded)?;
-    if loaded.image.non_background_pixels() == 0 {
+    if loaded.image.non_background_pixels(loaded.style.background) == 0 {
         return Err(NativeBunnySmokeError.into());
     }
 
@@ -603,25 +708,45 @@ pub fn open_bunny_window(asset_dir: &Path) -> Result<(), NativeBunnyError> {
     let loaded = load_bunny_fixture(asset_dir, 0)?;
     let mut window = Window::new(
         &bunny_window_title(&loaded),
-        BUNNY_RENDER_WIDTH,
-        BUNNY_RENDER_HEIGHT,
+        loaded.image.width,
+        loaded.image.height,
         WindowOptions::default(),
     )
     .map_err(NativeBunnyWindowError::window)?;
     let start = Instant::now();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
-        let frame_index = bunny_frame_index_from_elapsed_ms(start.elapsed().as_millis());
-        let report =
-            create_bunny_frame_report(frame_index, &loaded.report.asset_hash, &loaded.mesh);
-        let image = render_bunny_wireframe(&loaded.mesh, report.angle_radians);
+        let frame_index = bunny_frame_index_from_elapsed_ms(
+            start.elapsed().as_millis(),
+            loaded.fixture.playback.sample_rate,
+        );
+        let report = create_bunny_frame_report(
+            frame_index,
+            &loaded.report.asset_hash,
+            &loaded.mesh,
+            &loaded.fixture,
+        );
+        let image = render_bunny_wireframe(
+            &loaded.mesh,
+            &loaded.fixture,
+            loaded.style,
+            report.angle_radians,
+        );
         let buffer = minifb_buffer(&image)?;
         window
-            .update_with_buffer(&buffer, BUNNY_RENDER_WIDTH, BUNNY_RENDER_HEIGHT)
+            .update_with_buffer(&buffer, image.width, image.height)
             .map_err(NativeBunnyWindowError::window)?;
     }
 
     Ok(())
+}
+
+fn load_bunny_fixture_manifest(path: &Path) -> Result<BunnyMeshFixtureManifest, NativeBunnyError> {
+    let source = fs::read_to_string(path)
+        .map_err(|error| NativeBunnyManifestLoadError::new(path.to_path_buf(), error))?;
+
+    serde_json::from_str(&source)
+        .map_err(|error| NativeBunnyManifestParseError::new(path.to_path_buf(), error).into())
 }
 
 fn load_bunny_manifest(path: &Path) -> Result<BunnyMeshAssetManifest, NativeBunnyError> {
@@ -630,6 +755,37 @@ fn load_bunny_manifest(path: &Path) -> Result<BunnyMeshAssetManifest, NativeBunn
 
     serde_json::from_str(&source)
         .map_err(|error| NativeBunnyManifestParseError::new(path.to_path_buf(), error).into())
+}
+
+fn validate_bunny_fixture_manifest(
+    fixture: &BunnyMeshFixtureManifest,
+) -> Result<(), NativeBunnyManifestValidationError> {
+    let mut issues = Vec::new();
+    validate_literal(
+        &fixture.fixture_version,
+        BUNNY_FIXTURE_VERSION,
+        "$.fixtureVersion",
+        "Fixture version",
+        &mut issues,
+    );
+    validate_non_empty(&fixture.id, "$.id", "Fixture id", &mut issues);
+    validate_relative_path(
+        &fixture.asset_manifest_path,
+        "$.assetManifestPath",
+        "Asset manifest path",
+        &mut issues,
+    );
+    validate_mesh_runtime_profile(&fixture.runtime_profile, &mut issues);
+    validate_mesh_camera(&fixture.camera, &mut issues);
+    validate_mesh_projection(&fixture.projection, &mut issues);
+    validate_mesh_material(&fixture.material, &mut issues);
+    validate_mesh_playback(&fixture.playback, &mut issues);
+
+    if issues.is_empty() {
+        Ok(())
+    } else {
+        Err(NativeBunnyManifestValidationError::new(issues))
+    }
 }
 
 fn validate_bunny_manifest(
@@ -728,51 +884,72 @@ fn validate_bunny_mesh_matches_manifest(
     }
 }
 
+fn validate_bunny_fixture_matches_manifest(
+    fixture: &BunnyMeshFixtureManifest,
+    manifest: &BunnyMeshAssetManifest,
+) -> Result<(), NativeBunnyManifestValidationError> {
+    if fixture.id == manifest.id {
+        Ok(())
+    } else {
+        Err(NativeBunnyManifestValidationError::new(vec![
+            NativeBunnyManifestValidationIssue::new(
+                "$.id",
+                "Fixture id must match the mesh asset manifest id",
+            ),
+        ]))
+    }
+}
+
 fn create_bunny_frame_report(
     frame_index: u64,
     asset_hash: &str,
     mesh: &PlyMesh,
+    fixture: &BunnyMeshFixtureManifest,
 ) -> BunnyFrameReport {
-    let seconds = frame_index_to_seconds(frame_index);
+    let seconds = frame_index_to_seconds(frame_index, fixture.playback.sample_rate);
     BunnyFrameReport {
-        angle_radians: seconds * BUNNY_ROTATION_RADIANS_PER_SECOND,
+        angle_radians: seconds * fixture.playback.radians_per_second,
         asset_hash: asset_hash.to_owned(),
         face_count: mesh.faces.len(),
         frame_index,
-        normalized_axis: normalize_vector3(BUNNY_ROTATION_AXIS),
+        normalized_axis: normalize_vector3(fixture.playback.axis),
         seconds,
         transform_profile: BUNNY_TRANSFORM_PROFILE,
         vertex_count: mesh.vertices.len(),
     }
 }
 
-fn frame_index_to_seconds(frame_index: u64) -> f64 {
-    frame_index
-        .to_string()
-        .parse::<f64>()
-        .map_or(0.0, |value| value / BUNNY_ROTATION_SAMPLE_RATE)
+fn frame_index_to_seconds(frame_index: u64, sample_rate: u64) -> f64 {
+    let frame = frame_index.to_string().parse::<f64>().unwrap_or(0.0);
+    let rate = sample_rate.to_string().parse::<f64>().unwrap_or(1.0);
+    frame / rate
 }
 
-fn bunny_frame_index_from_elapsed_ms(elapsed_ms: u128) -> u64 {
-    let frames = elapsed_ms.saturating_mul(BUNNY_ROTATION_SAMPLE_RATE_MILLIS) / 1000;
+fn bunny_frame_index_from_elapsed_ms(elapsed_ms: u128, sample_rate: u64) -> u64 {
+    let frames = elapsed_ms.saturating_mul(u128::from(sample_rate)) / 1000;
     u64::try_from(frames).unwrap_or(u64::MAX)
 }
 
-fn render_bunny_wireframe(mesh: &PlyMesh, angle_radians: f64) -> BunnyImage {
+fn render_bunny_wireframe(
+    mesh: &PlyMesh,
+    fixture: &BunnyMeshFixtureManifest,
+    style: BunnyRenderStyle,
+    angle_radians: f64,
+) -> BunnyImage {
     let mut image = BunnyImage::new(
-        BUNNY_RENDER_WIDTH,
-        BUNNY_RENDER_HEIGHT,
-        BUNNY_BACKGROUND_RGBA,
+        fixture.projection.viewport.width,
+        fixture.projection.viewport.height,
+        style.background,
     );
-    let axis = normalize_vector3(BUNNY_ROTATION_AXIS);
+    let context = projection_context(fixture);
 
     for face in &mesh.faces {
-        let first = project_position(mesh.vertices[face[0]].position, axis, angle_radians);
-        let second = project_position(mesh.vertices[face[1]].position, axis, angle_radians);
-        let third = project_position(mesh.vertices[face[2]].position, axis, angle_radians);
-        draw_projected_edge(&mut image, first, second);
-        draw_projected_edge(&mut image, second, third);
-        draw_projected_edge(&mut image, third, first);
+        let first = project_position(mesh.vertices[face[0]].position, context, angle_radians);
+        let second = project_position(mesh.vertices[face[1]].position, context, angle_radians);
+        let third = project_position(mesh.vertices[face[2]].position, context, angle_radians);
+        draw_projected_edge(&mut image, style.material, first, second);
+        draw_projected_edge(&mut image, style.material, second, third);
+        draw_projected_edge(&mut image, style.material, third, first);
     }
 
     image
@@ -786,7 +963,7 @@ fn minifb_buffer(image: &BunnyImage) -> Result<Vec<u32>, NativeBunnyWindowError>
             .ok_or_else(NativeBunnyWindowError::buffer_size)?,
     );
 
-    for rgba in image.rgba.chunks_exact(BUNNY_BACKGROUND_RGBA.len()) {
+    for rgba in image.rgba.chunks_exact(4) {
         let red = u32::from(rgba[0]);
         let green = u32::from(rgba[1]);
         let blue = u32::from(rgba[2]);
@@ -803,11 +980,16 @@ fn minifb_buffer(image: &BunnyImage) -> Result<Vec<u32>, NativeBunnyWindowError>
 fn bunny_window_title(loaded: &LoadedBunnyFixture) -> String {
     format!(
         "Geordi Native - {BUNNY_RENDERER_NAME} - {} - frame {}",
-        loaded.manifest.id, loaded.report.frame_index
+        loaded.fixture.id, loaded.report.frame_index
     )
 }
 
-fn draw_projected_edge(image: &mut BunnyImage, first: ProjectedPoint, second: ProjectedPoint) {
+fn draw_projected_edge(
+    image: &mut BunnyImage,
+    color: [u8; 4],
+    first: ProjectedPoint,
+    second: ProjectedPoint,
+) {
     if !first.visible || !second.visible {
         return;
     }
@@ -825,10 +1007,17 @@ fn draw_projected_edge(image: &mut BunnyImage, first: ProjectedPoint, second: Pr
         return;
     };
 
-    draw_line(image, x0, y0, x1, y1);
+    draw_line(image, color, x0, y0, x1, y1);
 }
 
-fn draw_line(image: &mut BunnyImage, mut x0: i32, mut y0: i32, x1: i32, y1: i32) {
+fn draw_line(
+    image: &mut BunnyImage,
+    color: [u8; 4],
+    mut x0: i32,
+    mut y0: i32,
+    x1: i32,
+    y1: i32,
+) {
     let delta_x = (x1 - x0).abs();
     let step_x = if x0 < x1 { 1 } else { -1 };
     let delta_y = -(y1 - y0).abs();
@@ -836,7 +1025,7 @@ fn draw_line(image: &mut BunnyImage, mut x0: i32, mut y0: i32, x1: i32, y1: i32)
     let mut error = delta_x + delta_y;
 
     loop {
-        image.set_pixel(x0, y0, BUNNY_MATERIAL_RGBA);
+        image.set_pixel(x0, y0, color);
         if x0 == x1 && y0 == y1 {
             break;
         }
@@ -853,14 +1042,18 @@ fn draw_line(image: &mut BunnyImage, mut x0: i32, mut y0: i32, x1: i32, y1: i32)
     }
 }
 
-fn project_position(position: [f64; 3], axis: [f64; 3], angle_radians: f64) -> ProjectedPoint {
-    let rotated = rotate_around_axis(position, axis, angle_radians);
-    let camera_x = rotated[0] - BUNNY_CAMERA_EYE[0];
-    let camera_y = rotated[1] - BUNNY_CAMERA_EYE[1];
-    let camera_z = rotated[2] - BUNNY_CAMERA_EYE[2];
-    let depth = -camera_z;
+fn project_position(
+    position: [f64; 3],
+    context: ProjectionContext,
+    angle_radians: f64,
+) -> ProjectedPoint {
+    let rotated = rotate_around_axis(position, context.axis, angle_radians);
+    let delta = subtract_vector3(rotated, context.camera.eye);
+    let camera_x = dot_vector3(delta, context.camera.right);
+    let camera_y = dot_vector3(delta, context.camera.up);
+    let depth = dot_vector3(delta, context.camera.forward);
 
-    if depth <= 0.0 {
+    if depth < context.near || depth > context.far {
         return ProjectedPoint {
             visible: false,
             x: 0.0,
@@ -868,14 +1061,38 @@ fn project_position(position: [f64; 3], axis: [f64; 3], angle_radians: f64) -> P
         };
     }
 
-    let focal_length = 1.0 / (BUNNY_VERTICAL_FOV_RADIANS / 2.0).tan();
-    let x_ndc = (focal_length * camera_x) / depth;
-    let y_ndc = (focal_length * camera_y) / depth;
+    let x_ndc = (context.focal_length * camera_x) / depth;
+    let y_ndc = (context.focal_length * camera_y) / depth;
 
     ProjectedPoint {
         visible: true,
-        x: x_ndc.midpoint(1.0) * 512.0,
-        y: (-y_ndc).midpoint(1.0) * 512.0,
+        x: x_ndc.midpoint(1.0) * context.width,
+        y: (-y_ndc).midpoint(1.0) * context.height,
+    }
+}
+
+fn projection_context(fixture: &BunnyMeshFixtureManifest) -> ProjectionContext {
+    ProjectionContext {
+        axis: normalize_vector3(fixture.playback.axis),
+        camera: camera_basis(&fixture.camera),
+        far: fixture.projection.far,
+        focal_length: 1.0 / (fixture.projection.vertical_fov_radians / 2.0).tan(),
+        height: usize_to_f64(fixture.projection.viewport.height),
+        near: fixture.projection.near,
+        width: usize_to_f64(fixture.projection.viewport.width),
+    }
+}
+
+fn camera_basis(camera: &BunnyMeshCamera) -> CameraBasis {
+    let forward = normalize_vector3(subtract_vector3(camera.target, camera.eye));
+    let right = normalize_vector3(cross_vector3(forward, camera.up));
+    let up = normalize_vector3(cross_vector3(right, forward));
+
+    CameraBasis {
+        eye: camera.eye,
+        forward,
+        right,
+        up,
     }
 }
 
@@ -907,6 +1124,30 @@ fn normalize_vector3(vector: [f64; 3]) -> [f64; 3] {
     [vector[0] / length, vector[1] / length, vector[2] / length]
 }
 
+fn subtract_vector3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
+    [
+        left[0] - right[0],
+        left[1] - right[1],
+        left[2] - right[2],
+    ]
+}
+
+fn dot_vector3(left: [f64; 3], right: [f64; 3]) -> f64 {
+    left[2].mul_add(right[2], left[0].mul_add(right[0], left[1] * right[1]))
+}
+
+fn cross_vector3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
+    [
+        left[1].mul_add(right[2], -(left[2] * right[1])),
+        left[2].mul_add(right[0], -(left[0] * right[2])),
+        left[0].mul_add(right[1], -(left[1] * right[0])),
+    ]
+}
+
+fn usize_to_f64(value: usize) -> f64 {
+    value.to_string().parse::<f64>().unwrap_or(0.0)
+}
+
 const fn vector_bits(vector: [f64; 3]) -> [u64; 3] {
     [
         vector[0].to_bits(),
@@ -921,6 +1162,197 @@ fn rounded_i32(value: f64) -> Option<i32> {
     }
 
     format!("{value:.0}").parse::<i32>().ok()
+}
+
+fn bunny_render_style(
+    fixture: &BunnyMeshFixtureManifest,
+) -> Result<BunnyRenderStyle, NativeBunnyManifestValidationError> {
+    Ok(BunnyRenderStyle {
+        background: hex_color_rgba(&fixture.material.background_color, "$.material.backgroundColor")?,
+        material: hex_color_rgba(&fixture.material.color, "$.material.color")?,
+    })
+}
+
+fn hex_color_rgba(
+    value: &str,
+    path: &str,
+) -> Result<[u8; 4], NativeBunnyManifestValidationError> {
+    if !is_hex_color(value) {
+        return Err(NativeBunnyManifestValidationError::new(vec![
+            NativeBunnyManifestValidationIssue::new(path, "Color must be lowercase #rrggbb"),
+        ]));
+    }
+
+    let red = u8::from_str_radix(&value[1..3], 16).map_err(|_| {
+        NativeBunnyManifestValidationError::new(vec![NativeBunnyManifestValidationIssue::new(
+            path,
+            "Color red channel must be hexadecimal",
+        )])
+    })?;
+    let green = u8::from_str_radix(&value[3..5], 16).map_err(|_| {
+        NativeBunnyManifestValidationError::new(vec![NativeBunnyManifestValidationIssue::new(
+            path,
+            "Color green channel must be hexadecimal",
+        )])
+    })?;
+    let blue = u8::from_str_radix(&value[5..7], 16).map_err(|_| {
+        NativeBunnyManifestValidationError::new(vec![NativeBunnyManifestValidationIssue::new(
+            path,
+            "Color blue channel must be hexadecimal",
+        )])
+    })?;
+
+    Ok([red, green, blue, 255])
+}
+
+fn validate_mesh_runtime_profile(
+    runtime_profile: &BunnyMeshRuntimeProfile,
+    issues: &mut Vec<NativeBunnyManifestValidationIssue>,
+) {
+    validate_literal(
+        &runtime_profile.numeric_profile,
+        BUNNY_NUMERIC_PROFILE,
+        "$.runtimeProfile.numericProfile",
+        "Numeric profile",
+        issues,
+    );
+    if runtime_profile.requires.len() != BUNNY_RUNTIME_REQUIREMENTS.len() {
+        push_issue(
+            issues,
+            "$.runtimeProfile.requires",
+            "Runtime requirements must match the bunny fixture contract",
+        );
+        return;
+    }
+
+    for (index, expected) in BUNNY_RUNTIME_REQUIREMENTS.iter().enumerate() {
+        if runtime_profile.requires[index] != *expected {
+            push_issue(
+                issues,
+                &format!("$.runtimeProfile.requires[{index}]"),
+                "Runtime requirement must match the bunny fixture contract",
+            );
+        }
+    }
+}
+
+fn validate_mesh_camera(
+    camera: &BunnyMeshCamera,
+    issues: &mut Vec<NativeBunnyManifestValidationIssue>,
+) {
+    validate_literal(
+        &camera.coordinate_system,
+        "right-handed",
+        "$.camera.coordinateSystem",
+        "Camera coordinate system",
+        issues,
+    );
+    validate_vector3(&camera.eye, "$.camera.eye", "Camera eye", issues);
+    validate_vector3(&camera.target, "$.camera.target", "Camera target", issues);
+    validate_vector3(&camera.up, "$.camera.up", "Camera up", issues);
+    if vector_bits(camera.eye) == vector_bits(camera.target) {
+        push_issue(
+            issues,
+            "$.camera.target",
+            "Camera target must differ from camera eye",
+        );
+    }
+    if is_zero_vector3(camera.up) {
+        push_issue(issues, "$.camera.up", "Camera up must be non-zero");
+    }
+    let forward = subtract_vector3(camera.target, camera.eye);
+    if is_zero_vector3(cross_vector3(forward, camera.up)) {
+        push_issue(
+            issues,
+            "$.camera.up",
+            "Camera up must not be parallel to view direction",
+        );
+    }
+}
+
+fn validate_mesh_projection(
+    projection: &BunnyMeshProjection,
+    issues: &mut Vec<NativeBunnyManifestValidationIssue>,
+) {
+    validate_literal(
+        &projection.kind,
+        "perspective",
+        "$.projection.kind",
+        "Projection kind",
+        issues,
+    );
+    validate_positive_finite(
+        projection.vertical_fov_radians,
+        "$.projection.verticalFovRadians",
+        "Projection vertical FOV",
+        issues,
+    );
+    validate_positive_finite(projection.near, "$.projection.near", "Projection near", issues);
+    validate_positive_finite(projection.far, "$.projection.far", "Projection far", issues);
+    if projection.viewport.width == 0 {
+        push_issue(
+            issues,
+            "$.projection.viewport.width",
+            "Projection viewport width must be positive",
+        );
+    }
+    if projection.viewport.height == 0 {
+        push_issue(
+            issues,
+            "$.projection.viewport.height",
+            "Projection viewport height must be positive",
+        );
+    }
+}
+
+fn validate_mesh_material(
+    material: &BunnyMeshMaterial,
+    issues: &mut Vec<NativeBunnyManifestValidationIssue>,
+) {
+    validate_literal(
+        &material.kind,
+        "solid",
+        "$.material.kind",
+        "Material kind",
+        issues,
+    );
+    validate_hex_color(&material.color, "$.material.color", "Material color", issues);
+    validate_hex_color(
+        &material.background_color,
+        "$.material.backgroundColor",
+        "Material background color",
+        issues,
+    );
+}
+
+fn validate_mesh_playback(
+    playback: &BunnyMeshPlayback,
+    issues: &mut Vec<NativeBunnyManifestValidationIssue>,
+) {
+    validate_literal(
+        &playback.kind,
+        "fixed-rate-rotation",
+        "$.playback.kind",
+        "Playback kind",
+        issues,
+    );
+    validate_vector3(&playback.axis, "$.playback.axis", "Playback axis", issues);
+    if is_zero_vector3(playback.axis) {
+        push_issue(issues, "$.playback.axis", "Playback axis must be non-zero");
+    }
+    validate_positive_finite(
+        playback.radians_per_second,
+        "$.playback.radiansPerSecond",
+        "Playback radians per second",
+        issues,
+    );
+    if playback.sample_rate == 0 {
+        push_issue(
+            issues,
+            "$.playback.sampleRate",
+            "Playback sample rate must be positive",
+        );
+    }
 }
 
 fn validate_format(
@@ -1056,6 +1488,57 @@ fn has_windows_drive_prefix(value: &str) -> bool {
     bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':'
 }
 
+fn validate_vector3(
+    vector: &[f64; 3],
+    path: &str,
+    label: &str,
+    issues: &mut Vec<NativeBunnyManifestValidationIssue>,
+) {
+    for value in vector {
+        if !value.is_finite() {
+            push_issue(issues, path, &format!("{label} must contain finite numbers"));
+            return;
+        }
+    }
+}
+
+fn validate_positive_finite(
+    value: f64,
+    path: &str,
+    label: &str,
+    issues: &mut Vec<NativeBunnyManifestValidationIssue>,
+) {
+    if !value.is_finite() || value <= 0.0 {
+        push_issue(issues, path, &format!("{label} must be positive and finite"));
+    }
+}
+
+fn validate_hex_color(
+    value: &str,
+    path: &str,
+    label: &str,
+    issues: &mut Vec<NativeBunnyManifestValidationIssue>,
+) {
+    if !is_hex_color(value) {
+        push_issue(issues, path, &format!("{label} must be lowercase #rrggbb"));
+    }
+}
+
+fn is_hex_color(value: &str) -> bool {
+    let Some(hex) = value.strip_prefix('#') else {
+        return false;
+    };
+    hex.len() == 6
+        && hex
+            .as_bytes()
+            .iter()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(byte))
+}
+
+fn is_zero_vector3(vector: [f64; 3]) -> bool {
+    vector_bits(vector) == [0.0_f64.to_bits(), 0.0_f64.to_bits(), 0.0_f64.to_bits()]
+}
+
 fn validate_non_empty(
     value: &str,
     path: &str,
@@ -1110,7 +1593,7 @@ mod tests {
         assert!(text.contains("transformProfile=geordi-fixed-rate-rotation/1"));
         assert_eq!(loaded.report.vertex_count, 1889);
         assert_eq!(loaded.report.face_count, 3851);
-        assert!(loaded.image.non_background_pixels() > 0);
+        assert!(loaded.image.non_background_pixels(loaded.style.background) > 0);
         Ok(())
     }
 
@@ -1158,10 +1641,10 @@ mod tests {
 
     #[test]
     fn maps_host_elapsed_time_to_native_frame_indices() {
-        assert_eq!(bunny_frame_index_from_elapsed_ms(0), 0);
-        assert_eq!(bunny_frame_index_from_elapsed_ms(249), 14);
-        assert_eq!(bunny_frame_index_from_elapsed_ms(250), 15);
-        assert_eq!(bunny_frame_index_from_elapsed_ms(1000), 60);
+        assert_eq!(bunny_frame_index_from_elapsed_ms(0, 60), 0);
+        assert_eq!(bunny_frame_index_from_elapsed_ms(249, 60), 14);
+        assert_eq!(bunny_frame_index_from_elapsed_ms(250, 60), 15);
+        assert_eq!(bunny_frame_index_from_elapsed_ms(1000, 60), 60);
     }
 
     fn output_text(output: &[u8]) -> String {

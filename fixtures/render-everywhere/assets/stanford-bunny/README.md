@@ -2,6 +2,7 @@
 
 **Asset path**: `fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply`
 **Asset manifest**: `fixtures/render-everywhere/assets/stanford-bunny/bunny.mesh.json`
+**Fixture descriptor**: `fixtures/render-everywhere/assets/stanford-bunny/bunny.fixture.json`
 **Source archive**: `https://graphics.stanford.edu/pub/3Dscanrep/bunny.tar.gz`
 **Retrieved**: 2026-05-23
 
@@ -33,8 +34,10 @@ normalized for repository hygiene.
 - Bounds min: `[-0.0943643, 0.0334143, -0.0616721]`
 - Bounds max: `[0.0609346, 0.184813, 0.0584651]`
 
-The `bunny.mesh.json` manifest records these values in the `geordi-mesh-asset/1` schema. Runtimes
-should validate the manifest and the PLY bytes before using the mesh in a render-everywhere demo.
+The `bunny.mesh.json` manifest records these values in the `geordi-mesh-asset/1` schema. The
+`bunny.fixture.json` descriptor records the shared render intent: camera, perspective projection,
+solid wireframe material colors, and fixed-rate rotation playback. Browser and native runtimes load
+that same descriptor before rendering so the demo cannot drift into parallel hardcoded constants.
 
 ## Contract
 
@@ -42,10 +45,11 @@ The asset contract is:
 
 - one canonical mesh asset: `bun_zipper_res3.ply`;
 - one deterministic asset manifest: `bunny.mesh.json`;
+- one deterministic fixture descriptor: `bunny.fixture.json`;
 - one mesh profile: `geordi-ascii-ply-triangle-mesh/1`;
 - one asset hash:
   `sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6`;
-- one authored rotation axis: `[3, 5, 2]`;
+- one authored rotation axis from the fixture descriptor: `[3, 5, 2]`;
 - one transform profile: `geordi-fixed-rate-rotation/1`;
 - fixed-frame smoke samples at frame `0`, frame `15`, and frame `60`.
 

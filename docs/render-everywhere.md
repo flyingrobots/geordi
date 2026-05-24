@@ -114,6 +114,16 @@ The bunny asset manifest is:
 fixtures/render-everywhere/assets/stanford-bunny/bunny.mesh.json
 ```
 
+The shared bunny render descriptor is:
+
+```text
+fixtures/render-everywhere/assets/stanford-bunny/bunny.fixture.json
+```
+
+Both browser and native bunny demos load this descriptor for camera, projection, material colors,
+and fixed-rate rotation playback. Backend-specific harness code still owns presentation mechanics,
+but it no longer owns parallel render-intent constants.
+
 The bunny asset currently reports:
 
 ```text
