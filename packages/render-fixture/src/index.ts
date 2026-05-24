@@ -162,6 +162,19 @@ export interface RenderFixtureMeshAssetManifest extends JsonObject {
   readonly vertexProperties: readonly string[];
 }
 
+export interface RenderFixturePlyVertex extends JsonObject {
+  readonly position: RenderFixtureVector3;
+}
+
+export type RenderFixturePlyTriangleFace = readonly [number, number, number];
+
+export interface RenderFixturePlyMesh extends JsonObject {
+  readonly bounds: RenderFixtureMeshAssetBounds;
+  readonly faces: readonly RenderFixturePlyTriangleFace[];
+  readonly vertexProperties: readonly string[];
+  readonly vertices: readonly RenderFixturePlyVertex[];
+}
+
 export interface RenderFixtureMeshRuntimeProfile extends JsonObject {
   readonly numericProfile: GeordiNumericProfile;
   readonly requires: readonly GeordiFeatureRequirement[];
@@ -232,6 +245,36 @@ export class RenderFixtureInvalidMeshFixtureManifestError extends Error {
     super('Invalid render fixture mesh fixture manifest');
     this.name = new.target.name;
     this.issues = issues;
+  }
+}
+
+export class RenderFixturePlyHeaderError extends Error {
+  public readonly lineNumber: number;
+
+  constructor(lineNumber: number, message: string) {
+    super(message);
+    this.name = new.target.name;
+    this.lineNumber = lineNumber;
+  }
+}
+
+export class RenderFixturePlyVertexError extends Error {
+  public readonly lineNumber: number;
+
+  constructor(lineNumber: number) {
+    super('Invalid PLY vertex row');
+    this.name = new.target.name;
+    this.lineNumber = lineNumber;
+  }
+}
+
+export class RenderFixturePlyFaceError extends Error {
+  public readonly lineNumber: number;
+
+  constructor(lineNumber: number) {
+    super('Invalid PLY triangle face row');
+    this.name = new.target.name;
+    this.lineNumber = lineNumber;
   }
 }
 
@@ -560,6 +603,227 @@ export function renderFixtureRgbaFromBytes(bytes: ArrayLike<number>): RenderFixt
     requireByteChannel(bytes, 2),
     requireByteChannel(bytes, 3),
   ];
+}
+
+export function parseRenderFixtureAsciiPlyTriangleMesh(source: string): RenderFixturePlyMesh {
+  const lines = source.split(/\r?\n/u);
+  const header = parsePlyHeader(lines);
+  const vertices = parsePlyVertices(lines, header);
+  const faces = parsePlyFaces(lines, header, vertices.length);
+
+  return {
+    bounds: boundsFromVertices(vertices),
+    faces,
+    vertexProperties: header.vertexProperties,
+    vertices,
+  };
+}
+
+interface PlyHeader {
+  readonly faceCount: number;
+  readonly faceStartIndex: number;
+  readonly vertexCount: number;
+  readonly vertexProperties: readonly string[];
+  readonly vertexStartIndex: number;
+}
+
+function parsePlyHeader(lines: readonly string[]): PlyHeader {
+  if (lineAt(lines, 0).trim() !== 'ply') {
+    throw new RenderFixturePlyHeaderError(1, 'PLY source must start with ply');
+  }
+
+  let faceCount: number | undefined;
+  let vertexCount: number | undefined;
+  let currentElement = '';
+  let facePropertyFound = false;
+  const vertexProperties: string[] = [];
+
+  for (let index = 1; index < lines.length; index++) {
+    const lineNumber = index + 1;
+    const line = lineAt(lines, index).trim();
+    if (line === 'end_header') {
+      if (vertexCount === undefined || faceCount === undefined || !facePropertyFound) {
+        throw new RenderFixturePlyHeaderError(lineNumber, 'PLY header is incomplete');
+      }
+
+      assertVertexPositionProperties(vertexProperties, lineNumber);
+      const vertexStartIndex = index + 1;
+      return {
+        faceCount,
+        faceStartIndex: vertexStartIndex + vertexCount,
+        vertexCount,
+        vertexProperties,
+        vertexStartIndex,
+      };
+    }
+
+    if (line.length === 0 || line.startsWith('comment ')) {
+      continue;
+    }
+
+    if (line === 'format ascii 1.0') {
+      continue;
+    }
+
+    const parts = line.split(/\s+/u);
+    if (parts[0] === 'element' && parts[1] === 'vertex') {
+      vertexCount = parsePositiveIntegerToken(parts[2], lineNumber);
+      currentElement = 'vertex';
+      continue;
+    }
+
+    if (parts[0] === 'element' && parts[1] === 'face') {
+      faceCount = parsePositiveIntegerToken(parts[2], lineNumber);
+      currentElement = 'face';
+      continue;
+    }
+
+    if (parts[0] === 'property' && currentElement === 'vertex') {
+      if (parts.length !== 3) {
+        throw new RenderFixturePlyHeaderError(lineNumber, 'PLY vertex property is unsupported');
+      }
+      const propertyName = parts.at(2);
+      if (propertyName === undefined) {
+        throw new RenderFixturePlyHeaderError(lineNumber, 'PLY vertex property is unsupported');
+      }
+      vertexProperties.push(propertyName);
+      continue;
+    }
+
+    if (line === 'property list uchar int vertex_indices' && currentElement === 'face') {
+      facePropertyFound = true;
+      continue;
+    }
+
+    throw new RenderFixturePlyHeaderError(lineNumber, 'PLY header line is unsupported');
+  }
+
+  throw new RenderFixturePlyHeaderError(lines.length, 'PLY header must end with end_header');
+}
+
+function parsePlyVertices(
+  lines: readonly string[],
+  header: PlyHeader,
+): readonly RenderFixturePlyVertex[] {
+  const vertices: RenderFixturePlyVertex[] = [];
+  for (let index = 0; index < header.vertexCount; index++) {
+    const lineIndex = header.vertexStartIndex + index;
+    const lineNumber = lineIndex + 1;
+    const fields = lineAt(lines, lineIndex).trim().split(/\s+/u);
+    if (fields.length !== header.vertexProperties.length) {
+      throw new RenderFixturePlyVertexError(lineNumber);
+    }
+
+    const x = parseFiniteNumberToken(fields[0], lineNumber, RenderFixturePlyVertexError);
+    const y = parseFiniteNumberToken(fields[1], lineNumber, RenderFixturePlyVertexError);
+    const z = parseFiniteNumberToken(fields[2], lineNumber, RenderFixturePlyVertexError);
+    vertices.push({ position: [x, y, z] });
+  }
+
+  return vertices;
+}
+
+function parsePlyFaces(
+  lines: readonly string[],
+  header: PlyHeader,
+  vertexCount: number,
+): readonly RenderFixturePlyTriangleFace[] {
+  const faces: RenderFixturePlyTriangleFace[] = [];
+  for (let index = 0; index < header.faceCount; index++) {
+    const lineIndex = header.faceStartIndex + index;
+    const lineNumber = lineIndex + 1;
+    const fields = lineAt(lines, lineIndex).trim().split(/\s+/u);
+    if (fields.length !== 4 || fields[0] !== '3') {
+      throw new RenderFixturePlyFaceError(lineNumber);
+    }
+
+    const a = parseFaceIndex(fields[1], vertexCount, lineNumber);
+    const b = parseFaceIndex(fields[2], vertexCount, lineNumber);
+    const c = parseFaceIndex(fields[3], vertexCount, lineNumber);
+    faces.push([a, b, c]);
+  }
+
+  return faces;
+}
+
+function assertVertexPositionProperties(properties: readonly string[], lineNumber: number): void {
+  if (properties[0] !== 'x' || properties[1] !== 'y' || properties[2] !== 'z') {
+    throw new RenderFixturePlyHeaderError(lineNumber, 'PLY vertex properties must begin x y z');
+  }
+}
+
+function parsePositiveIntegerToken(value: string | undefined, lineNumber: number): number {
+  const parsed = Number(value);
+  if (value === undefined || !Number.isInteger(parsed) || parsed <= 0) {
+    throw new RenderFixturePlyHeaderError(lineNumber, 'PLY element count must be a positive integer');
+  }
+
+  return parsed;
+}
+
+function parseFiniteNumberToken(
+  value: string | undefined,
+  lineNumber: number,
+  ErrorClass: typeof RenderFixturePlyVertexError,
+): number {
+  const parsed = Number(value);
+  if (value === undefined || !Number.isFinite(parsed)) {
+    throw new ErrorClass(lineNumber);
+  }
+
+  return parsed;
+}
+
+function parseFaceIndex(
+  value: string | undefined,
+  vertexCount: number,
+  lineNumber: number,
+): number {
+  const parsed = Number(value);
+  if (value === undefined || !Number.isInteger(parsed) || parsed < 0 || parsed >= vertexCount) {
+    throw new RenderFixturePlyFaceError(lineNumber);
+  }
+
+  return parsed;
+}
+
+function boundsFromVertices(
+  vertices: readonly RenderFixturePlyVertex[],
+): RenderFixtureMeshAssetBounds {
+  if (vertices.length === 0) {
+    throw new RenderFixturePlyVertexError(0);
+  }
+
+  const min: [number, number, number] = [
+    Number.POSITIVE_INFINITY,
+    Number.POSITIVE_INFINITY,
+    Number.POSITIVE_INFINITY,
+  ];
+  const max: [number, number, number] = [
+    Number.NEGATIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+  ];
+  for (const vertex of vertices) {
+    const [x, y, z] = vertex.position;
+    min[0] = Math.min(min[0], x);
+    min[1] = Math.min(min[1], y);
+    min[2] = Math.min(min[2], z);
+    max[0] = Math.max(max[0], x);
+    max[1] = Math.max(max[1], y);
+    max[2] = Math.max(max[2], z);
+  }
+
+  return { max, min };
+}
+
+function lineAt(lines: readonly string[], index: number): string {
+  const line = lines.at(index);
+  if (line === undefined) {
+    throw new RenderFixturePlyHeaderError(index + 1, 'PLY source ended unexpectedly');
+  }
+
+  return line;
 }
 
 function validateCanvas(

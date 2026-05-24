@@ -18,6 +18,7 @@ import {
   isRenderFixtureMeshAssetManifest,
   isRenderFixtureMeshFixtureManifest,
   isRenderFixtureManifest,
+  parseRenderFixtureAsciiPlyTriangleMesh,
   parseRenderFixtureMeshAssetManifest,
   parseRenderFixtureMeshFixtureManifest,
   parseRenderFixtureManifest,
@@ -31,6 +32,9 @@ import {
   RenderFixtureInvalidMeshFixtureManifestError,
   RenderFixtureInvalidManifestError,
   RenderFixtureInvalidPixelSampleError,
+  RenderFixturePlyFaceError,
+  RenderFixturePlyHeaderError,
+  RenderFixturePlyVertexError,
   RenderFixturePixelProbeError,
   renderFixtureRgbaFromBytes,
   validateRenderFixtureArtifact,
@@ -190,6 +194,16 @@ function bunnyMeshAssetManifestSource(): string {
   return readFileSync(
     new URL(
       '../../../fixtures/render-everywhere/assets/stanford-bunny/bunny.mesh.json',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
+function bunnyPlySource(): string {
+  return readFileSync(
+    new URL(
+      '../../../fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply',
       import.meta.url,
     ),
     'utf8',
@@ -627,6 +641,70 @@ describe('render fixture mesh fixture manifest validation', () => {
         ),
       ),
     ).toThrow(RenderFixtureInvalidMeshFixtureManifestError);
+  });
+});
+
+describe('render fixture ASCII PLY triangle mesh parser', () => {
+  it('parses the committed Stanford bunny PLY into typed mesh data', () => {
+    const mesh = parseRenderFixtureAsciiPlyTriangleMesh(bunnyPlySource());
+
+    expect(mesh.vertexProperties).toEqual(['x', 'y', 'z', 'confidence', 'intensity']);
+    expect(mesh.vertices).toHaveLength(1889);
+    expect(mesh.faces).toHaveLength(3851);
+    expect(mesh.bounds.min).toEqual([-0.0943643, 0.0334143, -0.0616721]);
+    expect(mesh.bounds.max).toEqual([0.0609346, 0.184813, 0.0584651]);
+    expect(mesh.faces[0]).toEqual([4, 132, 80]);
+  });
+
+  it('rejects unsupported PLY headers with a custom error', () => {
+    expect(() =>
+      parseRenderFixtureAsciiPlyTriangleMesh(`ply
+format binary_little_endian 1.0
+element vertex 1
+property float x
+property float y
+property float z
+element face 1
+property list uchar int vertex_indices
+end_header
+0 0 0
+3 0 0 0
+`),
+    ).toThrow(RenderFixturePlyHeaderError);
+  });
+
+  it('rejects malformed vertex rows with a custom error', () => {
+    expect(() =>
+      parseRenderFixtureAsciiPlyTriangleMesh(`ply
+format ascii 1.0
+element vertex 1
+property float x
+property float y
+property float z
+element face 1
+property list uchar int vertex_indices
+end_header
+0 NaN 0
+3 0 0 0
+`),
+    ).toThrow(RenderFixturePlyVertexError);
+  });
+
+  it('rejects non-triangle or out-of-range faces with a custom error', () => {
+    expect(() =>
+      parseRenderFixtureAsciiPlyTriangleMesh(`ply
+format ascii 1.0
+element vertex 1
+property float x
+property float y
+property float z
+element face 1
+property list uchar int vertex_indices
+end_header
+0 0 0
+4 0 0 0 0
+`),
+    ).toThrow(RenderFixturePlyFaceError);
   });
 });
 

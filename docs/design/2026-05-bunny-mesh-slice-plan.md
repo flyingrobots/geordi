@@ -65,13 +65,19 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Add a Node-side hash helper for mesh asset bytes.
   - Assert expected `sha256:` values with a custom hash mismatch error.
   - Keep filesystem reads outside pure validators.
+  - Done: `6f4e7ca`.
+  - Verification: `pnpm --filter @flyingrobots/geordi-render-fixture typecheck`, `lint`, `build`,
+    `test`.
 
 - [x] **Slice 8: Rust asset hash validator**
   - Add a Rust hash helper for mesh asset bytes.
   - Assert expected `sha256:` values with a custom hash mismatch error.
   - Keep path validation fixture-local.
+  - Done: `13c1ee7`.
+  - Verification: `cargo test -p geordi-mesh`, `cargo clippy -p geordi-mesh --all-targets -- -D
+    warnings`.
 
-- [ ] **Slice 9: TypeScript PLY boundary**
+- [x] **Slice 9: TypeScript PLY boundary**
   - Parse the supported ASCII PLY subset into typed mesh data.
   - Reject unsupported headers, non-finite numbers, bad vertices, and bad faces with custom errors.
   - Do not leak raw JSON or unchecked strings beyond the parser boundary.
