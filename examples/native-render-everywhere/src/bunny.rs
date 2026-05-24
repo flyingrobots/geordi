@@ -1480,7 +1480,22 @@ fn is_fixture_local_relative_path(value: &str) -> bool {
     !value.starts_with('/')
         && !value.contains('\\')
         && !value.contains("..")
+        && !has_url_scheme(value)
         && !has_windows_drive_prefix(value)
+}
+
+fn has_url_scheme(value: &str) -> bool {
+    let Some((scheme, _rest)) = value.split_once("://") else {
+        return false;
+    };
+    let mut bytes = scheme.as_bytes().iter();
+    let Some(first) = bytes.next() else {
+        return false;
+    };
+    first.is_ascii_alphabetic()
+        && bytes.all(|byte| {
+            byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'.' | b'-')
+        })
 }
 
 fn has_windows_drive_prefix(value: &str) -> bool {
@@ -1570,7 +1585,7 @@ fn push_issue(issues: &mut Vec<NativeBunnyManifestValidationIssue>, path: &str, 
 mod tests {
     use super::{
         BUNNY_RENDERER_NAME, NativeBunnyError, bunny_frame_index_from_elapsed_ms,
-        load_bunny_fixture, run_bunny_smoke, write_bunny_summary,
+        is_fixture_local_relative_path, load_bunny_fixture, run_bunny_smoke, write_bunny_summary,
     };
     use std::path::{Path, PathBuf};
 
@@ -1645,6 +1660,13 @@ mod tests {
         assert_eq!(bunny_frame_index_from_elapsed_ms(249, 60), 14);
         assert_eq!(bunny_frame_index_from_elapsed_ms(250, 60), 15);
         assert_eq!(bunny_frame_index_from_elapsed_ms(1000, 60), 60);
+    }
+
+    #[test]
+    fn fixture_local_paths_reject_url_schemes() {
+        assert!(!is_fixture_local_relative_path("https://example.invalid/bunny.mesh.json"));
+        assert!(!is_fixture_local_relative_path("file://bunny.mesh.json"));
+        assert!(is_fixture_local_relative_path("bunny.mesh.json"));
     }
 
     fn output_text(output: &[u8]) -> String {

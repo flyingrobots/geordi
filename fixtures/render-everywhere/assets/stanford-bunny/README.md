@@ -54,8 +54,8 @@ The asset contract is:
 - fixed-frame smoke samples at frame `0`, frame `15`, and frame `60`.
 
 Both runtimes must validate the manifest and PLY bytes before rendering. A missing file, malformed
-manifest, hash mismatch, unsupported PLY header, nonfinite vertex, malformed face, bad face index,
-or zero rotation axis is a hard failure.
+manifest, URL-scheme or non-fixture-local path, hash mismatch, unsupported PLY header, nonfinite
+vertex, malformed face, bad face index, or zero rotation axis is a hard failure.
 
 ## Commands
 

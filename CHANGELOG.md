@@ -89,6 +89,8 @@
 - **Bunny mesh milestone**: Add the committed `bunny.fixture.json` render descriptor and have both
   browser and native bunny demos load it for camera, projection, material colors, and fixed-rate
   playback instead of carrying parallel render-intent constants.
+- **Native render-everywhere demo**: Reject URL-scheme paths anywhere the bunny fixture expects a
+  fixture-local relative path.
 - **Browser render-everywhere demo**: Add a scene switcher so the interactive browser harness can
   show either the rectangle pixel-probe fixture or the rotating Stanford bunny, with debug metadata
   hidden behind collapsed disclosure panels.
