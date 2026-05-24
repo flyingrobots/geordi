@@ -82,6 +82,9 @@
 - **Render-everywhere demos**: Add `pnpm test:render-everywhere:gpvue`, which compiles the GPVue
   fixture once, routes the browser gate to the emitted scene artifact, and runs the native Rust
   smoke against the same emitted artifact.
+- **Bunny mesh milestone**: Add known mesh feature requirements, Stanford bunny mesh asset and
+  fixture contracts, TypeScript and Rust SHA-256 helpers, ASCII PLY triangle parsers, and
+  deterministic bounds/camera/projection/rotation law vectors for the next render-everywhere demo.
 
 ### Tests
 
@@ -127,6 +130,9 @@
   construct coverage for the rectangle-only GPVue fixture compiler.
 - **Render-everywhere demos**: Add an end-to-end GPVue smoke path covering browser pixel probes and
   native Rust pixel probes against one compiled fixture artifact.
+- **Bunny mesh milestone**: Add cross-language coverage for Stanford bunny asset hash, vertex and
+  face counts, bounds, finite vertex coordinates, face index ranges, and malformed PLY failure
+  paths.
 
 ### Bug Fixes
 

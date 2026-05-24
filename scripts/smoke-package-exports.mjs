@@ -11,6 +11,7 @@ const checks = [
       'GEORDI_BASELINE_FEATURES',
       'GEORDI_CORE_PROFILE',
       'GEORDI_KNOWN_FEATURES',
+      'GEORDI_MESH_FEATURES',
       'GEORDI_NUMERIC_PROFILE',
       'GEORDI_STRICT_TEXT_FEATURES',
       'isGeordiFeatureRequirement',
@@ -44,12 +45,32 @@ const checks = [
     packageName: '@flyingrobots/geordi-render-fixture',
     packageDir: 'packages/render-fixture',
     exports: [
+      'RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE',
+      'RENDER_FIXTURE_MESH_ASSET_VERSION',
+      'RENDER_FIXTURE_MESH_FIXTURE_VERSION',
       'RENDER_FIXTURE_VERSION',
+      'RenderFixtureInvalidMeshAssetManifestError',
       'RenderFixtureInvalidManifestError',
+      'RenderFixturePlyHeaderError',
       'RenderFixturePixelProbeError',
       'assertRenderFixturePixelProbe',
+      'parseRenderFixtureAsciiPlyTriangleMesh',
+      'parseRenderFixtureMeshAssetManifest',
+      'parseRenderFixtureMeshFixtureManifest',
       'parseRenderFixtureManifest',
+      'validateRenderFixtureMeshAssetManifest',
+      'validateRenderFixtureMeshFixtureManifest',
       'validateRenderFixtureManifest',
+    ],
+  },
+  {
+    packageName: '@flyingrobots/geordi-render-fixture/node',
+    packageDir: 'packages/render-fixture',
+    exportPath: './node',
+    exports: [
+      'RenderFixtureHashMismatchError',
+      'assertRenderFixtureSha256',
+      'renderFixtureSha256FromBytes',
     ],
   },
   {
@@ -95,7 +116,14 @@ for (const check of checks) {
     throw new PackageJsonShapeError(check.packageName);
   }
 
-  const importPath = packageJson.exports?.['.']?.import ?? packageJson.main;
+  const exportPath = check.exportPath ?? '.';
+  const exportConfig = packageJson.exports?.[exportPath];
+  const importPath =
+    typeof exportConfig === 'object' && exportConfig !== null
+      ? exportConfig.import
+      : exportPath === '.'
+        ? packageJson.main
+        : undefined;
   if (!importPath) {
     throw new PackageExportEntrypointMissingError(check.packageName);
   }

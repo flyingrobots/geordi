@@ -34,6 +34,8 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Add this executable 30-slice checklist.
   - Wire the active design map to the bunny milestone.
   - Link the checklist from `BEARING.md`.
+  - Done: `6a51001`.
+  - Verification: `pnpm test:docs`, `git diff --check`.
 
 - [x] **Slice 3: Asset manifest schema**
   - Add typed TypeScript contracts for `geordi-mesh-asset/1`.
@@ -46,6 +48,8 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Add the bunny mesh asset manifest beside the committed PLY.
   - Record SHA-256, format, profile, vertex count, face count, bounds, source, and attribution.
   - Parse the manifest through the schema validator.
+  - Done: `eea32a2`.
+  - Verification: `pnpm --filter @flyingrobots/geordi-render-fixture test`, `pnpm test:docs`.
 
 - [x] **Slice 5: Mesh feature profile**
   - Add known feature requirements for mesh assets, triangle meshes, camera projection, depth,
@@ -60,6 +64,8 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Extend render fixture contracts for a bunny fixture descriptor.
   - Include asset manifest path, camera, projection, material, and playback descriptors.
   - Keep this separate from the existing rectangle `scene.geordi.json` fixture contract.
+  - Done: `61335fb`.
+  - Verification: `pnpm --filter @flyingrobots/geordi-render-fixture typecheck`, `lint`, `test`.
 
 - [x] **Slice 7: TypeScript asset hash validator**
   - Add a Node-side hash helper for mesh asset bytes.
@@ -81,37 +87,52 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Parse the supported ASCII PLY subset into typed mesh data.
   - Reject unsupported headers, non-finite numbers, bad vertices, and bad faces with custom errors.
   - Do not leak raw JSON or unchecked strings beyond the parser boundary.
+  - Done: `7c3b55c`.
+  - Verification: `pnpm --filter @flyingrobots/geordi-render-fixture typecheck`, `lint`, `test`.
 
 - [x] **Slice 10: Rust PLY boundary**
   - Parse the same supported ASCII PLY subset into typed Rust mesh data.
   - Reject unsupported headers, non-finite numbers, bad vertices, and bad faces with custom errors.
   - Keep parser output independent from renderer state.
+  - Done: `ebbfaa2`.
+  - Verification: `cargo test -p geordi-mesh`, `cargo clippy -p geordi-mesh --all-targets -- -D
+    warnings`.
 
 - [x] **Slice 11: Mesh validation tests**
   - Assert vertex count, face count, bounds, index ranges, finite numbers, and stable asset hash in
     both languages.
   - Include negative tests for malformed headers and invalid face data.
+  - Done: `be6fcce`.
+  - Verification: render-fixture tests and `cargo test -p geordi-mesh`.
 
 - [x] **Slice 12: Mesh bounds normalization law**
   - Specify bounds computation, center, extent, and normalization behavior.
   - Keep parser output unnormalized.
   - Add deterministic test vectors.
+  - Done: `a47d32f`.
+  - Verification: `pnpm test:docs`, JSON parse check.
 
 - [x] **Slice 13: Camera descriptor law**
   - Define eye, target, up, handedness, and view-matrix construction.
   - Reject degenerate camera descriptors.
   - Add deterministic test vectors.
+  - Done: `8146a9e`.
+  - Verification: `pnpm test:docs`, JSON parse check.
 
 - [x] **Slice 14: Projection descriptor law**
   - Define vertical field of view, aspect, near/far planes, and projection-matrix construction.
   - Reject invalid projection descriptors.
   - Add deterministic test vectors.
+  - Done: `76a43f5`.
+  - Verification: `pnpm test:docs`, JSON parse check.
 
 - [x] **Slice 15: Matrix/vector operation-order law**
   - Define matrix storage, vector convention, multiply order, axis normalization, and sampled
     rotation composition.
   - Add deterministic test vectors.
   - Pause for drift check after this slice.
+  - Done: `cd4f7d3`.
+  - Verification: `pnpm test:docs`, JSON parse check.
 
 - [ ] **Slice 16: Static browser bunny**
   - Render one fixed bunny frame in the browser harness.
