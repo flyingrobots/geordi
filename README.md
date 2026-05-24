@@ -22,7 +22,12 @@ Core compiler architecture is complete. The current implementation is focused on
 - Deterministic artifact emission
 - WebGL runtime scaffolding
 
-See [BEARING.md](BEARING.md) for the current operating map.
+See [BEARING.md](BEARING.md) for the current operating map. The active render-everywhere
+execution checklist is
+[`docs/design/2026-05-render-everywhere-slice-plan.md`](docs/design/2026-05-render-everywhere-slice-plan.md).
+Rust workspace gates are tracked in [`docs/RUST_GATES.md`](docs/RUST_GATES.md).
+For a detailed source-to-rendering walkthrough, see
+[`docs/end-to-end.md`](docs/end-to-end.md).
 
 ---
 
@@ -38,6 +43,15 @@ At runtime:
 - No layout thrashing
 - Deterministic subtree recomputation
 - Direct GPU draw calls
+
+## Render-Everywhere Demo Plan
+
+The current execution path builds toward one GPVue-authored scene compiling to one canonical
+Geordi IR artifact, then rendering that same artifact in a browser canvas and a native Rust
+application. The slice checklist lives in
+[`docs/design/2026-05-render-everywhere-slice-plan.md`](docs/design/2026-05-render-everywhere-slice-plan.md)
+and should be updated as slices land. The runnable demo guide lives in
+[`docs/render-everywhere.md`](docs/render-everywhere.md).
 
 ---
 
@@ -154,8 +168,12 @@ geordi/
     core/              # @flyingrobots/geordi-core - IR types and domain models
     compiler-core/     # @flyingrobots/geordi-compiler-core - Compilation engine
     schema-graphql/    # @flyingrobots/geordi-schema-graphql - GraphQL SDL adapter
+    gpvue/             # @flyingrobots/geordi-gpvue - constrained GPVue fixture compiler
     wesley-generator/  # @flyingrobots/geordi-wesley-generator - Wesley integration
     runtime-webgl/     # @flyingrobots/geordi-runtime-webgl - WebGL runtime
+
+  crates/              # Rust crates for native render-everywhere support
+  examples/            # Browser and native demo harnesses
 
   docs/
     ARCHITECTURE.md

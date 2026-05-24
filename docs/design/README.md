@@ -2,13 +2,42 @@
 
 **Status**: Draft
 **Date**: 2026-05-23
-**Baseline**: `main` after design-pack merge `1719019`
+**Baseline**: `main` after feature-registry hit-list merge `654adba`
 
-This directory holds implementation design documents for the next post-capability-profile P0
-sequence. The design pack is intentionally separate from [`../V0_DESIGN_LAWS.md`](../V0_DESIGN_LAWS.md):
-the laws define product semantics, while these documents define the next implementation slices.
+This directory holds implementation design documents for P0 slice sequences. The design pack is
+intentionally separate from [`../V0_DESIGN_LAWS.md`](../V0_DESIGN_LAWS.md): the laws define product
+semantics, while these documents define implementation slices.
 
-## Slice Map
+## Active Slice Map: Render Everywhere
+
+The executable checklist for this sequence lives in
+[`2026-05-render-everywhere-slice-plan.md`](./2026-05-render-everywhere-slice-plan.md). Keep that
+checklist updated as slices land.
+
+| Slice | Working Title | Design Document |
+| ---: | --- | --- |
+| 1 | Render-everywhere design pack | [`2026-05-render-everywhere-demo.md`](./2026-05-render-everywhere-demo.md) |
+| 2 | Shared fixture root | [`2026-05-render-everywhere-demo.md`](./2026-05-render-everywhere-demo.md) |
+| 3 | Fixture manifest validator | [`2026-05-render-everywhere-demo.md`](./2026-05-render-everywhere-demo.md) |
+| 4 | Pixel probe contract | [`2026-05-render-everywhere-demo.md`](./2026-05-render-everywhere-demo.md) |
+| 5 | Browser harness scaffold | [`2026-05-browser-render-harness.md`](./2026-05-browser-render-harness.md) |
+| 6 | Browser render smoke | [`2026-05-browser-render-harness.md`](./2026-05-browser-render-harness.md) |
+| 7 | Browser Playwright gate | [`2026-05-browser-render-harness.md`](./2026-05-browser-render-harness.md) |
+| 8 | Browser failure fixture | [`2026-05-browser-render-harness.md`](./2026-05-browser-render-harness.md) |
+| 9 | Cargo workspace scaffold | [`2026-05-native-rust-render-harness.md`](./2026-05-native-rust-render-harness.md) |
+| 10 | Rust IR crate | [`2026-05-native-rust-render-harness.md`](./2026-05-native-rust-render-harness.md) |
+| 11 | Rust IR validation | [`2026-05-native-rust-render-harness.md`](./2026-05-native-rust-render-harness.md) |
+| 12 | Rust runtime profile | [`2026-05-native-rust-render-harness.md`](./2026-05-native-rust-render-harness.md) |
+| 13 | Native Rust app shell | [`2026-05-native-rust-render-harness.md`](./2026-05-native-rust-render-harness.md) |
+| 14 | Rust rectangle renderer | [`2026-05-native-rust-render-harness.md`](./2026-05-native-rust-render-harness.md) |
+| 15 | Rust offscreen smoke mode | [`2026-05-native-rust-render-harness.md`](./2026-05-native-rust-render-harness.md) |
+| 16 | Shared hash display | [`2026-05-render-everywhere-demo.md`](./2026-05-render-everywhere-demo.md) |
+| 17 | Render-everywhere README | [`2026-05-render-everywhere-demo.md`](./2026-05-render-everywhere-demo.md) |
+| 18 | GPVue fixture hook | [`2026-05-gpvue-render-fixture-pipeline.md`](./2026-05-gpvue-render-fixture-pipeline.md) |
+| 19 | GPVue compiler MVP | [`2026-05-gpvue-render-fixture-pipeline.md`](./2026-05-gpvue-render-fixture-pipeline.md) |
+| 20 | End-to-end GPVue render everywhere | [`2026-05-gpvue-render-fixture-pipeline.md`](./2026-05-gpvue-render-fixture-pipeline.md) |
+
+## Completed Slice Map: Feature Registry Hit List
 
 | Slice | Working Title | Design Document |
 | ---: | --- | --- |
@@ -34,6 +63,10 @@ All slices must preserve these invariants:
 - Capability failures are hard failures, not best-effort rendering.
 - Compiler emission of baseline IR requirements must not silently grow when future known features
   are added.
+- Render-everywhere demos must consume the same canonical `scene.geordi.json` artifact in every
+  runtime. Separate per-platform scene definitions are not proof of portability.
+- Raw runtime text is not a pixel-identical cross-runtime claim. Use rectangle-only fixtures for the
+  first deterministic browser/native proof.
 - Local validation must include the relevant package gate plus final full gates before PR.
 
 ## Full Gate
@@ -52,7 +85,16 @@ pnpm test:exports
 git diff --check
 ```
 
+After Rust workspace support exists, render-everywhere native PRs should also run:
+
+```bash
+cargo fmt --check
+cargo test
+cargo clippy --workspace --all-targets -- -D warnings
+```
+
 ## Non-Goals
 
-This design pack does not implement strict text shaping, matrix operation-order law, binary IR
-packing, or a CLI package. It prepares the contracts that make those later changes explicit.
+These design docs do not implement strict text shaping, matrix operation-order law, binary IR
+packing, a production CLI, or the full GPVue compiler. They prepare the contracts and harnesses
+that make those later changes explicit.

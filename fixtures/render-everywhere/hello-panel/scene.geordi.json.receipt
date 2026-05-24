@@ -1,0 +1,15 @@
+{
+  "artifactHash": "sha256:30623d6141ba69c382c14c09eca9adedd40cb02644ff4ee9621de101da6b0082",
+  "artifactHashAlg": "sha256",
+  "artifactPath": "scene.geordi.json",
+  "fixtureId": "render-everywhere:hello-panel",
+  "fixtureVersion": "geordi-render-fixture/1",
+  "irVersion": "geordi-ir/1",
+  "numericProfile": "geordi-finite-binary64/1",
+  "requires": [
+    "geordi/core/1",
+    "layout.resolved",
+    "shape.rect",
+    "paint.solid"
+  ]
+}

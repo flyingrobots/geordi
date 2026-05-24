@@ -1,0 +1,33 @@
+{
+  "name": "@flyingrobots/geordi-example-browser-render-everywhere",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser canvas harness for the Geordi render-everywhere demo",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "dev": "vite",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run",
+    "test:browser": "pnpm --filter @flyingrobots/geordi-core build && pnpm --filter @flyingrobots/geordi-render-fixture build && pnpm --filter @flyingrobots/geordi-gpvue build && playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flyingrobots/geordi-core": "workspace:*",
+    "@flyingrobots/geordi-render-fixture": "workspace:*",
+    "@flyingrobots/geordi-runtime-webgl": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@flyingrobots/geordi-gpvue": "workspace:*",
+    "@types/node": "^25.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.7"
+  }
+}

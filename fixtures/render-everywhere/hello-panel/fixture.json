@@ -1,0 +1,95 @@
+{
+  "artifactHash": "sha256:30623d6141ba69c382c14c09eca9adedd40cb02644ff4ee9621de101da6b0082",
+  "canvas": {
+    "height": 360,
+    "width": 640
+  },
+  "fixtureVersion": "geordi-render-fixture/1",
+  "id": "render-everywhere:hello-panel",
+  "pixelProbes": [
+    {
+      "id": "background",
+      "rgba": [
+        16,
+        24,
+        32,
+        255
+      ],
+      "x": 8,
+      "y": 8
+    },
+    {
+      "id": "panel",
+      "rgba": [
+        248,
+        250,
+        252,
+        255
+      ],
+      "x": 64,
+      "y": 80
+    },
+    {
+      "id": "accent-bar",
+      "rgba": [
+        45,
+        212,
+        191,
+        255
+      ],
+      "x": 64,
+      "y": 56
+    },
+    {
+      "id": "title-bar",
+      "rgba": [
+        15,
+        23,
+        42,
+        255
+      ],
+      "x": 100,
+      "y": 100
+    },
+    {
+      "id": "button",
+      "rgba": [
+        37,
+        99,
+        235,
+        255
+      ],
+      "x": 100,
+      "y": 230
+    },
+    {
+      "id": "status-indicator",
+      "rgba": [
+        34,
+        197,
+        94,
+        255
+      ],
+      "x": 510,
+      "y": 100
+    }
+  ],
+  "receiptPath": "scene.geordi.json.receipt",
+  "runtimeProfile": {
+    "irVersion": "geordi-ir/1",
+    "numericProfile": "geordi-finite-binary64/1",
+    "requires": [
+      "geordi/core/1",
+      "layout.resolved",
+      "shape.rect",
+      "paint.solid"
+    ]
+  },
+  "scenePath": "scene.geordi.json",
+  "source": {
+    "compiler": "@flyingrobots/geordi-gpvue",
+    "compilerVersion": "0.1.0",
+    "kind": "gpvue",
+    "path": "source.gpvue"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "artifactHash": "sha256:b5e858d9eeb9eca3403ba7d11378a2950079b351ae75ad74549c9868b35bf75b",
+  "artifactHashAlg": "sha256",
+  "artifactPath": "scene.geordi.json",
+  "fixtureId": "render-everywhere:unsupported-strict-text",
+  "fixtureVersion": "geordi-render-fixture/1",
+  "irVersion": "geordi-ir/1",
+  "numericProfile": "geordi-finite-binary64/1",
+  "requires": [
+    "geordi/core/1",
+    "layout.resolved",
+    "shape.rect",
+    "paint.solid",
+    "text.fontPack"
+  ]
+}

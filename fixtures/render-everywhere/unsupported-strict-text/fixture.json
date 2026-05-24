@@ -1,0 +1,49 @@
+{
+  "artifactHash": "sha256:b5e858d9eeb9eca3403ba7d11378a2950079b351ae75ad74549c9868b35bf75b",
+  "canvas": {
+    "height": 96,
+    "width": 128
+  },
+  "fixtureVersion": "geordi-render-fixture/1",
+  "id": "render-everywhere:unsupported-strict-text",
+  "pixelProbes": [
+    {
+      "id": "background",
+      "rgba": [
+        16,
+        24,
+        32,
+        255
+      ],
+      "x": 8,
+      "y": 8
+    },
+    {
+      "id": "panel",
+      "rgba": [
+        248,
+        250,
+        252,
+        255
+      ],
+      "x": 32,
+      "y": 32
+    }
+  ],
+  "receiptPath": "scene.geordi.json.receipt",
+  "runtimeProfile": {
+    "irVersion": "geordi-ir/1",
+    "numericProfile": "geordi-finite-binary64/1",
+    "requires": [
+      "geordi/core/1",
+      "layout.resolved",
+      "shape.rect",
+      "paint.solid",
+      "text.fontPack"
+    ]
+  },
+  "scenePath": "scene.geordi.json",
+  "source": {
+    "kind": "none"
+  }
+}

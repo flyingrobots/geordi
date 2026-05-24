@@ -41,6 +41,27 @@ const checks = [
     ],
   },
   {
+    packageName: '@flyingrobots/geordi-render-fixture',
+    packageDir: 'packages/render-fixture',
+    exports: [
+      'RENDER_FIXTURE_VERSION',
+      'RenderFixtureInvalidManifestError',
+      'RenderFixturePixelProbeError',
+      'assertRenderFixturePixelProbe',
+      'parseRenderFixtureManifest',
+      'validateRenderFixtureManifest',
+    ],
+  },
+  {
+    packageName: '@flyingrobots/geordi-gpvue',
+    packageDir: 'packages/gpvue',
+    exports: [
+      'GpvueDuplicateNodeIdError',
+      'GpvueUnsupportedConstructError',
+      'compileGpvueSource',
+    ],
+  },
+  {
     packageName: '@flyingrobots/geordi-wesley-generator',
     packageDir: 'packages/wesley-generator',
     exports: ['GeordiGeneratorPlugin'],

@@ -3,11 +3,14 @@ node_modules/
 packages/*/pnpm-lock.yaml
 .pnp
 .pnp.js
+target/
 
 # Testing
 coverage/
 *.lcov
 .nyc_output
+playwright-report/
+test-results/
 
 # Production
 build/

@@ -51,6 +51,8 @@ export default [
       '**/dist/**',
       '**/node_modules/**',
       '**/.turbo/**',
+      '**/.obsidian/**',
+      '**/.trash/**',
     ],
   },
   ...tsPlugin.configs['flat/strict-type-checked'],
