@@ -24,6 +24,15 @@ The harness deserializes JSON at the Rust boundary, validates the artifact hash 
 the loaded scene bytes, validates the supported rectangle-only IR profile, renders to a native image
 buffer, and can either open a window or run offscreen pixel probes.
 
+The binary also loads the Stanford bunny mesh asset from:
+
+```text
+fixtures/render-everywhere/assets/stanford-bunny
+```
+
+The bunny path validates the checked-in mesh manifest, parses the checked-in PLY bytes, computes
+fixed-rate playback frames, and draws the mesh as a rotating software wireframe.
+
 ## Commands
 
 Run the smoke gate without opening a window:
@@ -42,6 +51,26 @@ Open the native window:
 
 ```bash
 cargo run -p native-render-everywhere -- fixtures/render-everywhere/hello-panel
+```
+
+Validate the bunny asset without opening a window:
+
+```bash
+cargo run -p native-render-everywhere -- --bunny-check fixtures/render-everywhere/assets/stanford-bunny
+```
+
+Run fixed-frame bunny smoke:
+
+```bash
+cargo run -p native-render-everywhere -- --bunny-smoke fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke --frame 15 fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke --frame 60 fixtures/render-everywhere/assets/stanford-bunny
+```
+
+Open the native bunny window:
+
+```bash
+cargo run -p native-render-everywhere -- --bunny-window fixtures/render-everywhere/assets/stanford-bunny
 ```
 
 Run tests and lints:
@@ -65,6 +94,22 @@ featureRequirements=geordi/core/1, layout.resolved, shape.rect, paint.solid
 canvas=640x360
 scene=render-everywhere:hello-panel
 shortHash=30623d6141ba
+smoke=passed
+```
+
+Expected bunny smoke output includes:
+
+```text
+Geordi native bunny fixture loaded
+rendererName=rust-software-wireframe-mesh
+fixtureId=render-everywhere:stanford-bunny
+assetHash=sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6
+vertices=1889
+faces=3851
+frameIndex=60
+seconds=1
+angleRadians=0.7853981633974483
+transformProfile=geordi-fixed-rate-rotation/1
 smoke=passed
 ```
 
@@ -94,3 +139,7 @@ paint.solid
 
 Unsupported feature requirements must fail before drawing. Text is intentionally excluded from this
 first deterministic browser/native proof.
+
+The bunny mesh path is a demo harness path, not a general mesh node inside core Geordi IR. It proves
+shared asset identity, parsed mesh metadata, deterministic sampled-frame metadata, and coarse
+nonblank drawing in the native renderer.

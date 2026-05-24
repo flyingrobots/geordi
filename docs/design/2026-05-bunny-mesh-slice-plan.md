@@ -203,8 +203,10 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Done: slice commit `Slice 26: Document bunny fixture contract`.
   - Verification: `pnpm test:docs`, `git diff --check`.
 
-- [ ] **Slice 27: Demo guide update**
+- [x] **Slice 27: Demo guide update**
   - Extend render-everywhere documentation with bunny commands and claim boundaries.
+  - Done: slice commit `Slice 27: Update bunny demo guide`.
+  - Verification: `pnpm test:docs`, `git diff --check`.
 
 - [ ] **Slice 28: CI gate wiring**
   - Add focused package and Rust gates for mesh parsing and bunny fixture validation.

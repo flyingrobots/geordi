@@ -12,6 +12,17 @@ one canonical Geordi IR artifact
 -> same rectangle pixel probes
 ```
 
+It also includes a separate mesh sanity path:
+
+```text
+one canonical Stanford bunny mesh asset
+-> browser canvas wireframe harness
+-> native Rust wireframe harness
+-> same mesh hash
+-> same fixed-rate playback metadata
+-> coarse nonblank render smoke
+```
+
 The design background lives in
 [`docs/design/2026-05-render-everywhere-demo.md`](./design/2026-05-render-everywhere-demo.md).
 The full source-to-runtime walkthrough lives in [`docs/end-to-end.md`](./end-to-end.md).
@@ -22,6 +33,11 @@ The current demo proves that the same checked-in `geordi-ir/1` artifact can be l
 browser runtime and a native Rust runtime. Both runtimes report the same fixture id, artifact hash,
 IR version, numeric profile, feature requirements, and canvas dimensions. Both runtimes verify the
 same exact RGBA pixel probes from the shared fixture manifest.
+
+The bunny demo proves a different, deliberately weaker claim: both runtimes load the same checked-in
+Stanford bunny PLY bytes, validate the same mesh manifest, report the same asset hash, parse the
+same vertex and face counts, and compute comparable fixed-frame rotation metadata for the same
+sampled frames. The bunny path is a mesh sanity proof, not a pixel-identical 3D rasterization proof.
 
 The shared fixture is:
 
@@ -86,6 +102,31 @@ featureRequirements=geordi/core/1, layout.resolved, shape.rect, paint.solid
 canvas=640x360
 ```
 
+The shared bunny asset is:
+
+```text
+fixtures/render-everywhere/assets/stanford-bunny
+```
+
+The bunny asset manifest is:
+
+```text
+fixtures/render-everywhere/assets/stanford-bunny/bunny.mesh.json
+```
+
+The bunny asset currently reports:
+
+```text
+fixtureId=render-everywhere:stanford-bunny
+assetHash=sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6
+meshProfile=geordi-ascii-ply-triangle-mesh/1
+vertices=1889
+faces=3851
+transformProfile=geordi-fixed-rate-rotation/1
+rotationAxis=[3,5,2]
+sampledFrames=0,15,60
+```
+
 ## Non-Claims
 
 The interactive browser and native demo commands do not compile GPVue while serving the page or
@@ -101,9 +142,11 @@ This demo does not claim GPU shader parity. The browser package name includes `r
 the current browser implementation is a Canvas 2D proof path. The native Rust harness renders the
 rectangle fixture through the Rust software renderer and presents it in a native window.
 
-This demo does not claim images, meshes, gradients, transforms, animation, hit testing, or layout.
-Those features need explicit IR requirements, runtime capability negotiation, and deterministic
-tests before they become part of a render-everywhere claim.
+This demo does not claim images, gradients, hit testing, layout, general mesh nodes in core Geordi
+IR, arbitrary animation curves, or GPU shader parity. The bunny path exercises mesh asset parsing
+and fixed-rate playback in demo harnesses only. Those features still need explicit IR requirements,
+runtime capability negotiation, and deterministic tests before they become part of a core
+render-everywhere claim.
 
 ## Browser Harness
 
@@ -143,6 +186,24 @@ Expected result:
 The Playwright gate samples the browser canvas at the exact coordinates declared in
 `fixture.json`. A wrong pixel, missing canvas, unsupported feature, or fixture load failure is a hard
 failure.
+
+Run the browser bunny path:
+
+```bash
+pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere dev
+```
+
+Expected behavior:
+
+- the page reports `browser-canvas-wireframe-mesh`;
+- the page reports `render-everywhere:stanford-bunny`;
+- the page reports the bunny asset hash;
+- the canvas shows the Stanford bunny as a rotating wireframe mesh;
+- right-clicking the bunny still shows browser image actions because it is rendered into an HTML
+  canvas, not because the fixture is a PNG source asset.
+
+The browser unit and Playwright gates sample deterministic frames and metadata. They do not require
+host-time animation to land on a specific wall-clock frame.
 
 ## Native Rust Harness
 
@@ -199,6 +260,49 @@ Expected behavior:
 - no native window opens;
 - pixel probes are not run in `--check` mode.
 
+Run native bunny validation without opening a window:
+
+```bash
+cargo run -p native-render-everywhere -- --bunny-check fixtures/render-everywhere/assets/stanford-bunny
+```
+
+Run native fixed-frame bunny smoke:
+
+```bash
+cargo run -p native-render-everywhere -- --bunny-smoke fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke --frame 15 fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke --frame 60 fixtures/render-everywhere/assets/stanford-bunny
+```
+
+Expected native bunny smoke output includes:
+
+```text
+Geordi native bunny fixture loaded
+rendererName=rust-software-wireframe-mesh
+fixtureId=render-everywhere:stanford-bunny
+assetHash=sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6
+vertices=1889
+faces=3851
+frameIndex=60
+seconds=1
+angleRadians=0.7853981633974483
+transformProfile=geordi-fixed-rate-rotation/1
+smoke=passed
+```
+
+Run the native bunny window demo:
+
+```bash
+cargo run -p native-render-everywhere -- --bunny-window fixtures/render-everywhere/assets/stanford-bunny
+```
+
+Expected behavior:
+
+- the same bunny summary lines print to stdout;
+- a native window opens;
+- the window draws the Stanford bunny as a rotating wireframe mesh;
+- pressing Escape closes the window.
+
 ## Shared Fixture Contract
 
 Both harnesses consume the same fixture directory. There is no browser-specific scene and no
@@ -235,6 +339,14 @@ shape.rect
 paint.solid
 ```
 
+The bunny proof is intentionally outside this rectangle-only IR contract. It uses:
+
+```text
+geordi-mesh-asset/1
+geordi-ascii-ply-triangle-mesh/1
+geordi-fixed-rate-rotation/1
+```
+
 ## Failure Fixture
 
 The negative fixture is:
@@ -267,6 +379,19 @@ Run the native gates:
 cargo test -p native-render-everywhere
 cargo clippy -p native-render-everywhere --all-targets -- -D warnings
 cargo run -p native-render-everywhere -- --smoke fixtures/render-everywhere/hello-panel
+```
+
+Run the bunny gates:
+
+```bash
+pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test
+pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser
+cargo test -p native-render-everywhere
+cargo clippy -p native-render-everywhere --all-targets -- -D warnings
+cargo run -p native-render-everywhere -- --bunny-check fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke --frame 15 fixtures/render-everywhere/assets/stanford-bunny
+cargo run -p native-render-everywhere -- --bunny-smoke --frame 60 fixtures/render-everywhere/assets/stanford-bunny
 ```
 
 Run the doc hygiene gate for this guide:
@@ -305,3 +430,13 @@ one GPVue source file
 The browser and native interactive demo commands still load the checked-in artifact directly. The
 `pnpm test:render-everywhere:gpvue` gate is the command path that proves compile-then-render across
 both runtimes.
+
+The next render-everywhere checkpoint is the bunny mesh milestone:
+
+```text
+one Stanford bunny mesh asset
+-> one browser wireframe canvas
+-> one native Rust wireframe window
+-> same fixed-rate rotation metadata
+-> sampled nonblank smoke in both runtimes
+```

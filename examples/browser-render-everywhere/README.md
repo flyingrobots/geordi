@@ -23,6 +23,15 @@ fixtures/render-everywhere/hello-panel/source.gpvue
 The harness parses and validates the fixture through the shared TypeScript fixture package, parses
 the scene through the core JSON port, then renders the artifact into a browser canvas.
 
+The same browser harness also loads the Stanford bunny mesh asset from:
+
+```text
+fixtures/render-everywhere/assets/stanford-bunny
+```
+
+The bunny path validates the checked-in mesh manifest, parses the checked-in PLY bytes, computes
+fixed-rate playback frames, and draws the mesh as a rotating Canvas 2D wireframe.
+
 ## Commands
 
 Run the interactive browser harness:
@@ -57,6 +66,10 @@ pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere lint
 pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere build
 ```
 
+The browser unit and Playwright gates also exercise sampled bunny frames. The interactive page uses
+host time for smooth presentation; the tests use fixed frame indices so assertions remain
+deterministic.
+
 ## Expected Page
 
 The page should show:
@@ -69,6 +82,10 @@ The page should show:
 - `geordi-finite-binary64/1`
 - `geordi/core/1, layout.resolved, shape.rect, paint.solid`
 - one canvas containing the rectangle-only panel fixture
+- `browser-canvas-wireframe-mesh`
+- `render-everywhere:stanford-bunny`
+- the Stanford bunny asset hash
+- the Stanford bunny drawn as a rotating wireframe mesh
 
 ## Boundaries
 
@@ -85,3 +102,7 @@ The current browser implementation renders through Canvas 2D. The package remain
 this demo should not claim shader parity yet.
 
 Text is intentionally excluded from this first deterministic browser/native proof.
+
+The bunny mesh path does not extend the pixel-identical rectangle proof. It proves shared asset
+identity, parsed mesh metadata, deterministic sampled-frame metadata, and coarse nonblank drawing in
+the browser canvas.
