@@ -207,6 +207,16 @@ export interface RenderFixtureMeshPlayback extends JsonObject {
   readonly sampleRate: number;
 }
 
+export interface RenderFixtureMeshPlaybackFrame extends JsonObject {
+  readonly angleRadians: number;
+  readonly axis: RenderFixtureVector3;
+  readonly frameIndex: number;
+  readonly normalizedAxis: RenderFixtureVector3;
+  readonly radiansPerSecond: number;
+  readonly sampleRate: number;
+  readonly seconds: number;
+}
+
 export interface RenderFixtureMeshFixtureManifest extends JsonObject {
   readonly assetManifestPath: string;
   readonly camera: RenderFixtureMeshCamera;
@@ -275,6 +285,16 @@ export class RenderFixturePlyFaceError extends Error {
     super('Invalid PLY triangle face row');
     this.name = new.target.name;
     this.lineNumber = lineNumber;
+  }
+}
+
+export class RenderFixtureInvalidPlaybackFrameError extends Error {
+  public readonly frameIndex: number;
+
+  constructor(frameIndex: number) {
+    super('Invalid render fixture playback frame');
+    this.name = new.target.name;
+    this.frameIndex = frameIndex;
   }
 }
 
@@ -574,6 +594,31 @@ export function assertRenderFixtureArtifact(
   if (!result.ok) {
     throw new RenderFixtureArtifactValidationError(input.manifest.id, result.issues);
   }
+}
+
+export function createRenderFixtureMeshPlaybackFrame(
+  playback: RenderFixtureMeshPlayback,
+  frameIndex: number,
+): RenderFixtureMeshPlaybackFrame {
+  if (nonNegativeInteger(frameIndex) === undefined) {
+    throw new RenderFixtureInvalidPlaybackFrameError(frameIndex);
+  }
+
+  const normalizedAxis = normalizePlaybackAxis(playback.axis);
+  if (normalizedAxis === undefined) {
+    throw new RenderFixtureInvalidPlaybackFrameError(frameIndex);
+  }
+
+  const seconds = frameIndex / playback.sampleRate;
+  return {
+    angleRadians: seconds * playback.radiansPerSecond,
+    axis: playback.axis,
+    frameIndex,
+    normalizedAxis,
+    radiansPerSecond: playback.radiansPerSecond,
+    sampleRate: playback.sampleRate,
+    seconds,
+  };
 }
 
 export function assertRenderFixturePixelProbe(
@@ -1015,7 +1060,12 @@ function validateMeshPlayback(
     'Playback kind',
     issues,
   );
-  validateVector3(property(value, 'axis'), `${path}.axis`, 'Playback axis', issues);
+  const axisValue = property(value, 'axis');
+  validateVector3(axisValue, `${path}.axis`, 'Playback axis', issues);
+  const axis = vector3FromJsonValue(axisValue);
+  if (axis !== undefined && vectorLength(axis) === 0) {
+    pushIssue(issues, `${path}.axis`, 'Playback axis must not be the zero vector');
+  }
   validatePositiveFiniteNumber(
     property(value, 'radiansPerSecond'),
     `${path}.radiansPerSecond`,
@@ -1356,6 +1406,34 @@ function validateVector3(
       pushIssue(issues, `${path}[${index}]`, `${label} coordinate must be finite`);
     }
   }
+}
+
+function vector3FromJsonValue(value: JsonValue | undefined): RenderFixtureVector3 | undefined {
+  if (!isJsonArray(value) || value.length !== 3) {
+    return undefined;
+  }
+
+  const first = finiteNumber(value[0]);
+  const second = finiteNumber(value[1]);
+  const third = finiteNumber(value[2]);
+  if (first === undefined || second === undefined || third === undefined) {
+    return undefined;
+  }
+
+  return [first, second, third];
+}
+
+function normalizePlaybackAxis(axis: RenderFixtureVector3): RenderFixtureVector3 | undefined {
+  const length = vectorLength(axis);
+  if (length === 0) {
+    return undefined;
+  }
+
+  return [axis[0] / length, axis[1] / length, axis[2] / length];
+}
+
+function vectorLength(axis: RenderFixtureVector3): number {
+  return Math.hypot(axis[0], axis[1], axis[2]);
 }
 
 function rejectPresent(

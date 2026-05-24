@@ -15,6 +15,7 @@ import {
   assertRenderFixtureMeshFixtureManifest,
   assertRenderFixturePixelProbe,
   assertRenderFixturePixelProbes,
+  createRenderFixtureMeshPlaybackFrame,
   isRenderFixtureMeshAssetManifest,
   isRenderFixtureMeshFixtureManifest,
   isRenderFixtureManifest,
@@ -32,6 +33,7 @@ import {
   RenderFixtureInvalidMeshFixtureManifestError,
   RenderFixtureInvalidManifestError,
   RenderFixtureInvalidPixelSampleError,
+  RenderFixtureInvalidPlaybackFrameError,
   RenderFixturePlyFaceError,
   RenderFixturePlyHeaderError,
   RenderFixturePlyVertexError,
@@ -560,6 +562,41 @@ describe('render fixture mesh fixture manifest validation', () => {
 
     expect(parsed.id).toBe('render-everywhere:stanford-bunny');
     expect(parsed.playback.axis).toEqual([3, 5, 2]);
+  });
+
+  it('derives deterministic fixed-rate playback frame metadata', () => {
+    const frame = createRenderFixtureMeshPlaybackFrame(makeMeshFixtureManifest().playback, 15);
+
+    expect(frame.axis).toEqual([3, 5, 2]);
+    expect(frame.normalizedAxis[0]).toBeCloseTo(0.4866642633922876);
+    expect(frame.normalizedAxis[1]).toBeCloseTo(0.8111071056538126);
+    expect(frame.normalizedAxis[2]).toBeCloseTo(0.32444284226152503);
+    expect(frame.frameIndex).toBe(15);
+    expect(frame.sampleRate).toBe(60);
+    expect(frame.seconds).toBe(0.25);
+    expect(frame.radiansPerSecond).toBe(0.7853981633974483);
+    expect(frame.angleRadians).toBeCloseTo(Math.PI / 16);
+  });
+
+  it('rejects invalid fixed-rate playback frames with a custom error', () => {
+    expect(() =>
+      createRenderFixtureMeshPlaybackFrame(makeMeshFixtureManifest().playback, -1),
+    ).toThrow(RenderFixtureInvalidPlaybackFrameError);
+  });
+
+  it('rejects zero playback axes', () => {
+    const invalid: JsonValue = {
+      ...makeMeshFixtureManifest(),
+      playback: {
+        ...makeMeshFixtureManifest().playback,
+        axis: [0, 0, 0],
+      },
+    };
+
+    const result = validateRenderFixtureMeshFixtureManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual(['$.playback.axis']);
   });
 
   it('rejects invalid mesh fixture descriptor metadata', () => {

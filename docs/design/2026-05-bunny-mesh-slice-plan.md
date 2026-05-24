@@ -154,9 +154,11 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Verification: browser render-everywhere browser test; native render-everywhere tests and
     clippy.
 
-- [ ] **Slice 19: Rotation playback descriptor**
+- [x] **Slice 19: Rotation playback descriptor**
   - Add fixed-rate rotation descriptor validation.
   - Include frame index, sample rate, seconds, angle, authored axis, and normalized axis.
+  - Done: slice commit `Slice 19: Add rotation playback frame contract`.
+  - Verification: render-fixture typecheck, lint, and tests.
 
 - [ ] **Slice 20: Browser fixed-frame rotation**
   - Render deterministic browser frames for frame 0 and at least two nonzero frames.
