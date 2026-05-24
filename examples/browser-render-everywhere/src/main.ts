@@ -25,9 +25,14 @@ async function startBrowserHarness(): Promise<void> {
   });
   const bunny = await renderBunnyFixtureFrame(STANFORD_BUNNY_ASSETS, 0, fetchText);
 
-  mountBrowserHarnessShell(root, createBrowserHarnessStatus(result.manifest, result.ir));
-  mountRenderedFixtureCanvas(root, result.canvas);
-  const bunnyReport = mountBunnyCanvas(root, bunny.canvas, bunnyReportText(bunny.report));
+  const shell = mountBrowserHarnessShell(root, createBrowserHarnessStatus(result.manifest, result.ir));
+  mountRenderedFixtureCanvas(shell.rectangleCanvasSlot, result.canvas);
+  const bunnyReport = mountBunnyCanvas(
+    shell.bunnyCanvasSlot,
+    bunny.canvas,
+    shell.bunnyReport,
+    bunnyReportText(bunny.report),
+  );
   startBunnyLiveRotation(bunny, bunnyReport);
 }
 
@@ -47,7 +52,7 @@ function bunnyReportText(report: Awaited<ReturnType<typeof renderBunnyFixtureFra
 
 function startBunnyLiveRotation(
   bunny: BunnyRenderResult,
-  reportElement: HTMLParagraphElement,
+  reportElement: HTMLPreElement,
 ): void {
   let startMs: number | undefined;
   const tick = (nowMs: number): void => {

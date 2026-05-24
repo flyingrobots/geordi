@@ -1,5 +1,13 @@
 import type { BrowserHarnessStatus } from './harnessModel.js';
 
+export type BrowserHarnessMode = 'rectangles' | 'bunny';
+
+export interface BrowserHarnessShellMount {
+  readonly bunnyCanvasSlot: HTMLElement;
+  readonly bunnyReport: HTMLPreElement;
+  readonly rectangleCanvasSlot: HTMLElement;
+}
+
 export class BrowserHarnessMountError extends Error {
   constructor() {
     super('Browser harness mount failed');
@@ -7,68 +15,66 @@ export class BrowserHarnessMountError extends Error {
   }
 }
 
-export class BrowserHarnessCanvasSlotError extends Error {
-  public readonly slotCount: number;
-
-  constructor(slotCount: number) {
-    super('Browser harness canvas slot invalid');
-    this.name = new.target.name;
-    this.slotCount = slotCount;
-  }
+interface BrowserHarnessShellBuild {
+  readonly mount: BrowserHarnessShellMount;
+  readonly shell: HTMLElement;
 }
 
-const CANVAS_SLOT_ATTRIBUTE = 'data-harness-canvas-slot' as const;
-const CANVAS_SLOT_SELECTOR = `[${CANVAS_SLOT_ATTRIBUTE}="true"]` as const;
+interface DemoPanelMount {
+  readonly canvasSlot: HTMLElement;
+  readonly panel: HTMLElement;
+}
+
+interface BunnyPanelMount extends DemoPanelMount {
+  readonly report: HTMLPreElement;
+}
+
+interface ModeButtonSet {
+  readonly bunny: HTMLButtonElement;
+  readonly rectangles: HTMLButtonElement;
+}
+
+interface DemoPanelSet {
+  readonly bunny: HTMLElement;
+  readonly rectangles: HTMLElement;
+}
+
+interface ModeSwitch {
+  readonly buttons: ModeButtonSet;
+  readonly element: HTMLElement;
+}
 
 export function mountBrowserHarnessShell(
   root: HTMLElement | null,
   status: BrowserHarnessStatus,
-): void {
+): BrowserHarnessShellMount {
   if (root === null) {
     throw new BrowserHarnessMountError();
   }
 
-  root.replaceChildren(createShell(status));
+  const build = createShell(status);
+  root.replaceChildren(build.shell);
+  return build.mount;
 }
 
 export function mountRenderedFixtureCanvas(
-  root: ParentNode | null,
+  slot: HTMLElement,
   canvas: HTMLCanvasElement,
 ): void {
-  if (root === null) {
-    throw new BrowserHarnessMountError();
-  }
-
-  const slots = root.querySelectorAll<HTMLElement>(CANVAS_SLOT_SELECTOR);
-  if (slots.length !== 1) {
-    throw new BrowserHarnessCanvasSlotError(slots.length);
-  }
-
-  const slot = slots.item(0);
   canvas.setAttribute('data-geordi-render-canvas', 'true');
   slot.replaceChildren(canvas);
 }
 
 export function mountBunnyCanvas(
-  root: ParentNode | null,
+  slot: HTMLElement,
   canvas: HTMLCanvasElement,
+  report: HTMLPreElement,
   reportText: string,
-): HTMLParagraphElement {
-  if (root === null) {
-    throw new BrowserHarnessMountError();
-  }
-
-  const section = document.createElement('section');
-  section.className = 'bunny-demo';
-
-  const label = document.createElement('p');
-  label.className = 'bunny-demo-label';
-  label.setAttribute('data-geordi-bunny-report', 'true');
-  label.textContent = reportText;
-
-  section.append(label, canvas);
-  root.append(section);
-  return label;
+): HTMLPreElement {
+  canvas.setAttribute('data-geordi-bunny-canvas', 'true');
+  report.textContent = reportText;
+  slot.replaceChildren(canvas);
+  return report;
 }
 
 export function mountBrowserHarnessFailure(root: HTMLElement | null): void {
@@ -82,11 +88,35 @@ export function mountBrowserHarnessFailure(root: HTMLElement | null): void {
   root.replaceChildren(failure);
 }
 
-function createShell(status: BrowserHarnessStatus): HTMLElement {
+function createShell(status: BrowserHarnessStatus): BrowserHarnessShellBuild {
   const shell = document.createElement('section');
   shell.className = 'harness-shell';
-  shell.append(createHeading(status), createStatusGrid(status), createViewportSlot());
-  return shell;
+
+  const modeSwitch = createModeSwitch();
+  const rectanglePanel = createRectanglePanel(status);
+  const bunnyPanel = createBunnyPanel();
+  const panels: DemoPanelSet = {
+    bunny: bunnyPanel.panel,
+    rectangles: rectanglePanel.panel,
+  };
+
+  modeSwitch.buttons.rectangles.addEventListener('click', () => {
+    setActiveMode('rectangles', modeSwitch.buttons, panels);
+  });
+  modeSwitch.buttons.bunny.addEventListener('click', () => {
+    setActiveMode('bunny', modeSwitch.buttons, panels);
+  });
+  setActiveMode('bunny', modeSwitch.buttons, panels);
+
+  shell.append(createHeading(status), modeSwitch.element, rectanglePanel.panel, bunnyPanel.panel);
+  return {
+    mount: {
+      bunnyCanvasSlot: bunnyPanel.canvasSlot,
+      bunnyReport: bunnyPanel.report,
+      rectangleCanvasSlot: rectanglePanel.canvasSlot,
+    },
+    shell,
+  };
 }
 
 function createHeading(status: BrowserHarnessStatus): HTMLElement {
@@ -118,6 +148,84 @@ function createStatusGrid(status: BrowserHarnessStatus): HTMLElement {
   return grid;
 }
 
+function createModeSwitch(): ModeSwitch {
+  const element = document.createElement('nav');
+  element.className = 'mode-switch';
+  element.setAttribute('aria-label', 'Demo scene');
+
+  const buttons: ModeButtonSet = {
+    bunny: createModeButton('bunny', 'Bunny'),
+    rectangles: createModeButton('rectangles', 'Rectangles'),
+  };
+  element.append(buttons.rectangles, buttons.bunny);
+  return { buttons, element };
+}
+
+function createModeButton(mode: BrowserHarnessMode, label: string): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.className = 'mode-button';
+  button.setAttribute('data-geordi-demo-mode', mode);
+  button.textContent = label;
+  button.type = 'button';
+  return button;
+}
+
+function createRectanglePanel(status: BrowserHarnessStatus): DemoPanelMount {
+  const panel = createDemoPanel('rectangles', 'Rectangle fixture');
+  const metadata = createMetadataPanel('Rectangle metadata');
+  const canvasSlot = createViewportSlot();
+
+  metadata.append(createStatusGrid(status));
+  panel.append(metadata, canvasSlot);
+  return { canvasSlot, panel };
+}
+
+function createBunnyPanel(): BunnyPanelMount {
+  const panel = createDemoPanel('bunny', 'Stanford bunny fixture');
+  const metadata = createMetadataPanel('Bunny metadata');
+  const report = document.createElement('pre');
+  const canvasSlot = createViewportSlot();
+
+  report.className = 'bunny-report';
+  report.setAttribute('data-geordi-bunny-report', 'true');
+
+  metadata.append(report);
+  panel.append(metadata, canvasSlot);
+  return { canvasSlot, panel, report };
+}
+
+function createDemoPanel(mode: BrowserHarnessMode, label: string): HTMLElement {
+  const panel = document.createElement('section');
+  panel.className = 'demo-panel';
+  panel.setAttribute('aria-label', label);
+  panel.setAttribute('data-geordi-demo-panel', mode);
+  return panel;
+}
+
+function createMetadataPanel(summaryText: string): HTMLDetailsElement {
+  const details = document.createElement('details');
+  details.className = 'metadata-panel';
+
+  const summary = document.createElement('summary');
+  summary.textContent = summaryText;
+
+  details.append(summary);
+  return details;
+}
+
+function setActiveMode(
+  mode: BrowserHarnessMode,
+  buttons: ModeButtonSet,
+  panels: DemoPanelSet,
+): void {
+  const rectanglesActive = mode === 'rectangles';
+
+  buttons.rectangles.setAttribute('aria-pressed', String(rectanglesActive));
+  buttons.bunny.setAttribute('aria-pressed', String(!rectanglesActive));
+  panels.rectangles.hidden = !rectanglesActive;
+  panels.bunny.hidden = rectanglesActive;
+}
+
 function appendStatus(grid: HTMLElement, label: string, value: string): void {
   const item = document.createElement('div');
   item.className = 'status-item';
@@ -135,6 +243,5 @@ function appendStatus(grid: HTMLElement, label: string, value: string): void {
 function createViewportSlot(): HTMLElement {
   const viewport = document.createElement('section');
   viewport.className = 'viewport-slot';
-  viewport.setAttribute(CANVAS_SLOT_ATTRIBUTE, 'true');
   return viewport;
 }
