@@ -160,9 +160,11 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Done: slice commit `Slice 19: Add rotation playback frame contract`.
   - Verification: render-fixture typecheck, lint, and tests.
 
-- [ ] **Slice 20: Browser fixed-frame rotation**
+- [x] **Slice 20: Browser fixed-frame rotation**
   - Render deterministic browser frames for frame 0 and at least two nonzero frames.
   - Expose frame metadata to tests.
+  - Done: slice commit `Slice 20: Use shared browser bunny playback frames`.
+  - Verification: browser render-everywhere typecheck, lint, tests, and build.
 
 - [ ] **Slice 21: Native fixed-frame rotation**
   - Render deterministic native frames for frame 0 and at least two nonzero frames.

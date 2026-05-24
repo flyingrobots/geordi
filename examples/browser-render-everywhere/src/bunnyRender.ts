@@ -1,7 +1,9 @@
 import {
+  createRenderFixtureMeshPlaybackFrame,
   parseRenderFixtureAsciiPlyTriangleMesh,
   parseRenderFixtureMeshAssetManifest,
   type RenderFixtureMeshAssetManifest,
+  type RenderFixtureMeshPlayback,
   type RenderFixturePlyMesh,
   type RenderFixtureVector3,
 } from '@flyingrobots/geordi-render-fixture';
@@ -20,6 +22,12 @@ const BUNNY_CAMERA_EYE = [0, 0.1, 0.35] as const;
 const BUNNY_VERTICAL_FOV_RADIANS = Math.PI / 4;
 const BUNNY_FOCAL_LENGTH = 1 / Math.tan(BUNNY_VERTICAL_FOV_RADIANS / 2);
 const BUNNY_ROTATION_AXIS = [3, 5, 2] as const;
+const BUNNY_PLAYBACK: RenderFixtureMeshPlayback = {
+  axis: BUNNY_ROTATION_AXIS,
+  kind: 'fixed-rate-rotation',
+  radiansPerSecond: BUNNY_ROTATION_RADIANS_PER_SECOND,
+  sampleRate: BUNNY_ROTATION_SAMPLE_RATE,
+};
 
 interface ProjectedPoint {
   readonly visible: boolean;
@@ -29,11 +37,14 @@ interface ProjectedPoint {
 
 export interface BunnyFrameReport {
   readonly angleRadians: number;
+  readonly axis: RenderFixtureVector3;
   readonly assetHash: string;
   readonly faceCount: number;
   readonly frameIndex: number;
   readonly normalizedAxis: RenderFixtureVector3;
+  readonly radiansPerSecond: number;
   readonly rendererName: typeof BUNNY_BROWSER_RENDERER_NAME;
+  readonly sampleRate: number;
   readonly seconds: number;
   readonly vertexCount: number;
 }
@@ -115,15 +126,18 @@ export function createBunnyFrameReport(
   manifest: RenderFixtureMeshAssetManifest,
   mesh: RenderFixturePlyMesh,
 ): BunnyFrameReport {
-  const seconds = frameIndex / BUNNY_ROTATION_SAMPLE_RATE;
+  const playbackFrame = createRenderFixtureMeshPlaybackFrame(BUNNY_PLAYBACK, frameIndex);
   return {
-    angleRadians: seconds * BUNNY_ROTATION_RADIANS_PER_SECOND,
+    angleRadians: playbackFrame.angleRadians,
+    axis: playbackFrame.axis,
     assetHash: manifest.sha256,
     faceCount: mesh.faces.length,
-    frameIndex,
-    normalizedAxis: normalizeVector3(BUNNY_ROTATION_AXIS),
+    frameIndex: playbackFrame.frameIndex,
+    normalizedAxis: playbackFrame.normalizedAxis,
+    radiansPerSecond: playbackFrame.radiansPerSecond,
     rendererName: BUNNY_BROWSER_RENDERER_NAME,
-    seconds,
+    sampleRate: playbackFrame.sampleRate,
+    seconds: playbackFrame.seconds,
     vertexCount: mesh.vertices.length,
   };
 }

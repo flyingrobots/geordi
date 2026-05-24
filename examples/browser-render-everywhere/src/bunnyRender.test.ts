@@ -58,8 +58,11 @@ describe('bunny render report', () => {
     const report = createBunnyFrameReport(15, TEST_MESH_MANIFEST, mesh);
 
     expect(report.rendererName).toBe(BUNNY_BROWSER_RENDERER_NAME);
+    expect(report.axis).toEqual([3, 5, 2]);
     expect(report.frameIndex).toBe(15);
+    expect(report.sampleRate).toBe(60);
     expect(report.seconds).toBe(0.25);
+    expect(report.radiansPerSecond).toBe(Math.PI / 4);
     expect(report.angleRadians).toBeCloseTo(Math.PI / 16);
     expect(report.assetHash).toBe(TEST_MESH_MANIFEST.sha256);
     expect(report.vertexCount).toBe(3);
@@ -67,5 +70,19 @@ describe('bunny render report', () => {
     expect(report.normalizedAxis[0]).toBeCloseTo(0.4866642633922876);
     expect(report.normalizedAxis[1]).toBeCloseTo(0.8111071056538126);
     expect(report.normalizedAxis[2]).toBeCloseTo(0.32444284226152503);
+  });
+
+  it('exposes deterministic sampled frame metadata for browser rendering', () => {
+    const mesh = parseRenderFixtureAsciiPlyTriangleMesh(TEST_PLY_SOURCE);
+    const frame0 = createBunnyFrameReport(0, TEST_MESH_MANIFEST, mesh);
+    const frame15 = createBunnyFrameReport(15, TEST_MESH_MANIFEST, mesh);
+    const frame60 = createBunnyFrameReport(60, TEST_MESH_MANIFEST, mesh);
+    const frames = [frame0, frame15, frame60];
+
+    expect(frames.map((frame) => frame.frameIndex)).toEqual([0, 15, 60]);
+    expect(frames.map((frame) => frame.seconds)).toEqual([0, 0.25, 1]);
+    expect(frame0.angleRadians).toBe(0);
+    expect(frame15.angleRadians).toBeCloseTo(Math.PI / 16);
+    expect(frame60.angleRadians).toBeCloseTo(Math.PI / 4);
   });
 });
