@@ -82,7 +82,7 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Reject unsupported headers, non-finite numbers, bad vertices, and bad faces with custom errors.
   - Do not leak raw JSON or unchecked strings beyond the parser boundary.
 
-- [ ] **Slice 10: Rust PLY boundary**
+- [x] **Slice 10: Rust PLY boundary**
   - Parse the same supported ASCII PLY subset into typed Rust mesh data.
   - Reject unsupported headers, non-finite numbers, bad vertices, and bad faces with custom errors.
   - Keep parser output independent from renderer state.
