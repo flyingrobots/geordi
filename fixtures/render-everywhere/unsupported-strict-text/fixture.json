@@ -42,5 +42,8 @@
       "text.fontPack"
     ]
   },
-  "scenePath": "scene.geordi.json"
+  "scenePath": "scene.geordi.json",
+  "source": {
+    "kind": "none"
+  }
 }

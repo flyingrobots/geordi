@@ -85,5 +85,9 @@
       "paint.solid"
     ]
   },
-  "scenePath": "scene.geordi.json"
+  "scenePath": "scene.geordi.json",
+  "source": {
+    "kind": "gpvue-draft",
+    "path": "source.gpvue"
+  }
 }

@@ -41,6 +41,15 @@ The shared manifest is:
 fixtures/render-everywhere/hello-panel/fixture.json
 ```
 
+The fixture also includes draft GPVue source:
+
+```text
+fixtures/render-everywhere/hello-panel/source.gpvue
+```
+
+That source is metadata only at this stage. The manifest marks it as `gpvue-draft`, and compile
+attempts fail with a custom compile-unavailable error until the GPVue compiler slice lands.
+
 The fixture currently reports:
 
 ```text
@@ -54,8 +63,8 @@ canvas=640x360
 
 ## Non-Claims
 
-This demo does not yet prove that GPVue compiles to Geordi IR. GPVue authoring support starts in the
-next slices.
+This demo does not yet prove that GPVue compiles to Geordi IR. The fixture contains draft
+`source.gpvue` metadata, but the compiler is not implemented yet.
 
 This demo does not claim deterministic text. Text is excluded from the first deterministic
 browser/native proof because portable text requires a strict font pack, a shaping law, and a
@@ -186,7 +195,9 @@ flowchart LR
 ```
 
 The manifest declares the artifact hash, runtime profile, canvas size, and pixel probes. A renderer
-must reject the fixture before drawing if it cannot support every required feature.
+must reject the fixture before drawing if it cannot support every required feature. The manifest can
+also describe authoring source. The current `hello-panel` source is `gpvue-draft`, which documents
+intent without making the source a runtime dependency.
 
 The first proof uses only:
 

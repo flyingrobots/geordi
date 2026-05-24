@@ -11,12 +11,15 @@ import {
   assertRenderFixtureManifest,
   assertRenderFixturePixelProbe,
   assertRenderFixturePixelProbes,
+  compileRenderFixtureSource,
   isRenderFixtureManifest,
   parseRenderFixtureManifest,
+  RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
   RENDER_FIXTURE_VERSION,
   RenderFixtureInvalidManifestError,
   RenderFixtureInvalidPixelSampleError,
   RenderFixturePixelProbeError,
+  RenderFixtureSourceCompileUnavailableError,
   renderFixtureRgbaFromBytes,
   validateRenderFixtureManifest,
   type RenderFixtureManifest,
@@ -47,6 +50,10 @@ function makeManifest(): RenderFixtureManifest {
       requires: [GEORDI_CORE_PROFILE, 'layout.resolved', 'shape.rect', 'paint.solid'],
     },
     scenePath: 'scene.geordi.json',
+    source: {
+      kind: RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
+      path: 'source.gpvue',
+    },
   };
 }
 
@@ -97,11 +104,27 @@ function captureInvalidPixelSampleError(): RenderFixtureInvalidPixelSampleError 
   throw new RenderFixtureTestError('Expected RenderFixtureInvalidPixelSampleError');
 }
 
+function captureSourceCompileError(): RenderFixtureSourceCompileUnavailableError {
+  try {
+    compileRenderFixtureSource(makeManifest());
+  } catch (error) {
+    if (error instanceof RenderFixtureSourceCompileUnavailableError) {
+      return error;
+    }
+  }
+
+  throw new RenderFixtureTestError('Expected RenderFixtureSourceCompileUnavailableError');
+}
+
 describe('render fixture manifest validation', () => {
   it('accepts the shared hello-panel fixture manifest', () => {
     const manifest = parseRenderFixtureManifest(fixtureManifestSource());
 
     expect(manifest.id).toBe('render-everywhere:hello-panel');
+    expect(manifest.source).toEqual({
+      kind: 'gpvue-draft',
+      path: 'source.gpvue',
+    });
     expect(manifest.pixelProbes.map((probe) => probe.id)).toEqual([
       'background',
       'panel',
@@ -163,6 +186,25 @@ describe('render fixture manifest validation', () => {
     ]);
   });
 
+  it('rejects invalid source metadata', () => {
+    const invalid: JsonValue = {
+      ...makeManifest(),
+      source: {
+        compiler: '@flyingrobots/geordi-gpvue',
+        kind: 'gpvue-draft',
+        path: '../source.gpvue',
+      },
+    };
+
+    const result = validateRenderFixtureManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual([
+      '$.source.path',
+      '$.source.compiler',
+    ]);
+  });
+
   it('rejects invalid probes', () => {
     const invalid: JsonValue = {
       ...makeManifest(),
@@ -211,6 +253,14 @@ describe('render fixture manifest validation', () => {
     expect(() => parseRenderFixtureManifest(invalidSource)).toThrow(
       RenderFixtureInvalidManifestError,
     );
+  });
+
+  it('fails draft GPVue compile attempts with a custom error', () => {
+    const error = captureSourceCompileError();
+
+    expect(error.fixtureId).toBe('render-everywhere:hello-panel');
+    expect(error.sourceKind).toBe('gpvue-draft');
+    expect(error.sourcePath).toBe('source.gpvue');
   });
 });
 

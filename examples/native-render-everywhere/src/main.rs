@@ -94,6 +94,7 @@ struct RenderFixtureManifest {
     receipt_path: String,
     runtime_profile: RenderFixtureRuntimeProfile,
     scene_path: String,
+    source: RenderFixtureSource,
 }
 
 #[derive(Debug, Deserialize)]
@@ -118,6 +119,21 @@ struct RenderFixtureRuntimeProfile {
     ir_version: String,
     numeric_profile: String,
     requires: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase", tag = "kind")]
+enum RenderFixtureSource {
+    #[serde(rename = "none")]
+    None,
+    #[serde(rename = "gpvue-draft")]
+    GpvueDraft { path: String },
+    #[serde(rename = "gpvue")]
+    Gpvue {
+        compiler: String,
+        compiler_version: String,
+        path: String,
+    },
 }
 
 #[derive(Debug)]
@@ -483,6 +499,7 @@ fn validate_manifest(
         &mut issues,
     );
     validate_manifest_hash(&manifest.artifact_hash, &mut issues);
+    validate_manifest_source(&manifest.source, &mut issues);
     validate_manifest_canvas(&manifest.canvas, &mut issues);
     validate_manifest_runtime_profile(&manifest.runtime_profile, &mut issues);
     validate_manifest_pixel_probes(&manifest.pixel_probes, &manifest.canvas, &mut issues);
@@ -588,6 +605,32 @@ fn validate_manifest_runtime_profile(
                 issues,
                 &format!("$.runtimeProfile.requires[{index}]"),
                 "Runtime profile requirement must not be duplicated",
+            );
+        }
+    }
+}
+
+fn validate_manifest_source(
+    source: &RenderFixtureSource,
+    issues: &mut Vec<NativeManifestValidationIssue>,
+) {
+    match source {
+        RenderFixtureSource::None => {}
+        RenderFixtureSource::GpvueDraft { path } => {
+            validate_manifest_path(path, "$.source.path", "GPVue draft source path", issues);
+        }
+        RenderFixtureSource::Gpvue {
+            compiler,
+            compiler_version,
+            path,
+        } => {
+            validate_manifest_path(path, "$.source.path", "GPVue source path", issues);
+            validate_manifest_non_empty(compiler, "$.source.compiler", "GPVue compiler", issues);
+            validate_manifest_non_empty(
+                compiler_version,
+                "$.source.compilerVersion",
+                "GPVue compiler version",
+                issues,
             );
         }
     }
@@ -831,8 +874,8 @@ fn short_hash(hash: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        NativeAppError, NativeArgs, NativeMode, assert_pixel_probes, load_fixture, run_smoke,
-        write_fixture_summary,
+        NativeAppError, NativeArgs, NativeMode, RenderFixtureSource, assert_pixel_probes,
+        load_fixture, run_smoke, write_fixture_summary,
     };
     use std::ffi::OsString;
     use std::path::{Path, PathBuf};
@@ -856,6 +899,10 @@ mod tests {
             "featureRequirements=geordi/core/1, layout.resolved, shape.rect, paint.solid"
         ));
         assert!(text.contains("shortHash=30623d6141ba"));
+        assert!(matches!(
+            loaded.manifest.source,
+            RenderFixtureSource::GpvueDraft { ref path } if path == "source.gpvue"
+        ));
         Ok(())
     }
 

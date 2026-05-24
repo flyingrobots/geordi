@@ -14,6 +14,9 @@ import {
 export const RENDER_FIXTURE_VERSION = 'geordi-render-fixture/1' as const;
 export const RENDER_FIXTURE_HASH_PREFIX = 'sha256:' as const;
 export const RENDER_FIXTURE_HASH_HEX_LENGTH = 64 as const;
+export const RENDER_FIXTURE_SOURCE_KIND_NONE = 'none' as const;
+export const RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT = 'gpvue-draft' as const;
+export const RENDER_FIXTURE_SOURCE_KIND_GPVUE = 'gpvue' as const;
 
 export interface RenderFixtureManifestIssue extends JsonObject {
   readonly path: string;
@@ -45,6 +48,32 @@ export interface RenderFixtureRuntimeProfile extends JsonObject {
   readonly requires: readonly GeordiFeatureRequirement[];
 }
 
+export type RenderFixtureSourceKind =
+  | typeof RENDER_FIXTURE_SOURCE_KIND_NONE
+  | typeof RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT
+  | typeof RENDER_FIXTURE_SOURCE_KIND_GPVUE;
+
+export interface RenderFixtureNoSource extends JsonObject {
+  readonly kind: typeof RENDER_FIXTURE_SOURCE_KIND_NONE;
+}
+
+export interface RenderFixtureGpvueDraftSource extends JsonObject {
+  readonly kind: typeof RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT;
+  readonly path: string;
+}
+
+export interface RenderFixtureGpvueSource extends JsonObject {
+  readonly compiler: string;
+  readonly compilerVersion: string;
+  readonly kind: typeof RENDER_FIXTURE_SOURCE_KIND_GPVUE;
+  readonly path: string;
+}
+
+export type RenderFixtureSource =
+  | RenderFixtureNoSource
+  | RenderFixtureGpvueDraftSource
+  | RenderFixtureGpvueSource;
+
 export interface RenderFixtureManifest extends JsonObject {
   readonly artifactHash: string;
   readonly canvas: RenderFixtureCanvas;
@@ -54,6 +83,7 @@ export interface RenderFixtureManifest extends JsonObject {
   readonly receiptPath: string;
   readonly runtimeProfile: RenderFixtureRuntimeProfile;
   readonly scenePath: string;
+  readonly source: RenderFixtureSource;
 }
 
 export class RenderFixtureInvalidManifestError extends Error {
@@ -95,6 +125,20 @@ export class RenderFixtureInvalidPixelSampleError extends Error {
     this.name = new.target.name;
     this.channelIndex = channelIndex;
     this.value = value;
+  }
+}
+
+export class RenderFixtureSourceCompileUnavailableError extends Error {
+  public readonly fixtureId: string;
+  public readonly sourceKind: RenderFixtureSourceKind;
+  public readonly sourcePath: string | undefined;
+
+  constructor(fixtureId: string, source: RenderFixtureSource) {
+    super('Render fixture source compile unavailable');
+    this.name = new.target.name;
+    this.fixtureId = fixtureId;
+    this.sourceKind = source.kind;
+    this.sourcePath = source.kind === RENDER_FIXTURE_SOURCE_KIND_NONE ? undefined : source.path;
   }
 }
 
@@ -152,6 +196,7 @@ export function validateRenderFixtureManifest(
     issues,
   );
   validateArtifactHash(property(value, 'artifactHash'), '$.artifactHash', issues);
+  validateSource(property(value, 'source'), '$.source', issues);
 
   const canvas = property(value, 'canvas');
   validateCanvas(canvas, '$.canvas', issues);
@@ -188,6 +233,10 @@ export function renderFixtureRgbaFromBytes(bytes: ArrayLike<number>): RenderFixt
     requireByteChannel(bytes, 2),
     requireByteChannel(bytes, 3),
   ];
+}
+
+export function compileRenderFixtureSource(manifest: RenderFixtureManifest): never {
+  throw new RenderFixtureSourceCompileUnavailableError(manifest.id, manifest.source);
 }
 
 function validateCanvas(
@@ -229,6 +278,71 @@ function validateRuntimeProfile(
     issues,
   );
   validateFeatureRequirements(property(value, 'requires'), `${path}.requires`, issues);
+}
+
+function validateSource(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Fixture source must be an object');
+    return;
+  }
+
+  const kind = property(value, 'kind');
+  if (kind === RENDER_FIXTURE_SOURCE_KIND_NONE) {
+    rejectPresent(property(value, 'path'), `${path}.path`, 'No-source path', issues);
+    rejectPresent(property(value, 'compiler'), `${path}.compiler`, 'No-source compiler', issues);
+    rejectPresent(
+      property(value, 'compilerVersion'),
+      `${path}.compilerVersion`,
+      'No-source compiler version',
+      issues,
+    );
+    return;
+  }
+
+  if (kind === RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT) {
+    validateRelativePath(
+      property(value, 'path'),
+      `${path}.path`,
+      'GPVue draft source path',
+      issues,
+    );
+    rejectPresent(
+      property(value, 'compiler'),
+      `${path}.compiler`,
+      'GPVue draft compiler',
+      issues,
+    );
+    rejectPresent(
+      property(value, 'compilerVersion'),
+      `${path}.compilerVersion`,
+      'GPVue draft compiler version',
+      issues,
+    );
+    return;
+  }
+
+  if (kind === RENDER_FIXTURE_SOURCE_KIND_GPVUE) {
+    validateRelativePath(property(value, 'path'), `${path}.path`, 'GPVue source path', issues);
+    validateNonEmptyString(
+      property(value, 'compiler'),
+      `${path}.compiler`,
+      'GPVue compiler',
+      issues,
+    );
+    validateNonEmptyString(
+      property(value, 'compilerVersion'),
+      `${path}.compilerVersion`,
+      'GPVue compiler version',
+      issues,
+    );
+    return;
+  }
+
+  pushIssue(issues, `${path}.kind`, 'Fixture source kind is not supported');
 }
 
 function validateFeatureRequirements(
@@ -399,6 +513,17 @@ function validateRelativePath(
 
   if (value.startsWith('/') || value.includes('..')) {
     pushIssue(issues, path, `${label} must be a relative fixture-local path`);
+  }
+}
+
+function rejectPresent(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (value !== undefined) {
+    pushIssue(issues, path, `${label} must not be present`);
   }
 }
 

@@ -22,9 +22,16 @@ pixel-identical browser/native claim.
 ## Files
 
 - `fixture.json`: shared manifest with the expected hash, runtime profile, canvas size, and pixel
-  probes.
+  probes. It also marks `source.gpvue` as draft GPVue source.
 - `scene.geordi.json`: canonical `geordi-ir/1` artifact consumed by every runtime.
 - `scene.geordi.json.receipt`: hash and profile receipt for the scene artifact.
+- `source.gpvue`: draft GPVue authoring fixture. It is intentionally not compiled yet.
+
+## GPVue Source Status
+
+`source.gpvue` records the intended authoring shape for this scene, but the checked-in
+`scene.geordi.json` remains the artifact consumed by the demos. Any attempt to compile the draft
+source before the GPVue compiler lands must fail with a custom compile-unavailable error.
 
 ## Visual Shape
 

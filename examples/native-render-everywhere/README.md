@@ -14,6 +14,12 @@ It loads the shared Geordi IR artifact from:
 fixtures/render-everywhere/hello-panel/scene.geordi.json
 ```
 
+The same fixture also contains draft GPVue source at:
+
+```text
+fixtures/render-everywhere/hello-panel/source.gpvue
+```
+
 The harness deserializes JSON at the Rust boundary, validates the supported rectangle-only IR
 profile, renders to a native image buffer, and can either open a window or run offscreen pixel
 probes.
@@ -66,6 +72,9 @@ smoke=passed
 
 This harness does not call the browser renderer or translate a browser snapshot. It loads the same
 IR artifact independently, validates it independently, and renders it independently.
+
+The draft GPVue source is metadata only. The native harness must not parse or compile
+`source.gpvue`; it remains an artifact consumer.
 
 The native renderer currently supports the rectangle-only MVP profile:
 
