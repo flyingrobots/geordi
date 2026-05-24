@@ -143,10 +143,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `a132cf5`.
   - Verification: tests assert reported hash matches manifest.
 
-- [ ] **Slice 17: Render-everywhere README**
+- [x] **Slice 17: Render-everywhere README**
   - Document the demo claim, non-claims, commands, fixture path, and expected output.
   - State that text is excluded from the first deterministic proof.
   - Link browser and native harness docs.
+  - Done: current slice.
   - Verification: `pnpm test:docs`.
 
 - [ ] **Slice 18: GPVue fixture hook**

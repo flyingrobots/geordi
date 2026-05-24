@@ -50,7 +50,8 @@ The current execution path builds toward one GPVue-authored scene compiling to o
 Geordi IR artifact, then rendering that same artifact in a browser canvas and a native Rust
 application. The slice checklist lives in
 [`docs/design/2026-05-render-everywhere-slice-plan.md`](docs/design/2026-05-render-everywhere-slice-plan.md)
-and should be updated as slices land.
+and should be updated as slices land. The runnable demo guide lives in
+[`docs/render-everywhere.md`](docs/render-everywhere.md).
 
 ---
 
