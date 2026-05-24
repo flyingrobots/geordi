@@ -161,7 +161,7 @@ pixel-identical browser/native claim until strict text exists.
   - Add the first constrained GPVue compiler path for static rectangle-only fixtures.
   - Emit canonical `scene.geordi.json`, receipt, and source map.
   - Reject unsupported CSS, runtime layout, text, and dynamic constructs.
-  - Done: current slice.
+  - Done: `3c5c60c`.
   - Verification: stable output hash and source map tests.
 
 - [ ] **Slice 20: End-to-end GPVue render everywhere**
