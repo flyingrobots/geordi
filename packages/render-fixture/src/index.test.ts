@@ -11,20 +11,28 @@ import {
 import {
   assertRenderFixtureArtifact,
   assertRenderFixtureManifest,
+  assertRenderFixtureMeshAssetManifest,
   assertRenderFixturePixelProbe,
   assertRenderFixturePixelProbes,
+  isRenderFixtureMeshAssetManifest,
   isRenderFixtureManifest,
+  parseRenderFixtureMeshAssetManifest,
   parseRenderFixtureManifest,
+  RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE,
+  RENDER_FIXTURE_MESH_ASSET_VERSION,
   RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
   RENDER_FIXTURE_VERSION,
   RenderFixtureArtifactValidationError,
+  RenderFixtureInvalidMeshAssetManifestError,
   RenderFixtureInvalidManifestError,
   RenderFixtureInvalidPixelSampleError,
   RenderFixturePixelProbeError,
   renderFixtureRgbaFromBytes,
   validateRenderFixtureArtifact,
+  validateRenderFixtureMeshAssetManifest,
   validateRenderFixtureManifest,
   type RenderFixtureManifest,
+  type RenderFixtureMeshAssetManifest,
   type RenderFixturePixelProbe,
 } from './index.js';
 
@@ -83,6 +91,36 @@ function makeIr(): GeordiIr {
       units: 'px',
       width: 640,
     },
+  };
+}
+
+function makeMeshAssetManifest(): RenderFixtureMeshAssetManifest {
+  return {
+    assetPath: 'bun_zipper_res3.ply',
+    assetVersion: RENDER_FIXTURE_MESH_ASSET_VERSION,
+    bounds: {
+      max: [0.0609346, 0.184813, 0.0584651],
+      min: [-0.0943643, 0.0334143, -0.0616721],
+    },
+    counts: {
+      faces: 3851,
+      vertices: 1889,
+    },
+    faceProperty: 'vertex_indices',
+    format: {
+      encoding: 'ascii',
+      kind: 'ply',
+      version: '1.0',
+    },
+    id: 'render-everywhere:stanford-bunny',
+    meshProfile: RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE,
+    sha256: 'sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6',
+    source: {
+      attribution: 'Stanford Computer Graphics Laboratory Stanford 3D Scanning Repository',
+      retrieved: '2026-05-23',
+      url: 'https://graphics.stanford.edu/pub/3Dscanrep/bunny.tar.gz',
+    },
+    vertexProperties: ['x', 'y', 'z', 'confidence', 'intensity'],
   };
 }
 
@@ -322,6 +360,96 @@ describe('render fixture manifest validation', () => {
     );
   });
 
+});
+
+describe('render fixture mesh asset manifest validation', () => {
+  it('accepts a typed valid mesh asset manifest object', () => {
+    const manifest = makeMeshAssetManifest();
+
+    expect(validateRenderFixtureMeshAssetManifest(manifest)).toEqual({
+      ok: true,
+      issues: [],
+    });
+    expect(isRenderFixtureMeshAssetManifest(manifest)).toBe(true);
+    expect(assertRenderFixtureMeshAssetManifest(manifest)).toBe(manifest);
+  });
+
+  it('parses mesh asset manifests through the canonical JSON port', () => {
+    const source = canonicalJsonPort.stringify(makeMeshAssetManifest(), { space: 2 });
+
+    const parsed = parseRenderFixtureMeshAssetManifest(source);
+
+    expect(parsed.id).toBe('render-everywhere:stanford-bunny');
+    expect(parsed.counts).toEqual({ faces: 3851, vertices: 1889 });
+  });
+
+  it('rejects invalid mesh asset manifest metadata', () => {
+    const invalid: JsonValue = {
+      ...makeMeshAssetManifest(),
+      assetPath: 'https://example.test/bunny.ply',
+      assetVersion: 'geordi-mesh-asset/2',
+      bounds: {
+        max: [1, 2, Number.POSITIVE_INFINITY],
+        min: [0, 1],
+      },
+      counts: {
+        faces: 0,
+        vertices: -1,
+      },
+      faceProperty: 'triangles',
+      format: {
+        encoding: 'binary',
+        kind: 'obj',
+        version: '2.0',
+      },
+      meshProfile: 'geordi-obj-mesh/1',
+      sha256: 'sha256:not-a-hash',
+      source: {
+        attribution: '',
+        retrieved: 'May 23',
+        url: '',
+      },
+      vertexProperties: ['x', 'x', 'confidence'],
+    };
+
+    const result = validateRenderFixtureMeshAssetManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual([
+      '$.assetVersion',
+      '$.meshProfile',
+      '$.assetPath',
+      '$.sha256',
+      '$.format.kind',
+      '$.format.encoding',
+      '$.format.version',
+      '$.counts.vertices',
+      '$.counts.faces',
+      '$.bounds.min',
+      '$.bounds.max[2]',
+      '$.source.url',
+      '$.source.retrieved',
+      '$.source.attribution',
+      '$.vertexProperties[1]',
+      '$.vertexProperties',
+      '$.vertexProperties',
+      '$.faceProperty',
+    ]);
+  });
+
+  it('throws a custom error for invalid mesh asset manifests', () => {
+    expect(() =>
+      parseRenderFixtureMeshAssetManifest(
+        canonicalJsonPort.stringify(
+          {
+            ...makeMeshAssetManifest(),
+            counts: { faces: 1, vertices: 0 },
+          },
+          { space: 2 },
+        ),
+      ),
+    ).toThrow(RenderFixtureInvalidMeshAssetManifestError);
+  });
 });
 
 describe('render fixture artifact validation', () => {
