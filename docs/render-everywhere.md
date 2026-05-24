@@ -64,6 +64,16 @@ Expected result:
 5 passed
 ```
 
+Run the full GPVue render-everywhere smoke:
+
+```bash
+pnpm test:render-everywhere:gpvue
+```
+
+This command compiles `source.gpvue` once into a temporary fixture directory, routes the browser
+gate to that emitted `scene.geordi.json`, then runs the native Rust smoke gate against the same
+temporary fixture directory.
+
 The fixture currently reports:
 
 ```text
@@ -271,10 +281,15 @@ pnpm --filter @flyingrobots/geordi-gpvue lint
 pnpm --filter @flyingrobots/geordi-gpvue test
 ```
 
+Run the end-to-end GPVue render-everywhere gate:
+
+```bash
+pnpm test:render-everywhere:gpvue
+```
+
 ## Where This Goes Next
 
-The final slice wires the constrained GPVue compiler into the demo path. Once that lands, the
-stronger claim becomes:
+The constrained compiler is now wired into the smoke path:
 
 ```text
 one GPVue source file
@@ -285,5 +300,6 @@ one GPVue source file
 -> same rectangle pixel probes
 ```
 
-Until then, this document should describe the implemented artifact-first runtime proof exactly and
-avoid claiming that the browser or native demo commands compile GPVue before rendering.
+The browser and native interactive demo commands still load the checked-in artifact directly. The
+`pnpm test:render-everywhere:gpvue` gate is the command path that proves compile-then-render across
+both runtimes.

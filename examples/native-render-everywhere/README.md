@@ -76,6 +76,13 @@ IR artifact independently, validates it independently, and renders it independen
 The GPVue source is a compiler input, not a native runtime input. The native harness must not parse
 or compile `source.gpvue`; it remains an artifact consumer.
 
+The root command below compiles GPVue into a temporary fixture directory, then points this native
+harness at that emitted artifact:
+
+```bash
+pnpm test:render-everywhere:gpvue
+```
+
 The native renderer currently supports the rectangle-only MVP profile:
 
 ```text

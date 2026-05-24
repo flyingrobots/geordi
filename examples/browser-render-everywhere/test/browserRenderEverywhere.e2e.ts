@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { test, expect } from '@playwright/test';
 import {
   parseRenderFixtureManifest,
@@ -8,6 +9,7 @@ import {
   type RenderFixturePixelProbe,
   type RenderFixtureRgba,
 } from '@flyingrobots/geordi-render-fixture';
+import { compileGpvueSource } from '@flyingrobots/geordi-gpvue';
 
 interface ProbeInput {
   readonly id: string;
@@ -57,6 +59,16 @@ class BrowserGatePixelSampleMissingError extends Error {
   }
 }
 
+class BrowserGateCompiledScenePathError extends Error {
+  public readonly path: string;
+
+  constructor(path: string) {
+    super('Browser gate compiled scene path failed');
+    this.name = new.target.name;
+    this.path = path;
+  }
+}
+
 function loadManifest(): RenderFixtureManifest {
   return parseRenderFixtureManifest(
     readFileSync(
@@ -64,6 +76,29 @@ function loadManifest(): RenderFixtureManifest {
       'utf8',
     ),
   );
+}
+
+function loadCompiledSceneSource(): string {
+  const { GEORDI_RENDER_EVERYWHERE_COMPILED_SCENE: overridePath } = process.env;
+  if (overridePath !== undefined && overridePath.length > 0) {
+    try {
+      return readFileSync(overridePath, 'utf8');
+    } catch {
+      throw new BrowserGateCompiledScenePathError(overridePath);
+    }
+  }
+
+  return compileGpvueSource({
+    filename: 'source.gpvue',
+    source: readFileSync(
+      new URL('../../../fixtures/render-everywhere/hello-panel/source.gpvue', import.meta.url),
+      'utf8',
+    ),
+  }).artifacts.ir.content;
+}
+
+function artifactHash(source: string): string {
+  return `sha256:${createHash('sha256').update(source).digest('hex')}`;
 }
 
 function probeInputs(probes: readonly RenderFixturePixelProbe[]): readonly ProbeInput[] {
@@ -96,9 +131,28 @@ function sampleForProbe(
 
 test('renders the shared hello-panel fixture with exact browser pixel probes', async ({ page }) => {
   const manifest = loadManifest();
+  const compiledSceneSource = loadCompiledSceneSource();
+  let servedCompiledScene = false;
+
+  expect(artifactHash(compiledSceneSource)).toBe(manifest.artifactHash);
+
+  await page.route(/scene\.geordi\.json(?:\?.*)?$/u, async (route) => {
+    if (route.request().url().includes('?import')) {
+      await route.continue();
+      return;
+    }
+
+    servedCompiledScene = true;
+    await route.fulfill({
+      body: compiledSceneSource,
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Geordi Render Everywhere' })).toBeVisible();
+  expect(servedCompiledScene).toBe(true);
   await expect(page.getByText('browser-canvas').first()).toBeVisible();
   await expect(page.getByText(manifest.id)).toBeVisible();
   await expect(page.getByText(manifest.artifactHash)).toBeVisible();

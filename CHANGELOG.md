@@ -79,6 +79,9 @@
   source map while rejecting CSS, text, directives, runtime layout, and duplicate node ids.
 - **Render fixtures**: Mark the hello-panel fixture source as compiler-backed GPVue metadata and
   keep browser/native runtime harnesses artifact-first.
+- **Render-everywhere demos**: Add `pnpm test:render-everywhere:gpvue`, which compiles the GPVue
+  fixture once, routes the browser gate to the emitted scene artifact, and runs the native Rust
+  smoke against the same emitted artifact.
 
 ### Tests
 
@@ -122,6 +125,8 @@
 - Whitespace-reformatted SDL variant produces identical IR hash (determinism guarantee)
 - **`@flyingrobots/geordi-gpvue`**: Add stable output-hash, receipt, source-map, and unsupported
   construct coverage for the rectangle-only GPVue fixture compiler.
+- **Render-everywhere demos**: Add an end-to-end GPVue smoke path covering browser pixel probes and
+  native Rust pixel probes against one compiled fixture artifact.
 
 ### Bug Fixes
 

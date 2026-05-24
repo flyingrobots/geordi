@@ -164,10 +164,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `3c5c60c`.
   - Verification: stable output hash and source map tests.
 
-- [ ] **Slice 20: End-to-end GPVue render everywhere**
+- [x] **Slice 20: End-to-end GPVue render everywhere**
   - Compile the GPVue fixture once.
   - Render the emitted artifact in browser and native Rust.
   - Verify both report the same artifact hash and pass the same pixel probes.
+  - Done: current slice.
   - Verification: browser gate, Rust smoke gate, and render-everywhere README command path.
 
 ## Update Policy

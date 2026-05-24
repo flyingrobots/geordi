@@ -43,6 +43,11 @@ Run the Playwright browser gate:
 pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser
 ```
 
+The Playwright gate compiles `source.gpvue` and routes the page's `scene.geordi.json` request to the
+emitted artifact. When `GEORDI_RENDER_EVERYWHERE_COMPILED_SCENE` is set, the gate uses that file
+instead; this is how the root render-everywhere smoke shares one compiled artifact with the native
+Rust harness.
+
 Run typecheck, lint, and build:
 
 ```bash
