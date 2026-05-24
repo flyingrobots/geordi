@@ -87,7 +87,7 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Reject unsupported headers, non-finite numbers, bad vertices, and bad faces with custom errors.
   - Keep parser output independent from renderer state.
 
-- [ ] **Slice 11: Mesh validation tests**
+- [x] **Slice 11: Mesh validation tests**
   - Assert vertex count, face count, bounds, index ranges, finite numbers, and stable asset hash in
     both languages.
   - Include negative tests for malformed headers and invalid face data.

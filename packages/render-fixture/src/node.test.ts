@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  parseRenderFixtureAsciiPlyTriangleMesh,
+  parseRenderFixtureMeshAssetManifest,
+} from './index.js';
+import {
   assertRenderFixtureSha256,
   RenderFixtureHashMismatchError,
   renderFixtureSha256FromBytes,
@@ -14,6 +18,26 @@ function bunnyBytes(): Uint8Array {
       '../../../fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply',
       import.meta.url,
     ),
+  );
+}
+
+function bunnySource(): string {
+  return readFileSync(
+    new URL(
+      '../../../fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
+function bunnyManifestSource(): string {
+  return readFileSync(
+    new URL(
+      '../../../fixtures/render-everywhere/assets/stanford-bunny/bunny.mesh.json',
+      import.meta.url,
+    ),
+    'utf8',
   );
 }
 
@@ -33,5 +57,26 @@ describe('Node render fixture hash helpers', () => {
         'sha256:0000000000000000000000000000000000000000000000000000000000000000',
       ),
     ).toThrow(RenderFixtureHashMismatchError);
+  });
+
+  it('cross-checks the bunny manifest against bytes and parsed mesh data', () => {
+    const manifest = parseRenderFixtureMeshAssetManifest(bunnyManifestSource());
+    const mesh = parseRenderFixtureAsciiPlyTriangleMesh(bunnySource());
+
+    expect(renderFixtureSha256FromBytes(bunnyBytes())).toBe(manifest.sha256);
+    expect(mesh.vertices).toHaveLength(manifest.counts.vertices);
+    expect(mesh.faces).toHaveLength(manifest.counts.faces);
+    expect(mesh.bounds).toEqual(manifest.bounds);
+
+    for (const vertex of mesh.vertices) {
+      expect(vertex.position.every(Number.isFinite)).toBe(true);
+    }
+
+    for (const face of mesh.faces) {
+      for (const index of face) {
+        expect(index).toBeGreaterThanOrEqual(0);
+        expect(index).toBeLessThan(mesh.vertices.length);
+      }
+    }
   });
 });

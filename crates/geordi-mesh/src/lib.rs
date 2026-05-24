@@ -566,6 +566,33 @@ mod tests {
         assert!(matches!(result, Err(PlyMeshParseError::Face(_))));
     }
 
+    #[test]
+    fn validates_bunny_mesh_counts_bounds_indices_and_hash() -> Result<(), Box<dyn Error>> {
+        let bytes = fs::read(bunny_path())?;
+        let source = String::from_utf8(bytes.clone())?;
+        let mesh = parse_ascii_ply_triangle_mesh(&source)?;
+
+        assert_eq!(mesh_asset_sha256_from_bytes(&bytes), BUNNY_HASH);
+        assert_eq!(mesh.vertices.len(), 1889);
+        assert_eq!(mesh.faces.len(), 3851);
+        assert_exact_vec3(mesh.bounds.min, [-0.094_364_3, 0.033_414_3, -0.061_672_1]);
+        assert_exact_vec3(mesh.bounds.max, [0.060_934_6, 0.184_813, 0.058_465_1]);
+
+        for vertex in &mesh.vertices {
+            for coordinate in vertex.position {
+                assert!(coordinate.is_finite());
+            }
+        }
+
+        for face in &mesh.faces {
+            for index in face {
+                assert!(*index < mesh.vertices.len());
+            }
+        }
+
+        Ok(())
+    }
+
     fn bunny_path() -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply")
