@@ -74,6 +74,11 @@
 - **`@flyingrobots/geordi-schema-graphql`**: Null-safe source location policy (`SourceRef` fallback to `<inline>:1:1` when `loc` absent)
 - **`@flyingrobots/geordi-schema-graphql`**: `GEORDI_W_UNUSED_FIELD` warning only for unknown `geordi_*`-prefixed directives; non-`geordi_` directives silently ignored
 - **`@flyingrobots/geordi-wesley-generator`**: Imports and injects `graphqlToCanonicalAst` adapter into `compile()`; adds `@flyingrobots/geordi-schema-graphql` dependency
+- **`@flyingrobots/geordi-gpvue`**: Add the first constrained GPVue compiler path for static
+  rectangle-only fixtures, emitting canonical `scene.geordi.json`, a fixture receipt, and a GPVue
+  source map while rejecting CSS, text, directives, runtime layout, and duplicate node ids.
+- **Render fixtures**: Mark the hello-panel fixture source as compiler-backed GPVue metadata and
+  keep browser/native runtime harnesses artifact-first.
 
 ### Tests
 
@@ -115,6 +120,8 @@
 - Receipt `inputHash` verified against `sha256(input.source)` in golden tests; two compilations of identical input produce byte-identical receipts
 - E2E Terminal SDL fixture compiles to IR with identical SHA-256 on two consecutive runs
 - Whitespace-reformatted SDL variant produces identical IR hash (determinism guarantee)
+- **`@flyingrobots/geordi-gpvue`**: Add stable output-hash, receipt, source-map, and unsupported
+  construct coverage for the rectangle-only GPVue fixture compiler.
 
 ### Bug Fixes
 

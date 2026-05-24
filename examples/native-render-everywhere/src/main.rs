@@ -126,9 +126,9 @@ struct RenderFixtureRuntimeProfile {
 enum RenderFixtureSource {
     #[serde(rename = "none")]
     None,
-    #[serde(rename = "gpvue-draft")]
+    #[serde(rename = "gpvue-draft", rename_all = "camelCase")]
     GpvueDraft { path: String },
-    #[serde(rename = "gpvue")]
+    #[serde(rename = "gpvue", rename_all = "camelCase")]
     Gpvue {
         compiler: String,
         compiler_version: String,
@@ -901,7 +901,13 @@ mod tests {
         assert!(text.contains("shortHash=30623d6141ba"));
         assert!(matches!(
             loaded.manifest.source,
-            RenderFixtureSource::GpvueDraft { ref path } if path == "source.gpvue"
+            RenderFixtureSource::Gpvue {
+                ref compiler,
+                ref compiler_version,
+                ref path,
+            } if compiler == "@flyingrobots/geordi-gpvue"
+                && compiler_version == "0.1.0"
+                && path == "source.gpvue"
         ));
         Ok(())
     }

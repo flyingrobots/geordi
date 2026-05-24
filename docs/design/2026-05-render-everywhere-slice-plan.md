@@ -157,10 +157,11 @@ pixel-identical browser/native claim until strict text exists.
   - Done: `ecf143d`.
   - Verification: manifest and failure-path tests.
 
-- [ ] **Slice 19: GPVue compiler MVP**
+- [x] **Slice 19: GPVue compiler MVP**
   - Add the first constrained GPVue compiler path for static rectangle-only fixtures.
   - Emit canonical `scene.geordi.json`, receipt, and source map.
   - Reject unsupported CSS, runtime layout, text, and dynamic constructs.
+  - Done: current slice.
   - Verification: stable output hash and source map tests.
 
 - [ ] **Slice 20: End-to-end GPVue render everywhere**

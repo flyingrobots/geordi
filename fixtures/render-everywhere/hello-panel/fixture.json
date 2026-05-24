@@ -87,7 +87,9 @@
   },
   "scenePath": "scene.geordi.json",
   "source": {
-    "kind": "gpvue-draft",
+    "compiler": "@flyingrobots/geordi-gpvue",
+    "compilerVersion": "0.1.0",
+    "kind": "gpvue",
     "path": "source.gpvue"
   }
 }

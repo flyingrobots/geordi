@@ -53,6 +53,15 @@ const checks = [
     ],
   },
   {
+    packageName: '@flyingrobots/geordi-gpvue',
+    packageDir: 'packages/gpvue',
+    exports: [
+      'GpvueDuplicateNodeIdError',
+      'GpvueUnsupportedConstructError',
+      'compileGpvueSource',
+    ],
+  },
+  {
     packageName: '@flyingrobots/geordi-wesley-generator',
     packageDir: 'packages/wesley-generator',
     exports: ['GeordiGeneratorPlugin'],

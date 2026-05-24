@@ -14,7 +14,7 @@ It loads the shared Geordi IR artifact from:
 fixtures/render-everywhere/hello-panel/scene.geordi.json
 ```
 
-The same fixture also contains draft GPVue source at:
+The same fixture also contains constrained GPVue source at:
 
 ```text
 fixtures/render-everywhere/hello-panel/source.gpvue
@@ -69,8 +69,9 @@ The page should show:
 This harness does not define its own scene. It consumes the same checked-in artifact as the native
 Rust harness.
 
-The draft GPVue source is metadata only. The browser harness must not compile `source.gpvue` until a
-real GPVue compiler package exists.
+The GPVue source is a compiler input, not a browser runtime input. The browser harness still renders
+the checked-in `scene.geordi.json` artifact directly until the end-to-end GPVue slice wires the
+compile step into the demo path.
 
 The current browser implementation renders through Canvas 2D. The package remains named
 `@flyingrobots/geordi-runtime-webgl` because the runtime package will grow into the WebGL path, but

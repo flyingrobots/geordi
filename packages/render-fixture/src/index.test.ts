@@ -122,7 +122,9 @@ describe('render fixture manifest validation', () => {
 
     expect(manifest.id).toBe('render-everywhere:hello-panel');
     expect(manifest.source).toEqual({
-      kind: 'gpvue-draft',
+      compiler: '@flyingrobots/geordi-gpvue',
+      compilerVersion: '0.1.0',
+      kind: 'gpvue',
       path: 'source.gpvue',
     });
     expect(manifest.pixelProbes.map((probe) => probe.id)).toEqual([

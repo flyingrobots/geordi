@@ -168,6 +168,7 @@ geordi/
     core/              # @flyingrobots/geordi-core - IR types and domain models
     compiler-core/     # @flyingrobots/geordi-compiler-core - Compilation engine
     schema-graphql/    # @flyingrobots/geordi-schema-graphql - GraphQL SDL adapter
+    gpvue/             # @flyingrobots/geordi-gpvue - constrained GPVue fixture compiler
     wesley-generator/  # @flyingrobots/geordi-wesley-generator - Wesley integration
     runtime-webgl/     # @flyingrobots/geordi-runtime-webgl - WebGL runtime
 

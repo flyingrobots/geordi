@@ -41,14 +41,28 @@ The shared manifest is:
 fixtures/render-everywhere/hello-panel/fixture.json
 ```
 
-The fixture also includes draft GPVue source:
+The fixture also includes constrained GPVue source:
 
 ```text
 fixtures/render-everywhere/hello-panel/source.gpvue
 ```
 
-That source is metadata only at this stage. The manifest marks it as `gpvue-draft`, and compile
-attempts fail with a custom compile-unavailable error until the GPVue compiler slice lands.
+The manifest marks that source as compiler-backed by `@flyingrobots/geordi-gpvue`. The compiler can
+reproduce the checked-in `scene.geordi.json`, receipt, and source map from this source, but the
+browser and native harnesses still consume the checked-in artifact directly until the final
+end-to-end slice wires the compile step into the demo path.
+
+Run the GPVue compiler gate:
+
+```bash
+pnpm --filter @flyingrobots/geordi-gpvue test
+```
+
+Expected result:
+
+```text
+5 passed
+```
 
 The fixture currently reports:
 
@@ -63,8 +77,9 @@ canvas=640x360
 
 ## Non-Claims
 
-This demo does not yet prove that GPVue compiles to Geordi IR. The fixture contains draft
-`source.gpvue` metadata, but the compiler is not implemented yet.
+This demo does not yet run GPVue compilation as part of the browser/native demo command path. The
+compiler can reproduce the fixture artifact, but the runtime harnesses still load the checked-in
+`scene.geordi.json` directly until the final end-to-end slice.
 
 This demo does not claim deterministic text. Text is excluded from the first deterministic
 browser/native proof because portable text requires a strict font pack, a shaping law, and a
@@ -196,8 +211,8 @@ flowchart LR
 
 The manifest declares the artifact hash, runtime profile, canvas size, and pixel probes. A renderer
 must reject the fixture before drawing if it cannot support every required feature. The manifest can
-also describe authoring source. The current `hello-panel` source is `gpvue-draft`, which documents
-intent without making the source a runtime dependency.
+also describe authoring source. The current `hello-panel` source is `gpvue`, which makes the source
+a compiler input while keeping the runtime path artifact-first.
 
 The first proof uses only:
 
@@ -248,10 +263,18 @@ Run the doc hygiene gate for this guide:
 pnpm test:docs
 ```
 
+Run the GPVue compiler gates:
+
+```bash
+pnpm --filter @flyingrobots/geordi-gpvue typecheck
+pnpm --filter @flyingrobots/geordi-gpvue lint
+pnpm --filter @flyingrobots/geordi-gpvue test
+```
+
 ## Where This Goes Next
 
-The next slices add a draft GPVue source hook, then a constrained GPVue compiler path. Once that
-lands, the stronger claim becomes:
+The final slice wires the constrained GPVue compiler into the demo path. Once that lands, the
+stronger claim becomes:
 
 ```text
 one GPVue source file
@@ -262,5 +285,5 @@ one GPVue source file
 -> same rectangle pixel probes
 ```
 
-Until then, this document should describe the implemented hand-authored IR proof exactly and avoid
-claiming GPVue compilation early.
+Until then, this document should describe the implemented artifact-first runtime proof exactly and
+avoid claiming that the browser or native demo commands compile GPVue before rendering.
