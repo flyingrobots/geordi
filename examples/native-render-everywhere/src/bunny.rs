@@ -1127,6 +1127,21 @@ mod tests {
     }
 
     #[test]
+    fn smoke_mode_checks_nonzero_sampled_bunny_frames() -> Result<(), NativeBunnyError> {
+        for frame_index in [15, 60] {
+            let mut output = Vec::new();
+
+            run_bunny_smoke(&mut output, &bunny_path(), frame_index)?;
+
+            let text = output_text(&output);
+            assert!(text.contains(&format!("frameIndex={frame_index}")));
+            assert!(text.contains("smoke=passed"));
+        }
+
+        Ok(())
+    }
+
+    #[test]
     fn derives_the_static_frame_report() -> Result<(), NativeBunnyError> {
         let loaded = load_bunny_fixture(&bunny_path(), 15)?;
 

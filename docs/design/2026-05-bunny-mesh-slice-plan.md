@@ -191,9 +191,12 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Verification: browser render-everywhere browser test; native render-everywhere tests and
     clippy.
 
-- [ ] **Slice 25: Sampled-frame smoke tests**
+- [x] **Slice 25: Sampled-frame smoke tests**
   - Verify at least two nonzero frames in browser and native smoke paths.
   - Assert frame metadata and coarse visual invariants.
+  - Done: slice commit `Slice 25: Add sampled bunny smoke coverage`.
+  - Verification: browser render-everywhere typecheck, lint, and tests; native
+    render-everywhere tests and clippy.
 
 - [ ] **Slice 26: Bunny fixture documentation**
   - Document asset manifest, fixture manifest, commands, expected output, and attribution.

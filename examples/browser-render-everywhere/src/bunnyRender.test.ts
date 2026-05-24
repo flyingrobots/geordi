@@ -8,6 +8,7 @@ import {
   BUNNY_TRANSFORM_PROFILE,
   bunnyFrameIndexFromElapsedMs,
   createBunnyFrameReport,
+  renderBunnyFrameToCanvas,
 } from './bunnyRender.js';
 
 const TEST_MESH_MANIFEST: RenderFixtureMeshAssetManifest = {
@@ -53,6 +54,48 @@ end_header
 3 0 1 2
 `;
 
+interface DrawCall {
+  readonly name: 'lineTo' | 'moveTo';
+  readonly x: number;
+  readonly y: number;
+}
+
+class FakeBunnyCanvasContext2D {
+  fillStyle: string | CanvasGradient | CanvasPattern = '';
+  lineWidth = 1;
+  strokeStyle: string | CanvasGradient | CanvasPattern = '';
+  readonly calls: DrawCall[] = [];
+
+  beginPath(): void {
+    return undefined;
+  }
+
+  fillRect(_x: number, _y: number, _width: number, _height: number): void {
+    return undefined;
+  }
+
+  lineTo(x: number, y: number): void {
+    this.calls.push({ name: 'lineTo', x, y });
+  }
+
+  moveTo(x: number, y: number): void {
+    this.calls.push({ name: 'moveTo', x, y });
+  }
+
+  stroke(): void {
+    return undefined;
+  }
+}
+
+function makeFakeCanvas(context: FakeBunnyCanvasContext2D): HTMLCanvasElement {
+  return {
+    height: 512,
+    getContext: (contextId: string) => (contextId === '2d' ? context : null),
+    setAttribute: () => undefined,
+    width: 512,
+  } as object as HTMLCanvasElement;
+}
+
 describe('bunny render report', () => {
   it('derives deterministic fixed-rate frame metadata', () => {
     const mesh = parseRenderFixtureAsciiPlyTriangleMesh(TEST_PLY_SOURCE);
@@ -94,5 +137,35 @@ describe('bunny render report', () => {
     expect(bunnyFrameIndexFromElapsedMs(249)).toBe(14);
     expect(bunnyFrameIndexFromElapsedMs(250)).toBe(15);
     expect(bunnyFrameIndexFromElapsedMs(1000)).toBe(60);
+  });
+
+  it('renders fixed sampled browser frames through the canvas path', () => {
+    const mesh = parseRenderFixtureAsciiPlyTriangleMesh(TEST_PLY_SOURCE);
+    const context0 = new FakeBunnyCanvasContext2D();
+    const context15 = new FakeBunnyCanvasContext2D();
+    const context60 = new FakeBunnyCanvasContext2D();
+
+    const frame0 = renderBunnyFrameToCanvas(makeFakeCanvas(context0), TEST_MESH_MANIFEST, mesh, 0);
+    const frame15 = renderBunnyFrameToCanvas(
+      makeFakeCanvas(context15),
+      TEST_MESH_MANIFEST,
+      mesh,
+      15,
+    );
+    const frame60 = renderBunnyFrameToCanvas(
+      makeFakeCanvas(context60),
+      TEST_MESH_MANIFEST,
+      mesh,
+      60,
+    );
+
+    expect(frame0.frameIndex).toBe(0);
+    expect(frame15.frameIndex).toBe(15);
+    expect(frame60.frameIndex).toBe(60);
+    expect(context0.calls.length).toBeGreaterThan(0);
+    expect(context15.calls.length).toBeGreaterThan(0);
+    expect(context60.calls.length).toBeGreaterThan(0);
+    expect(context15.calls).not.toEqual(context0.calls);
+    expect(context60.calls).not.toEqual(context0.calls);
   });
 });
