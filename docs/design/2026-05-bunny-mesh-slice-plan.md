@@ -66,7 +66,7 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Assert expected `sha256:` values with a custom hash mismatch error.
   - Keep filesystem reads outside pure validators.
 
-- [ ] **Slice 8: Rust asset hash validator**
+- [x] **Slice 8: Rust asset hash validator**
   - Add a Rust hash helper for mesh asset bytes.
   - Assert expected `sha256:` values with a custom hash mismatch error.
   - Keep path validation fixture-local.
