@@ -34,6 +34,14 @@ const GEORDI_KNOWN_FEATURES: &[&str] = &[
     "text.fallbackChain",
     "text.glyphRuns",
     "text.lineBoxes",
+    "asset.mesh",
+    "mesh.triangle",
+    "transform.matrix4",
+    "camera.perspective",
+    "projection.perspective",
+    "depth.z-buffer",
+    "material.solid",
+    "playback.fixed-rate-rotation",
 ];
 
 /// Typed rectangle-only subset of a `scene.geordi.json` artifact.
@@ -563,6 +571,28 @@ mod tests {
         assert_paths_include(&paths, "$.requires");
         assert_paths_include(&paths, "$.requires[1]");
         assert_paths_include(&paths, "$.requires[2]");
+        Ok(())
+    }
+
+    #[test]
+    fn accepts_known_mesh_features_without_adding_them_to_rectangle_fixtures()
+    -> Result<(), GeordiIrTestError> {
+        let mut ir = load_geordi_ir(fixture_path("hello-panel/scene.geordi.json"))?;
+        ir.requires = vec![
+            "geordi/core/1".to_owned(),
+            "asset.mesh".to_owned(),
+            "mesh.triangle".to_owned(),
+            "transform.matrix4".to_owned(),
+            "camera.perspective".to_owned(),
+            "projection.perspective".to_owned(),
+            "depth.z-buffer".to_owned(),
+            "material.solid".to_owned(),
+            "playback.fixed-rate-rotation".to_owned(),
+        ];
+
+        let paths = validation_paths(validate_geordi_ir(&ir));
+
+        assert!(paths.is_empty());
         Ok(())
     }
 

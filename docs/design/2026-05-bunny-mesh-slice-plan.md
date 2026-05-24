@@ -47,7 +47,7 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Record SHA-256, format, profile, vertex count, face count, bounds, source, and attribution.
   - Parse the manifest through the schema validator.
 
-- [ ] **Slice 5: Mesh feature profile**
+- [x] **Slice 5: Mesh feature profile**
   - Add known feature requirements for mesh assets, triangle meshes, camera projection, depth,
     solid material, and deterministic playback.
   - Keep these out of the baseline emitted rectangle profile.
