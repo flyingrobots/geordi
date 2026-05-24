@@ -2,7 +2,7 @@
 
 **Date**: 2026-05-24
 **Branch baseline**: `main` at `b9d1398`
-**Current branch when written**: `main`
+**Current branch when refreshed**: `codex/bunny-rotation-milestone` at `f243bc9`
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
@@ -36,6 +36,13 @@ Completed:
   - the same artifact renders in a native Rust application;
   - browser and native smoke paths report the same artifact hash, feature profile, and deterministic
     pixel probes.
+- The Stanford bunny mesh milestone is implemented through slice 25:
+  - the bunny PLY is described by a canonical mesh asset manifest;
+  - TypeScript and Rust validate the asset hash and parse the supported ASCII PLY subset;
+  - the browser harness renders a static and live rotating bunny canvas;
+  - the native Rust harness renders static, fixed-frame, and live-window bunny paths;
+  - browser and native paths expose comparable sampled-frame metadata for frames such as `0`, `15`,
+    and `60`.
 - The completed rectangle proof is tracked in
   [`docs/design/2026-05-render-everywhere-slice-plan.md`](./docs/design/2026-05-render-everywhere-slice-plan.md).
 - The active bunny milestone checklist is
@@ -43,7 +50,9 @@ Completed:
 
 Still true:
 
-- The current deterministic rendering claim is rectangle-only.
+- The current exact pixel-probe rendering claim is rectangle-only. The bunny proof currently claims
+  shared asset identity, shared parsed mesh metadata, deterministic sampled-frame metadata, and
+  coarse nonblank smoke checks, not pixel-identical 3D rasterization.
 - Text rendering remains deferred. No pixel-identical text claim is allowed until font identity,
   shaping, fallback, line breaking, and measurement laws exist.
 - Multi-step geometry, vector, matrix, transform, camera, projection, depth, rasterization, and
@@ -55,10 +64,10 @@ Still true:
 
 ## Next Credibility Milestone
 
-The next goal is a mesh render-everywhere proof using the Stanford bunny asset already checked in at
+The active goal is closing the mesh render-everywhere proof using the Stanford bunny asset already checked in at
 [`fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply`](./fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply).
 
-The demo should show:
+The demo now shows:
 
 1. The Stanford bunny mesh loaded from one canonical asset manifest.
 2. The same mesh rendered in the browser.
@@ -121,60 +130,23 @@ Not allowed yet:
 
 ## Immediate Moves
 
-1. Write a formal bunny mesh design pack in [`docs/design/`](./docs/design/):
-   - mesh asset model and manifest;
-   - PLY parsing boundary;
-   - mesh IR/profile shape;
-   - camera and projection law;
-   - rotation playback descriptor;
-   - browser harness changes;
-   - native Rust harness changes;
-   - verification strategy and non-claims.
-2. Follow the bunny slice checklist in
-   [`docs/design/2026-05-bunny-mesh-slice-plan.md`](./docs/design/2026-05-bunny-mesh-slice-plan.md)
-   and pause after slice 15 for a drift check.
-3. Implement the mesh asset manifest first. Hashes, counts, bounds, source attribution, and license
-   notes must be machine-checkable before rendering work begins.
-4. Build parsers and validators at the boundaries:
-   - TypeScript for browser/demo tooling;
-   - Rust for native rendering.
-5. Add transform math only after the mesh asset contract is validated in both runtimes.
-6. Add static bunny rendering before adding rotation.
-7. Add fixed-frame rotation verification before live animation polish.
-8. Keep text rendering explicitly out of scope until after the bunny milestone lands.
+Follow the active bunny slice checklist in
+[`docs/design/2026-05-bunny-mesh-slice-plan.md`](./docs/design/2026-05-bunny-mesh-slice-plan.md).
+The repo is paused after slice 25. The remaining milestone work is documentation, demo-guide
+alignment, CI wiring, Code Lawyer hardening, and the final bearing refresh.
 
-## Recommended P0 Order
+Keep text rendering explicitly out of scope until after the bunny milestone lands.
 
-1. Bunny design pack: formalize the mesh, camera, transform, playback, and verification contracts.
-2. Bunny slice checklist: create an executable checklist with one commit per slice.
-3. Asset manifest: describe the Stanford bunny asset by hash, format, vertex count, face count,
-   bounds, source, and attribution.
-4. Mesh feature profile: add known feature requirements for mesh asset loading, triangle meshes,
-   camera projection, depth, solid material, and deterministic playback.
-5. TypeScript PLY boundary: parse the ASCII PLY into typed mesh data with custom errors and no
-   unchecked values beyond the parser boundary.
-6. Rust PLY boundary: parse the same PLY into typed Rust mesh data with custom errors and strict
-   validation.
-7. Mesh validation tests: assert counts, bounds, index ranges, finite numbers, and stable asset hash
-   in both languages.
-8. Mesh fixture manifest: add a render-everywhere bunny fixture that references the asset manifest
-   and declares camera/material/playback requirements.
-9. Static browser bunny: render one fixed frame in the browser harness.
-10. Static native bunny: render the same fixed frame in the Rust harness.
-11. Static smoke gates: verify nonblank output, mesh metadata, and coarse visual invariants for one
-    sampled frame.
-12. Transform math law: define matrix layout, multiply order, coordinate handedness, axis
-    normalization, and camera/projection composition.
-13. Rotation playback: add deterministic sampled-frame transforms for fixed frame indices.
-14. Browser rotation demo: animate the bunny at the declared fixed rate in the browser.
-15. Native rotation demo: animate the bunny at the declared fixed rate in Rust.
-16. Cross-runtime frame report: both runtimes print or expose matching frame index, elapsed time,
-    rotation angle, asset hash, and transform profile.
-17. Verification upgrade: add sampled-frame smoke tests for at least two nonzero rotation frames.
-18. Demo documentation: document commands, expected output, claim boundaries, and troubleshooting.
-19. Review hardening: run a Code Lawyer pass over mesh parsing, transform determinism, and fixture
-    path safety.
-20. Bearing refresh: close this milestone or set the next target, likely strict text/font law.
+## Remaining P0 Order
+
+1. Bunny fixture documentation: document asset manifests, commands, expected output, attribution,
+   and troubleshooting.
+2. Demo guide update: extend the render-everywhere guide with bunny commands and claim boundaries.
+3. CI gate wiring: add focused package and Rust gates for mesh parsing and bunny fixture validation
+   without launching interactive windows.
+4. Review hardening: run a Code Lawyer pass over mesh parsing, transform determinism, fixture path
+   safety, and unsupported feature failures.
+5. Bearing refresh: close this milestone or set the next target, likely strict text/font law.
 
 ## Deferred Work
 
