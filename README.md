@@ -1,5 +1,9 @@
 # Geordi
 
+<p align="center">
+  <img src="assets/geordi-animated-palette.svg" alt="Geordi animated logo" width="460">
+</p>
+
 **Deterministic GPU scene IR for interactive vector UI**
 
 Formerly SVJif, Geordi is a canonical intermediate representation for building
