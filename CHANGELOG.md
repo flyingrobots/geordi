@@ -83,8 +83,12 @@
   fixture once, routes the browser gate to the emitted scene artifact, and runs the native Rust
   smoke against the same emitted artifact.
 - **Bunny mesh milestone**: Add known mesh feature requirements, Stanford bunny mesh asset and
-  fixture contracts, TypeScript and Rust SHA-256 helpers, ASCII PLY triangle parsers, and
-  deterministic bounds/camera/projection/rotation law vectors for the next render-everywhere demo.
+  fixture contracts, TypeScript and Rust SHA-256 helpers, ASCII PLY triangle parsers,
+  deterministic bounds/camera/projection/rotation law vectors, and browser/native wireframe
+  render-everywhere demos for static, fixed-frame, and live rotating bunny playback.
+- **Browser render-everywhere demo**: Add a scene switcher so the interactive browser harness can
+  show either the rectangle pixel-probe fixture or the rotating Stanford bunny, with debug metadata
+  hidden behind collapsed disclosure panels.
 
 ### Tests
 
@@ -133,6 +137,9 @@
 - **Bunny mesh milestone**: Add cross-language coverage for Stanford bunny asset hash, vertex and
   face counts, bounds, finite vertex coordinates, face index ranges, and malformed PLY failure
   paths.
+- **Bunny mesh milestone**: Add focused browser and native gates for fixed-frame bunny metadata,
+  nonblank wireframe output, native clippy, manifest validation, and sampled smoke frames `0`, `15`,
+  and `60`.
 
 ### Bug Fixes
 
@@ -173,6 +180,8 @@
 
 - `docs/ERROR_CODES.md`: Added `GEORDI_E_INPUT_INVALID_JSON` and `GEORDI_E_INPUT_INVALID_SDL` entries
 - `docs/ERROR_CODES.md`: Corrected `GEORDI_E_REF_TARGET_NOT_FOUND` — `refKind` detail is `"animation"` only; bindings use `GEORDI_E_BIND_TARGET_NOT_FOUND`
+- Render-everywhere docs now describe the completed bunny milestone, browser/native bunny commands,
+  claim boundaries, and the browser scene switcher.
 
 ### Post-Sprint-3 PR Feedback (Round 5)
 

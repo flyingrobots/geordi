@@ -228,6 +228,18 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Done: slice commit `Slice 30: Refresh bearing after bunny milestone`.
   - Verification: `pnpm test:docs`, `git diff --check`.
 
+## Closeout Notes
+
+After the planned 30 slices landed, the branch received two closeout polish fixes:
+
+- live browser bunny metadata now updates with the animated frame report;
+- the browser harness now exposes a `Rectangles` / `Bunny` scene switcher and hides debug metadata
+  behind collapsed disclosure panels.
+
+These changes do not expand the milestone claim boundary. The bunny proof remains a shared asset,
+shared metadata, deterministic sampled-frame, and coarse nonblank smoke proof rather than a
+pixel-identical 3D rasterization claim.
+
 ## Update Policy
 
 When a slice lands:

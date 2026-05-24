@@ -738,8 +738,9 @@ The browser gate checks:
 
 ### Browser Bunny Mesh Path
 
-The same browser demo also mounts a second canvas for the Stanford bunny. This canvas is deliberately
-not treated as a Geordi IR pixel-perfect proof yet. It is a mesh harness proof:
+The same browser demo can switch from the rectangle fixture to the Stanford bunny fixture. The bunny
+canvas is deliberately not treated as a Geordi IR pixel-perfect proof yet. It is a mesh harness
+proof:
 
 1. Vite serves `bunny.mesh.json` and `bun_zipper_res3.ply` as static assets.
 2. The browser harness fetches both assets through the same fetch boundary used by the rectangle
@@ -752,6 +753,8 @@ not treated as a Geordi IR pixel-perfect proof yet. It is a mesh harness proof:
    transform profile.
 6. A Canvas 2D wireframe renderer draws the sampled frame.
 7. `requestAnimationFrame` is presentation glue only. Tests use explicit frame indices.
+8. The interactive page keeps the live report behind a collapsed `Bunny metadata` disclosure so the
+   demo surface stays focused on the rendered mesh.
 
 ```mermaid
 sequenceDiagram
@@ -774,7 +777,8 @@ sequenceDiagram
   Gate->>Canvas: assert nonblank and frame metadata
 ```
 
-The browser bunny report contains the fields that make the native report comparable:
+The browser bunny report contains the fields that make the native report comparable. In the
+interactive harness, these fields are available under `Bunny metadata`:
 
 ```text
 rendererName=browser-canvas-wireframe-mesh

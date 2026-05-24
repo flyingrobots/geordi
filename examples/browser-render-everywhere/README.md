@@ -75,17 +75,16 @@ deterministic.
 The page should show:
 
 - `Geordi Render Everywhere`
-- `browser-canvas`
-- `render-everywhere:hello-panel`
-- the fixture artifact hash
-- `geordi-ir/1`
-- `geordi-finite-binary64/1`
-- `geordi/core/1, layout.resolved, shape.rect, paint.solid`
-- one canvas containing the rectangle-only panel fixture
-- `browser-canvas-wireframe-mesh`
-- `render-everywhere:stanford-bunny`
-- the Stanford bunny asset hash
-- the Stanford bunny drawn as a rotating wireframe mesh
+- a `Rectangles` / `Bunny` scene switcher
+- the `Bunny` scene selected by default
+- the Stanford bunny drawn as a rotating wireframe mesh in the visible canvas
+- a collapsed `Bunny metadata` disclosure containing the wireframe renderer name, frame report,
+  transform profile, mesh counts, and Stanford bunny asset hash
+- a collapsed `Rectangle metadata` disclosure after switching to `Rectangles`
+- the rectangle-only panel fixture after switching to `Rectangles`
+- rectangle metadata including `browser-canvas`, `render-everywhere:hello-panel`, the fixture
+  artifact hash, `geordi-ir/1`, `geordi-finite-binary64/1`, and
+  `geordi/core/1, layout.resolved, shape.rect, paint.solid`
 
 ## Boundaries
 

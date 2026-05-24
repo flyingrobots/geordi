@@ -2,7 +2,7 @@
 
 **Date**: 2026-05-24
 **Branch baseline**: `main` at `b9d1398`
-**Current branch when refreshed**: `codex/bunny-rotation-milestone` at `09397d8`
+**Current branch when refreshed**: `codex/bunny-rotation-milestone` closeout
 
 This file is the short-term operating map. Product rationale remains in
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md); detailed work items remain in
@@ -40,6 +40,8 @@ Completed:
   - the bunny PLY is described by a canonical mesh asset manifest;
   - TypeScript and Rust validate the asset hash and parse the supported ASCII PLY subset;
   - the browser harness renders a static and live rotating bunny canvas;
+  - the browser harness can switch between the rectangle proof and the bunny proof with debug
+    metadata hidden behind disclosure panels;
   - the native Rust harness renders static, fixed-frame, and live-window bunny paths;
   - browser and native paths expose comparable sampled-frame metadata for frames such as `0`, `15`,
     and `60`;
@@ -136,13 +138,13 @@ Not allowed yet:
 
 ## Immediate Moves
 
-Pause for inspection after the completed bunny slice checklist:
-[`docs/design/2026-05-bunny-mesh-slice-plan.md`](./docs/design/2026-05-bunny-mesh-slice-plan.md).
+Wrap the bunny branch with final docs/changelog polish, open the PR to `main`, and let CI be the
+merge gate.
 
-Do not start text implementation by adding ad hoc canvas text. First write the strict text/font law,
-then choose a deliberately tiny first fixture. Keep the same discipline as the bunny milestone:
-manifest first, typed boundary parsing, custom errors, focused gates, then browser/native render
-proof.
+After the bunny PR lands, do not start text implementation by adding ad hoc canvas text. First write
+the strict text/font law, then choose a deliberately tiny first fixture. Keep the same discipline as
+the bunny milestone: manifest first, typed boundary parsing, custom errors, focused gates, then
+browser/native render proof.
 
 ## Remaining P0 Order
 
