@@ -26,6 +26,8 @@ See [BEARING.md](BEARING.md) for the current operating map. The active render-ev
 execution checklist is
 [`docs/design/2026-05-render-everywhere-slice-plan.md`](docs/design/2026-05-render-everywhere-slice-plan.md).
 Rust workspace gates are tracked in [`docs/RUST_GATES.md`](docs/RUST_GATES.md).
+For a detailed source-to-rendering walkthrough, see
+[`docs/end-to-end.md`](docs/end-to-end.md).
 
 ---
 
