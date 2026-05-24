@@ -166,9 +166,11 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Done: slice commit `Slice 20: Use shared browser bunny playback frames`.
   - Verification: browser render-everywhere typecheck, lint, tests, and build.
 
-- [ ] **Slice 21: Native fixed-frame rotation**
+- [x] **Slice 21: Native fixed-frame rotation**
   - Render deterministic native frames for frame 0 and at least two nonzero frames.
   - Expose frame metadata to smoke output.
+  - Done: slice commit `Slice 21: Add native bunny fixed-frame CLI`.
+  - Verification: native render-everywhere tests, clippy, and sampled frame smoke command.
 
 - [ ] **Slice 22: Browser live rotation**
   - Add host-time presentation that maps elapsed time to deterministic frame indices.

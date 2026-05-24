@@ -35,12 +35,16 @@ fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAp
 
     match args.mode {
         NativeMode::BunnyCheck => {
-            let loaded = bunny::load_bunny_fixture(&args.fixture_dir, 0)?;
+            let loaded = bunny::load_bunny_fixture(&args.fixture_dir, args.frame_index)?;
             bunny::write_bunny_summary(&mut io::stdout().lock(), &loaded)?;
             Ok(())
         }
         NativeMode::BunnySmoke => {
-            bunny::run_bunny_smoke(&mut io::stdout().lock(), &args.fixture_dir, 0)?;
+            bunny::run_bunny_smoke(
+                &mut io::stdout().lock(),
+                &args.fixture_dir,
+                args.frame_index,
+            )?;
             Ok(())
         }
         NativeMode::Check => {
@@ -74,6 +78,7 @@ enum NativeMode {
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct NativeArgs {
     fixture_dir: PathBuf,
+    frame_index: u64,
     mode: NativeMode,
 }
 
@@ -83,27 +88,55 @@ impl NativeArgs {
         match values.as_slice() {
             [flag, fixture_dir] if flag == OsStr::new("--bunny-check") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
                 mode: NativeMode::BunnyCheck,
             }),
             [flag, fixture_dir] if flag == OsStr::new("--bunny-smoke") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
                 mode: NativeMode::BunnySmoke,
             }),
+            [flag, frame_flag, frame_index, fixture_dir]
+                if flag == OsStr::new("--bunny-check") && frame_flag == OsStr::new("--frame") =>
+            {
+                Ok(Self {
+                    fixture_dir: PathBuf::from(fixture_dir),
+                    frame_index: parse_frame_index(frame_index)?,
+                    mode: NativeMode::BunnyCheck,
+                })
+            }
+            [flag, frame_flag, frame_index, fixture_dir]
+                if flag == OsStr::new("--bunny-smoke") && frame_flag == OsStr::new("--frame") =>
+            {
+                Ok(Self {
+                    fixture_dir: PathBuf::from(fixture_dir),
+                    frame_index: parse_frame_index(frame_index)?,
+                    mode: NativeMode::BunnySmoke,
+                })
+            }
             [flag, fixture_dir] if flag == OsStr::new("--check") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
                 mode: NativeMode::Check,
             }),
             [flag, fixture_dir] if flag == OsStr::new("--smoke") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
                 mode: NativeMode::Smoke,
             }),
             [fixture_dir] => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
                 mode: NativeMode::Window,
             }),
             _ => Err(NativeArgsError),
         }
     }
+}
+
+fn parse_frame_index(value: &OsStr) -> Result<u64, NativeArgsError> {
+    let text = value.to_str().ok_or(NativeArgsError)?;
+    text.parse::<u64>().map_err(|_error| NativeArgsError)
 }
 
 #[derive(Debug)]
@@ -1325,6 +1358,7 @@ mod tests {
         ])?;
 
         assert_eq!(args.mode, NativeMode::Check);
+        assert_eq!(args.frame_index, 0);
         assert_eq!(
             args.fixture_dir,
             PathBuf::from("fixtures/render-everywhere/hello-panel")
@@ -1341,6 +1375,7 @@ mod tests {
         ])?;
 
         assert_eq!(args.mode, NativeMode::Smoke);
+        assert_eq!(args.frame_index, 0);
         assert_eq!(
             args.fixture_dir,
             PathBuf::from("fixtures/render-everywhere/hello-panel")
@@ -1357,6 +1392,7 @@ mod tests {
         ])?;
 
         assert_eq!(args.mode, NativeMode::BunnyCheck);
+        assert_eq!(args.frame_index, 0);
         assert_eq!(
             args.fixture_dir,
             PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
@@ -1373,11 +1409,44 @@ mod tests {
         ])?;
 
         assert_eq!(args.mode, NativeMode::BunnySmoke);
+        assert_eq!(args.frame_index, 0);
         assert_eq!(
             args.fixture_dir,
             PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
         );
         Ok(())
+    }
+
+    #[test]
+    fn parses_bunny_fixed_frame_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--bunny-smoke"),
+            OsString::from("--frame"),
+            OsString::from("60"),
+            OsString::from("fixtures/render-everywhere/assets/stanford-bunny"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::BunnySmoke);
+        assert_eq!(args.frame_index, 60);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_invalid_bunny_fixed_frame_arguments() {
+        let result = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--bunny-check"),
+            OsString::from("--frame"),
+            OsString::from("-1"),
+            OsString::from("fixtures/render-everywhere/assets/stanford-bunny"),
+        ]);
+
+        assert!(result.is_err());
     }
 
     fn output_text(output: &[u8]) -> String {
