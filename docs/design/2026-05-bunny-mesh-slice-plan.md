@@ -147,9 +147,12 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Verification: `cargo fmt --check`, `cargo test -p native-render-everywhere`,
     `cargo clippy -p native-render-everywhere --all-targets -- -D warnings`.
 
-- [ ] **Slice 18: Static smoke gates**
+- [x] **Slice 18: Static smoke gates**
   - Verify nonblank output, mesh metadata, and coarse visual invariants for one sampled frame.
   - Keep pixel-identical 3D claims out of scope.
+  - Done: slice commit `Slice 18: Add static bunny smoke gates`.
+  - Verification: browser render-everywhere browser test; native render-everywhere tests and
+    clippy.
 
 - [ ] **Slice 19: Rotation playback descriptor**
   - Add fixed-rate rotation descriptor validation.

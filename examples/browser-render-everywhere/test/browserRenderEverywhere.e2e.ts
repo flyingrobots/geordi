@@ -197,6 +197,14 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   await expect(page.getByText(manifest.runtimeProfile.irVersion)).toBeVisible();
   await expect(page.getByText(manifest.runtimeProfile.numericProfile)).toBeVisible();
   await expect(page.getByText(manifest.runtimeProfile.requires.join(', '))).toBeVisible();
+  await expect(page.getByText('browser-canvas-wireframe-mesh')).toBeVisible();
+  await expect(page.getByText('vertices=1889')).toBeVisible();
+  await expect(page.getByText('faces=3851')).toBeVisible();
+  await expect(
+    page.getByText(
+      'asset=sha256:975e7f9b160b4ea15b0e225e21b10828ebcf678df020d2f6a46aa408fdcf5cd6',
+    ),
+  ).toBeVisible();
 
   const evaluation = await page.evaluate<CanvasEvaluation, readonly ProbeInput[]>((probes) => {
     const canvases = document.querySelectorAll<HTMLCanvasElement>(
@@ -262,4 +270,52 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   assertRenderFixturePixelProbes(manifest.id, manifest.pixelProbes, (probe) =>
     sampleForProbe(samples, probe),
   );
+
+  const bunnyEvaluation = await page.evaluate<CanvasEvaluation>(() => {
+    const canvases = document.querySelectorAll<HTMLCanvasElement>(
+      'canvas[data-geordi-bunny-canvas="true"]',
+    );
+    if (canvases.length !== 1) {
+      return {
+        canvasCount: canvases.length,
+        reason: 'canvas-count',
+      };
+    }
+
+    const canvas = canvases.item(0);
+    const context = canvas.getContext('2d');
+    if (context === null) {
+      return {
+        canvasCount: canvases.length,
+        reason: 'context-unavailable',
+      };
+    }
+
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let nonblank = false;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const alpha = pixels[index + 3] ?? 0;
+      const red = pixels[index] ?? 17;
+      const green = pixels[index + 1] ?? 24;
+      const blue = pixels[index + 2] ?? 39;
+      if (alpha > 0 && (red !== 17 || green !== 24 || blue !== 39)) {
+        nonblank = true;
+        break;
+      }
+    }
+
+    return {
+      canvasCount: canvases.length,
+      height: canvas.height,
+      nonblank,
+      samples: [],
+      width: canvas.width,
+    };
+  });
+
+  const bunnySnapshot = snapshotFromEvaluation(bunnyEvaluation);
+  expect(bunnySnapshot.canvasCount).toBe(1);
+  expect(bunnySnapshot.width).toBe(512);
+  expect(bunnySnapshot.height).toBe(512);
+  expect(bunnySnapshot.nonblank).toBe(true);
 });

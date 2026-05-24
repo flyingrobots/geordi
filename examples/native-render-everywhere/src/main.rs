@@ -1348,6 +1348,38 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn parses_bunny_check_mode_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--bunny-check"),
+            OsString::from("fixtures/render-everywhere/assets/stanford-bunny"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::BunnyCheck);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn parses_bunny_smoke_mode_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--bunny-smoke"),
+            OsString::from("fixtures/render-everywhere/assets/stanford-bunny"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::BunnySmoke);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
+        );
+        Ok(())
+    }
+
     fn output_text(output: &[u8]) -> String {
         String::from_utf8_lossy(output).into_owned()
     }
