@@ -58,5 +58,34 @@
       1
     ]
   },
+  "projection": {
+    "aspectRatio": 1,
+    "far": 10,
+    "kind": "perspective",
+    "matrixColumnMajor": [
+      2.414213562373095,
+      0,
+      0,
+      0,
+      0,
+      2.414213562373095,
+      0,
+      0,
+      0,
+      0,
+      -1.002002002002002,
+      -1,
+      0,
+      0,
+      -0.02002002002002002,
+      0
+    ],
+    "near": 0.01,
+    "verticalFovRadians": 0.7853981633974483,
+    "viewport": {
+      "height": 512,
+      "width": 512
+    }
+  },
   "version": "geordi-bunny-math-vectors/1"
 }

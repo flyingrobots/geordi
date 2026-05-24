@@ -102,7 +102,7 @@ Pause after slice 15 for a drift check before static rendering starts.
   - Reject degenerate camera descriptors.
   - Add deterministic test vectors.
 
-- [ ] **Slice 14: Projection descriptor law**
+- [x] **Slice 14: Projection descriptor law**
   - Define vertical field of view, aspect, near/far planes, and projection-matrix construction.
   - Reject invalid projection descriptors.
   - Add deterministic test vectors.
