@@ -4,6 +4,7 @@ use geordi_mesh::{
     MeshAssetHashMismatchError, PlyMesh, PlyMeshParseError, assert_mesh_asset_sha256,
     parse_ascii_ply_triangle_mesh,
 };
+use minifb::{Key, Window, WindowOptions};
 use serde::Deserialize;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -11,6 +12,7 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::string::FromUtf8Error;
+use std::time::Instant;
 
 const BUNNY_MANIFEST_PATH: &str = "bunny.mesh.json";
 const BUNNY_RENDERER_NAME: &str = "rust-software-wireframe-mesh";
@@ -26,6 +28,7 @@ const BUNNY_CAMERA_EYE: [f64; 3] = [0.0, 0.1, 0.35];
 const BUNNY_VERTICAL_FOV_RADIANS: f64 = std::f64::consts::FRAC_PI_4;
 const BUNNY_ROTATION_AXIS: [f64; 3] = [3.0, 5.0, 2.0];
 const BUNNY_ROTATION_RADIANS_PER_SECOND: f64 = std::f64::consts::FRAC_PI_4;
+const BUNNY_ROTATION_SAMPLE_RATE_MILLIS: u128 = 60;
 const BUNNY_ROTATION_SAMPLE_RATE: f64 = 60.0;
 
 /// Native bunny harness error boundary.
@@ -49,6 +52,8 @@ pub enum NativeBunnyError {
     Output(NativeBunnyOutputError),
     /// Rendered image failed the smoke invariant.
     Smoke(NativeBunnySmokeError),
+    /// Native bunny presentation window failed.
+    Window(NativeBunnyWindowError),
 }
 
 impl Display for NativeBunnyError {
@@ -69,6 +74,7 @@ impl Error for NativeBunnyError {
             Self::MeshParse(source) => Some(source),
             Self::Output(source) => Some(source),
             Self::Smoke(source) => Some(source),
+            Self::Window(source) => Some(source),
         }
     }
 }
@@ -124,6 +130,12 @@ impl From<NativeBunnyOutputError> for NativeBunnyError {
 impl From<NativeBunnySmokeError> for NativeBunnyError {
     fn from(error: NativeBunnySmokeError) -> Self {
         Self::Smoke(error)
+    }
+}
+
+impl From<NativeBunnyWindowError> for NativeBunnyError {
+    fn from(error: NativeBunnyWindowError) -> Self {
+        Self::Window(error)
     }
 }
 
@@ -322,6 +334,47 @@ impl Display for NativeBunnySmokeError {
 
 impl Error for NativeBunnySmokeError {}
 
+/// Custom error for native bunny presentation window failures.
+#[derive(Debug)]
+pub struct NativeBunnyWindowError {
+    source: NativeBunnyWindowErrorSource,
+}
+
+#[derive(Debug)]
+enum NativeBunnyWindowErrorSource {
+    BufferSize,
+    Window(minifb::Error),
+}
+
+impl NativeBunnyWindowError {
+    const fn buffer_size() -> Self {
+        Self {
+            source: NativeBunnyWindowErrorSource::BufferSize,
+        }
+    }
+
+    const fn window(source: minifb::Error) -> Self {
+        Self {
+            source: NativeBunnyWindowErrorSource::Window(source),
+        }
+    }
+}
+
+impl Display for NativeBunnyWindowError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Native bunny window failed")
+    }
+}
+
+impl Error for NativeBunnyWindowError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match &self.source {
+            NativeBunnyWindowErrorSource::BufferSize => None,
+            NativeBunnyWindowErrorSource::Window(source) => Some(source),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct BunnyMeshAssetManifest {
@@ -373,6 +426,7 @@ struct BunnyMeshAssetSource {
 pub struct LoadedBunnyFixture {
     image: BunnyImage,
     manifest: BunnyMeshAssetManifest,
+    mesh: PlyMesh,
     report: BunnyFrameReport,
 }
 
@@ -467,6 +521,7 @@ pub fn load_bunny_fixture(
     Ok(LoadedBunnyFixture {
         image,
         manifest,
+        mesh,
         report,
     })
 }
@@ -527,6 +582,37 @@ pub fn run_bunny_smoke(
     }
 
     writeln!(writer, "smoke=passed").map_err(NativeBunnyOutputError::new)?;
+    Ok(())
+}
+
+/// Open the live native bunny presentation window.
+///
+/// # Errors
+///
+/// Returns `NativeBunnyError` when loading, rendering, buffer conversion, or window presentation
+/// fails.
+pub fn open_bunny_window(asset_dir: &Path) -> Result<(), NativeBunnyError> {
+    let loaded = load_bunny_fixture(asset_dir, 0)?;
+    let mut window = Window::new(
+        &bunny_window_title(&loaded),
+        BUNNY_RENDER_WIDTH,
+        BUNNY_RENDER_HEIGHT,
+        WindowOptions::default(),
+    )
+    .map_err(NativeBunnyWindowError::window)?;
+    let start = Instant::now();
+
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+        let frame_index = bunny_frame_index_from_elapsed_ms(start.elapsed().as_millis());
+        let report =
+            create_bunny_frame_report(frame_index, &loaded.report.asset_hash, &loaded.mesh);
+        let image = render_bunny_wireframe(&loaded.mesh, report.angle_radians);
+        let buffer = minifb_buffer(&image)?;
+        window
+            .update_with_buffer(&buffer, BUNNY_RENDER_WIDTH, BUNNY_RENDER_HEIGHT)
+            .map_err(NativeBunnyWindowError::window)?;
+    }
+
     Ok(())
 }
 
@@ -658,6 +744,11 @@ fn frame_index_to_seconds(frame_index: u64) -> f64 {
         .map_or(0.0, |value| value / BUNNY_ROTATION_SAMPLE_RATE)
 }
 
+fn bunny_frame_index_from_elapsed_ms(elapsed_ms: u128) -> u64 {
+    let frames = elapsed_ms.saturating_mul(BUNNY_ROTATION_SAMPLE_RATE_MILLIS) / 1000;
+    u64::try_from(frames).unwrap_or(u64::MAX)
+}
+
 fn render_bunny_wireframe(mesh: &PlyMesh, angle_radians: f64) -> BunnyImage {
     let mut image = BunnyImage::new(
         BUNNY_RENDER_WIDTH,
@@ -676,6 +767,35 @@ fn render_bunny_wireframe(mesh: &PlyMesh, angle_radians: f64) -> BunnyImage {
     }
 
     image
+}
+
+fn minifb_buffer(image: &BunnyImage) -> Result<Vec<u32>, NativeBunnyWindowError> {
+    let mut buffer = Vec::with_capacity(
+        image
+            .width
+            .checked_mul(image.height)
+            .ok_or_else(NativeBunnyWindowError::buffer_size)?,
+    );
+
+    for rgba in image.rgba.chunks_exact(BUNNY_BACKGROUND_RGBA.len()) {
+        let red = u32::from(rgba[0]);
+        let green = u32::from(rgba[1]);
+        let blue = u32::from(rgba[2]);
+        buffer.push((red << 16) | (green << 8) | blue);
+    }
+
+    if buffer.is_empty() {
+        return Err(NativeBunnyWindowError::buffer_size());
+    }
+
+    Ok(buffer)
+}
+
+fn bunny_window_title(loaded: &LoadedBunnyFixture) -> String {
+    format!(
+        "Geordi Native - {BUNNY_RENDERER_NAME} - {} - frame {}",
+        loaded.manifest.id, loaded.report.frame_index
+    )
 }
 
 fn draw_projected_edge(image: &mut BunnyImage, first: ProjectedPoint, second: ProjectedPoint) {
@@ -957,8 +1077,8 @@ fn push_issue(issues: &mut Vec<NativeBunnyManifestValidationIssue>, path: &str, 
 #[cfg(test)]
 mod tests {
     use super::{
-        BUNNY_RENDERER_NAME, NativeBunnyError, load_bunny_fixture, run_bunny_smoke,
-        write_bunny_summary,
+        BUNNY_RENDERER_NAME, NativeBunnyError, bunny_frame_index_from_elapsed_ms,
+        load_bunny_fixture, run_bunny_smoke, write_bunny_summary,
     };
     use std::path::{Path, PathBuf};
 
@@ -1009,6 +1129,14 @@ mod tests {
         assert!((report.normalized_axis[1] - 0.811_107_105_653_812_6).abs() < 0.000_000_001);
         assert!((report.normalized_axis[2] - 0.324_442_842_261_525_03).abs() < 0.000_000_001);
         Ok(())
+    }
+
+    #[test]
+    fn maps_host_elapsed_time_to_native_frame_indices() {
+        assert_eq!(bunny_frame_index_from_elapsed_ms(0), 0);
+        assert_eq!(bunny_frame_index_from_elapsed_ms(249), 14);
+        assert_eq!(bunny_frame_index_from_elapsed_ms(250), 15);
+        assert_eq!(bunny_frame_index_from_elapsed_ms(1000), 60);
     }
 
     fn output_text(output: &[u8]) -> String {

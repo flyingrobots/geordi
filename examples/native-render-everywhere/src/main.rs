@@ -47,6 +47,10 @@ fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAp
             )?;
             Ok(())
         }
+        NativeMode::BunnyWindow => {
+            bunny::open_bunny_window(&args.fixture_dir)?;
+            Ok(())
+        }
         NativeMode::Check => {
             let loaded = load_fixture(&args.fixture_dir)?;
             write_fixture_summary(&mut io::stdout().lock(), &loaded)?;
@@ -70,6 +74,7 @@ fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAp
 enum NativeMode {
     BunnyCheck,
     BunnySmoke,
+    BunnyWindow,
     Check,
     Smoke,
     Window,
@@ -95,6 +100,11 @@ impl NativeArgs {
                 fixture_dir: PathBuf::from(fixture_dir),
                 frame_index: 0,
                 mode: NativeMode::BunnySmoke,
+            }),
+            [flag, fixture_dir] if flag == OsStr::new("--bunny-window") => Ok(Self {
+                fixture_dir: PathBuf::from(fixture_dir),
+                frame_index: 0,
+                mode: NativeMode::BunnyWindow,
             }),
             [flag, frame_flag, frame_index, fixture_dir]
                 if flag == OsStr::new("--bunny-check") && frame_flag == OsStr::new("--frame") =>
@@ -355,7 +365,7 @@ struct NativeArgsError;
 impl Display for NativeArgsError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         formatter.write_str(
-            "Usage: native-render-everywhere [--check|--smoke|--bunny-check|--bunny-smoke] <fixture-dir>",
+            "Usage: native-render-everywhere [--check|--smoke|--bunny-check|--bunny-smoke|--bunny-window] [--frame <index>] <fixture-dir>",
         )
     }
 }
@@ -1409,6 +1419,23 @@ mod tests {
         ])?;
 
         assert_eq!(args.mode, NativeMode::BunnySmoke);
+        assert_eq!(args.frame_index, 0);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn parses_bunny_window_mode_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--bunny-window"),
+            OsString::from("fixtures/render-everywhere/assets/stanford-bunny"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::BunnyWindow);
         assert_eq!(args.frame_index, 0);
         assert_eq!(
             args.fixture_dir,
