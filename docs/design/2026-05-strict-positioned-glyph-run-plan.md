@@ -846,6 +846,32 @@ The checkpoint assertions are:
 - The next OPEN nodes are `S016` and `S031`; S016 is selected first because it is the lowest-numbered
   OPEN node.
 
+## Font License Candidate Review
+
+S016 chooses a font candidate before any font bytes enter the repository. The first fixture font must
+be boring on purpose: static, redistributable, fixture-local, easy to hash, and suitable for simple
+Latin uppercase/lowercase/digit proof strings.
+
+Candidate requirements:
+
+- License must permit bundling the unmodified font with the repository and demos.
+- License text must be vendored beside the font bytes.
+- Source must be an inspectable upstream path, not a host font lookup or CDN alias.
+- First asset must be a static `.ttf`; variable fonts and collections are deferred.
+- Candidate must cover the initial fixture strings `GEORDI`, `HELLO`, and `text 0123`.
+- Reserved Font Name rules must be recorded; Geordi must not modify and redistribute a renamed
+  derivative as if it were the original family.
+
+| Candidate | Upstream path | License | Remote check | Decision |
+| --- | --- | --- | --- | --- |
+| Lato Regular | `google/fonts/ofl/lato/Lato-Regular.ttf` | SIL OFL 1.1 with Reserved Font Name `Lato` | HTTP 200, 656568 bytes | Selected candidate for S018/S020. Broader useful glyph set than `Basic`, static TTF, and normal UI proportions. |
+| Poppins Regular | `google/fonts/ofl/poppins/Poppins-Regular.ttf` | SIL OFL 1.1 | HTTP 200, 160316 bytes | Acceptable fallback, but geometric shapes are less representative of dense UI body text. |
+| Basic Regular | `google/fonts/ofl/basic/Basic-Regular.ttf` | SIL OFL 1.1 with Reserved Font Name `Basic` | HTTP 200, 58520 bytes | Useful tiny fallback, but too narrow as the primary fixture font. |
+
+S016 does not land font bytes and does not create the final manifest. Those are deliberately split
+into S020 and S021 so the review, directory contract, selection record, byte landing, and hash record
+remain separately inspectable commits.
+
 ## Active DAG
 
 The active dependency graph is rendered from [2026-05-strict-positioned-glyph-run-dag.dot](./2026-05-strict-positioned-glyph-run-dag.dot) to [2026-05-strict-positioned-glyph-run-dag.svg](./2026-05-strict-positioned-glyph-run-dag.svg).
