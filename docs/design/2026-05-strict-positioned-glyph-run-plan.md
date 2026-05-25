@@ -745,3 +745,29 @@ flowchart LR
 The active dependency graph is rendered from [2026-05-strict-positioned-glyph-run-dag.dot](./2026-05-strict-positioned-glyph-run-dag.dot) to [2026-05-strict-positioned-glyph-run-dag.svg](./2026-05-strict-positioned-glyph-run-dag.svg).
 
 Use the DAG to choose the next slice. A node is OPEN when all parents are complete. After each slice, update the checklist state, update the node status in the DOT file, regenerate the SVG, and commit both the slice work and planning-state updates.
+
+## DAG Execution Protocol
+
+Every slice execution follows the same planning-state protocol:
+
+1. Read `BEARING.md` and the DAG DOT file.
+2. Identify all nodes whose `Blocked By` entries are complete.
+3. Select the lowest-numbered OPEN node unless the user explicitly reprioritizes.
+4. Complete only that slice's acceptance criteria.
+5. Run the relevant gates for that slice.
+6. Update the checklist entry from `- [ ]` to `- [x]`.
+7. Update the completed node in DOT to dashed gray.
+8. Update newly unblocked nodes in DOT to thick green.
+9. Regenerate the SVG with Graphviz.
+10. Commit the slice and planning-state updates together.
+
+State styling is normative:
+
+| State | DOT style |
+| --- | --- |
+| OPEN | `color="#16a34a", penwidth=4` |
+| BLOCKED | `color="#dc2626", penwidth=4` |
+| COMPLETE | `color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"` |
+
+The graph is not a decorative image. It is the scheduler. If `BEARING.md`, the DOT source, and the
+SVG disagree, the next slice is blocked until planning state is repaired.

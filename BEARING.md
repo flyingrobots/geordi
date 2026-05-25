@@ -63,7 +63,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S011**.
+Current OPEN node: **S012**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -181,7 +181,7 @@ Current OPEN node: **S011**.
 
 ### S011: Slice DAG operating rule
 
-- [ ] **S011: Slice DAG operating rule** (OPEN)
+- [x] **S011: Slice DAG operating rule** (COMPLETE)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with slice dag operating rule documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Slice DAG operating rule.
@@ -192,7 +192,7 @@ Current OPEN node: **S011**.
 
 ### S012: Text compliance badge vocabulary
 
-- [ ] **S012: Text compliance badge vocabulary** (BLOCKED)
+- [ ] **S012: Text compliance badge vocabulary** (OPEN)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with text compliance badge vocabulary documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Text compliance badge vocabulary.
