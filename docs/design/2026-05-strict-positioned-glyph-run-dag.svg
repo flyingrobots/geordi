@@ -135,28 +135,28 @@
 <!-- S006 -->
 <g id="node9" class="node">
 <title>S006</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M441.26,-3608.5C441.26,-3608.5 312.74,-3608.5 312.74,-3608.5 306.74,-3608.5 300.74,-3602.5 300.74,-3596.5 300.74,-3596.5 300.74,-3584.5 300.74,-3584.5 300.74,-3578.5 306.74,-3572.5 312.74,-3572.5 312.74,-3572.5 441.26,-3572.5 441.26,-3572.5 447.26,-3572.5 453.26,-3578.5 453.26,-3584.5 453.26,-3584.5 453.26,-3596.5 453.26,-3596.5 453.26,-3602.5 447.26,-3608.5 441.26,-3608.5"/>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3592.25" font-family="Helvetica,sans-Serif" font-size="10.00">S006</text>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3581" font-family="Helvetica,sans-Serif" font-size="10.00">Text coordinate and numeric law</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M441.26,-3608.5C441.26,-3608.5 312.74,-3608.5 312.74,-3608.5 306.74,-3608.5 300.74,-3602.5 300.74,-3596.5 300.74,-3596.5 300.74,-3584.5 300.74,-3584.5 300.74,-3578.5 306.74,-3572.5 312.74,-3572.5 312.74,-3572.5 441.26,-3572.5 441.26,-3572.5 447.26,-3572.5 453.26,-3578.5 453.26,-3584.5 453.26,-3584.5 453.26,-3596.5 453.26,-3596.5 453.26,-3602.5 447.26,-3608.5 441.26,-3608.5"/>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3592.25" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S006</text>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3581" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Text coordinate and numeric law</text>
 </g>
 <!-- S005&#45;&gt;S006 -->
 <g id="edge5" class="edge">
 <title>S005&#45;&gt;S006</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3643.11C377,-3635.37 377,-3626.23 377,-3617.8"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3617.83 377,-3611.83 374.9,-3617.83 379.1,-3617.83"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3643.11C377,-3635.17 377,-3625.75 377,-3617.14"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3617.34 377,-3611.34 374.9,-3617.34 379.1,-3617.34"/>
 </g>
 <!-- S007 -->
 <g id="node10" class="node">
 <title>S007</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M427.01,-3536.5C427.01,-3536.5 326.99,-3536.5 326.99,-3536.5 320.99,-3536.5 314.99,-3530.5 314.99,-3524.5 314.99,-3524.5 314.99,-3512.5 314.99,-3512.5 314.99,-3506.5 320.99,-3500.5 326.99,-3500.5 326.99,-3500.5 427.01,-3500.5 427.01,-3500.5 433.01,-3500.5 439.01,-3506.5 439.01,-3512.5 439.01,-3512.5 439.01,-3524.5 439.01,-3524.5 439.01,-3530.5 433.01,-3536.5 427.01,-3536.5"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M427.01,-3536.5C427.01,-3536.5 326.99,-3536.5 326.99,-3536.5 320.99,-3536.5 314.99,-3530.5 314.99,-3524.5 314.99,-3524.5 314.99,-3512.5 314.99,-3512.5 314.99,-3506.5 320.99,-3500.5 326.99,-3500.5 326.99,-3500.5 427.01,-3500.5 427.01,-3500.5 433.01,-3500.5 439.01,-3506.5 439.01,-3512.5 439.01,-3512.5 439.01,-3524.5 439.01,-3524.5 439.01,-3530.5 433.01,-3536.5 427.01,-3536.5"/>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3520.25" font-family="Helvetica,sans-Serif" font-size="10.00">S007</text>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3509" font-family="Helvetica,sans-Serif" font-size="10.00">Line box and baseline law</text>
 </g>
 <!-- S006&#45;&gt;S007 -->
 <g id="edge6" class="edge">
 <title>S006&#45;&gt;S007</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3570.74C377,-3563.13 377,-3554.2 377,-3545.95"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3546.13 377,-3540.13 374.9,-3546.13 379.1,-3546.13"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3571.11C377,-3563.37 377,-3554.23 377,-3545.8"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3545.83 377,-3539.83 374.9,-3545.83 379.1,-3545.83"/>
 </g>
 <!-- S008 -->
 <g id="node11" class="node">

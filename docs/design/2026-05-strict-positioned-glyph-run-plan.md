@@ -379,6 +379,41 @@ The fixture-level declaration is:
 }
 ~~~
 
+Storage rules:
+
+- Canonical strict fixtures store fixed positions as integers unless a later review-profile format
+  explicitly permits decimal display values.
+- The integer value is `round(px * 64)` only inside text preparation. Renderers do not rescale source
+  decimals.
+- Renderers convert fixed values to px by dividing by `64` after validation.
+- `-0` is rejected or normalized to `0` at the JSON boundary.
+- `NaN`, infinities, unsafe integers, and values outside the declared fixed-point bounds are hard
+  failures.
+- A renderer must not apply hidden snapping before layout, line-box comparison, or metadata
+  reporting.
+
+Coordinate rules:
+
+| Field | Meaning |
+| --- | --- |
+| `baselineX` | Fixed-point x coordinate of the run origin in scene px. |
+| `baselineY` | Fixed-point y coordinate of the text baseline in scene px. |
+| `xOffset` | Fixed-point glyph offset from `baselineX`. |
+| `yOffset` | Fixed-point glyph offset from `baselineY`; positive values move down. |
+| `advance` | Fixed-point horizontal advance already computed by text preparation. |
+
+Renderer math for the first profile:
+
+~~~text
+glyphOriginX = baselineX + xOffset
+glyphOriginY = baselineY + yOffset
+nextPenX = currentPenX + advance
+~~~
+
+The renderer may use floating-point internally after decoding fixed values, but the fixture,
+metadata reports, receipts, and parity checks use the fixed-point integer representation as the
+source of truth.
+
 ## Font Identity Law
 
 Font identity is not a family name. It is a concrete content-addressed asset plus face metadata.
