@@ -662,6 +662,43 @@ strict text fixture
 
 The renderer contract is deliberately smaller than the authoring contract. Authoring tools may provide strings, font intent, language metadata, and accessibility text, but the strict renderer path accepts only positioned glyph evidence.
 
+## Initial Fixture Scope And Nonclaims
+
+The first strict text milestone uses two fixtures:
+
+| Fixture | Text metadata | Purpose |
+| --- | --- | --- |
+| Fixture A | `GEORDI` | Simple uppercase pipeline proof with few glyph categories. |
+| Fixture B | `text 0123` | Ascenders, descenders, space, lowercase, and digits. |
+
+Fixture scope:
+
+- one font pack;
+- one face index;
+- one line per fixture;
+- left-to-right direction;
+- no fallback chain;
+- no multiline wrapping;
+- no bidi;
+- no complex scripts;
+- no variable axes;
+- no runtime shaping;
+- no runtime kerning;
+- no runtime ligatures;
+- fill-only monochrome outline evidence for the first visible proof.
+
+Fixture A proves the contract can render a minimal word. Fixture B catches lazy assumptions about
+spaces, descenders, lowercase bounds, and digit advances.
+
+Nonclaims:
+
+- The milestone does not support arbitrary user strings.
+- The milestone does not support CSS text.
+- The milestone does not support browser/native text metric equivalence.
+- The milestone does not support full-image text pixel identity unless a later shared raster profile
+  proves it.
+- The milestone does not imply `shape.text` is production-ready in `geordi-ir/1`.
+
 ## Runtime Responsibilities
 
 A strict renderer consumes glyph ids, positions, line boxes, and glyph evidence. It does not perform:

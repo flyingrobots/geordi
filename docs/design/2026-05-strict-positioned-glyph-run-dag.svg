@@ -187,28 +187,28 @@
 <!-- S010 -->
 <g id="node13" class="node">
 <title>S010</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M445.01,-3320.5C445.01,-3320.5 308.99,-3320.5 308.99,-3320.5 302.99,-3320.5 296.99,-3314.5 296.99,-3308.5 296.99,-3308.5 296.99,-3296.5 296.99,-3296.5 296.99,-3290.5 302.99,-3284.5 308.99,-3284.5 308.99,-3284.5 445.01,-3284.5 445.01,-3284.5 451.01,-3284.5 457.01,-3290.5 457.01,-3296.5 457.01,-3296.5 457.01,-3308.5 457.01,-3308.5 457.01,-3314.5 451.01,-3320.5 445.01,-3320.5"/>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3304.25" font-family="Helvetica,sans-Serif" font-size="10.00">S010</text>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3293" font-family="Helvetica,sans-Serif" font-size="10.00">Initial fixture scope and nonclaims</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M445.01,-3320.5C445.01,-3320.5 308.99,-3320.5 308.99,-3320.5 302.99,-3320.5 296.99,-3314.5 296.99,-3308.5 296.99,-3308.5 296.99,-3296.5 296.99,-3296.5 296.99,-3290.5 302.99,-3284.5 308.99,-3284.5 308.99,-3284.5 445.01,-3284.5 445.01,-3284.5 451.01,-3284.5 457.01,-3290.5 457.01,-3296.5 457.01,-3296.5 457.01,-3308.5 457.01,-3308.5 457.01,-3314.5 451.01,-3320.5 445.01,-3320.5"/>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3304.25" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S010</text>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3293" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Initial fixture scope and nonclaims</text>
 </g>
 <!-- S009&#45;&gt;S010 -->
 <g id="edge9" class="edge">
 <title>S009&#45;&gt;S010</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3355.11C377,-3347.37 377,-3338.23 377,-3329.8"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3329.83 377,-3323.83 374.9,-3329.83 379.1,-3329.83"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3355.11C377,-3347.17 377,-3337.75 377,-3329.14"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3329.34 377,-3323.34 374.9,-3329.34 379.1,-3329.34"/>
 </g>
 <!-- S011 -->
 <g id="node14" class="node">
 <title>S011</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M424.76,-3248.5C424.76,-3248.5 329.24,-3248.5 329.24,-3248.5 323.24,-3248.5 317.24,-3242.5 317.24,-3236.5 317.24,-3236.5 317.24,-3224.5 317.24,-3224.5 317.24,-3218.5 323.24,-3212.5 329.24,-3212.5 329.24,-3212.5 424.76,-3212.5 424.76,-3212.5 430.76,-3212.5 436.76,-3218.5 436.76,-3224.5 436.76,-3224.5 436.76,-3236.5 436.76,-3236.5 436.76,-3242.5 430.76,-3248.5 424.76,-3248.5"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M424.76,-3248.5C424.76,-3248.5 329.24,-3248.5 329.24,-3248.5 323.24,-3248.5 317.24,-3242.5 317.24,-3236.5 317.24,-3236.5 317.24,-3224.5 317.24,-3224.5 317.24,-3218.5 323.24,-3212.5 329.24,-3212.5 329.24,-3212.5 424.76,-3212.5 424.76,-3212.5 430.76,-3212.5 436.76,-3218.5 436.76,-3224.5 436.76,-3224.5 436.76,-3236.5 436.76,-3236.5 436.76,-3242.5 430.76,-3248.5 424.76,-3248.5"/>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3232.25" font-family="Helvetica,sans-Serif" font-size="10.00">S011</text>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3221" font-family="Helvetica,sans-Serif" font-size="10.00">Slice DAG operating rule</text>
 </g>
 <!-- S010&#45;&gt;S011 -->
 <g id="edge10" class="edge">
 <title>S010&#45;&gt;S011</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3282.74C377,-3275.13 377,-3266.2 377,-3257.95"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3258.13 377,-3252.13 374.9,-3258.13 379.1,-3258.13"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3283.11C377,-3275.37 377,-3266.23 377,-3257.8"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3257.83 377,-3251.83 374.9,-3257.83 379.1,-3257.83"/>
 </g>
 <!-- S012 -->
 <g id="node15" class="node">

@@ -63,7 +63,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S010**.
+Current OPEN node: **S011**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -170,7 +170,7 @@ Current OPEN node: **S010**.
 
 ### S010: Initial fixture scope and nonclaims
 
-- [ ] **S010: Initial fixture scope and nonclaims** (OPEN)
+- [x] **S010: Initial fixture scope and nonclaims** (COMPLETE)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with initial fixture scope and nonclaims documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Initial fixture scope and nonclaims.
@@ -181,7 +181,7 @@ Current OPEN node: **S010**.
 
 ### S011: Slice DAG operating rule
 
-- [ ] **S011: Slice DAG operating rule** (BLOCKED)
+- [ ] **S011: Slice DAG operating rule** (OPEN)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with slice dag operating rule documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Slice DAG operating rule.
