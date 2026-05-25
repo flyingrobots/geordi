@@ -1,11 +1,17 @@
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   parseRenderFixtureAsciiPlyTriangleMesh,
+  parseRenderFixtureFontPackManifest,
   parseRenderFixtureMeshAssetManifest,
 } from './index.js';
 import {
+  assertRenderFixtureFontPackHashes,
   assertRenderFixtureSha256,
+  RenderFixtureFontPackAssetPathError,
+  RenderFixtureFontPackAssetReadError,
+  RenderFixtureFontPackHashMismatchError,
   RenderFixtureHashMismatchError,
   renderFixtureSha256FromBytes,
 } from './node.js';
@@ -39,6 +45,20 @@ function bunnyManifestSource(): string {
     ),
     'utf8',
   );
+}
+
+function fontPackManifestSource(): string {
+  return readFileSync(
+    new URL(
+      '../../../fixtures/render-everywhere/assets/fonts/font-pack.geordi.json',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
+function repositoryRoot(): string {
+  return fileURLToPath(new URL('../../..', import.meta.url));
 }
 
 describe('Node render fixture hash helpers', () => {
@@ -78,5 +98,77 @@ describe('Node render fixture hash helpers', () => {
         expect(index).toBeLessThan(mesh.vertices.length);
       }
     }
+  });
+
+  it('verifies font pack asset and license hashes from committed bytes', () => {
+    const manifest = parseRenderFixtureFontPackManifest(fontPackManifestSource());
+
+    expect(assertRenderFixtureFontPackHashes(manifest, repositoryRoot())).toEqual([
+      {
+        fontId: 'lato-regular',
+        kind: 'font',
+        path: 'fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf',
+        sha256: 'sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251',
+      },
+      {
+        fontId: 'lato-regular',
+        kind: 'license',
+        path: 'fixtures/render-everywhere/assets/fonts/lato/OFL.txt',
+        sha256: 'sha256:19e7e97ffc31e58fa0e54919b8189b2ddcc6fd75539f387e2822b107b6a51423',
+      },
+    ]);
+  });
+
+  it('throws a custom error when a font pack hash does not match', () => {
+    const manifest = parseRenderFixtureFontPackManifest(fontPackManifestSource());
+
+    expect(() =>
+      assertRenderFixtureFontPackHashes(
+        {
+          ...manifest,
+          fonts: [
+            {
+              ...manifest.fonts[0],
+              sha256: 'sha256:0000000000000000000000000000000000000000000000000000000000000000',
+            },
+          ],
+        },
+        repositoryRoot(),
+      ),
+    ).toThrow(RenderFixtureFontPackHashMismatchError);
+  });
+
+  it('throws custom errors for unreadable or escaped font pack asset paths', () => {
+    const manifest = parseRenderFixtureFontPackManifest(fontPackManifestSource());
+
+    expect(() =>
+      assertRenderFixtureFontPackHashes(
+        {
+          ...manifest,
+          fonts: [
+            {
+              ...manifest.fonts[0],
+              path: '../Lato-Regular.ttf',
+            },
+          ],
+        },
+        repositoryRoot(),
+      ),
+    ).toThrow(RenderFixtureFontPackAssetPathError);
+
+    expect(() =>
+      assertRenderFixtureFontPackHashes(
+        {
+          ...manifest,
+          fonts: [
+            {
+              ...manifest.fonts[0],
+              path: 'fixtures/render-everywhere/assets/fonts/lato/missing.ttf',
+            },
+          ],
+        },
+        repositoryRoot(),
+      ),
+    ).toThrow(RenderFixtureFontPackAssetReadError);
   });
 });

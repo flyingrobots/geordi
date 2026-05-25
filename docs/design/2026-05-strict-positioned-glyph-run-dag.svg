@@ -408,15 +408,15 @@
 <!-- S026 -->
 <g id="node29" class="node">
 <title>S026</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M159.88,-2279C159.88,-2279 50.12,-2279 50.12,-2279 44.12,-2279 38.11,-2273 38.11,-2267 38.11,-2267 38.11,-2255 38.11,-2255 38.11,-2249 44.11,-2243 50.11,-2243 50.11,-2243 159.88,-2243 159.88,-2243 165.88,-2243 171.88,-2249 171.88,-2255 171.88,-2255 171.88,-2267 171.88,-2267 171.88,-2273 165.88,-2279 159.88,-2279"/>
-<text xml:space="preserve" text-anchor="middle" x="105" y="-2262.75" font-family="Helvetica,sans-Serif" font-size="10.00">S026</text>
-<text xml:space="preserve" text-anchor="middle" x="105" y="-2251.5" font-family="Helvetica,sans-Serif" font-size="10.00">TypeScript font hash verifier</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M159.88,-2279C159.88,-2279 50.12,-2279 50.12,-2279 44.12,-2279 38.11,-2273 38.11,-2267 38.11,-2267 38.11,-2255 38.11,-2255 38.11,-2249 44.11,-2243 50.11,-2243 50.11,-2243 159.88,-2243 159.88,-2243 165.88,-2243 171.88,-2249 171.88,-2255 171.88,-2255 171.88,-2267 171.88,-2267 171.88,-2273 165.88,-2279 159.88,-2279"/>
+<text xml:space="preserve" text-anchor="middle" x="105" y="-2262.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S026</text>
+<text xml:space="preserve" text-anchor="middle" x="105" y="-2251.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">TypeScript font hash verifier</text>
 </g>
 <!-- S024&#45;&gt;S026 -->
 <g id="edge25" class="edge">
 <title>S024&#45;&gt;S026</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M101.31,-2313.61C101.87,-2305.87 102.52,-2296.73 103.12,-2288.3"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="105.22,-2288.46 103.55,-2282.32 101.03,-2288.16 105.22,-2288.46"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M101.31,-2313.61C101.88,-2305.67 102.55,-2296.25 103.17,-2287.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="105.25,-2287.97 103.58,-2281.84 101.06,-2287.67 105.25,-2287.97"/>
 </g>
 <!-- S027 -->
 <g id="node30" class="node">
@@ -441,8 +441,8 @@
 <!-- S026&#45;&gt;S028 -->
 <g id="edge27" class="edge">
 <title>S026&#45;&gt;S028</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M142.89,-2241.06C160.63,-2232.19 181.88,-2221.56 200.4,-2212.3"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="201.03,-2214.33 205.46,-2209.77 199.15,-2210.58 201.03,-2214.33"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M141.78,-2241.61C159.82,-2232.59 181.69,-2221.65 200.65,-2212.18"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="201.44,-2214.13 205.86,-2209.57 199.56,-2210.37 201.44,-2214.13"/>
 </g>
 <!-- S027&#45;&gt;S028 -->
 <g id="edge28" class="edge">
