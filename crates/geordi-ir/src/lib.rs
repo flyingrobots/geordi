@@ -1793,8 +1793,9 @@ mod tests {
         GEORDI_TEXT_FEATURE_POSITIONED_GLYPH_RUNS, GeordiFontPackHashArtifactKind,
         GeordiFontPackHashError, GeordiFontPackLoadError, GeordiFontPackParseError,
         GeordiIrLoadError, GeordiIrParseError, GeordiIrValidationError,
-        GeordiStrictTextFixtureParseError, GeordiStrictTextFixtureValidationError,
-        geordi_sha256_from_bytes, load_geordi_font_pack_manifest, load_geordi_ir,
+        GeordiStrictTextFixtureLoadError, GeordiStrictTextFixtureParseError,
+        GeordiStrictTextFixtureValidationError, geordi_sha256_from_bytes,
+        load_geordi_font_pack_manifest, load_geordi_ir, load_geordi_strict_text_fixture_manifest,
         parse_geordi_font_pack_manifest, parse_geordi_ir,
         parse_geordi_strict_text_fixture_manifest, validate_geordi_font_pack_hashes,
         validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
@@ -1813,6 +1814,7 @@ mod tests {
         Load(GeordiIrLoadError),
         Parse(GeordiIrParseError),
         ExpectedFailure,
+        StrictTextLoad(GeordiStrictTextFixtureLoadError),
         StrictTextParse(GeordiStrictTextFixtureParseError),
         StrictTextValidation(GeordiStrictTextFixtureValidationError),
         Validation(GeordiIrValidationError),
@@ -1834,6 +1836,7 @@ mod tests {
                 Self::Load(source) => Some(source),
                 Self::Parse(source) => Some(source),
                 Self::ExpectedFailure => None,
+                Self::StrictTextLoad(source) => Some(source),
                 Self::StrictTextParse(source) => Some(source),
                 Self::StrictTextValidation(source) => Some(source),
                 Self::Validation(source) => Some(source),
@@ -1874,6 +1877,12 @@ mod tests {
     impl From<GeordiFontPackParseError> for GeordiIrTestError {
         fn from(error: GeordiFontPackParseError) -> Self {
             Self::FontPackParse(error)
+        }
+    }
+
+    impl From<GeordiStrictTextFixtureLoadError> for GeordiIrTestError {
+        fn from(error: GeordiStrictTextFixtureLoadError) -> Self {
+            Self::StrictTextLoad(error)
         }
     }
 
@@ -2218,16 +2227,60 @@ mod tests {
     }
 
     #[test]
+    fn loads_canonical_strict_text_fixture_a() -> Result<(), GeordiIrTestError> {
+        let manifest = load_geordi_strict_text_fixture_manifest(fixture_path(
+            "strict-text/geordi.strict-text.geordi.json",
+        ))?;
+        let font_pack =
+            load_geordi_font_pack_manifest(fixture_path("assets/fonts/font-pack.geordi.json"))?;
+
+        validate_geordi_strict_text_fixture_manifest(&manifest)?;
+        validate_geordi_strict_text_font_references(&manifest, &font_pack)?;
+
+        assert_eq!(manifest.id, "render-everywhere:strict-text:geordi");
+        assert_eq!(manifest.semantic_text.source, "GEORDI");
+        assert_eq!(manifest.line_boxes.len(), 1);
+        assert_eq!(manifest.line_boxes[0].baseline_y, 3072);
+        assert_eq!(manifest.line_boxes[0].height, 4096);
+        assert_eq!(manifest.line_boxes[0].width, 12288);
+        assert_eq!(manifest.glyph_runs.len(), 1);
+        assert_eq!(
+            manifest.glyph_runs[0]
+                .glyphs
+                .iter()
+                .map(|glyph| glyph.glyph_id)
+                .collect::<Vec<_>>(),
+            vec![14, 11, 27, 33, 9, 17]
+        );
+        assert_eq!(
+            manifest.glyph_runs[0]
+                .glyphs
+                .iter()
+                .map(|glyph| glyph.x)
+                .collect::<Vec<_>>(),
+            vec![0, 2244, 3970, 6429, 8354, 10690]
+        );
+        assert_eq!(
+            manifest.glyph_runs[0]
+                .glyphs
+                .iter()
+                .map(|glyph| glyph.advance)
+                .collect::<Vec<_>>(),
+            vec![2244, 1726, 2459, 1925, 2336, 860]
+        );
+        Ok(())
+    }
+
+    #[test]
     fn rejects_unresolved_strict_text_font_references() -> Result<(), GeordiIrTestError> {
         let mut manifest = parse_geordi_strict_text_fixture_manifest(strict_text_fixture_source())?;
         let font_pack =
             load_geordi_font_pack_manifest(fixture_path("assets/fonts/font-pack.geordi.json"))?;
         manifest.glyph_runs[0].font_id = "missing-font".to_owned();
 
-        let paths =
-            strict_text_validation_paths(validate_geordi_strict_text_font_references(
-                &manifest, &font_pack,
-            ));
+        let paths = strict_text_validation_paths(validate_geordi_strict_text_font_references(
+            &manifest, &font_pack,
+        ));
 
         assert_paths_include(&paths, "$.glyphRuns[0].fontId");
         Ok(())

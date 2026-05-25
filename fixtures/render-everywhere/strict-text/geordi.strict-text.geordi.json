@@ -1,0 +1,84 @@
+{
+  "features": [
+    "text.positionedGlyphRuns",
+    "text.fontPack",
+    "text.lineBoxes"
+  ],
+  "fixtureVersion": "geordi-strict-text-fixture/1",
+  "fontPackPath": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json",
+  "glyphRuns": [
+    {
+      "fontId": "lato-regular",
+      "glyphs": [
+        {
+          "advance": 2244,
+          "glyphId": 14,
+          "x": 0,
+          "xOffset": 0,
+          "y": 3072,
+          "yOffset": 0
+        },
+        {
+          "advance": 1726,
+          "glyphId": 11,
+          "x": 2244,
+          "xOffset": 0,
+          "y": 3072,
+          "yOffset": 0
+        },
+        {
+          "advance": 2459,
+          "glyphId": 27,
+          "x": 3970,
+          "xOffset": 0,
+          "y": 3072,
+          "yOffset": 0
+        },
+        {
+          "advance": 1925,
+          "glyphId": 33,
+          "x": 6429,
+          "xOffset": 0,
+          "y": 3072,
+          "yOffset": 0
+        },
+        {
+          "advance": 2336,
+          "glyphId": 9,
+          "x": 8354,
+          "xOffset": 0,
+          "y": 3072,
+          "yOffset": 0
+        },
+        {
+          "advance": 860,
+          "glyphId": 17,
+          "x": 10690,
+          "xOffset": 0,
+          "y": 3072,
+          "yOffset": 0
+        }
+      ],
+      "id": "run-0",
+      "lineBoxId": "line-0"
+    }
+  ],
+  "id": "render-everywhere:strict-text:geordi",
+  "lineBoxes": [
+    {
+      "baselineY": 3072,
+      "height": 4096,
+      "id": "line-0",
+      "width": 12288,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "positionEncoding": "geordi-fixed-26.6/1",
+  "semanticText": {
+    "affectsPixels": false,
+    "language": "en",
+    "source": "GEORDI"
+  },
+  "textProfile": "geordi-strict-positioned-glyph-run/1"
+}

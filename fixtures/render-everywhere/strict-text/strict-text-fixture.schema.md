@@ -9,7 +9,7 @@ The strict text fixture is the first renderable text artifact shape. It stays ou
 until browser and native runtimes prove the contract. The fixture references a font pack and carries
 pre-positioned glyph runs plus explicit line boxes.
 
-Canonical fixture shape:
+Fixture shape excerpt:
 
 ~~~json
 {
@@ -79,6 +79,8 @@ Field laws:
   `-9007199254740991` through `9007199254740991`.
 - `advance`, `lineBoxes[].width`, and `lineBoxes[].height` must be non-negative and no greater
   than `9007199254740991`.
+- Derived line-box right and bottom edges must remain safe fixed-point integers.
+- `lineBoxes[].baselineY` must be inside the line box's vertical bounds, inclusive.
 - Renderers must not infer kerning, ligatures, fallback, line metrics, wrapping, or shaping from the
   host platform.
 
@@ -93,6 +95,7 @@ Known failures for later slices:
 - non-integer fixed-point coordinate;
 - negative advance;
 - negative line-box width or height;
+- line-box baseline outside vertical bounds;
 - unresolved `fontId`;
 - unresolved `lineBoxId`;
 - duplicate run id or line-box id.

@@ -332,6 +332,16 @@ function fontPackManifestSource(): string {
   );
 }
 
+function strictTextFixtureASource(): string {
+  return readFileSync(
+    new URL(
+      '../../../fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
 function fontPackFailureManifestSource(name: string): string {
   return readFileSync(
     new URL(
@@ -846,6 +856,37 @@ describe('render fixture strict text fixture manifest validation', () => {
       issues: [],
     });
     expect(assertRenderFixtureStrictTextFontReferences(input)).toBe(input);
+  });
+
+  it('loads canonical strict text fixture A', () => {
+    const manifest = parseRenderFixtureStrictTextFixtureManifest(strictTextFixtureASource());
+    const fontPack = parseRenderFixtureFontPackManifest(fontPackManifestSource());
+
+    expect(manifest.id).toBe('render-everywhere:strict-text:geordi');
+    expect(manifest.semanticText.source).toBe('GEORDI');
+    expect(manifest.lineBoxes).toEqual([
+      {
+        baselineY: 3072,
+        height: 4096,
+        id: 'line-0',
+        width: 12288,
+        x: 0,
+        y: 0,
+      },
+    ]);
+    expect(manifest.glyphRuns[0]?.glyphs.map((glyph) => glyph.glyphId)).toEqual([
+      14, 11, 27, 33, 9, 17,
+    ]);
+    expect(manifest.glyphRuns[0]?.glyphs.map((glyph) => glyph.x)).toEqual([
+      0, 2244, 3970, 6429, 8354, 10690,
+    ]);
+    expect(manifest.glyphRuns[0]?.glyphs.map((glyph) => glyph.advance)).toEqual([
+      2244, 1726, 2459, 1925, 2336, 860,
+    ]);
+    expect(validateRenderFixtureStrictTextFontReferences({ fontPack, manifest })).toEqual({
+      ok: true,
+      issues: [],
+    });
   });
 
   it('rejects unresolved strict text font references', () => {
