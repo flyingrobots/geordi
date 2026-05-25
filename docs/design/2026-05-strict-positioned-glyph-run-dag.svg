@@ -109,28 +109,28 @@
 <!-- S004 -->
 <g id="node7" class="node">
 <title>S004</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M465.63,-3752.5C465.63,-3752.5 288.37,-3752.5 288.37,-3752.5 282.37,-3752.5 276.37,-3746.5 276.37,-3740.5 276.37,-3740.5 276.37,-3728.5 276.37,-3728.5 276.37,-3722.5 282.37,-3716.5 288.37,-3716.5 288.37,-3716.5 465.63,-3716.5 465.63,-3716.5 471.63,-3716.5 477.63,-3722.5 477.63,-3728.5 477.63,-3728.5 477.63,-3740.5 477.63,-3740.5 477.63,-3746.5 471.63,-3752.5 465.63,-3752.5"/>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3736.25" font-family="Helvetica,sans-Serif" font-size="10.00">S004</text>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3725" font-family="Helvetica,sans-Serif" font-size="10.00">Unsupported raw/platform text rejection law</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M465.63,-3752.5C465.63,-3752.5 288.37,-3752.5 288.37,-3752.5 282.37,-3752.5 276.37,-3746.5 276.37,-3740.5 276.37,-3740.5 276.37,-3728.5 276.37,-3728.5 276.37,-3722.5 282.37,-3716.5 288.37,-3716.5 288.37,-3716.5 465.63,-3716.5 465.63,-3716.5 471.63,-3716.5 477.63,-3722.5 477.63,-3728.5 477.63,-3728.5 477.63,-3740.5 477.63,-3740.5 477.63,-3746.5 471.63,-3752.5 465.63,-3752.5"/>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3736.25" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S004</text>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3725" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Unsupported raw/platform text rejection law</text>
 </g>
 <!-- S003&#45;&gt;S004 -->
 <g id="edge3" class="edge">
 <title>S003&#45;&gt;S004</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3787.11C377,-3779.37 377,-3770.23 377,-3761.8"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3761.83 377,-3755.83 374.9,-3761.83 379.1,-3761.83"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3787.11C377,-3779.17 377,-3769.75 377,-3761.14"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3761.34 377,-3755.34 374.9,-3761.34 379.1,-3761.34"/>
 </g>
 <!-- S005 -->
 <g id="node8" class="node">
 <title>S005</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M431.51,-3680.5C431.51,-3680.5 322.49,-3680.5 322.49,-3680.5 316.49,-3680.5 310.49,-3674.5 310.49,-3668.5 310.49,-3668.5 310.49,-3656.5 310.49,-3656.5 310.49,-3650.5 316.49,-3644.5 322.49,-3644.5 322.49,-3644.5 431.51,-3644.5 431.51,-3644.5 437.51,-3644.5 443.51,-3650.5 443.51,-3656.5 443.51,-3656.5 443.51,-3668.5 443.51,-3668.5 443.51,-3674.5 437.51,-3680.5 431.51,-3680.5"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M431.51,-3680.5C431.51,-3680.5 322.49,-3680.5 322.49,-3680.5 316.49,-3680.5 310.49,-3674.5 310.49,-3668.5 310.49,-3668.5 310.49,-3656.5 310.49,-3656.5 310.49,-3650.5 316.49,-3644.5 322.49,-3644.5 322.49,-3644.5 431.51,-3644.5 431.51,-3644.5 437.51,-3644.5 443.51,-3650.5 443.51,-3656.5 443.51,-3656.5 443.51,-3668.5 443.51,-3668.5 443.51,-3674.5 437.51,-3680.5 431.51,-3680.5"/>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3664.25" font-family="Helvetica,sans-Serif" font-size="10.00">S005</text>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3653" font-family="Helvetica,sans-Serif" font-size="10.00">Font&#45;local glyph identity law</text>
 </g>
 <!-- S004&#45;&gt;S005 -->
 <g id="edge4" class="edge">
 <title>S004&#45;&gt;S005</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3714.74C377,-3707.13 377,-3698.2 377,-3689.95"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3690.13 377,-3684.13 374.9,-3690.13 379.1,-3690.13"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3715.11C377,-3707.37 377,-3698.23 377,-3689.8"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3689.83 377,-3683.83 374.9,-3689.83 379.1,-3689.83"/>
 </g>
 <!-- S006 -->
 <g id="node9" class="node">

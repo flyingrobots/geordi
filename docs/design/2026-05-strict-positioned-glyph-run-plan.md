@@ -137,6 +137,36 @@ This law keeps future dynamic text possible without making runtime text APIs par
 renderer contract. A host can accept user input, run text preparation, and emit a new deterministic
 artifact. The renderer still consumes only the prepared artifact.
 
+## Unsupported Raw And Platform Text Rejection Law
+
+Strict text failures are capability failures, not rendering warnings. A runtime that receives any
+unsupported text requirement must fail before drawing.
+
+Rejected requirements for the first strict profile:
+
+| Rejected requirement | Reason |
+| --- | --- |
+| `text.raw-runtime-shaping` | Runtime shaping makes glyph identity and positions runtime-dependent. |
+| `text.platform-font-metrics` | Host metrics differ across browsers, OSes, and font stacks. |
+| `text.host-font-fallback` | Host fallback silently changes font bytes and glyph ids. |
+| `text.dynamic-user-text` | Dynamic strings require a new prepared artifact. |
+| `text.css-line-breaking` | CSS line breaking is outside the first profile. |
+| `text.runtime-kerning` | Kerning must already be reflected in positioned glyph data. |
+| `text.runtime-ligatures` | Ligature substitution must already be reflected in glyph ids. |
+| `text.runtime-glyph-substitution` | Substitution is shaping and is not a renderer responsibility. |
+
+Failure behavior:
+
+- The runtime validates `features` and `textProfile` before loading font or glyph evidence.
+- The failure names the unsupported requirement.
+- The failure uses a custom error type in implementation slices.
+- The runtime must not partially render supported nodes from a strict text fixture after rejecting
+  a required text feature.
+- Best-effort fallbacks may exist only behind a separately named noncompliant demo profile.
+
+The known-failure fixture family should include one fixture per rejected requirement so future
+contributors cannot accidentally make platform text look compliant.
+
 ## End-To-End Pipeline
 
 ~~~mermaid
