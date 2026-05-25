@@ -63,7 +63,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S003**.
+Current OPEN node: **S004**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -93,7 +93,7 @@ Current OPEN node: **S003**.
 
 ### S003: Source text versus render evidence law
 
-- [ ] **S003: Source text versus render evidence law** (OPEN)
+- [x] **S003: Source text versus render evidence law** (COMPLETE)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with source text versus render evidence law documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Source text versus render evidence law.
@@ -104,7 +104,7 @@ Current OPEN node: **S003**.
 
 ### S004: Unsupported raw/platform text rejection law
 
-- [ ] **S004: Unsupported raw/platform text rejection law** (BLOCKED)
+- [ ] **S004: Unsupported raw/platform text rejection law** (OPEN)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with unsupported raw/platform text rejection law documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Unsupported raw/platform text rejection law.

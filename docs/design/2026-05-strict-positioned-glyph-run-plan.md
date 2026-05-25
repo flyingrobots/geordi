@@ -93,6 +93,50 @@ Initial rejected feature vocabulary:
 | `text.runtime-kerning` | Kerning must already be reflected in positions. |
 | `text.runtime-ligatures` | Ligatures must already be reflected as glyph ids. |
 
+## Source Text Versus Render Evidence Law
+
+Strict text separates authoring intention from rendering evidence.
+
+Source text is allowed in strict fixtures only as non-rendering metadata:
+
+~~~json
+{
+  "semanticText": {
+    "language": "en",
+    "source": "GEORDI",
+    "purpose": "debug-accessibility-only",
+    "affectsPixels": false
+  }
+}
+~~~
+
+Rules:
+
+- `semanticText.affectsPixels` must be `false` in strict fixtures.
+- `semanticText.source` may support debugging, review, accessibility experiments, search indexing,
+  or source maps.
+- `semanticText.source` must not be read by renderers while producing pixels.
+- If `semanticText.source` disagrees with glyph evidence, the renderer still follows glyph evidence.
+- Tools may report the disagreement as a diagnostic, but the strict rendering path is unchanged.
+- If a fixture needs source strings to determine glyphs at runtime, it is not a strict positioned
+  glyph-run fixture.
+
+The renderer consumes:
+
+~~~text
+font pack + positioned glyph runs + line boxes + glyph evidence pack
+~~~
+
+The renderer ignores for pixel purposes:
+
+~~~text
+source strings + logical font names + authoring aliases + accessibility descriptions
+~~~
+
+This law keeps future dynamic text possible without making runtime text APIs part of the strict
+renderer contract. A host can accept user input, run text preparation, and emit a new deterministic
+artifact. The renderer still consumes only the prepared artifact.
+
 ## End-To-End Pipeline
 
 ~~~mermaid
