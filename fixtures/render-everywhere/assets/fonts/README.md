@@ -28,5 +28,12 @@ Rules:
 - Derived subsets, glyph outlines, atlases, or SDF assets belong in later glyph evidence packs, not
   as silent mutations of the vendored source font.
 
-The first planned asset is Lato Regular from `google/fonts/ofl/lato`, pending the S018 selection
-record and the S020/S021 byte/hash commits.
+The first landed asset is Lato Regular from `google/fonts/ofl/lato`. Its selection record,
+vendored font bytes, vendored OFL text, and hash manifest are committed at:
+
+~~~text
+fixtures/render-everywhere/assets/fonts/lato/SELECTION.md
+fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf
+fixtures/render-everywhere/assets/fonts/lato/OFL.txt
+fixtures/render-everywhere/assets/fonts/font-pack.geordi.json
+~~~
