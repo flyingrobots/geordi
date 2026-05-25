@@ -81,7 +81,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S028**.
+Current OPEN node: **S029**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -386,7 +386,7 @@ Current OPEN node: **S028**.
 
 ### S028: Font failure fixtures
 
-- [ ] **S028: Font failure fixtures** (OPEN)
+- [x] **S028: Font failure fixtures** (COMPLETE)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with font failure fixtures documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Font failure fixtures.
@@ -397,7 +397,7 @@ Current OPEN node: **S028**.
 
 ### S029: Font asset docs and receipts
 
-- [ ] **S029: Font asset docs and receipts** (BLOCKED)
+- [ ] **S029: Font asset docs and receipts** (OPEN)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with font asset docs and receipts documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Font asset docs and receipts.

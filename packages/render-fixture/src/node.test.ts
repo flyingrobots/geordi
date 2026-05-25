@@ -57,6 +57,16 @@ function fontPackManifestSource(): string {
   );
 }
 
+function fontPackFailureManifestSource(name: string): string {
+  return readFileSync(
+    new URL(
+      `../../../fixtures/render-everywhere/assets/fonts/failures/${name}.font-pack.geordi.json`,
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
 function repositoryRoot(): string {
   return fileURLToPath(new URL('../../..', import.meta.url));
 }
@@ -136,6 +146,16 @@ describe('Node render fixture hash helpers', () => {
         repositoryRoot(),
       ),
     ).toThrow(RenderFixtureFontPackHashMismatchError);
+  });
+
+  it('keeps the committed bad font hash failure fixture rejected', () => {
+    const manifest = parseRenderFixtureFontPackManifest(
+      fontPackFailureManifestSource('bad-hash'),
+    );
+
+    expect(() => assertRenderFixtureFontPackHashes(manifest, repositoryRoot())).toThrow(
+      RenderFixtureFontPackHashMismatchError,
+    );
   });
 
   it('throws custom errors for unreadable or escaped font pack asset paths', () => {

@@ -1055,6 +1055,23 @@ mod tests {
     }
 
     #[test]
+    fn rejects_committed_bad_font_hash_failure_fixture() -> Result<(), GeordiIrTestError> {
+        let manifest = load_geordi_font_pack_manifest(fixture_path(
+            "assets/fonts/failures/bad-hash.font-pack.geordi.json",
+        ))?;
+
+        let error = font_pack_hash_error(validate_geordi_font_pack_hashes(
+            &manifest,
+            repository_root(),
+        ))?;
+
+        assert_eq!(error.font_id(), "lato-regular");
+        assert_eq!(error.kind(), GeordiFontPackHashArtifactKind::Font);
+
+        Ok(())
+    }
+
+    #[test]
     fn parses_font_pack_manifest_without_json_values() -> Result<(), GeordiIrTestError> {
         let source = r#"{
           "fontPackVersion": "geordi-font-pack/1",

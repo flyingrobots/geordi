@@ -270,6 +270,16 @@ function fontPackManifestSource(): string {
   );
 }
 
+function fontPackFailureManifestSource(name: string): string {
+  return readFileSync(
+    new URL(
+      `../../../fixtures/render-everywhere/assets/fonts/failures/${name}.font-pack.geordi.json`,
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
 function bunnyPlySource(): string {
   return readFileSync(
     new URL(
@@ -726,6 +736,18 @@ describe('render fixture font pack manifest validation', () => {
           { space: 2 },
         ),
       ),
+    ).toThrow(RenderFixtureInvalidFontPackManifestError);
+  });
+
+  it('keeps committed structural failure fixtures rejected', () => {
+    expect(() =>
+      parseRenderFixtureFontPackManifest(fontPackFailureManifestSource('absolute-path')),
+    ).toThrow(RenderFixtureInvalidFontPackManifestError);
+    expect(() =>
+      parseRenderFixtureFontPackManifest(fontPackFailureManifestSource('duplicate-id')),
+    ).toThrow(RenderFixtureInvalidFontPackManifestError);
+    expect(() =>
+      parseRenderFixtureFontPackManifest(fontPackFailureManifestSource('unsupported-format')),
     ).toThrow(RenderFixtureInvalidFontPackManifestError);
   });
 });

@@ -1,0 +1,33 @@
+{
+  "fontPackVersion": "geordi-font-pack/1",
+  "fonts": [
+    {
+      "faceIndex": 0,
+      "familyName": "Lato",
+      "format": "ttf",
+      "id": "lato-regular",
+      "license": {
+        "name": "SIL Open Font License 1.1",
+        "path": "/fixtures/render-everywhere/assets/fonts/lato/OFL.txt",
+        "redistributionAllowed": true,
+        "reservedFontNames": [
+          "Lato"
+        ],
+        "sha256": "sha256:19e7e97ffc31e58fa0e54919b8189b2ddcc6fd75539f387e2822b107b6a51423"
+      },
+      "path": "/fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf",
+      "sha256": "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251",
+      "source": {
+        "commit": "c5b52261e8fde2d3b2592fa9d26ac525939c5e4c",
+        "fontSha256": "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251",
+        "licenseNormalization": "trim-trailing-ascii-whitespace/1",
+        "licensePath": "ofl/lato/OFL.txt",
+        "licenseSha256": "sha256:74ba064d03f1f1c4a952da936c3eb71866c34404916734de3cae73b34357e59e",
+        "path": "ofl/lato/Lato-Regular.ttf",
+        "repository": "https://github.com/google/fonts"
+      },
+      "styleName": "Regular",
+      "weight": 400
+    }
+  ]
+}
