@@ -60,8 +60,8 @@ digraph StrictPositionedGlyphRunPlan {
     S034 [label="S034\nTypeScript glyph-run parser", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S035 [label="S035\nRust glyph-run parser", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S036 [label="S036\nGlyph id validation", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S037 [label="S037\nGlyph position validation", color="#16a34a", penwidth=4];
-    S038 [label="S038\nAdvance and offset validation", color="#dc2626", penwidth=4];
+    S037 [label="S037\nGlyph position validation", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S038 [label="S038\nAdvance and offset validation", color="#16a34a", penwidth=4];
     S039 [label="S039\nFont reference resolution validation", color="#dc2626", penwidth=4];
     S040 [label="S040\nLine box validation", color="#dc2626", penwidth=4];
     S041 [label="S041\nCanonical strict text fixture A", color="#dc2626", penwidth=4];

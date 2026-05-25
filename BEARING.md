@@ -100,7 +100,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S037**.
+Current OPEN node: **S038**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -504,7 +504,7 @@ Current OPEN node: **S037**.
 
 ### S037: Glyph position validation
 
-- [ ] **S037: Glyph position validation** (OPEN)
+- [x] **S037: Glyph position validation** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with glyph position validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Glyph position validation.
@@ -515,7 +515,7 @@ Current OPEN node: **S037**.
 
 ### S038: Advance and offset validation
 
-- [ ] **S038: Advance and offset validation** (BLOCKED)
+- [ ] **S038: Advance and offset validation** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with advance and offset validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Advance and offset validation.
