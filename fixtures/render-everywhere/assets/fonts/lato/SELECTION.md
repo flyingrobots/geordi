@@ -32,5 +32,9 @@ bytes are exact upstream bytes; the license text is whitespace-normalized for re
 | `Lato-Regular.ttf` | TrueType font data, 656568 bytes |
 | `OFL.txt` | ASCII license text, 4406 bytes |
 
-The final `sha256:<hex>` identity is intentionally deferred to S021, after S020 lands the actual
-bytes.
+S021 records the final manifest identity:
+
+| Manifest field | Value |
+| --- | --- |
+| Font hash | `sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251` |
+| License hash | `sha256:19e7e97ffc31e58fa0e54919b8189b2ddcc6fd75539f387e2822b107b6a51423` |

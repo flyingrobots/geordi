@@ -12,6 +12,7 @@ Canonical manifest shape:
 
 ~~~json
 {
+  "fontPackVersion": "geordi-font-pack/1",
   "fonts": [
     {
       "faceIndex": 0,
@@ -22,7 +23,8 @@ Canonical manifest shape:
         "name": "SIL Open Font License 1.1",
         "path": "fixtures/render-everywhere/assets/fonts/lato/OFL.txt",
         "redistributionAllowed": true,
-        "reservedFontNames": ["Lato"]
+        "reservedFontNames": ["Lato"],
+        "sha256": "sha256:<64 lowercase hex chars>"
       },
       "path": "fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf",
       "sha256": "sha256:<64 lowercase hex chars>",
@@ -34,8 +36,7 @@ Canonical manifest shape:
       "styleName": "Regular",
       "weight": 400
     }
-  ],
-  "fontPackVersion": "geordi-font-pack/1"
+  ]
 }
 ~~~
 
@@ -50,6 +51,7 @@ Validation rules:
   `fixtures/render-everywhere/assets/fonts/`.
 - Absolute paths, `..`, empty path segments, and URL paths are invalid.
 - `sha256` must use the exact `sha256:<64 lowercase hex chars>` form.
+- `license.sha256` must hash the vendored license text that ships beside the font bytes.
 - `faceIndex` must be a non-negative integer and is `0` for single-face static TTF files.
 - `weight`, when present, must be an integer in the OpenType CSS-compatible range `1..1000`.
 - `license.redistributionAllowed` must be `true`; otherwise the font cannot be used in a vendored

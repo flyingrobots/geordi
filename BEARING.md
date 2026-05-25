@@ -81,7 +81,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S021**.
+Current OPEN node: **S022**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -309,7 +309,7 @@ Current OPEN node: **S021**.
 
 ### S021: Font hash manifest record
 
-- [ ] **S021: Font hash manifest record** (OPEN)
+- [x] **S021: Font hash manifest record** (COMPLETE)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with font hash manifest record documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Font hash manifest record.
@@ -320,7 +320,7 @@ Current OPEN node: **S021**.
 
 ### S022: TypeScript font manifest type
 
-- [ ] **S022: TypeScript font manifest type** (BLOCKED)
+- [ ] **S022: TypeScript font manifest type** (OPEN)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with typescript font manifest type documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: TypeScript font manifest type.

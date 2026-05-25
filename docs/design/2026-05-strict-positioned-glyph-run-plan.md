@@ -938,7 +938,8 @@ Schema commitments:
 - First milestone format support is static `ttf` only.
 - Paths are repository-relative POSIX paths under `fixtures/render-everywhere/assets/fonts/`.
 - Hashes use `sha256:<64 lowercase hex chars>`.
-- License data is explicit and includes `redistributionAllowed` plus reserved font names.
+- License data is explicit and includes `redistributionAllowed`, reserved font names, and a license
+  text hash.
 - No timestamp, local machine path, host font lookup, or environment-derived value is allowed.
 
 This is still schema design, not parser implementation. TypeScript and Rust boundary types/parsers
@@ -962,6 +963,28 @@ Verification recorded during landing:
 
 The S020 commit intentionally does not introduce the final font manifest. S021 records the hash
 manifest after the bytes are present in the repository.
+
+## Font Hash Manifest Record
+
+S021 records the concrete `geordi-font-pack/1` manifest at:
+
+~~~text
+fixtures/render-everywhere/assets/fonts/font-pack.geordi.json
+~~~
+
+The first manifest binds logical font id `lato-regular` to:
+
+| Field | Value |
+| --- | --- |
+| Font file | `fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf` |
+| Font hash | `sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251` |
+| License file | `fixtures/render-everywhere/assets/fonts/lato/OFL.txt` |
+| License hash | `sha256:19e7e97ffc31e58fa0e54919b8189b2ddcc6fd75539f387e2822b107b6a51423` |
+| Source repository | `https://github.com/google/fonts` |
+| Source path | `ofl/lato/Lato-Regular.ttf` |
+
+This manifest is data only. Parser, hash-verifier, and failure-fixture implementation starts in the
+later TypeScript/Rust font-manifest slices.
 
 ## Active DAG
 
