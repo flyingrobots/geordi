@@ -369,15 +369,15 @@
 <!-- S023 -->
 <g id="node26" class="node">
 <title>S023</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M296.13,-2423C296.13,-2423 205.87,-2423 205.87,-2423 199.87,-2423 193.87,-2417 193.87,-2411 193.87,-2411 193.87,-2399 193.87,-2399 193.87,-2393 199.87,-2387 205.87,-2387 205.87,-2387 296.13,-2387 296.13,-2387 302.13,-2387 308.13,-2393 308.13,-2399 308.13,-2399 308.13,-2411 308.13,-2411 308.13,-2417 302.13,-2423 296.13,-2423"/>
-<text xml:space="preserve" text-anchor="middle" x="251" y="-2406.75" font-family="Helvetica,sans-Serif" font-size="10.00">S023</text>
-<text xml:space="preserve" text-anchor="middle" x="251" y="-2395.5" font-family="Helvetica,sans-Serif" font-size="10.00">Rust font manifest type</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M296.13,-2423C296.13,-2423 205.87,-2423 205.87,-2423 199.87,-2423 193.87,-2417 193.87,-2411 193.87,-2411 193.87,-2399 193.87,-2399 193.87,-2393 199.87,-2387 205.87,-2387 205.87,-2387 296.13,-2387 296.13,-2387 302.13,-2387 308.13,-2393 308.13,-2399 308.13,-2399 308.13,-2411 308.13,-2411 308.13,-2417 302.13,-2423 296.13,-2423"/>
+<text xml:space="preserve" text-anchor="middle" x="251" y="-2406.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S023</text>
+<text xml:space="preserve" text-anchor="middle" x="251" y="-2395.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Rust font manifest type</text>
 </g>
 <!-- S021&#45;&gt;S023 -->
 <g id="edge22" class="edge">
 <title>S021&#45;&gt;S023</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M244.78,-2470.39C245.85,-2459.29 247.23,-2444.96 248.42,-2432.64"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="250.51,-2432.87 249,-2426.7 246.33,-2432.47 250.51,-2432.87"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M244.78,-2470.39C245.87,-2459.03 247.3,-2444.28 248.51,-2431.77"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="250.57,-2432.3 249.05,-2426.12 246.39,-2431.89 250.57,-2432.3"/>
 </g>
 <!-- S024 -->
 <g id="node27" class="node">
@@ -395,15 +395,15 @@
 <!-- S025 -->
 <g id="node28" class="node">
 <title>S025</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M302.26,-2351C302.26,-2351 203.74,-2351 203.74,-2351 197.74,-2351 191.74,-2345 191.74,-2339 191.74,-2339 191.74,-2327 191.74,-2327 191.74,-2321 197.74,-2315 203.74,-2315 203.74,-2315 302.26,-2315 302.26,-2315 308.26,-2315 314.26,-2321 314.26,-2327 314.26,-2327 314.26,-2339 314.26,-2339 314.26,-2345 308.26,-2351 302.26,-2351"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M302.26,-2351C302.26,-2351 203.74,-2351 203.74,-2351 197.74,-2351 191.74,-2345 191.74,-2339 191.74,-2339 191.74,-2327 191.74,-2327 191.74,-2321 197.74,-2315 203.74,-2315 203.74,-2315 302.26,-2315 302.26,-2315 308.26,-2315 314.26,-2321 314.26,-2327 314.26,-2327 314.26,-2339 314.26,-2339 314.26,-2345 308.26,-2351 302.26,-2351"/>
 <text xml:space="preserve" text-anchor="middle" x="253" y="-2334.75" font-family="Helvetica,sans-Serif" font-size="10.00">S025</text>
 <text xml:space="preserve" text-anchor="middle" x="253" y="-2323.5" font-family="Helvetica,sans-Serif" font-size="10.00">Rust font manifest parser</text>
 </g>
 <!-- S023&#45;&gt;S025 -->
 <g id="edge24" class="edge">
 <title>S023&#45;&gt;S025</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M251.54,-2385.24C251.75,-2377.63 252.01,-2368.7 252.24,-2360.45"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="254.34,-2360.68 252.41,-2354.63 250.14,-2360.56 254.34,-2360.68"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M251.53,-2385.61C251.75,-2377.87 252.01,-2368.73 252.25,-2360.3"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="254.35,-2360.38 252.42,-2354.33 250.15,-2360.26 254.35,-2360.38"/>
 </g>
 <!-- S026 -->
 <g id="node29" class="node">

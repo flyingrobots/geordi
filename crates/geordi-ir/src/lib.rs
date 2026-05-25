@@ -15,6 +15,16 @@ pub const GEORDI_NUMERIC_PROFILE: &str = "geordi-finite-binary64/1";
 /// Required core Geordi feature profile entry.
 pub const GEORDI_CORE_PROFILE: &str = "geordi/core/1";
 
+/// Current supported strict text font-pack manifest version.
+pub const GEORDI_FONT_PACK_VERSION: &str = "geordi-font-pack/1";
+
+/// Current supported strict text font asset format.
+pub const GEORDI_FONT_FORMAT_TTF: &str = "ttf";
+
+/// Current supported upstream license-byte normalization profile.
+pub const GEORDI_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE: &str =
+    "trim-trailing-ascii-whitespace/1";
+
 const GEORDI_KNOWN_FEATURES: &[&str] = &[
     GEORDI_CORE_PROFILE,
     "layout.resolved",
@@ -43,6 +53,78 @@ const GEORDI_KNOWN_FEATURES: &[&str] = &[
     "material.solid",
     "playback.fixed-rate-rotation",
 ];
+
+/// Content-addressed font-pack manifest used by strict positioned glyph-run fixtures.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiFontPackManifest {
+    /// Font-pack schema version.
+    pub font_pack_version: String,
+    /// Font faces available to strict text fixtures.
+    pub fonts: Vec<GeordiFontFace>,
+}
+
+/// One content-addressed font face available to strict text fixtures.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiFontFace {
+    /// Stable font identifier used by glyph runs.
+    pub id: String,
+    /// Font file format.
+    pub format: String,
+    /// Repository-relative path to the font file.
+    pub path: String,
+    /// Content hash of the font file.
+    pub sha256: String,
+    /// Zero-based face index inside the font container.
+    pub face_index: u32,
+    /// Human-readable font family name.
+    pub family_name: String,
+    /// Human-readable font style name.
+    pub style_name: String,
+    /// Numeric OpenType weight.
+    pub weight: u32,
+    /// Redistribution and license proof for the font face.
+    pub license: GeordiFontLicense,
+    /// Upstream source proof for the font face.
+    pub source: GeordiFontSource,
+}
+
+/// Redistribution and license proof for one font face.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiFontLicense {
+    /// Human-readable license name.
+    pub name: String,
+    /// Repository-relative path to the checked-in license file.
+    pub path: String,
+    /// Whether the license permits redistribution in the fixture pack.
+    pub redistribution_allowed: bool,
+    /// Reserved font names declared by the license, if any.
+    pub reserved_font_names: Vec<String>,
+    /// Content hash of the checked-in license file.
+    pub sha256: String,
+}
+
+/// Upstream source proof for one font face.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiFontSource {
+    /// Upstream repository URL.
+    pub repository: String,
+    /// Upstream commit used as the source of truth.
+    pub commit: String,
+    /// Upstream path to the font file.
+    pub path: String,
+    /// Upstream path to the license file.
+    pub license_path: String,
+    /// Content hash of the upstream font bytes.
+    pub font_sha256: String,
+    /// Content hash of the upstream license bytes.
+    pub license_sha256: String,
+    /// License normalization profile used before hashing upstream license bytes.
+    pub license_normalization: String,
+}
 
 /// Typed rectangle-only subset of a `scene.geordi.json` artifact.
 #[derive(Clone, Debug, Deserialize, PartialEq)]

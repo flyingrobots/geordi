@@ -41,9 +41,9 @@ digraph StrictPositionedGlyphRunPlan {
     S020 [label="S020\nFont fixture asset landing", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S021 [label="S021\nFont hash manifest record", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S022 [label="S022\nTypeScript font manifest type", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S023 [label="S023\nRust font manifest type", color="#16a34a", penwidth=4];
+    S023 [label="S023\nRust font manifest type", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S024 [label="S024\nTypeScript font manifest parser", color="#16a34a", penwidth=4];
-    S025 [label="S025\nRust font manifest parser", color="#dc2626", penwidth=4];
+    S025 [label="S025\nRust font manifest parser", color="#16a34a", penwidth=4];
     S026 [label="S026\nTypeScript font hash verifier", color="#dc2626", penwidth=4];
     S027 [label="S027\nRust font hash verifier", color="#dc2626", penwidth=4];
     S028 [label="S028\nFont failure fixtures", color="#dc2626", penwidth=4];
