@@ -100,7 +100,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S032**.
+Current OPEN node: **S033**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -449,7 +449,7 @@ Current OPEN node: **S032**.
 
 ### S032: TypeScript glyph-run type
 
-- [ ] **S032: TypeScript glyph-run type** (OPEN)
+- [x] **S032: TypeScript glyph-run type** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with typescript glyph-run type documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: TypeScript glyph-run type.
@@ -471,7 +471,7 @@ Current OPEN node: **S032**.
 
 ### S034: TypeScript glyph-run parser
 
-- [ ] **S034: TypeScript glyph-run parser** (BLOCKED)
+- [ ] **S034: TypeScript glyph-run parser** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with typescript glyph-run parser documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: TypeScript glyph-run parser.

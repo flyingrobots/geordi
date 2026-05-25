@@ -26,6 +26,15 @@ export const RENDER_FIXTURE_FONT_PACK_VERSION = 'geordi-font-pack/1' as const;
 export const RENDER_FIXTURE_FONT_FORMAT_TTF = 'ttf' as const;
 export const RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE =
   'trim-trailing-ascii-whitespace/1' as const;
+export const RENDER_FIXTURE_STRICT_TEXT_FIXTURE_VERSION =
+  'geordi-strict-text-fixture/1' as const;
+export const RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE =
+  'geordi-strict-positioned-glyph-run/1' as const;
+export const RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING = 'geordi-fixed-26.6/1' as const;
+export const RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS =
+  'text.positionedGlyphRuns' as const;
+export const RENDER_FIXTURE_TEXT_FEATURE_FONT_PACK = 'text.fontPack' as const;
+export const RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES = 'text.lineBoxes' as const;
 const WINDOWS_DRIVE_PREFIX_PATTERN = /^[A-Za-z]:/u;
 const URL_SCHEME_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
@@ -212,6 +221,54 @@ export interface RenderFixtureFontFace extends JsonObject {
 export interface RenderFixtureFontPackManifest extends JsonObject {
   readonly fontPackVersion: typeof RENDER_FIXTURE_FONT_PACK_VERSION;
   readonly fonts: readonly RenderFixtureFontFace[];
+}
+
+export type RenderFixtureStrictTextFeatureRequirement =
+  | typeof RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS
+  | typeof RENDER_FIXTURE_TEXT_FEATURE_FONT_PACK
+  | typeof RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES;
+
+export interface RenderFixtureStrictTextSemanticText extends JsonObject {
+  readonly affectsPixels: false;
+  readonly language: string;
+  readonly source: string;
+}
+
+export interface RenderFixtureStrictTextLineBox extends JsonObject {
+  readonly baselineY: number;
+  readonly height: number;
+  readonly id: string;
+  readonly width: number;
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface RenderFixturePositionedGlyph extends JsonObject {
+  readonly advance: number;
+  readonly glyphId: number;
+  readonly x: number;
+  readonly xOffset: number;
+  readonly y: number;
+  readonly yOffset: number;
+}
+
+export interface RenderFixtureGlyphRun extends JsonObject {
+  readonly fontId: string;
+  readonly glyphs: readonly RenderFixturePositionedGlyph[];
+  readonly id: string;
+  readonly lineBoxId: string;
+}
+
+export interface RenderFixtureStrictTextFixtureManifest extends JsonObject {
+  readonly features: readonly RenderFixtureStrictTextFeatureRequirement[];
+  readonly fixtureVersion: typeof RENDER_FIXTURE_STRICT_TEXT_FIXTURE_VERSION;
+  readonly fontPackPath: string;
+  readonly glyphRuns: readonly RenderFixtureGlyphRun[];
+  readonly id: string;
+  readonly lineBoxes: readonly RenderFixtureStrictTextLineBox[];
+  readonly positionEncoding: typeof RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING;
+  readonly semanticText: RenderFixtureStrictTextSemanticText;
+  readonly textProfile: typeof RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE;
 }
 
 export interface RenderFixturePlyVertex extends JsonObject {

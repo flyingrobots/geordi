@@ -492,15 +492,15 @@
 <!-- S032 -->
 <g id="node35" class="node">
 <title>S032</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M463.26,-2351C463.26,-2351 364.74,-2351 364.74,-2351 358.74,-2351 352.74,-2345 352.74,-2339 352.74,-2339 352.74,-2327 352.74,-2327 352.74,-2321 358.74,-2315 364.74,-2315 364.74,-2315 463.26,-2315 463.26,-2315 469.26,-2315 475.26,-2321 475.26,-2327 475.26,-2327 475.26,-2339 475.26,-2339 475.26,-2345 469.26,-2351 463.26,-2351"/>
-<text xml:space="preserve" text-anchor="middle" x="414" y="-2334.75" font-family="Helvetica,sans-Serif" font-size="10.00">S032</text>
-<text xml:space="preserve" text-anchor="middle" x="414" y="-2323.5" font-family="Helvetica,sans-Serif" font-size="10.00">TypeScript glyph&#45;run type</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M463.26,-2351C463.26,-2351 364.74,-2351 364.74,-2351 358.74,-2351 352.74,-2345 352.74,-2339 352.74,-2339 352.74,-2327 352.74,-2327 352.74,-2321 358.74,-2315 364.74,-2315 364.74,-2315 463.26,-2315 463.26,-2315 469.26,-2315 475.26,-2321 475.26,-2327 475.26,-2327 475.26,-2339 475.26,-2339 475.26,-2345 469.26,-2351 463.26,-2351"/>
+<text xml:space="preserve" text-anchor="middle" x="414" y="-2334.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S032</text>
+<text xml:space="preserve" text-anchor="middle" x="414" y="-2323.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">TypeScript glyph&#45;run type</text>
 </g>
 <!-- S031&#45;&gt;S032 -->
 <g id="edge32" class="edge">
 <title>S031&#45;&gt;S032</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M420.64,-2385.61C419.63,-2377.79 418.44,-2368.54 417.35,-2360.04"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="419.46,-2360 416.61,-2354.31 415.29,-2360.53 419.46,-2360"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M420.64,-2385.61C419.61,-2377.67 418.4,-2368.25 417.3,-2359.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="419.4,-2359.51 416.55,-2353.83 415.23,-2360.05 419.4,-2359.51"/>
 </g>
 <!-- S033 -->
 <g id="node36" class="node">
@@ -518,15 +518,15 @@
 <!-- S034 -->
 <g id="node37" class="node">
 <title>S034</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M465.38,-2279C465.38,-2279 358.62,-2279 358.62,-2279 352.62,-2279 346.62,-2273 346.62,-2267 346.62,-2267 346.62,-2255 346.62,-2255 346.62,-2249 352.62,-2243 358.62,-2243 358.62,-2243 465.38,-2243 465.38,-2243 471.38,-2243 477.38,-2249 477.38,-2255 477.38,-2255 477.38,-2267 477.38,-2267 477.38,-2273 471.38,-2279 465.38,-2279"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M465.38,-2279C465.38,-2279 358.62,-2279 358.62,-2279 352.62,-2279 346.62,-2273 346.62,-2267 346.62,-2267 346.62,-2255 346.62,-2255 346.62,-2249 352.62,-2243 358.62,-2243 358.62,-2243 465.38,-2243 465.38,-2243 471.38,-2243 477.38,-2249 477.38,-2255 477.38,-2255 477.38,-2267 477.38,-2267 477.38,-2273 471.38,-2279 465.38,-2279"/>
 <text xml:space="preserve" text-anchor="middle" x="412" y="-2262.75" font-family="Helvetica,sans-Serif" font-size="10.00">S034</text>
 <text xml:space="preserve" text-anchor="middle" x="412" y="-2251.5" font-family="Helvetica,sans-Serif" font-size="10.00">TypeScript glyph&#45;run parser</text>
 </g>
 <!-- S032&#45;&gt;S034 -->
 <g id="edge34" class="edge">
 <title>S032&#45;&gt;S034</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M413.46,-2313.24C413.25,-2305.63 412.99,-2296.7 412.76,-2288.45"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="414.86,-2288.56 412.59,-2282.63 410.66,-2288.68 414.86,-2288.56"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M413.47,-2313.61C413.25,-2305.87 412.99,-2296.73 412.75,-2288.3"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="414.85,-2288.26 412.58,-2282.33 410.65,-2288.38 414.85,-2288.26"/>
 </g>
 <!-- S035 -->
 <g id="node38" class="node">
