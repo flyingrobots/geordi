@@ -1,10 +1,11 @@
 //! Rust types and JSON-boundary loaders for Geordi IR artifacts.
 
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 /// Current supported Geordi IR version.
 pub const GEORDI_IR_VERSION: &str = "geordi-ir/1";
@@ -24,6 +25,9 @@ pub const GEORDI_FONT_FORMAT_TTF: &str = "ttf";
 /// Current supported upstream license-byte normalization profile.
 pub const GEORDI_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE: &str =
     "trim-trailing-ascii-whitespace/1";
+
+/// Prefix used by Geordi SHA-256 content identity strings.
+pub const GEORDI_SHA256_PREFIX: &str = "sha256:";
 
 const GEORDI_KNOWN_FEATURES: &[&str] = &[
     GEORDI_CORE_PROFILE,
@@ -124,6 +128,28 @@ pub struct GeordiFontSource {
     pub license_sha256: String,
     /// License normalization profile used before hashing upstream license bytes.
     pub license_normalization: String,
+}
+
+/// Kind of font-pack artifact hash verified by the Rust boundary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum GeordiFontPackHashArtifactKind {
+    /// Font binary bytes.
+    Font,
+    /// Font license text bytes.
+    License,
+}
+
+/// One successful font-pack hash verification result.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GeordiFontPackHashVerification {
+    /// Font id whose asset was checked.
+    pub font_id: String,
+    /// Kind of checked asset.
+    pub kind: GeordiFontPackHashArtifactKind,
+    /// Repository-relative checked path.
+    pub path: String,
+    /// Computed `sha256:` digest.
+    pub sha256: String,
 }
 
 /// Typed rectangle-only subset of a `scene.geordi.json` artifact.
@@ -346,6 +372,121 @@ impl Error for GeordiFontPackLoadError {
     }
 }
 
+/// Custom error returned when font-pack asset hash verification fails.
+#[derive(Debug)]
+pub struct GeordiFontPackHashError {
+    font_id: String,
+    kind: GeordiFontPackHashArtifactKind,
+    path: String,
+    source: GeordiFontPackHashErrorSource,
+}
+
+#[derive(Debug)]
+enum GeordiFontPackHashErrorSource {
+    EscapedPath,
+    Read(std::io::Error),
+    Mismatch { actual: String, expected: String },
+}
+
+impl GeordiFontPackHashError {
+    fn escaped_path(font_id: &str, kind: GeordiFontPackHashArtifactKind, path: &str) -> Self {
+        Self {
+            font_id: font_id.to_owned(),
+            kind,
+            path: path.to_owned(),
+            source: GeordiFontPackHashErrorSource::EscapedPath,
+        }
+    }
+
+    fn read(
+        font_id: &str,
+        kind: GeordiFontPackHashArtifactKind,
+        path: &str,
+        source: std::io::Error,
+    ) -> Self {
+        Self {
+            font_id: font_id.to_owned(),
+            kind,
+            path: path.to_owned(),
+            source: GeordiFontPackHashErrorSource::Read(source),
+        }
+    }
+
+    fn mismatch(
+        font_id: &str,
+        kind: GeordiFontPackHashArtifactKind,
+        path: &str,
+        expected: &str,
+        actual: String,
+    ) -> Self {
+        Self {
+            font_id: font_id.to_owned(),
+            kind,
+            path: path.to_owned(),
+            source: GeordiFontPackHashErrorSource::Mismatch {
+                actual,
+                expected: expected.to_owned(),
+            },
+        }
+    }
+
+    /// Font id whose asset failed verification.
+    #[must_use]
+    pub fn font_id(&self) -> &str {
+        &self.font_id
+    }
+
+    /// Kind of asset that failed verification.
+    #[must_use]
+    pub const fn kind(&self) -> GeordiFontPackHashArtifactKind {
+        self.kind
+    }
+
+    /// Repository-relative path that failed verification.
+    #[must_use]
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+
+    /// Actual hash when the failure was a hash mismatch.
+    #[must_use]
+    pub fn actual(&self) -> Option<&str> {
+        match &self.source {
+            GeordiFontPackHashErrorSource::Mismatch { actual, .. } => Some(actual),
+            GeordiFontPackHashErrorSource::EscapedPath | GeordiFontPackHashErrorSource::Read(_) => {
+                None
+            }
+        }
+    }
+
+    /// Expected hash when the failure was a hash mismatch.
+    #[must_use]
+    pub fn expected(&self) -> Option<&str> {
+        match &self.source {
+            GeordiFontPackHashErrorSource::Mismatch { expected, .. } => Some(expected),
+            GeordiFontPackHashErrorSource::EscapedPath | GeordiFontPackHashErrorSource::Read(_) => {
+                None
+            }
+        }
+    }
+}
+
+impl Display for GeordiFontPackHashError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Geordi font pack hash verification failed")
+    }
+}
+
+impl Error for GeordiFontPackHashError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match &self.source {
+            GeordiFontPackHashErrorSource::Read(source) => Some(source),
+            GeordiFontPackHashErrorSource::EscapedPath
+            | GeordiFontPackHashErrorSource::Mismatch { .. } => None,
+        }
+    }
+}
+
 /// One structural validation failure for a Geordi IR artifact.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct GeordiIrValidationIssue {
@@ -443,6 +584,46 @@ pub fn load_geordi_font_pack_manifest(
         .map_err(|error| GeordiFontPackLoadError::parse(path.to_path_buf(), error))
 }
 
+/// Compute a `sha256:` hash string from font-pack asset bytes.
+#[must_use]
+pub fn geordi_sha256_from_bytes(bytes: &[u8]) -> String {
+    let digest = Sha256::digest(bytes);
+    format!("{GEORDI_SHA256_PREFIX}{digest:x}")
+}
+
+/// Verify all font and license hashes declared by a font-pack manifest.
+///
+/// # Errors
+///
+/// Returns `GeordiFontPackHashError` when a declared path escapes the repository root, cannot be
+/// read, or hashes to bytes other than the declared `sha256:` digest.
+pub fn validate_geordi_font_pack_hashes(
+    manifest: &GeordiFontPackManifest,
+    repository_root: impl AsRef<Path>,
+) -> Result<Vec<GeordiFontPackHashVerification>, GeordiFontPackHashError> {
+    let repository_root = repository_root.as_ref();
+    let mut verifications = Vec::with_capacity(manifest.fonts.len() * 2);
+
+    for font in &manifest.fonts {
+        verifications.push(validate_geordi_font_pack_asset_hash(
+            repository_root,
+            &font.id,
+            GeordiFontPackHashArtifactKind::Font,
+            &font.path,
+            &font.sha256,
+        )?);
+        verifications.push(validate_geordi_font_pack_asset_hash(
+            repository_root,
+            &font.id,
+            GeordiFontPackHashArtifactKind::License,
+            &font.license.path,
+            &font.license.sha256,
+        )?);
+    }
+
+    Ok(verifications)
+}
+
 /// Validate typed Geordi IR for the rectangle-only Rust MVP subset.
 ///
 /// # Errors
@@ -463,6 +644,50 @@ pub fn validate_geordi_ir(ir: &GeordiIr) -> Result<(), GeordiIrValidationError> 
     } else {
         Err(GeordiIrValidationError::new(issues))
     }
+}
+
+fn validate_geordi_font_pack_asset_hash(
+    repository_root: &Path,
+    font_id: &str,
+    kind: GeordiFontPackHashArtifactKind,
+    fixture_path: &str,
+    expected: &str,
+) -> Result<GeordiFontPackHashVerification, GeordiFontPackHashError> {
+    if !is_fixture_local_path(fixture_path) {
+        return Err(GeordiFontPackHashError::escaped_path(
+            font_id,
+            kind,
+            fixture_path,
+        ));
+    }
+
+    let bytes = fs::read(repository_root.join(fixture_path))
+        .map_err(|error| GeordiFontPackHashError::read(font_id, kind, fixture_path, error))?;
+    let actual = geordi_sha256_from_bytes(&bytes);
+    if actual != expected {
+        return Err(GeordiFontPackHashError::mismatch(
+            font_id,
+            kind,
+            fixture_path,
+            expected,
+            actual,
+        ));
+    }
+
+    Ok(GeordiFontPackHashVerification {
+        font_id: font_id.to_owned(),
+        kind,
+        path: fixture_path.to_owned(),
+        sha256: actual,
+    })
+}
+
+fn is_fixture_local_path(path: &str) -> bool {
+    let path = Path::new(path);
+    !path.as_os_str().is_empty()
+        && path
+            .components()
+            .all(|component| matches!(component, Component::Normal(_) | Component::CurDir))
 }
 
 fn validate_version(ir: &GeordiIr, issues: &mut Vec<GeordiIrValidationIssue>) {
@@ -640,9 +865,11 @@ fn push_issue(issues: &mut Vec<GeordiIrValidationIssue>, path: &str, message: &s
 #[cfg(test)]
 mod tests {
     use super::{
-        GeordiFontPackLoadError, GeordiFontPackParseError, GeordiIrLoadError, GeordiIrParseError,
-        GeordiIrValidationError, load_geordi_font_pack_manifest, load_geordi_ir,
-        parse_geordi_font_pack_manifest, parse_geordi_ir, validate_geordi_ir,
+        GeordiFontPackHashArtifactKind, GeordiFontPackHashError, GeordiFontPackLoadError,
+        GeordiFontPackParseError, GeordiIrLoadError, GeordiIrParseError, GeordiIrValidationError,
+        geordi_sha256_from_bytes, load_geordi_font_pack_manifest, load_geordi_ir,
+        parse_geordi_font_pack_manifest, parse_geordi_ir, validate_geordi_font_pack_hashes,
+        validate_geordi_ir,
     };
     use std::error::Error;
     use std::fmt::{Display, Formatter};
@@ -651,9 +878,11 @@ mod tests {
     #[derive(Debug)]
     enum GeordiIrTestError {
         FontPackLoad(GeordiFontPackLoadError),
+        FontPackHash(GeordiFontPackHashError),
         FontPackParse(GeordiFontPackParseError),
         Load(GeordiIrLoadError),
         Parse(GeordiIrParseError),
+        ExpectedFailure,
         Validation(GeordiIrValidationError),
     }
 
@@ -667,9 +896,11 @@ mod tests {
         fn source(&self) -> Option<&(dyn Error + 'static)> {
             match self {
                 Self::FontPackLoad(source) => Some(source),
+                Self::FontPackHash(source) => Some(source),
                 Self::FontPackParse(source) => Some(source),
                 Self::Load(source) => Some(source),
                 Self::Parse(source) => Some(source),
+                Self::ExpectedFailure => None,
                 Self::Validation(source) => Some(source),
             }
         }
@@ -684,6 +915,12 @@ mod tests {
     impl From<GeordiFontPackLoadError> for GeordiIrTestError {
         fn from(error: GeordiFontPackLoadError) -> Self {
             Self::FontPackLoad(error)
+        }
+    }
+
+    impl From<GeordiFontPackHashError> for GeordiIrTestError {
+        fn from(error: GeordiFontPackHashError) -> Self {
+            Self::FontPackHash(error)
         }
     }
 
@@ -741,6 +978,78 @@ mod tests {
             manifest.fonts[0].source.repository,
             "https://github.com/google/fonts"
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn verifies_shared_font_pack_hashes() -> Result<(), GeordiIrTestError> {
+        let manifest =
+            load_geordi_font_pack_manifest(fixture_path("assets/fonts/font-pack.geordi.json"))?;
+
+        let verifications = validate_geordi_font_pack_hashes(&manifest, repository_root())?;
+
+        assert_eq!(verifications.len(), 2);
+        assert_eq!(verifications[0].font_id, "lato-regular");
+        assert_eq!(verifications[0].kind, GeordiFontPackHashArtifactKind::Font);
+        assert_eq!(
+            verifications[0].sha256,
+            "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251"
+        );
+        assert_eq!(verifications[1].font_id, "lato-regular");
+        assert_eq!(
+            verifications[1].kind,
+            GeordiFontPackHashArtifactKind::License
+        );
+        assert_eq!(
+            verifications[1].sha256,
+            "sha256:19e7e97ffc31e58fa0e54919b8189b2ddcc6fd75539f387e2822b107b6a51423"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn hashes_font_pack_bytes_with_geordi_prefix() {
+        assert_eq!(
+            geordi_sha256_from_bytes(b"geordi"),
+            "sha256:56d547e10e34985139e56ef160086a6d83bd5b4731c25569adf6b20b0565b535"
+        );
+    }
+
+    #[test]
+    fn rejects_font_pack_hash_mismatches_and_escaped_paths() -> Result<(), GeordiIrTestError> {
+        let mut manifest =
+            load_geordi_font_pack_manifest(fixture_path("assets/fonts/font-pack.geordi.json"))?;
+        manifest.fonts[0].sha256 =
+            "sha256:0000000000000000000000000000000000000000000000000000000000000000".to_owned();
+
+        let mismatch = font_pack_hash_error(validate_geordi_font_pack_hashes(
+            &manifest,
+            repository_root(),
+        ))?;
+
+        assert_eq!(mismatch.font_id(), "lato-regular");
+        assert_eq!(mismatch.kind(), GeordiFontPackHashArtifactKind::Font);
+        assert_eq!(
+            mismatch.expected(),
+            Some("sha256:0000000000000000000000000000000000000000000000000000000000000000")
+        );
+        assert_eq!(
+            mismatch.actual(),
+            Some("sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251")
+        );
+
+        manifest.fonts[0].sha256 =
+            "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251".to_owned();
+        manifest.fonts[0].path = "../Lato-Regular.ttf".to_owned();
+
+        let escaped = font_pack_hash_error(validate_geordi_font_pack_hashes(
+            &manifest,
+            repository_root(),
+        ))?;
+
+        assert_eq!(escaped.path(), "../Lato-Regular.ttf");
 
         Ok(())
     }
@@ -903,6 +1212,10 @@ mod tests {
             .join(path)
     }
 
+    fn repository_root() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
+    }
+
     fn assert_exact_float(actual: f64, expected: f64) {
         assert_eq!(actual.to_bits(), expected.to_bits());
     }
@@ -915,6 +1228,15 @@ mod tests {
                 .iter()
                 .map(|issue| issue.path.clone())
                 .collect(),
+        }
+    }
+
+    fn font_pack_hash_error<T>(
+        result: Result<T, GeordiFontPackHashError>,
+    ) -> Result<GeordiFontPackHashError, GeordiIrTestError> {
+        match result {
+            Ok(_) => Err(GeordiIrTestError::ExpectedFailure),
+            Err(error) => Ok(error),
         }
     }
 
