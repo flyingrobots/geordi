@@ -49,6 +49,8 @@
   `validateGeordiIr()`, `isGeordiIr()`) and compiler target (`geordi-ir`) while preserving
   `irVersion: "geordi-ir/1"` as the serialized contract identity.
 - **Root scripts**: Add `pnpm wesley` as a thin shell-out to the installed `wesley` CLI.
+- **Strict text fixtures**: Add TypeScript and Rust font-pack boundary types, parsers, hash
+  verifiers, failure fixtures, and a receipt for the Lato font asset pack.
 - **`@flyingrobots/geordi-compiler-core`**: Add a canonical source-location model shared by AST
   `SourceRef` and diagnostics, including optional spans and offsets.
 - **`@flyingrobots/geordi-schema-graphql`**: Preserve GraphQL source spans and byte offsets for

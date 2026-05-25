@@ -1,0 +1,24 @@
+{
+  "artifact": {
+    "hash": "sha256:1b7ad58b48a3ad0d1aff0736ef014783945dc0a472de1f14b48c4211eb53533d",
+    "path": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json"
+  },
+  "fontPackVersion": "geordi-font-pack/1",
+  "generatedBy": "manual-font-asset-boundary/1",
+  "hashAlgorithm": "sha256",
+  "profile": "geordi-strict-positioned-glyph-run/1",
+  "verifications": [
+    {
+      "fontId": "lato-regular",
+      "kind": "font",
+      "path": "fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf",
+      "sha256": "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251"
+    },
+    {
+      "fontId": "lato-regular",
+      "kind": "license",
+      "path": "fixtures/render-everywhere/assets/fonts/lato/OFL.txt",
+      "sha256": "sha256:19e7e97ffc31e58fa0e54919b8189b2ddcc6fd75539f387e2822b107b6a51423"
+    }
+  ]
+}

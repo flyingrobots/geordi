@@ -81,7 +81,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S029**.
+Current OPEN node: **S030**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -397,7 +397,7 @@ Current OPEN node: **S029**.
 
 ### S029: Font asset docs and receipts
 
-- [ ] **S029: Font asset docs and receipts** (OPEN)
+- [x] **S029: Font asset docs and receipts** (COMPLETE)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with font asset docs and receipts documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Font asset docs and receipts.
@@ -408,7 +408,7 @@ Current OPEN node: **S029**.
 
 ### S030: Font asset checkpoint gate
 
-- [ ] **S030: Font asset checkpoint gate** (BLOCKED)
+- [ ] **S030: Font asset checkpoint gate** (OPEN)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with font asset checkpoint gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Font asset checkpoint gate.

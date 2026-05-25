@@ -3,6 +3,7 @@
 **Profile**: `geordi-font-pack/1`
 **Slice**: S019
 **Planned manifest path**: `fixtures/render-everywhere/assets/fonts/font-pack.geordi.json`
+**Receipt path**: `fixtures/render-everywhere/assets/fonts/font-pack.geordi.json.receipt`
 
 The font pack manifest is the only strict text surface that maps a logical font id to fixture-local
 font bytes. Renderers and validators must treat the manifest as boundary data and reject invalid
@@ -73,13 +74,39 @@ Validation rules:
 
 Known rejection fixtures for later slices:
 
-- missing font file;
-- hash mismatch;
+- `failures/bad-hash.font-pack.geordi.json`: hash mismatch;
 - malformed `sha256`;
-- unsupported `format`;
-- duplicate `id`;
+- `failures/unsupported-format.font-pack.geordi.json`: unsupported `format`;
+- `failures/duplicate-id.font-pack.geordi.json`: duplicate `id`;
 - disallowed license;
-- absolute path;
+- `failures/absolute-path.font-pack.geordi.json`: absolute path;
 - path traversal;
+- missing font file;
 - missing license path;
 - host font lookup field.
+
+Receipt shape:
+
+~~~json
+{
+  "artifact": {
+    "hash": "sha256:<64 lowercase hex chars>",
+    "path": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json"
+  },
+  "fontPackVersion": "geordi-font-pack/1",
+  "generatedBy": "manual-font-asset-boundary/1",
+  "hashAlgorithm": "sha256",
+  "profile": "geordi-strict-positioned-glyph-run/1",
+  "verifications": [
+    {
+      "fontId": "lato-regular",
+      "kind": "font",
+      "path": "fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf",
+      "sha256": "sha256:<64 lowercase hex chars>"
+    }
+  ]
+}
+~~~
+
+The receipt records the manifest bytes and verifier outputs. It does not replace parser or hash
+verification; it gives reviewers and CI a deterministic provenance artifact to compare.
