@@ -22,13 +22,19 @@ claims back to files, commits, commands, or other inspectable evidence.
 ## Render-Everywhere Slice Tracking
 
 When `BEARING.md` names an active execution checklist, follow that checklist in order. The latest
-completed render-everywhere checklist is
+active checklist is the strict positioned glyph-run text plan in `BEARING.md`, backed by
+[`docs/design/2026-05-strict-positioned-glyph-run-dag.dot`](docs/design/2026-05-strict-positioned-glyph-run-dag.dot)
+and
+[`docs/design/2026-05-strict-positioned-glyph-run-dag.svg`](docs/design/2026-05-strict-positioned-glyph-run-dag.svg).
+The latest completed render-everywhere checklist is
 [`docs/design/2026-05-bunny-mesh-slice-plan.md`](docs/design/2026-05-bunny-mesh-slice-plan.md).
 
 When executing slices:
 
-- Work in checklist order unless the user explicitly reprioritizes.
+- Pick an OPEN node from the active DAG, preferably the lowest-numbered OPEN node unless the user
+  explicitly reprioritizes.
 - Keep each slice scoped to its checklist acceptance criteria.
 - Update the checklist from `- [ ]` to `- [x]` only when that slice is actually implemented,
   verified, and committed.
+- Update the active DAG DOT node status and regenerate the SVG after each completed slice.
 - Keep `BEARING.md` aligned when the active direction or slice order changes materially.

@@ -8,7 +8,23 @@ This directory holds implementation design documents for P0 slice sequences. The
 intentionally separate from [`../V0_DESIGN_LAWS.md`](../V0_DESIGN_LAWS.md): the laws define product
 semantics, while these documents define implementation slices.
 
-## Active Slice Map: Bunny Mesh Render Everywhere
+## Active Slice Map: Strict Positioned Glyph-Run Text
+
+The executable checklist for this sequence lives in
+[`../../BEARING.md`](../../BEARING.md). The detailed design document is
+[`2026-05-strict-positioned-glyph-run-plan.md`](./2026-05-strict-positioned-glyph-run-plan.md).
+The dependency graph source is
+[`2026-05-strict-positioned-glyph-run-dag.dot`](./2026-05-strict-positioned-glyph-run-dag.dot) and
+the rendered graph is
+[`2026-05-strict-positioned-glyph-run-dag.svg`](./2026-05-strict-positioned-glyph-run-dag.svg).
+
+Use the DAG, not list order alone, to choose the next slice. A node is OPEN when all of its
+dependencies are complete. After each slice, update the checklist state, update the DOT node status,
+regenerate the SVG, and commit those planning-state changes with the slice.
+
+Current OPEN node: S002.
+
+## Completed Slice Map: Bunny Mesh Render Everywhere
 
 The executable checklist for this sequence lives in
 [`2026-05-bunny-mesh-slice-plan.md`](./2026-05-bunny-mesh-slice-plan.md). Keep that checklist

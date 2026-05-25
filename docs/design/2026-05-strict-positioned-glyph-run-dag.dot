@@ -1,0 +1,262 @@
+digraph StrictPositionedGlyphRunPlan {
+  graph [rankdir=TB, bgcolor="white", fontname="Helvetica", label="Geordi strict positioned glyph-run 100-slice DAG", labelloc="t", fontsize=24];
+  node [shape=box, style="rounded,filled", fillcolor="white", fontname="Helvetica", fontsize=10, margin="0.08,0.05"];
+  edge [color="#64748b", arrowsize=0.6, penwidth=1.2];
+
+  subgraph cluster_legend {
+    label="Legend";
+    color="#cbd5e1";
+    legend_open [label="OPEN", color="#16a34a", penwidth=4];
+    legend_blocked [label="BLOCKED", color="#dc2626", penwidth=4];
+    legend_done [label="COMPLETED", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+  }
+
+  subgraph cluster_law {
+    label="Arc 1: Law";
+    color="#e2e8f0";
+    S001 [label="S001\nMilestone law and nonclaims", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S002 [label="S002\nProfile name and feature vocabulary", color="#16a34a", penwidth=4];
+    S003 [label="S003\nSource text versus render evidence law", color="#dc2626", penwidth=4];
+    S004 [label="S004\nUnsupported raw/platform text rejection law", color="#dc2626", penwidth=4];
+    S005 [label="S005\nFont-local glyph identity law", color="#dc2626", penwidth=4];
+    S006 [label="S006\nText coordinate and numeric law", color="#dc2626", penwidth=4];
+    S007 [label="S007\nLine box and baseline law", color="#dc2626", penwidth=4];
+    S008 [label="S008\nText receipt provenance law", color="#dc2626", penwidth=4];
+    S009 [label="S009\nGlyph evidence ladder and evidence kinds", color="#dc2626", penwidth=4];
+    S010 [label="S010\nInitial fixture scope and nonclaims", color="#dc2626", penwidth=4];
+    S011 [label="S011\nSlice DAG operating rule", color="#dc2626", penwidth=4];
+    S012 [label="S012\nText compliance badge vocabulary", color="#dc2626", penwidth=4];
+    S013 [label="S013\nWhy this is not CSS text section", color="#dc2626", penwidth=4];
+    S014 [label="S014\nBacklog and design index alignment", color="#dc2626", penwidth=4];
+    S015 [label="S015\nLaw checkpoint review gate", color="#dc2626", penwidth=4];
+  }
+
+  subgraph cluster_assets {
+    label="Arc 2: Font Assets";
+    color="#e2e8f0";
+    S016 [label="S016\nFont license candidate review", color="#dc2626", penwidth=4];
+    S017 [label="S017\nFont asset directory contract", color="#dc2626", penwidth=4];
+    S018 [label="S018\nFirst font asset selection", color="#dc2626", penwidth=4];
+    S019 [label="S019\nFont manifest schema design", color="#dc2626", penwidth=4];
+    S020 [label="S020\nFont fixture asset landing", color="#dc2626", penwidth=4];
+    S021 [label="S021\nFont hash manifest record", color="#dc2626", penwidth=4];
+    S022 [label="S022\nTypeScript font manifest type", color="#dc2626", penwidth=4];
+    S023 [label="S023\nRust font manifest type", color="#dc2626", penwidth=4];
+    S024 [label="S024\nTypeScript font manifest parser", color="#dc2626", penwidth=4];
+    S025 [label="S025\nRust font manifest parser", color="#dc2626", penwidth=4];
+    S026 [label="S026\nTypeScript font hash verifier", color="#dc2626", penwidth=4];
+    S027 [label="S027\nRust font hash verifier", color="#dc2626", penwidth=4];
+    S028 [label="S028\nFont failure fixtures", color="#dc2626", penwidth=4];
+    S029 [label="S029\nFont asset docs and receipts", color="#dc2626", penwidth=4];
+    S030 [label="S030\nFont asset checkpoint gate", color="#dc2626", penwidth=4];
+  }
+
+  subgraph cluster_glyph {
+    label="Arc 3: Glyph Runs";
+    color="#e2e8f0";
+    S031 [label="S031\nPositioned glyph-run schema design", color="#dc2626", penwidth=4];
+    S032 [label="S032\nTypeScript glyph-run type", color="#dc2626", penwidth=4];
+    S033 [label="S033\nRust glyph-run type", color="#dc2626", penwidth=4];
+    S034 [label="S034\nTypeScript glyph-run parser", color="#dc2626", penwidth=4];
+    S035 [label="S035\nRust glyph-run parser", color="#dc2626", penwidth=4];
+    S036 [label="S036\nGlyph id validation", color="#dc2626", penwidth=4];
+    S037 [label="S037\nGlyph position validation", color="#dc2626", penwidth=4];
+    S038 [label="S038\nAdvance and offset validation", color="#dc2626", penwidth=4];
+    S039 [label="S039\nFont reference resolution validation", color="#dc2626", penwidth=4];
+    S040 [label="S040\nLine box validation", color="#dc2626", penwidth=4];
+    S041 [label="S041\nCanonical strict text fixture A", color="#dc2626", penwidth=4];
+    S042 [label="S042\nCanonical strict text fixture B", color="#dc2626", penwidth=4];
+    S043 [label="S043\nCanonical JSON normalization test", color="#dc2626", penwidth=4];
+    S044 [label="S044\nText fixture receipt design", color="#dc2626", penwidth=4];
+    S045 [label="S045\nTypeScript text fixture receipt", color="#dc2626", penwidth=4];
+    S046 [label="S046\nRust text fixture receipt/report", color="#dc2626", penwidth=4];
+    S047 [label="S047\nUnsupported strict text fixture", color="#dc2626", penwidth=4];
+    S048 [label="S048\nBrowser strict text rejection", color="#dc2626", penwidth=4];
+    S049 [label="S049\nNative strict text rejection", color="#dc2626", penwidth=4];
+    S050 [label="S050\nGlyph-run checkpoint gate", color="#dc2626", penwidth=4];
+  }
+
+  subgraph cluster_browser {
+    label="Arc 4a: Browser Proof";
+    color="#e2e8f0";
+    S051 [label="S051\nRendering evidence strategy decision", color="#dc2626", penwidth=4];
+    S052 [label="S052\nOutline evidence pack schema", color="#dc2626", penwidth=4];
+    S053 [label="S053\nOutline evidence fixture data", color="#dc2626", penwidth=4];
+    S054 [label="S054\nTypeScript outline evidence parser", color="#dc2626", penwidth=4];
+    S056 [label="S056\nOutline command validation", color="#dc2626", penwidth=4];
+    S057 [label="S057\nBrowser outline glyph renderer", color="#dc2626", penwidth=4];
+    S058 [label="S058\nBrowser text fixture mode", color="#dc2626", penwidth=4];
+    S059 [label="S059\nBrowser text metadata disclosure", color="#dc2626", penwidth=4];
+    S060 [label="S060\nBrowser visible text smoke", color="#dc2626", penwidth=4];
+  }
+
+  subgraph cluster_native {
+    label="Arc 4b: Native Proof";
+    color="#e2e8f0";
+    S055 [label="S055\nRust outline evidence parser", color="#dc2626", penwidth=4];
+    S061 [label="S061\nNative outline glyph renderer", color="#dc2626", penwidth=4];
+    S062 [label="S062\nNative text fixture CLI mode", color="#dc2626", penwidth=4];
+    S063 [label="S063\nNative text metadata report", color="#dc2626", penwidth=4];
+    S064 [label="S064\nNative visible text smoke", color="#dc2626", penwidth=4];
+  }
+
+  subgraph cluster_parity {
+    label="Arc 4c: Parity";
+    color="#e2e8f0";
+    S065 [label="S065\nBrowser/native metadata equality", color="#dc2626", penwidth=4];
+    S066 [label="S066\nBrowser coarse pixel probes", color="#dc2626", penwidth=4];
+    S067 [label="S067\nNative coarse pixel probes", color="#dc2626", penwidth=4];
+    S068 [label="S068\nStable text probe policy", color="#dc2626", penwidth=4];
+    S069 [label="S069\nNonblank text bounds check", color="#dc2626", penwidth=4];
+    S070 [label="S070\nMissing glyph evidence failure", color="#dc2626", penwidth=4];
+    S071 [label="S071\nGlyph id not found failure", color="#dc2626", penwidth=4];
+    S072 [label="S072\nBad line box failure", color="#dc2626", penwidth=4];
+    S073 [label="S073\nUnsupported text fill/stroke failure", color="#dc2626", penwidth=4];
+  }
+
+  subgraph cluster_shaping {
+    label="Arc 5: Shaping";
+    color="#e2e8f0";
+    S076 [label="S076\nShaping implementation decision", color="#dc2626", penwidth=4];
+    S077 [label="S077\nShaping profile fingerprint law", color="#dc2626", penwidth=4];
+    S078 [label="S078\nShaping spike outside compliance path", color="#dc2626", penwidth=4];
+    S079 [label="S079\nCompiler text preparation boundary", color="#dc2626", penwidth=4];
+    S080 [label="S080\nGenerated shaped output schema", color="#dc2626", penwidth=4];
+    S081 [label="S081\nGlyph-run generation CLI", color="#dc2626", penwidth=4];
+    S082 [label="S082\nGenerated fixture artifact", color="#dc2626", penwidth=4];
+    S083 [label="S083\nGenerated artifact comparison", color="#dc2626", penwidth=4];
+    S084 [label="S084\nReceipt shaping profile field", color="#dc2626", penwidth=4];
+    S085 [label="S085\nReceipt glyph-run checksum field", color="#dc2626", penwidth=4];
+    S086 [label="S086\nReceipt line-box checksum field", color="#dc2626", penwidth=4];
+    S087 [label="S087\nNo-fallback validator", color="#dc2626", penwidth=4];
+    S088 [label="S088\nFallback-chain rejection fixture", color="#dc2626", penwidth=4];
+    S089 [label="S089\nMultiline rejection fixture", color="#dc2626", penwidth=4];
+    S090 [label="S090\nBidi and complex-script rejection fixtures", color="#dc2626", penwidth=4];
+    S091 [label="S091\nVariable-font-axis rejection fixture", color="#dc2626", penwidth=4];
+    S092 [label="S092\nMeasured line-box generation", color="#dc2626", penwidth=4];
+  }
+
+  subgraph cluster_docs {
+    label="Docs and Gates";
+    color="#e2e8f0";
+    S074 [label="S074\nBrowser text demo docs", color="#dc2626", penwidth=4];
+    S075 [label="S075\nNative text demo docs", color="#dc2626", penwidth=4];
+    S093 [label="S093\nRaw runtime text noncompliance docs", color="#dc2626", penwidth=4];
+    S094 [label="S094\nEnd-to-end text pipeline docs", color="#dc2626", penwidth=4];
+    S095 [label="S095\nRender-everywhere text docs", color="#dc2626", penwidth=4];
+    S096 [label="S096\nREADME strict text status gate", color="#dc2626", penwidth=4];
+    S097 [label="S097\nCI text fixture validation gate", color="#dc2626", penwidth=4];
+    S098 [label="S098\nCI browser text smoke gate", color="#dc2626", penwidth=4];
+    S099 [label="S099\nCI native text smoke gate", color="#dc2626", penwidth=4];
+    S100 [label="S100\nFinal drift and claim audit", color="#dc2626", penwidth=4];
+  }
+
+  S001 -> S002;
+  S002 -> S003;
+  S003 -> S004;
+  S004 -> S005;
+  S005 -> S006;
+  S006 -> S007;
+  S007 -> S008;
+  S008 -> S009;
+  S009 -> S010;
+  S010 -> S011;
+  S011 -> S012;
+  S012 -> S013;
+  S013 -> S014;
+  S014 -> S015;
+  S015 -> S016;
+  S016 -> S017;
+  S017 -> S018;
+  S018 -> S019;
+  S019 -> S020;
+  S020 -> S021;
+  S021 -> S022;
+  S021 -> S023;
+  S022 -> S024;
+  S023 -> S025;
+  S024 -> S026;
+  S025 -> S027;
+  S026 -> S028;
+  S027 -> S028;
+  S028 -> S029;
+  S029 -> S030;
+  S015 -> S031;
+  S031 -> S032;
+  S031 -> S033;
+  S032 -> S034;
+  S033 -> S035;
+  S034 -> S036;
+  S035 -> S036;
+  S036 -> S037;
+  S037 -> S038;
+  S038 -> S039;
+  S039 -> S040;
+  S030 -> S039;
+  S040 -> S041;
+  S041 -> S042;
+  S042 -> S043;
+  S043 -> S044;
+  S044 -> S045;
+  S044 -> S046;
+  S045 -> S047;
+  S046 -> S047;
+  S047 -> S048;
+  S047 -> S049;
+  S048 -> S050;
+  S049 -> S050;
+  S050 -> S051;
+  S051 -> S052;
+  S052 -> S053;
+  S041 -> S053;
+  S053 -> S054;
+  S053 -> S055;
+  S054 -> S056;
+  S055 -> S056;
+  S056 -> S057;
+  S057 -> S058;
+  S058 -> S059;
+  S059 -> S060;
+  S056 -> S061;
+  S061 -> S062;
+  S062 -> S063;
+  S063 -> S064;
+  S060 -> S065;
+  S064 -> S065;
+  S065 -> S066;
+  S065 -> S067;
+  S066 -> S068;
+  S067 -> S068;
+  S068 -> S069;
+  S056 -> S070;
+  S070 -> S071;
+  S071 -> S072;
+  S072 -> S073;
+  S060 -> S074;
+  S064 -> S075;
+  S075 -> S076;
+  S076 -> S077;
+  S077 -> S078;
+  S078 -> S079;
+  S079 -> S080;
+  S080 -> S081;
+  S081 -> S082;
+  S082 -> S083;
+  S083 -> S084;
+  S084 -> S085;
+  S085 -> S086;
+  S086 -> S087;
+  S087 -> S088;
+  S088 -> S089;
+  S089 -> S090;
+  S090 -> S091;
+  S091 -> S092;
+  S092 -> S093;
+  S093 -> S094;
+  S094 -> S095;
+  S095 -> S096;
+  S096 -> S097;
+  S097 -> S098;
+  S098 -> S099;
+  S099 -> S100;
+}
