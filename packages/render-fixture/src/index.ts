@@ -1505,27 +1505,62 @@ function validateStrictTextLineBox(
     return;
   }
 
-  validateNonEmptyString(property(value, 'id'), `${path}.id`, 'Strict text line box id', issues);
-  validateSafeInteger(property(value, 'x'), `${path}.x`, 'Strict text line box x', issues);
-  validateSafeInteger(property(value, 'y'), `${path}.y`, 'Strict text line box y', issues);
-  validateSafeNonNegativeInteger(
-    property(value, 'width'),
-    `${path}.width`,
-    'Strict text line box width',
+  const id = property(value, 'id');
+  const x = property(value, 'x');
+  const y = property(value, 'y');
+  const width = property(value, 'width');
+  const height = property(value, 'height');
+  const baselineY = property(value, 'baselineY');
+
+  validateNonEmptyString(id, `${path}.id`, 'Strict text line box id', issues);
+  validateSafeInteger(x, `${path}.x`, 'Strict text line box x', issues);
+  validateSafeInteger(y, `${path}.y`, 'Strict text line box y', issues);
+  validateSafeNonNegativeInteger(width, `${path}.width`, 'Strict text line box width', issues);
+  validateSafeNonNegativeInteger(height, `${path}.height`, 'Strict text line box height', issues);
+  validateSafeInteger(baselineY, `${path}.baselineY`, 'Strict text line box baseline y', issues);
+  validateStrictTextLineBoxGeometry(
+    safeInteger(x),
+    safeInteger(y),
+    safeNonNegativeInteger(width),
+    safeNonNegativeInteger(height),
+    safeInteger(baselineY),
+    path,
     issues,
   );
-  validateSafeNonNegativeInteger(
-    property(value, 'height'),
-    `${path}.height`,
-    'Strict text line box height',
-    issues,
-  );
-  validateSafeInteger(
-    property(value, 'baselineY'),
-    `${path}.baselineY`,
-    'Strict text line box baseline y',
-    issues,
-  );
+}
+
+function validateStrictTextLineBoxGeometry(
+  x: number | undefined,
+  y: number | undefined,
+  width: number | undefined,
+  height: number | undefined,
+  baselineY: number | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextFixtureManifestIssue[],
+): void {
+  if (x !== undefined && width !== undefined && !Number.isSafeInteger(x + width)) {
+    pushIssue(issues, `${path}.width`, 'Strict text line box right edge must be a safe integer');
+  }
+
+  let bottomY: number | undefined;
+  if (y !== undefined && height !== undefined) {
+    const candidateBottomY = y + height;
+    if (Number.isSafeInteger(candidateBottomY)) {
+      bottomY = candidateBottomY;
+    } else {
+      pushIssue(issues, `${path}.height`, 'Strict text line box bottom edge must be a safe integer');
+    }
+  }
+
+  if (y !== undefined && bottomY !== undefined && baselineY !== undefined) {
+    if (baselineY < y || baselineY > bottomY) {
+      pushIssue(
+        issues,
+        `${path}.baselineY`,
+        'Strict text line box baseline y must be within the line box vertical bounds',
+      );
+    }
+  }
 }
 
 function validateGlyphRuns(

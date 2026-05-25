@@ -313,7 +313,8 @@ promotes the kernel to required runtime behavior.
 ## Current Strict Text Interpretation
 
 The current strict text TypeScript and Rust DTOs are provisional. The S039 font-reference validator
-is acceptable because it is simple, structural, and protected by paired TypeScript and Rust tests.
+and S040 line-box geometry validator are acceptable because they are simple, structural, and
+protected by paired TypeScript and Rust tests.
 
 It is not a precedent for long-term hand-authored DTO mirroring.
 

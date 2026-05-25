@@ -459,6 +459,8 @@ Rules:
 - `descent` is the non-negative distance from baseline downward to the line's descent edge.
 - `height` must be at least `ascent + descent`.
 - `width` and `height` must be non-negative.
+- Derived right and bottom edges must remain safe fixed-point integers.
+- `baselineY` must be inside the line box's vertical bounds, inclusive.
 - A glyph run references exactly one line box in the first profile.
 - Line boxes are used for metadata, hit-test planning, clipping decisions, and explainability.
 - Line boxes are not used to ask the platform for metrics.

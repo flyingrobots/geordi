@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the active open node is `S040`, line box validation, after `S039` added strict text font-reference
-validation in TypeScript and Rust.
+the active open node is `S041`, canonical strict text fixture A, after `S040` tightened line-box
+geometry validation in TypeScript and Rust.
 
 ## Completed Capabilities
 
@@ -37,7 +37,7 @@ validation in TypeScript and Rust.
 | Native Rust proof harness | Rust workspace loads, validates, and renders rectangle and bunny proof paths. |
 | Mesh asset proof | Stanford bunny PLY bytes are content-addressed, parsed, bounded, and exercised by browser/native gates. |
 | Strict font assets | Lato font pack and failure fixtures prove content-addressed font/license boundaries. |
-| Strict text manifests | TypeScript and Rust can validate strict text manifest structure and font references. |
+| Strict text manifests | TypeScript and Rust can validate strict text manifest structure, font references, and line-box geometry. |
 
 ## Active Work
 

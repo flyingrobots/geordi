@@ -1353,9 +1353,58 @@ fn validate_strict_text_line_boxes<'a>(
             "Strict text line box baseline y",
             issues,
         );
+        validate_strict_text_line_box_geometry(line_box, &line_box_path, issues);
     }
 
     line_box_ids
+}
+
+fn validate_strict_text_line_box_geometry(
+    line_box: &GeordiStrictTextLineBox,
+    line_box_path: &str,
+    issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
+) {
+    if is_strict_text_safe_integer(line_box.x)
+        && is_strict_text_safe_non_negative_integer(line_box.width)
+    {
+        match line_box.x.checked_add(line_box.width) {
+            Some(right_edge) if is_strict_text_safe_integer(right_edge) => {}
+            _ => push_strict_text_issue(
+                issues,
+                &format!("{line_box_path}.width"),
+                "Strict text line box right edge must be a safe integer",
+            ),
+        }
+    }
+
+    let bottom_edge = if is_strict_text_safe_integer(line_box.y)
+        && is_strict_text_safe_non_negative_integer(line_box.height)
+    {
+        match line_box.y.checked_add(line_box.height) {
+            Some(bottom_edge) if is_strict_text_safe_integer(bottom_edge) => Some(bottom_edge),
+            _ => {
+                push_strict_text_issue(
+                    issues,
+                    &format!("{line_box_path}.height"),
+                    "Strict text line box bottom edge must be a safe integer",
+                );
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    if let Some(bottom_edge) = bottom_edge
+        && is_strict_text_safe_integer(line_box.baseline_y)
+        && (line_box.baseline_y < line_box.y || line_box.baseline_y > bottom_edge)
+    {
+        push_strict_text_issue(
+            issues,
+            &format!("{line_box_path}.baselineY"),
+            "Strict text line box baseline y must be within the line box vertical bounds",
+        );
+    }
 }
 
 fn validate_strict_text_glyphs(
@@ -1450,7 +1499,7 @@ fn validate_strict_text_safe_integer(
     label: &str,
     issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
 ) {
-    if !(-GEORDI_JSON_SAFE_INTEGER_MAX..=GEORDI_JSON_SAFE_INTEGER_MAX).contains(&value) {
+    if !is_strict_text_safe_integer(value) {
         push_strict_text_issue(issues, path, &format!("{label} must be a safe integer"));
     }
 }
@@ -1461,13 +1510,21 @@ fn validate_strict_text_safe_non_negative_integer(
     label: &str,
     issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
 ) {
-    if !(0..=GEORDI_JSON_SAFE_INTEGER_MAX).contains(&value) {
+    if !is_strict_text_safe_non_negative_integer(value) {
         push_strict_text_issue(
             issues,
             path,
             &format!("{label} must be a safe non-negative integer"),
         );
     }
+}
+
+fn is_strict_text_safe_integer(value: i64) -> bool {
+    (-GEORDI_JSON_SAFE_INTEGER_MAX..=GEORDI_JSON_SAFE_INTEGER_MAX).contains(&value)
+}
+
+fn is_strict_text_safe_non_negative_integer(value: i64) -> bool {
+    (0..=GEORDI_JSON_SAFE_INTEGER_MAX).contains(&value)
 }
 
 fn push_strict_text_issue(
@@ -2297,6 +2354,45 @@ mod tests {
         assert_paths_include(&paths, "$.lineBoxes[0].width");
         assert_paths_include(&paths, "$.lineBoxes[0].height");
         assert_paths_include(&paths, "$.lineBoxes[0].baselineY");
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_line_box_edges_and_baselines_outside_safe_bounds() -> Result<(), GeordiIrTestError> {
+        let mut manifest = parse_geordi_strict_text_fixture_manifest(strict_text_fixture_source())?;
+        let line_box = manifest.line_boxes[0].clone();
+        let mut baseline_above = line_box.clone();
+        baseline_above.baseline_y = -1;
+
+        let mut baseline_below = line_box.clone();
+        baseline_below.id = "line-1".to_owned();
+        baseline_below.baseline_y = baseline_below.y + baseline_below.height + 1;
+
+        let mut unsafe_right_edge = line_box.clone();
+        unsafe_right_edge.id = "line-2".to_owned();
+        unsafe_right_edge.x = GEORDI_JSON_SAFE_INTEGER_MAX;
+        unsafe_right_edge.width = 1;
+
+        let mut unsafe_bottom_edge = line_box;
+        unsafe_bottom_edge.id = "line-3".to_owned();
+        unsafe_bottom_edge.y = GEORDI_JSON_SAFE_INTEGER_MAX;
+        unsafe_bottom_edge.height = 1;
+        unsafe_bottom_edge.baseline_y = GEORDI_JSON_SAFE_INTEGER_MAX;
+
+        manifest.line_boxes = vec![
+            baseline_above,
+            baseline_below,
+            unsafe_right_edge,
+            unsafe_bottom_edge,
+        ];
+
+        let paths =
+            strict_text_validation_paths(validate_geordi_strict_text_fixture_manifest(&manifest));
+
+        assert_paths_include(&paths, "$.lineBoxes[0].baselineY");
+        assert_paths_include(&paths, "$.lineBoxes[1].baselineY");
+        assert_paths_include(&paths, "$.lineBoxes[2].width");
+        assert_paths_include(&paths, "$.lineBoxes[3].height");
         Ok(())
     }
 

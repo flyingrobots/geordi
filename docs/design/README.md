@@ -2,7 +2,7 @@
 
 **Status**: Draft
 **Date**: 2026-05-25
-**Baseline**: `main` at `78c4636`, after strict positioned glyph-run plan merge
+**Baseline**: `main` at `69073ed`, after signpost refresh merge
 
 This directory holds implementation design documents for P0 slice sequences. The design pack is
 intentionally separate from [`../V0_DESIGN_LAWS.md`](../V0_DESIGN_LAWS.md): the laws define product
@@ -39,7 +39,7 @@ Use the DAG, not list order alone, to choose the next slice. A node is OPEN when
 dependencies are complete. After each slice, update the checklist state, update the DOT node status,
 regenerate the SVG, and commit those planning-state changes with the slice.
 
-Current OPEN node: S040.
+Current OPEN node: S041.
 
 ## Completed Slice Map: Bunny Mesh Render Everywhere
 

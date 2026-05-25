@@ -1,7 +1,7 @@
 # Geordi Bearing
 
 **Date**: 2026-05-25
-**Branch baseline**: <code>main</code> at <code>78c4636</code>
+**Branch baseline**: <code>main</code> at <code>69073ed</code>
 **Active milestone**: Strict Positioned Glyph-Run Text
 **Active profile under design**: <code>geordi-strict-positioned-glyph-run/1</code>
 **Active design doc**: [docs/design/2026-05-strict-positioned-glyph-run-plan.md](./docs/design/2026-05-strict-positioned-glyph-run-plan.md)
@@ -115,7 +115,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S040**.
+Current OPEN node: **S041**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -552,7 +552,7 @@ Current OPEN node: **S040**.
 
 ### S040: Line box validation
 
-- [ ] **S040: Line box validation** (OPEN)
+- [x] **S040: Line box validation** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with line box validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Line box validation.
@@ -563,7 +563,7 @@ Current OPEN node: **S040**.
 
 ### S041: Canonical strict text fixture A
 
-- [ ] **S041: Canonical strict text fixture A** (BLOCKED)
+- [ ] **S041: Canonical strict text fixture A** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with canonical strict text fixture a documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Canonical strict text fixture A.
