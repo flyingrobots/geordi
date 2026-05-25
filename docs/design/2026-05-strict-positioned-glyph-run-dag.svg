@@ -83,28 +83,28 @@
 <!-- S002 -->
 <g id="node5" class="node">
 <title>S002</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M449.13,-3896.5C449.13,-3896.5 304.87,-3896.5 304.87,-3896.5 298.87,-3896.5 292.87,-3890.5 292.87,-3884.5 292.87,-3884.5 292.87,-3872.5 292.87,-3872.5 292.87,-3866.5 298.87,-3860.5 304.87,-3860.5 304.87,-3860.5 449.13,-3860.5 449.13,-3860.5 455.13,-3860.5 461.13,-3866.5 461.13,-3872.5 461.13,-3872.5 461.13,-3884.5 461.13,-3884.5 461.13,-3890.5 455.13,-3896.5 449.13,-3896.5"/>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3880.25" font-family="Helvetica,sans-Serif" font-size="10.00">S002</text>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3869" font-family="Helvetica,sans-Serif" font-size="10.00">Profile name and feature vocabulary</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M449.13,-3896.5C449.13,-3896.5 304.87,-3896.5 304.87,-3896.5 298.87,-3896.5 292.87,-3890.5 292.87,-3884.5 292.87,-3884.5 292.87,-3872.5 292.87,-3872.5 292.87,-3866.5 298.87,-3860.5 304.87,-3860.5 304.87,-3860.5 449.13,-3860.5 449.13,-3860.5 455.13,-3860.5 461.13,-3866.5 461.13,-3872.5 461.13,-3872.5 461.13,-3884.5 461.13,-3884.5 461.13,-3890.5 455.13,-3896.5 449.13,-3896.5"/>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3880.25" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S002</text>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3869" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Profile name and feature vocabulary</text>
 </g>
 <!-- S001&#45;&gt;S002 -->
 <g id="edge1" class="edge">
 <title>S001&#45;&gt;S002</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3931.11C377,-3923.37 377,-3914.23 377,-3905.8"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3905.83 377,-3899.83 374.9,-3905.83 379.1,-3905.83"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3931.11C377,-3923.17 377,-3913.75 377,-3905.14"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3905.34 377,-3899.34 374.9,-3905.34 379.1,-3905.34"/>
 </g>
 <!-- S003 -->
 <g id="node6" class="node">
 <title>S003</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M457.01,-3824.5C457.01,-3824.5 296.99,-3824.5 296.99,-3824.5 290.99,-3824.5 284.99,-3818.5 284.99,-3812.5 284.99,-3812.5 284.99,-3800.5 284.99,-3800.5 284.99,-3794.5 290.99,-3788.5 296.99,-3788.5 296.99,-3788.5 457.01,-3788.5 457.01,-3788.5 463.01,-3788.5 469.01,-3794.5 469.01,-3800.5 469.01,-3800.5 469.01,-3812.5 469.01,-3812.5 469.01,-3818.5 463.01,-3824.5 457.01,-3824.5"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M457.01,-3824.5C457.01,-3824.5 296.99,-3824.5 296.99,-3824.5 290.99,-3824.5 284.99,-3818.5 284.99,-3812.5 284.99,-3812.5 284.99,-3800.5 284.99,-3800.5 284.99,-3794.5 290.99,-3788.5 296.99,-3788.5 296.99,-3788.5 457.01,-3788.5 457.01,-3788.5 463.01,-3788.5 469.01,-3794.5 469.01,-3800.5 469.01,-3800.5 469.01,-3812.5 469.01,-3812.5 469.01,-3818.5 463.01,-3824.5 457.01,-3824.5"/>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3808.25" font-family="Helvetica,sans-Serif" font-size="10.00">S003</text>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3797" font-family="Helvetica,sans-Serif" font-size="10.00">Source text versus render evidence law</text>
 </g>
 <!-- S002&#45;&gt;S003 -->
 <g id="edge2" class="edge">
 <title>S002&#45;&gt;S003</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3858.74C377,-3851.13 377,-3842.2 377,-3833.95"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3834.13 377,-3828.13 374.9,-3834.13 379.1,-3834.13"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3859.11C377,-3851.37 377,-3842.23 377,-3833.8"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3833.83 377,-3827.83 374.9,-3833.83 379.1,-3833.83"/>
 </g>
 <!-- S004 -->
 <g id="node7" class="node">

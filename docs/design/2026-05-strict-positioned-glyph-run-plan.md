@@ -47,6 +47,52 @@ Not allowed after this milestone unless separate future profiles prove it:
 - Text editing, caret, selection, or accessibility tree semantics.
 - Full antialiasing pixel identity across independent rasterizers.
 
+## Profile Name And Feature Vocabulary
+
+The first strict text profile is:
+
+~~~text
+geordi-strict-positioned-glyph-run/1
+~~~
+
+This name is intentionally specific. The strict guarantee is not "text" and not merely "glyph
+runs." The guarantee is that renderers receive positioned glyph evidence with explicit font identity
+and line metrics.
+
+Initial artifact and subprofile names:
+
+| Name | Meaning |
+| --- | --- |
+| `geordi-strict-text-fixture/1` | Fixture artifact envelope used before `geordi-ir/1` integration. |
+| `geordi-strict-positioned-glyph-run/1` | Text profile for positioned, font-local glyph evidence. |
+| `geordi-font-pack/1` | Content-addressed font asset manifest. |
+| `geordi-glyph-evidence-pack/1` | Drawable glyph evidence manifest. |
+| `geordi-fixed-26.6/1` | Initial fixed-point coordinate subprofile for glyph positions. |
+| `precomputed-fixture/1` | Shaping provenance value when no shaper ran inside Geordi tooling. |
+
+Initial required feature vocabulary:
+
+| Feature | Requirement |
+| --- | --- |
+| `text.fontPack` | Fixture declares concrete font bytes by content hash. |
+| `text.positionedGlyphRuns` | Fixture declares font-local glyph ids and positions. |
+| `text.lineBoxes` | Fixture declares explicit line boxes and baselines. |
+| `text.positionEncoding.fixed26Dot6` | Fixture declares 26.6 fixed-point px positions. |
+| `glyphEvidence.outlinePaths` | Fixture declares outline path evidence for every referenced glyph. |
+| `text.receiptProvenance` | Receipts include text-specific provenance hashes. |
+
+Initial rejected feature vocabulary:
+
+| Feature | Failure |
+| --- | --- |
+| `text.raw-runtime-shaping` | Runtime shaping is not a strict path. |
+| `text.platform-font-metrics` | Host metrics are not part of the deterministic contract. |
+| `text.host-font-fallback` | Host fallback is forbidden. |
+| `text.dynamic-user-text` | Dynamic strings require a new prepared artifact. |
+| `text.css-line-breaking` | CSS line breaking is not implemented. |
+| `text.runtime-kerning` | Kerning must already be reflected in positions. |
+| `text.runtime-ligatures` | Ligatures must already be reflected as glyph ids. |
+
 ## End-To-End Pipeline
 
 ~~~mermaid
