@@ -826,6 +826,26 @@ The source-of-truth map is:
 Any future slice that changes milestone scope must update all of these surfaces in the same commit.
 If they disagree, the next implementation slice is blocked until the planning state is reconciled.
 
+## S015 Law Checkpoint
+
+S015 closes the law arc and opens the first implementation-adjacent paths. This checkpoint does not
+claim that Geordi renders strict text yet. It claims that the contract boundary is now stable enough
+to start collecting font assets and designing the glyph-run schema.
+
+The checkpoint assertions are:
+
+- The active profile is `geordi-strict-positioned-glyph-run/1`.
+- Source strings may be preserved as metadata, but they do not determine pixels in strict mode.
+- The render contract consumes positioned glyph runs, explicit line boxes, font identity, and glyph
+  evidence.
+- Font identity is content-addressed and fixture-local; host font lookup is outside the profile.
+- Glyph positions use `geordi-fixed-26.6/1` until a later profile explicitly changes the numeric
+  subprofile.
+- Runtime shaping, platform text APIs, fallback, CSS line breaking, wrapping, bidi, complex scripts,
+  variable axes, and broad text-support claims remain unsupported.
+- The next OPEN nodes are `S016` and `S031`; S016 is selected first because it is the lowest-numbered
+  OPEN node.
+
 ## Active DAG
 
 The active dependency graph is rendered from [2026-05-strict-positioned-glyph-run-dag.dot](./2026-05-strict-positioned-glyph-run-dag.dot) to [2026-05-strict-positioned-glyph-run-dag.svg](./2026-05-strict-positioned-glyph-run-dag.svg).

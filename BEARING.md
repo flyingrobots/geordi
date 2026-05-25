@@ -46,6 +46,24 @@ Initial glyph coordinates use `geordi-fixed-26.6/1`: px units, scale `64`, top-l
 x rightward, positive y downward, and explicit baselines. Renderers do not infer hidden rounding,
 baselines, line boxes, kerning, shaping, or fallback from platform APIs.
 
+## S015 Law Checkpoint
+
+The first law arc is complete when S015 is checked off. Its result is a scope lock, not a rendering
+claim:
+
+- Current claim: Geordi has a documented strict text evidence milestone named
+  `geordi-strict-positioned-glyph-run/1`.
+- Current claim: strict text fixture work starts outside `geordi-ir/1` and graduates only after both
+  browser and native validation/rendering paths prove the contract.
+- Current claim: positioned glyph evidence, content-addressed font identity, line boxes, fixed-point
+  coordinates, receipts, badges, backlog alignment, and DAG execution are defined enough to start
+  font-asset work.
+- Current nonclaim: Geordi still does not provide compliant general text rendering, platform text,
+  CSS text, runtime shaping, fallback, wrapping, bidi, complex scripts, variable font axes, text
+  editing, or pixel-identical text rasterization.
+- Next OPEN nodes after this checkpoint: `S016` and `S031`. The selected next slice is `S016`
+  because the execution rule prefers the lowest-numbered OPEN node.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -63,7 +81,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S015**.
+Current OPEN node: **S016**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -225,7 +243,7 @@ Current OPEN node: **S015**.
 
 ### S015: Law checkpoint review gate
 
-- [ ] **S015: Law checkpoint review gate** (OPEN)
+- [x] **S015: Law checkpoint review gate** (COMPLETE)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with law checkpoint review gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Law checkpoint review gate.
@@ -236,7 +254,7 @@ Current OPEN node: **S015**.
 
 ### S016: Font license candidate review
 
-- [ ] **S016: Font license candidate review** (BLOCKED)
+- [ ] **S016: Font license candidate review** (OPEN)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with font license candidate review documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Font license candidate review.
@@ -401,7 +419,7 @@ Current OPEN node: **S015**.
 
 ### S031: Positioned glyph-run schema design
 
-- [ ] **S031: Positioned glyph-run schema design** (BLOCKED)
+- [ ] **S031: Positioned glyph-run schema design** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with positioned glyph-run schema design documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Positioned glyph-run schema design.

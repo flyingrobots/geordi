@@ -28,13 +28,13 @@ digraph StrictPositionedGlyphRunPlan {
     S012 [label="S012\nText compliance badge vocabulary", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S013 [label="S013\nWhy this is not CSS text section", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S014 [label="S014\nBacklog and design index alignment", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S015 [label="S015\nLaw checkpoint review gate", color="#16a34a", penwidth=4];
+    S015 [label="S015\nLaw checkpoint review gate", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
   }
 
   subgraph cluster_assets {
     label="Arc 2: Font Assets";
     color="#e2e8f0";
-    S016 [label="S016\nFont license candidate review", color="#dc2626", penwidth=4];
+    S016 [label="S016\nFont license candidate review", color="#16a34a", penwidth=4];
     S017 [label="S017\nFont asset directory contract", color="#dc2626", penwidth=4];
     S018 [label="S018\nFirst font asset selection", color="#dc2626", penwidth=4];
     S019 [label="S019\nFont manifest schema design", color="#dc2626", penwidth=4];
@@ -54,7 +54,7 @@ digraph StrictPositionedGlyphRunPlan {
   subgraph cluster_glyph {
     label="Arc 3: Glyph Runs";
     color="#e2e8f0";
-    S031 [label="S031\nPositioned glyph-run schema design", color="#dc2626", penwidth=4];
+    S031 [label="S031\nPositioned glyph-run schema design", color="#16a34a", penwidth=4];
     S032 [label="S032\nTypeScript glyph-run type", color="#dc2626", penwidth=4];
     S033 [label="S033\nRust glyph-run type", color="#dc2626", penwidth=4];
     S034 [label="S034\nTypeScript glyph-run parser", color="#dc2626", penwidth=4];
