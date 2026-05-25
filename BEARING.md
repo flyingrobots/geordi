@@ -100,7 +100,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S031**.
+Current OPEN node: **S032**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -438,7 +438,7 @@ Current OPEN node: **S031**.
 
 ### S031: Positioned glyph-run schema design
 
-- [ ] **S031: Positioned glyph-run schema design** (OPEN)
+- [x] **S031: Positioned glyph-run schema design** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with positioned glyph-run schema design documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Positioned glyph-run schema design.
@@ -449,7 +449,7 @@ Current OPEN node: **S031**.
 
 ### S032: TypeScript glyph-run type
 
-- [ ] **S032: TypeScript glyph-run type** (BLOCKED)
+- [ ] **S032: TypeScript glyph-run type** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with typescript glyph-run type documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: TypeScript glyph-run type.
@@ -460,7 +460,7 @@ Current OPEN node: **S031**.
 
 ### S033: Rust glyph-run type
 
-- [ ] **S033: Rust glyph-run type** (BLOCKED)
+- [ ] **S033: Rust glyph-run type** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with rust glyph-run type documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Rust glyph-run type.
