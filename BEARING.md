@@ -81,7 +81,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S019**.
+Current OPEN node: **S020**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -287,7 +287,7 @@ Current OPEN node: **S019**.
 
 ### S019: Font manifest schema design
 
-- [ ] **S019: Font manifest schema design** (OPEN)
+- [x] **S019: Font manifest schema design** (COMPLETE)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with font manifest schema design documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Font manifest schema design.
@@ -298,7 +298,7 @@ Current OPEN node: **S019**.
 
 ### S020: Font fixture asset landing
 
-- [ ] **S020: Font fixture asset landing** (BLOCKED)
+- [ ] **S020: Font fixture asset landing** (OPEN)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with font fixture asset landing documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Font fixture asset landing.

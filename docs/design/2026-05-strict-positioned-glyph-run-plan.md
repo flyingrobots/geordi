@@ -921,6 +921,29 @@ Decision:
 The selection is intentionally separate from the asset landing so reviewers can audit why this font
 was chosen before reviewing vendored bytes or hash manifests.
 
+## Font Manifest Schema Design
+
+S019 defines the first font manifest shape in
+`fixtures/render-everywhere/assets/fonts/font-pack.schema.md`. The planned concrete manifest path is:
+
+~~~text
+fixtures/render-everywhere/assets/fonts/font-pack.geordi.json
+~~~
+
+Schema commitments:
+
+- `fontPackVersion` is `geordi-font-pack/1`.
+- `fonts` is a non-empty array of unique logical font ids.
+- Each font id is lowercase kebab-case.
+- First milestone format support is static `ttf` only.
+- Paths are repository-relative POSIX paths under `fixtures/render-everywhere/assets/fonts/`.
+- Hashes use `sha256:<64 lowercase hex chars>`.
+- License data is explicit and includes `redistributionAllowed` plus reserved font names.
+- No timestamp, local machine path, host font lookup, or environment-derived value is allowed.
+
+This is still schema design, not parser implementation. TypeScript and Rust boundary types/parsers
+begin at S022-S025.
+
 ## Active DAG
 
 The active dependency graph is rendered from [2026-05-strict-positioned-glyph-run-dag.dot](./2026-05-strict-positioned-glyph-run-dag.dot) to [2026-05-strict-positioned-glyph-run-dag.svg](./2026-05-strict-positioned-glyph-run-dag.svg).
