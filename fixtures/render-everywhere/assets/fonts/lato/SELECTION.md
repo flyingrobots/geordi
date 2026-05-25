@@ -24,5 +24,13 @@ fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf
 fixtures/render-everywhere/assets/fonts/lato/OFL.txt
 ~~~
 
+S020 landed the selected upstream font bytes and vendored OFL license text at those paths. The font
+bytes are exact upstream bytes; the license text is whitespace-normalized for repository hygiene.
+
+| File | Verification |
+| --- | --- |
+| `Lato-Regular.ttf` | TrueType font data, 656568 bytes |
+| `OFL.txt` | ASCII license text, 4406 bytes |
+
 The final `sha256:<hex>` identity is intentionally deferred to S021, after S020 lands the actual
 bytes.

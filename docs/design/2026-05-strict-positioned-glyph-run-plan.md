@@ -944,6 +944,25 @@ Schema commitments:
 This is still schema design, not parser implementation. TypeScript and Rust boundary types/parsers
 begin at S022-S025.
 
+## Font Fixture Asset Landing
+
+S020 lands the first font bytes and colocated license text:
+
+~~~text
+fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf
+fixtures/render-everywhere/assets/fonts/lato/OFL.txt
+~~~
+
+Verification recorded during landing:
+
+| File | Check |
+| --- | --- |
+| `Lato-Regular.ttf` | TrueType font data, 656568 bytes |
+| `OFL.txt` | ASCII license text, whitespace-normalized, 4406 bytes |
+
+The S020 commit intentionally does not introduce the final font manifest. S021 records the hash
+manifest after the bytes are present in the repository.
+
 ## Active DAG
 
 The active dependency graph is rendered from [2026-05-strict-positioned-glyph-run-dag.dot](./2026-05-strict-positioned-glyph-run-dag.dot) to [2026-05-strict-positioned-glyph-run-dag.svg](./2026-05-strict-positioned-glyph-run-dag.svg).
