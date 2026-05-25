@@ -981,7 +981,12 @@ The first manifest binds logical font id `lato-regular` to:
 | License file | `fixtures/render-everywhere/assets/fonts/lato/OFL.txt` |
 | License hash | `sha256:19e7e97ffc31e58fa0e54919b8189b2ddcc6fd75539f387e2822b107b6a51423` |
 | Source repository | `https://github.com/google/fonts` |
+| Source commit | `c5b52261e8fde2d3b2592fa9d26ac525939c5e4c` |
 | Source path | `ofl/lato/Lato-Regular.ttf` |
+| Source font hash | `sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251` |
+| Source license path | `ofl/lato/OFL.txt` |
+| Source license hash | `sha256:74ba064d03f1f1c4a952da936c3eb71866c34404916734de3cae73b34357e59e` |
+| License normalization | `trim-trailing-ascii-whitespace/1` |
 
 This manifest is data only. Parser, hash-verifier, and failure-fixture implementation starts in the
 later TypeScript/Rust font-manifest slices.
