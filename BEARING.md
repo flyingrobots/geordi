@@ -81,7 +81,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S022**.
+Current OPEN node: **S023**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -320,7 +320,7 @@ Current OPEN node: **S022**.
 
 ### S022: TypeScript font manifest type
 
-- [ ] **S022: TypeScript font manifest type** (OPEN)
+- [x] **S022: TypeScript font manifest type** (COMPLETE)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with typescript font manifest type documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: TypeScript font manifest type.
@@ -331,7 +331,7 @@ Current OPEN node: **S022**.
 
 ### S023: Rust font manifest type
 
-- [ ] **S023: Rust font manifest type** (BLOCKED)
+- [ ] **S023: Rust font manifest type** (OPEN)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with rust font manifest type documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Rust font manifest type.
@@ -342,7 +342,7 @@ Current OPEN node: **S022**.
 
 ### S024: TypeScript font manifest parser
 
-- [ ] **S024: TypeScript font manifest parser** (BLOCKED)
+- [ ] **S024: TypeScript font manifest parser** (OPEN)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with typescript font manifest parser documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: TypeScript font manifest parser.

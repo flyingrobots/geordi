@@ -22,6 +22,10 @@ export const RENDER_FIXTURE_MESH_ASSET_VERSION = 'geordi-mesh-asset/1' as const;
 export const RENDER_FIXTURE_MESH_FIXTURE_VERSION = 'geordi-mesh-render-fixture/1' as const;
 export const RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE =
   'geordi-ascii-ply-triangle-mesh/1' as const;
+export const RENDER_FIXTURE_FONT_PACK_VERSION = 'geordi-font-pack/1' as const;
+export const RENDER_FIXTURE_FONT_FORMAT_TTF = 'ttf' as const;
+export const RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE =
+  'trim-trailing-ascii-whitespace/1' as const;
 const WINDOWS_DRIVE_PREFIX_PATTERN = /^[A-Za-z]:/u;
 const URL_SCHEME_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
@@ -51,6 +55,13 @@ export type RenderFixtureMeshFixtureManifestIssue = RenderFixtureManifestIssue;
 export interface RenderFixtureMeshFixtureManifestValidationResult {
   readonly ok: boolean;
   readonly issues: readonly RenderFixtureMeshFixtureManifestIssue[];
+}
+
+export type RenderFixtureFontPackManifestIssue = RenderFixtureManifestIssue;
+
+export interface RenderFixtureFontPackManifestValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureFontPackManifestIssue[];
 }
 
 export interface RenderFixtureArtifactIssue extends JsonObject {
@@ -163,6 +174,42 @@ export interface RenderFixtureMeshAssetManifest extends JsonObject {
   readonly sha256: string;
   readonly source: RenderFixtureMeshAssetSource;
   readonly vertexProperties: readonly string[];
+}
+
+export interface RenderFixtureFontLicense extends JsonObject {
+  readonly name: string;
+  readonly path: string;
+  readonly redistributionAllowed: boolean;
+  readonly reservedFontNames: readonly string[];
+  readonly sha256: string;
+}
+
+export interface RenderFixtureFontSource extends JsonObject {
+  readonly commit: string;
+  readonly fontSha256: string;
+  readonly licenseNormalization: typeof RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE;
+  readonly licensePath: string;
+  readonly licenseSha256: string;
+  readonly path: string;
+  readonly repository: string;
+}
+
+export interface RenderFixtureFontFace extends JsonObject {
+  readonly faceIndex: number;
+  readonly familyName: string;
+  readonly format: typeof RENDER_FIXTURE_FONT_FORMAT_TTF;
+  readonly id: string;
+  readonly license: RenderFixtureFontLicense;
+  readonly path: string;
+  readonly sha256: string;
+  readonly source: RenderFixtureFontSource;
+  readonly styleName: string;
+  readonly weight: number;
+}
+
+export interface RenderFixtureFontPackManifest extends JsonObject {
+  readonly fontPackVersion: typeof RENDER_FIXTURE_FONT_PACK_VERSION;
+  readonly fonts: readonly RenderFixtureFontFace[];
 }
 
 export interface RenderFixturePlyVertex extends JsonObject {
