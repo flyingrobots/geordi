@@ -372,6 +372,30 @@ impl Error for GeordiFontPackParseError {
     }
 }
 
+/// Custom error returned when parsing a Geordi strict text fixture JSON string fails.
+#[derive(Debug)]
+pub struct GeordiStrictTextFixtureParseError {
+    source: serde_json::Error,
+}
+
+impl GeordiStrictTextFixtureParseError {
+    const fn new(source: serde_json::Error) -> Self {
+        Self { source }
+    }
+}
+
+impl Display for GeordiStrictTextFixtureParseError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Geordi strict text fixture parse failed")
+    }
+}
+
+impl Error for GeordiStrictTextFixtureParseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.source)
+    }
+}
+
 /// Custom error returned when loading a Geordi IR artifact from disk fails.
 #[derive(Debug)]
 pub struct GeordiIrLoadError {
@@ -472,6 +496,60 @@ impl Error for GeordiFontPackLoadError {
         match &self.source {
             GeordiFontPackLoadErrorSource::File(source) => Some(source),
             GeordiFontPackLoadErrorSource::Parse(source) => Some(source),
+        }
+    }
+}
+
+/// Custom error returned when loading a Geordi strict text fixture from disk fails.
+#[derive(Debug)]
+pub struct GeordiStrictTextFixtureLoadError {
+    path: PathBuf,
+    source: GeordiStrictTextFixtureLoadErrorSource,
+}
+
+#[derive(Debug)]
+enum GeordiStrictTextFixtureLoadErrorSource {
+    File(std::io::Error),
+    Parse(GeordiStrictTextFixtureParseError),
+}
+
+impl GeordiStrictTextFixtureLoadError {
+    const fn file(path: PathBuf, source: std::io::Error) -> Self {
+        Self {
+            path,
+            source: GeordiStrictTextFixtureLoadErrorSource::File(source),
+        }
+    }
+
+    const fn parse(path: PathBuf, source: GeordiStrictTextFixtureParseError) -> Self {
+        Self {
+            path,
+            source: GeordiStrictTextFixtureLoadErrorSource::Parse(source),
+        }
+    }
+
+    /// Path that failed to load.
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Display for GeordiStrictTextFixtureLoadError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Geordi strict text fixture load failed: {}",
+            self.path.display()
+        )
+    }
+}
+
+impl Error for GeordiStrictTextFixtureLoadError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match &self.source {
+            GeordiStrictTextFixtureLoadErrorSource::File(source) => Some(source),
+            GeordiStrictTextFixtureLoadErrorSource::Parse(source) => Some(source),
         }
     }
 }
@@ -657,6 +735,18 @@ pub fn parse_geordi_font_pack_manifest(
     serde_json::from_str(source).map_err(GeordiFontPackParseError::new)
 }
 
+/// Parse a Geordi strict text fixture JSON string into typed Rust structs.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextFixtureParseError` when the source is not valid JSON or does not match
+/// the strict text fixture manifest shape.
+pub fn parse_geordi_strict_text_fixture_manifest(
+    source: &str,
+) -> Result<GeordiStrictTextFixtureManifest, GeordiStrictTextFixtureParseError> {
+    serde_json::from_str(source).map_err(GeordiStrictTextFixtureParseError::new)
+}
+
 /// Load a Geordi IR artifact from a path into typed Rust structs.
 ///
 /// # Errors
@@ -686,6 +776,23 @@ pub fn load_geordi_font_pack_manifest(
 
     parse_geordi_font_pack_manifest(&source)
         .map_err(|error| GeordiFontPackLoadError::parse(path.to_path_buf(), error))
+}
+
+/// Load a Geordi strict text fixture from a path into typed Rust structs.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextFixtureLoadError` when the file cannot be read or its contents cannot be
+/// parsed as a strict text fixture manifest.
+pub fn load_geordi_strict_text_fixture_manifest(
+    path: impl AsRef<Path>,
+) -> Result<GeordiStrictTextFixtureManifest, GeordiStrictTextFixtureLoadError> {
+    let path = path.as_ref();
+    let source = fs::read_to_string(path)
+        .map_err(|error| GeordiStrictTextFixtureLoadError::file(path.to_path_buf(), error))?;
+
+    parse_geordi_strict_text_fixture_manifest(&source)
+        .map_err(|error| GeordiStrictTextFixtureLoadError::parse(path.to_path_buf(), error))
 }
 
 /// Compute a `sha256:` hash string from font-pack asset bytes.
@@ -971,9 +1078,10 @@ mod tests {
     use super::{
         GeordiFontPackHashArtifactKind, GeordiFontPackHashError, GeordiFontPackLoadError,
         GeordiFontPackParseError, GeordiIrLoadError, GeordiIrParseError, GeordiIrValidationError,
-        geordi_sha256_from_bytes, load_geordi_font_pack_manifest, load_geordi_ir,
-        parse_geordi_font_pack_manifest, parse_geordi_ir, validate_geordi_font_pack_hashes,
-        validate_geordi_ir,
+        GeordiStrictTextFixtureParseError, geordi_sha256_from_bytes,
+        load_geordi_font_pack_manifest, load_geordi_ir, parse_geordi_font_pack_manifest,
+        parse_geordi_ir, parse_geordi_strict_text_fixture_manifest,
+        validate_geordi_font_pack_hashes, validate_geordi_ir,
     };
     use std::error::Error;
     use std::fmt::{Display, Formatter};
@@ -987,6 +1095,7 @@ mod tests {
         Load(GeordiIrLoadError),
         Parse(GeordiIrParseError),
         ExpectedFailure,
+        StrictTextParse(GeordiStrictTextFixtureParseError),
         Validation(GeordiIrValidationError),
     }
 
@@ -1005,6 +1114,7 @@ mod tests {
                 Self::Load(source) => Some(source),
                 Self::Parse(source) => Some(source),
                 Self::ExpectedFailure => None,
+                Self::StrictTextParse(source) => Some(source),
                 Self::Validation(source) => Some(source),
             }
         }
@@ -1037,6 +1147,12 @@ mod tests {
     impl From<GeordiFontPackParseError> for GeordiIrTestError {
         fn from(error: GeordiFontPackParseError) -> Self {
             Self::FontPackParse(error)
+        }
+    }
+
+    impl From<GeordiStrictTextFixtureParseError> for GeordiIrTestError {
+        fn from(error: GeordiStrictTextFixtureParseError) -> Self {
+            Self::StrictTextParse(error)
         }
     }
 
@@ -1217,6 +1333,72 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    #[test]
+    fn parses_strict_text_fixture_manifest_without_json_values() -> Result<(), GeordiIrTestError> {
+        let source = r#"{
+          "features": [
+            "text.positionedGlyphRuns",
+            "text.fontPack",
+            "text.lineBoxes"
+          ],
+          "fixtureVersion": "geordi-strict-text-fixture/1",
+          "fontPackPath": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json",
+          "glyphRuns": [
+            {
+              "fontId": "lato-regular",
+              "glyphs": [
+                {
+                  "advance": 2048,
+                  "glyphId": 43,
+                  "x": 0,
+                  "xOffset": 0,
+                  "y": 3072,
+                  "yOffset": 0
+                }
+              ],
+              "id": "run-0",
+              "lineBoxId": "line-0"
+            }
+          ],
+          "id": "render-everywhere:strict-text:geordi",
+          "lineBoxes": [
+            {
+              "baselineY": 3072,
+              "height": 4096,
+              "id": "line-0",
+              "width": 12288,
+              "x": 0,
+              "y": 0
+            }
+          ],
+          "positionEncoding": "geordi-fixed-26.6/1",
+          "semanticText": {
+            "affectsPixels": false,
+            "language": "en",
+            "source": "GEORDI"
+          },
+          "textProfile": "geordi-strict-positioned-glyph-run/1"
+        }"#;
+
+        let manifest = parse_geordi_strict_text_fixture_manifest(source)?;
+
+        assert_eq!(
+            manifest.text_profile,
+            "geordi-strict-positioned-glyph-run/1"
+        );
+        assert_eq!(manifest.glyph_runs[0].glyphs[0].glyph_id, 43);
+        assert!(!manifest.semantic_text.affects_pixels);
+
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_malformed_strict_text_fixture_json_with_custom_error() {
+        let result = parse_geordi_strict_text_fixture_manifest("{");
+
+        assert!(result.is_err());
     }
 
     #[test]

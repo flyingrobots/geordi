@@ -531,20 +531,20 @@
 <!-- S035 -->
 <g id="node38" class="node">
 <title>S035</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M588.63,-2279C588.63,-2279 507.37,-2279 507.37,-2279 501.37,-2279 495.37,-2273 495.37,-2267 495.37,-2267 495.37,-2255 495.37,-2255 495.37,-2249 501.37,-2243 507.37,-2243 507.37,-2243 588.63,-2243 588.63,-2243 594.63,-2243 600.63,-2249 600.63,-2255 600.63,-2255 600.63,-2267 600.63,-2267 600.63,-2273 594.63,-2279 588.63,-2279"/>
-<text xml:space="preserve" text-anchor="middle" x="548" y="-2262.75" font-family="Helvetica,sans-Serif" font-size="10.00">S035</text>
-<text xml:space="preserve" text-anchor="middle" x="548" y="-2251.5" font-family="Helvetica,sans-Serif" font-size="10.00">Rust glyph&#45;run parser</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M588.63,-2279C588.63,-2279 507.37,-2279 507.37,-2279 501.37,-2279 495.37,-2273 495.37,-2267 495.37,-2267 495.37,-2255 495.37,-2255 495.37,-2249 501.37,-2243 507.37,-2243 507.37,-2243 588.63,-2243 588.63,-2243 594.63,-2243 600.63,-2249 600.63,-2255 600.63,-2255 600.63,-2267 600.63,-2267 600.63,-2273 594.63,-2279 588.63,-2279"/>
+<text xml:space="preserve" text-anchor="middle" x="548" y="-2262.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S035</text>
+<text xml:space="preserve" text-anchor="middle" x="548" y="-2251.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Rust glyph&#45;run parser</text>
 </g>
 <!-- S033&#45;&gt;S035 -->
 <g id="edge35" class="edge">
 <title>S033&#45;&gt;S035</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M546.53,-2313.61C546.75,-2305.87 547.01,-2296.73 547.25,-2288.3"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="549.35,-2288.38 547.42,-2282.33 545.15,-2288.26 549.35,-2288.38"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M546.53,-2313.61C546.75,-2305.67 547.02,-2296.25 547.27,-2287.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="549.36,-2287.9 547.43,-2281.84 545.16,-2287.78 549.36,-2287.9"/>
 </g>
 <!-- S036 -->
 <g id="node39" class="node">
 <title>S036</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M454.88,-2207C454.88,-2207 387.12,-2207 387.12,-2207 381.12,-2207 375.12,-2201 375.12,-2195 375.12,-2195 375.12,-2183 375.12,-2183 375.12,-2177 381.12,-2171 387.12,-2171 387.12,-2171 454.88,-2171 454.88,-2171 460.88,-2171 466.88,-2177 466.88,-2183 466.88,-2183 466.88,-2195 466.88,-2195 466.88,-2201 460.88,-2207 454.88,-2207"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M454.88,-2207C454.88,-2207 387.12,-2207 387.12,-2207 381.12,-2207 375.12,-2201 375.12,-2195 375.12,-2195 375.12,-2183 375.12,-2183 375.12,-2177 381.12,-2171 387.12,-2171 387.12,-2171 454.88,-2171 454.88,-2171 460.88,-2171 466.88,-2177 466.88,-2183 466.88,-2183 466.88,-2195 466.88,-2195 466.88,-2201 460.88,-2207 454.88,-2207"/>
 <text xml:space="preserve" text-anchor="middle" x="421" y="-2190.75" font-family="Helvetica,sans-Serif" font-size="10.00">S036</text>
 <text xml:space="preserve" text-anchor="middle" x="421" y="-2179.5" font-family="Helvetica,sans-Serif" font-size="10.00">Glyph id validation</text>
 </g>
@@ -557,8 +557,8 @@
 <!-- S035&#45;&gt;S036 -->
 <g id="edge37" class="edge">
 <title>S035&#45;&gt;S036</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M513.63,-2241.06C497.68,-2232.26 478.59,-2221.74 461.9,-2212.54"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="463.25,-2210.89 456.99,-2209.83 461.23,-2214.57 463.25,-2210.89"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M514.63,-2241.61C498.41,-2232.67 478.78,-2221.85 461.69,-2212.43"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="462.89,-2210.69 456.62,-2209.63 460.86,-2214.37 462.89,-2210.69"/>
 </g>
 <!-- S037 -->
 <g id="node40" class="node">
