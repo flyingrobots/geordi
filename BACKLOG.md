@@ -86,6 +86,7 @@ Acceptance criteria:
 ---
 
 ### Define the strict positioned glyph-run profile
+
 **Priority**: P0
 **Source**: v0 design laws,
 [`docs/design/2026-05-strict-text-font-profile.md`](./docs/design/2026-05-strict-text-font-profile.md),
