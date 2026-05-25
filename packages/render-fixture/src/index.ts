@@ -32,6 +32,8 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const ASCII_PLY_INTEGER_TOKEN_PATTERN = /^(?:0|[1-9][0-9]*)$/u;
 const ASCII_PLY_NUMBER_TOKEN_PATTERN =
   /^[+-]?(?:(?:[0-9]+(?:\.[0-9]*)?)|(?:\.[0-9]+))(?:[eE][+-]?[0-9]+)?$/u;
+const FONT_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
+const GIT_COMMIT_HEX_LENGTH = 40 as const;
 
 export interface RenderFixtureManifestIssue extends JsonObject {
   readonly path: string;
@@ -309,6 +311,16 @@ export class RenderFixtureInvalidMeshFixtureManifestError extends Error {
   }
 }
 
+export class RenderFixtureInvalidFontPackManifestError extends Error {
+  public readonly issues: readonly RenderFixtureFontPackManifestIssue[];
+
+  constructor(issues: readonly RenderFixtureFontPackManifestIssue[]) {
+    super('Invalid render fixture font pack manifest');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
+
 export class RenderFixturePlyHeaderError extends Error {
   public readonly lineNumber: number;
 
@@ -425,6 +437,13 @@ export function parseRenderFixtureMeshFixtureManifest(
   return assertRenderFixtureMeshFixtureManifest(jsonPort.parse(source));
 }
 
+export function parseRenderFixtureFontPackManifest(
+  source: string,
+  jsonPort: JsonPort = canonicalJsonPort,
+): RenderFixtureFontPackManifest {
+  return assertRenderFixtureFontPackManifest(jsonPort.parse(source));
+}
+
 export function assertRenderFixtureManifest(
   value: JsonValue | undefined,
 ): RenderFixtureManifest {
@@ -458,6 +477,17 @@ export function assertRenderFixtureMeshFixtureManifest(
   throw new RenderFixtureInvalidMeshFixtureManifestError(result.issues);
 }
 
+export function assertRenderFixtureFontPackManifest(
+  value: JsonValue | undefined,
+): RenderFixtureFontPackManifest {
+  const result = validateRenderFixtureFontPackManifest(value);
+  if (result.ok && isJsonObject(value)) {
+    return value as RenderFixtureFontPackManifest;
+  }
+
+  throw new RenderFixtureInvalidFontPackManifestError(result.issues);
+}
+
 export function isRenderFixtureManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureManifest {
@@ -474,6 +504,12 @@ export function isRenderFixtureMeshFixtureManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureMeshFixtureManifest {
   return validateRenderFixtureMeshFixtureManifest(value).ok;
+}
+
+export function isRenderFixtureFontPackManifest(
+  value: JsonValue | undefined,
+): value is RenderFixtureFontPackManifest {
+  return validateRenderFixtureFontPackManifest(value).ok;
 }
 
 export function validateRenderFixtureManifest(
@@ -551,6 +587,28 @@ export function validateRenderFixtureMeshAssetManifest(
     'Face property',
     issues,
   );
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function validateRenderFixtureFontPackManifest(
+  value: JsonValue | undefined,
+): RenderFixtureFontPackManifestValidationResult {
+  const issues: RenderFixtureFontPackManifestIssue[] = [];
+
+  if (!isJsonObject(value)) {
+    pushIssue(issues, '$', 'Font pack manifest must be an object');
+    return { ok: false, issues };
+  }
+
+  validateLiteral(
+    property(value, 'fontPackVersion'),
+    RENDER_FIXTURE_FONT_PACK_VERSION,
+    '$.fontPackVersion',
+    'Font pack version',
+    issues,
+  );
+  validateFontFaces(property(value, 'fonts'), '$.fonts', issues);
 
   return { ok: issues.length === 0, issues };
 }
@@ -1039,6 +1097,122 @@ function validateMeshAssetSource(
     property(value, 'attribution'),
     `${path}.attribution`,
     'Mesh asset attribution',
+    issues,
+  );
+}
+
+function validateFontFaces(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureFontPackManifestIssue[],
+): void {
+  if (!isJsonArray(value)) {
+    pushIssue(issues, path, 'Font pack fonts must be an array');
+    return;
+  }
+
+  if (value.length === 0) {
+    pushIssue(issues, path, 'Font pack fonts must not be empty');
+    return;
+  }
+
+  const seen = new Set<string>();
+  for (let index = 0; index < value.length; index++) {
+    const item = value[index];
+    const itemPath = `${path}[${index}]`;
+    validateFontFace(item, itemPath, issues);
+    if (!isJsonObject(item)) {
+      continue;
+    }
+
+    const id = property(item, 'id');
+    if (typeof id !== 'string') {
+      continue;
+    }
+
+    if (seen.has(id)) {
+      pushIssue(issues, `${itemPath}.id`, 'Font id must not be duplicated');
+    }
+    seen.add(id);
+  }
+}
+
+function validateFontFace(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureFontPackManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Font face must be an object');
+    return;
+  }
+
+  validateFontId(property(value, 'id'), `${path}.id`, issues);
+  validateLiteral(
+    property(value, 'format'),
+    RENDER_FIXTURE_FONT_FORMAT_TTF,
+    `${path}.format`,
+    'Font format',
+    issues,
+  );
+  validateRelativePath(property(value, 'path'), `${path}.path`, 'Font path', issues);
+  validateArtifactHash(property(value, 'sha256'), `${path}.sha256`, issues);
+  validateNonNegativeInteger(property(value, 'faceIndex'), `${path}.faceIndex`, 'Face index', issues);
+  validateNonEmptyString(property(value, 'familyName'), `${path}.familyName`, 'Font family name', issues);
+  validateNonEmptyString(property(value, 'styleName'), `${path}.styleName`, 'Font style name', issues);
+  validateFontWeight(property(value, 'weight'), `${path}.weight`, issues);
+  validateFontLicense(property(value, 'license'), `${path}.license`, issues);
+  validateFontSource(property(value, 'source'), `${path}.source`, issues);
+}
+
+function validateFontLicense(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureFontPackManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Font license must be an object');
+    return;
+  }
+
+  validateNonEmptyString(property(value, 'name'), `${path}.name`, 'Font license name', issues);
+  validateRelativePath(property(value, 'path'), `${path}.path`, 'Font license path', issues);
+  validateBoolean(
+    property(value, 'redistributionAllowed'),
+    `${path}.redistributionAllowed`,
+    'Font license redistribution allowed',
+    issues,
+  );
+  validateArtifactHash(property(value, 'sha256'), `${path}.sha256`, issues);
+  validateReservedFontNames(property(value, 'reservedFontNames'), `${path}.reservedFontNames`, issues);
+}
+
+function validateFontSource(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureFontPackManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Font source must be an object');
+    return;
+  }
+
+  validateNonEmptyString(property(value, 'repository'), `${path}.repository`, 'Font source repository', issues);
+  validateGitCommit(property(value, 'commit'), `${path}.commit`, issues);
+  validateNonEmptyString(property(value, 'path'), `${path}.path`, 'Font source path', issues);
+  validateNonEmptyString(
+    property(value, 'licensePath'),
+    `${path}.licensePath`,
+    'Font source license path',
+    issues,
+  );
+  validateArtifactHash(property(value, 'fontSha256'), `${path}.fontSha256`, issues);
+  validateArtifactHash(property(value, 'licenseSha256'), `${path}.licenseSha256`, issues);
+  validateLiteral(
+    property(value, 'licenseNormalization'),
+    RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE,
+    `${path}.licenseNormalization`,
+    'Font source license normalization',
     issues,
   );
 }
@@ -1615,6 +1789,85 @@ function validatePositiveInteger(
 ): void {
   if (positiveInteger(value) === undefined) {
     pushIssue(issues, path, `${label} must be a positive integer`);
+  }
+}
+
+function validateNonNegativeInteger(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (nonNegativeInteger(value) === undefined) {
+    pushIssue(issues, path, `${label} must be a non-negative integer`);
+  }
+}
+
+function validateBoolean(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (typeof value !== 'boolean') {
+    pushIssue(issues, path, `${label} must be a boolean`);
+  }
+}
+
+function validateFontId(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (typeof value !== 'string' || !FONT_ID_PATTERN.test(value)) {
+    pushIssue(issues, path, 'Font id must be lowercase kebab-case ASCII');
+  }
+}
+
+function validateFontWeight(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  const weight = positiveInteger(value);
+  if (weight === undefined || weight > 1000) {
+    pushIssue(issues, path, 'Font weight must be an integer from 1 through 1000');
+  }
+}
+
+function validateReservedFontNames(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (!isJsonArray(value)) {
+    pushIssue(issues, path, 'Reserved font names must be an array');
+    return;
+  }
+
+  const seen = new Set<string>();
+  for (let index = 0; index < value.length; index++) {
+    const name = value[index];
+    const itemPath = `${path}[${index}]`;
+    if (typeof name !== 'string' || name.length === 0) {
+      pushIssue(issues, itemPath, 'Reserved font name must be a non-empty string');
+      continue;
+    }
+
+    if (seen.has(name)) {
+      pushIssue(issues, itemPath, 'Reserved font name must not be duplicated');
+    }
+    seen.add(name);
+  }
+}
+
+function validateGitCommit(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (typeof value !== 'string' || value.length !== GIT_COMMIT_HEX_LENGTH || !isLowercaseHex(value)) {
+    pushIssue(issues, path, 'Font source commit must be a lowercase full git commit hash');
   }
 }
 

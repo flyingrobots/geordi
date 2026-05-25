@@ -10,25 +10,32 @@ import {
 } from '@flyingrobots/geordi-core';
 import {
   assertRenderFixtureArtifact,
+  assertRenderFixtureFontPackManifest,
   assertRenderFixtureManifest,
   assertRenderFixtureMeshAssetManifest,
   assertRenderFixtureMeshFixtureManifest,
   assertRenderFixturePixelProbe,
   assertRenderFixturePixelProbes,
   createRenderFixtureMeshPlaybackFrame,
+  isRenderFixtureFontPackManifest,
   isRenderFixtureMeshAssetManifest,
   isRenderFixtureMeshFixtureManifest,
   isRenderFixtureManifest,
   parseRenderFixtureAsciiPlyTriangleMesh,
+  parseRenderFixtureFontPackManifest,
   parseRenderFixtureMeshAssetManifest,
   parseRenderFixtureMeshFixtureManifest,
   parseRenderFixtureManifest,
   RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE,
+  RENDER_FIXTURE_FONT_FORMAT_TTF,
+  RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE,
+  RENDER_FIXTURE_FONT_PACK_VERSION,
   RENDER_FIXTURE_MESH_FIXTURE_VERSION,
   RENDER_FIXTURE_MESH_ASSET_VERSION,
   RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
   RENDER_FIXTURE_VERSION,
   RenderFixtureArtifactValidationError,
+  RenderFixtureInvalidFontPackManifestError,
   RenderFixtureInvalidMeshAssetManifestError,
   RenderFixtureInvalidMeshFixtureManifestError,
   RenderFixtureInvalidManifestError,
@@ -41,9 +48,11 @@ import {
   RenderFixturePixelProbeError,
   renderFixtureRgbaFromBytes,
   validateRenderFixtureArtifact,
+  validateRenderFixtureFontPackManifest,
   validateRenderFixtureMeshAssetManifest,
   validateRenderFixtureMeshFixtureManifest,
   validateRenderFixtureManifest,
+  type RenderFixtureFontPackManifest,
   type RenderFixtureManifest,
   type RenderFixtureMeshAssetManifest,
   type RenderFixtureMeshFixtureManifest,
@@ -138,6 +147,43 @@ function makeMeshAssetManifest(): RenderFixtureMeshAssetManifest {
   };
 }
 
+function makeFontPackManifest(): RenderFixtureFontPackManifest {
+  return {
+    fontPackVersion: RENDER_FIXTURE_FONT_PACK_VERSION,
+    fonts: [
+      {
+        faceIndex: 0,
+        familyName: 'Lato',
+        format: RENDER_FIXTURE_FONT_FORMAT_TTF,
+        id: 'lato-regular',
+        license: {
+          name: 'SIL Open Font License 1.1',
+          path: 'fixtures/render-everywhere/assets/fonts/lato/OFL.txt',
+          redistributionAllowed: true,
+          reservedFontNames: ['Lato'],
+          sha256: 'sha256:19e7e97ffc31e58fa0e54919b8189b2ddcc6fd75539f387e2822b107b6a51423',
+        },
+        path: 'fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf',
+        sha256: 'sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251',
+        source: {
+          commit: 'c5b52261e8fde2d3b2592fa9d26ac525939c5e4c',
+          fontSha256:
+            'sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251',
+          licenseNormalization:
+            RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE,
+          licensePath: 'ofl/lato/OFL.txt',
+          licenseSha256:
+            'sha256:74ba064d03f1f1c4a952da936c3eb71866c34404916734de3cae73b34357e59e',
+          path: 'ofl/lato/Lato-Regular.ttf',
+          repository: 'https://github.com/google/fonts',
+        },
+        styleName: 'Regular',
+        weight: 400,
+      },
+    ],
+  };
+}
+
 function makeMeshFixtureManifest(): RenderFixtureMeshFixtureManifest {
   return {
     assetManifestPath: 'bunny.mesh.json',
@@ -214,6 +260,16 @@ function bunnyMeshFixtureManifestSource(): string {
   );
 }
 
+function fontPackManifestSource(): string {
+  return readFileSync(
+    new URL(
+      '../../../fixtures/render-everywhere/assets/fonts/font-pack.geordi.json',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
 function bunnyPlySource(): string {
   return readFileSync(
     new URL(
@@ -229,6 +285,10 @@ class RenderFixtureTestError extends Error {
     super(message);
     this.name = new.target.name;
   }
+}
+
+function requireFirstFont(manifest: RenderFixtureFontPackManifest): RenderFixtureFontPackManifest['fonts'][number] {
+  return manifest.fonts[0];
 }
 
 function makeProbe(): RenderFixturePixelProbe {
@@ -552,6 +612,121 @@ describe('render fixture mesh asset manifest validation', () => {
         ),
       ),
     ).toThrow(RenderFixtureInvalidMeshAssetManifestError);
+  });
+});
+
+describe('render fixture font pack manifest validation', () => {
+  it('accepts the committed font pack manifest', () => {
+    const manifest = parseRenderFixtureFontPackManifest(fontPackManifestSource());
+
+    expect(manifest.fontPackVersion).toBe(RENDER_FIXTURE_FONT_PACK_VERSION);
+    expect(manifest.fonts.map((font) => font.id)).toEqual(['lato-regular']);
+    expect(manifest.fonts[0]?.sha256).toBe(
+      'sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251',
+    );
+  });
+
+  it('accepts a typed valid font pack manifest object', () => {
+    const manifest = makeFontPackManifest();
+
+    expect(validateRenderFixtureFontPackManifest(manifest)).toEqual({
+      ok: true,
+      issues: [],
+    });
+    expect(isRenderFixtureFontPackManifest(manifest)).toBe(true);
+    expect(assertRenderFixtureFontPackManifest(manifest)).toBe(manifest);
+  });
+
+  it('parses font pack manifests through the canonical JSON port', () => {
+    const source = canonicalJsonPort.stringify(makeFontPackManifest(), { space: 2 });
+
+    const parsed = parseRenderFixtureFontPackManifest(source);
+
+    expect(parsed.fonts[0]?.familyName).toBe('Lato');
+  });
+
+  it('rejects invalid font pack metadata', () => {
+    const baseFont = requireFirstFont(makeFontPackManifest());
+    const invalid: JsonValue = {
+      ...makeFontPackManifest(),
+      fontPackVersion: 'geordi-font-pack/2',
+      fonts: [
+        {
+          ...baseFont,
+          faceIndex: -1,
+          format: 'woff2',
+          id: 'Lato Regular',
+          license: {
+            ...baseFont.license,
+            path: '/tmp/OFL.txt',
+            redistributionAllowed: 'yes',
+            reservedFontNames: ['Lato', 'Lato', ''],
+            sha256: 'sha256:nope',
+          },
+          path: 'https://example.test/font.ttf',
+          sha256: 'sha256:nope',
+          source: {
+            ...baseFont.source,
+            commit: 'not-a-commit',
+            fontSha256: 'sha256:nope',
+            licenseNormalization: 'none',
+            licenseSha256: 'sha256:nope',
+            repository: '',
+          },
+          weight: 1001,
+        },
+      ],
+    };
+
+    const result = validateRenderFixtureFontPackManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual([
+      '$.fontPackVersion',
+      '$.fonts[0].id',
+      '$.fonts[0].format',
+      '$.fonts[0].path',
+      '$.fonts[0].sha256',
+      '$.fonts[0].faceIndex',
+      '$.fonts[0].weight',
+      '$.fonts[0].license.path',
+      '$.fonts[0].license.redistributionAllowed',
+      '$.fonts[0].license.sha256',
+      '$.fonts[0].license.reservedFontNames[1]',
+      '$.fonts[0].license.reservedFontNames[2]',
+      '$.fonts[0].source.repository',
+      '$.fonts[0].source.commit',
+      '$.fonts[0].source.fontSha256',
+      '$.fonts[0].source.licenseSha256',
+      '$.fonts[0].source.licenseNormalization',
+    ]);
+  });
+
+  it('rejects duplicate font ids', () => {
+    const firstFont = requireFirstFont(makeFontPackManifest());
+    const invalid: JsonValue = {
+      fontPackVersion: RENDER_FIXTURE_FONT_PACK_VERSION,
+      fonts: [firstFont, firstFont],
+    };
+
+    const result = validateRenderFixtureFontPackManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual(['$.fonts[1].id']);
+  });
+
+  it('throws a custom error for invalid font pack manifests', () => {
+    expect(() =>
+      parseRenderFixtureFontPackManifest(
+        canonicalJsonPort.stringify(
+          {
+            ...makeFontPackManifest(),
+            fonts: [],
+          },
+          { space: 2 },
+        ),
+      ),
+    ).toThrow(RenderFixtureInvalidFontPackManifestError);
   });
 });
 
