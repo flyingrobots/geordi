@@ -1,4 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
@@ -190,5 +192,58 @@ describe('Node render fixture hash helpers', () => {
         repositoryRoot(),
       ),
     ).toThrow(RenderFixtureFontPackAssetReadError);
+  });
+
+  it('rejects font pack asset symlinks that resolve outside the repository root', () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), 'geordi-font-pack-root-'));
+    const externalRoot = mkdtempSync(join(tmpdir(), 'geordi-font-pack-external-'));
+    try {
+      const externalFontPath = join(externalRoot, 'external.ttf');
+      writeFileSync(externalFontPath, new Uint8Array([1, 2, 3]));
+      symlinkSync(externalFontPath, join(tempRoot, 'font.ttf'));
+      writeFileSync(join(tempRoot, 'license.txt'), 'license');
+
+      expect(() =>
+        assertRenderFixtureFontPackHashes(
+          {
+            fontPackVersion: 'geordi-font-pack/1',
+            fonts: [
+              {
+                faceIndex: 0,
+                familyName: 'Lato',
+                format: 'ttf',
+                id: 'lato-regular',
+                license: {
+                  name: 'SIL Open Font License 1.1',
+                  path: 'license.txt',
+                  redistributionAllowed: true,
+                  reservedFontNames: ['Lato'],
+                  sha256: renderFixtureSha256FromBytes(readFileSync(join(tempRoot, 'license.txt'))),
+                },
+                path: 'font.ttf',
+                sha256: renderFixtureSha256FromBytes(readFileSync(externalFontPath)),
+                source: {
+                  commit: 'c5b52261e8fde2d3b2592fa9d26ac525939c5e4c',
+                  fontSha256: renderFixtureSha256FromBytes(readFileSync(externalFontPath)),
+                  licenseNormalization: 'trim-trailing-ascii-whitespace/1',
+                  licensePath: 'ofl/lato/OFL.txt',
+                  licenseSha256: renderFixtureSha256FromBytes(
+                    readFileSync(join(tempRoot, 'license.txt')),
+                  ),
+                  path: 'ofl/lato/Lato-Regular.ttf',
+                  repository: 'https://github.com/google/fonts',
+                },
+                styleName: 'Regular',
+                weight: 400,
+              },
+            ],
+          },
+          tempRoot,
+        ),
+      ).toThrow(RenderFixtureFontPackAssetPathError);
+    } finally {
+      rmSync(tempRoot, { force: true, recursive: true });
+      rmSync(externalRoot, { force: true, recursive: true });
+    }
   });
 });

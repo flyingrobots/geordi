@@ -47,6 +47,8 @@ pub const GEORDI_TEXT_FEATURE_LINE_BOXES: &str = "text.lineBoxes";
 /// Prefix used by Geordi SHA-256 content identity strings.
 pub const GEORDI_SHA256_PREFIX: &str = "sha256:";
 
+const GEORDI_JSON_SAFE_INTEGER_MAX: i64 = 9_007_199_254_740_991;
+
 const GEORDI_KNOWN_FEATURES: &[&str] = &[
     GEORDI_CORE_PROFILE,
     "layout.resolved",
@@ -883,15 +885,15 @@ pub fn validate_geordi_font_pack_hashes(
 ///
 /// # Errors
 ///
-/// Returns `GeordiStrictTextFixtureValidationError` when positioned glyph ids violate the strict
-/// glyph-run contract.
+/// Returns `GeordiStrictTextFixtureValidationError` when strict text line boxes or positioned glyph
+/// fields violate the fixed-point glyph-run contract.
 pub fn validate_geordi_strict_text_fixture_manifest(
     manifest: &GeordiStrictTextFixtureManifest,
 ) -> Result<(), GeordiStrictTextFixtureValidationError> {
     let mut issues = Vec::new();
 
-    validate_strict_text_glyph_ids(manifest, &mut issues);
-    validate_strict_text_glyph_advances(manifest, &mut issues);
+    validate_strict_text_line_boxes(manifest, &mut issues);
+    validate_strict_text_glyphs(manifest, &mut issues);
 
     if issues.is_empty() {
         Ok(())
@@ -937,7 +939,9 @@ fn validate_geordi_font_pack_asset_hash(
         ));
     }
 
-    let bytes = fs::read(repository_root.join(fixture_path))
+    let target_path = resolve_fixture_local_path(repository_root, font_id, kind, fixture_path)?;
+
+    let bytes = fs::read(target_path)
         .map_err(|error| GeordiFontPackHashError::read(font_id, kind, fixture_path, error))?;
     let actual = geordi_sha256_from_bytes(&bytes);
     if actual != expected {
@@ -958,37 +962,115 @@ fn validate_geordi_font_pack_asset_hash(
     })
 }
 
-fn validate_strict_text_glyph_ids(
+fn validate_strict_text_line_boxes(
+    manifest: &GeordiStrictTextFixtureManifest,
+    issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
+) {
+    for (line_box_index, line_box) in manifest.line_boxes.iter().enumerate() {
+        let line_box_path = format!("$.lineBoxes[{line_box_index}]");
+        validate_strict_text_safe_integer(
+            line_box.x,
+            &format!("{line_box_path}.x"),
+            "Strict text line box x",
+            issues,
+        );
+        validate_strict_text_safe_integer(
+            line_box.y,
+            &format!("{line_box_path}.y"),
+            "Strict text line box y",
+            issues,
+        );
+        validate_strict_text_safe_non_negative_integer(
+            line_box.width,
+            &format!("{line_box_path}.width"),
+            "Strict text line box width",
+            issues,
+        );
+        validate_strict_text_safe_non_negative_integer(
+            line_box.height,
+            &format!("{line_box_path}.height"),
+            "Strict text line box height",
+            issues,
+        );
+        validate_strict_text_safe_integer(
+            line_box.baseline_y,
+            &format!("{line_box_path}.baselineY"),
+            "Strict text line box baseline y",
+            issues,
+        );
+    }
+}
+
+fn validate_strict_text_glyphs(
     manifest: &GeordiStrictTextFixtureManifest,
     issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
 ) {
     for (run_index, run) in manifest.glyph_runs.iter().enumerate() {
         for (glyph_index, glyph) in run.glyphs.iter().enumerate() {
-            if glyph.glyph_id < 0 {
-                push_strict_text_issue(
-                    issues,
-                    &format!("$.glyphRuns[{run_index}].glyphs[{glyph_index}].glyphId"),
-                    "Strict text glyph id must be a non-negative integer",
-                );
-            }
+            let glyph_path = format!("$.glyphRuns[{run_index}].glyphs[{glyph_index}]");
+            validate_strict_text_safe_non_negative_integer(
+                glyph.glyph_id,
+                &format!("{glyph_path}.glyphId"),
+                "Strict text glyph id",
+                issues,
+            );
+            validate_strict_text_safe_integer(
+                glyph.x,
+                &format!("{glyph_path}.x"),
+                "Strict text glyph x",
+                issues,
+            );
+            validate_strict_text_safe_integer(
+                glyph.y,
+                &format!("{glyph_path}.y"),
+                "Strict text glyph y",
+                issues,
+            );
+            validate_strict_text_safe_integer(
+                glyph.x_offset,
+                &format!("{glyph_path}.xOffset"),
+                "Strict text glyph x offset",
+                issues,
+            );
+            validate_strict_text_safe_integer(
+                glyph.y_offset,
+                &format!("{glyph_path}.yOffset"),
+                "Strict text glyph y offset",
+                issues,
+            );
+            validate_strict_text_safe_non_negative_integer(
+                glyph.advance,
+                &format!("{glyph_path}.advance"),
+                "Strict text glyph advance",
+                issues,
+            );
         }
     }
 }
 
-fn validate_strict_text_glyph_advances(
-    manifest: &GeordiStrictTextFixtureManifest,
+fn validate_strict_text_safe_integer(
+    value: i64,
+    path: &str,
+    label: &str,
     issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
 ) {
-    for (run_index, run) in manifest.glyph_runs.iter().enumerate() {
-        for (glyph_index, glyph) in run.glyphs.iter().enumerate() {
-            if glyph.advance < 0 {
-                push_strict_text_issue(
-                    issues,
-                    &format!("$.glyphRuns[{run_index}].glyphs[{glyph_index}].advance"),
-                    "Strict text glyph advance must be a non-negative integer",
-                );
-            }
-        }
+    if !(-GEORDI_JSON_SAFE_INTEGER_MAX..=GEORDI_JSON_SAFE_INTEGER_MAX).contains(&value) {
+        push_strict_text_issue(issues, path, &format!("{label} must be a safe integer"));
+    }
+}
+
+fn validate_strict_text_safe_non_negative_integer(
+    value: i64,
+    path: &str,
+    label: &str,
+    issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
+) {
+    if !(0..=GEORDI_JSON_SAFE_INTEGER_MAX).contains(&value) {
+        push_strict_text_issue(
+            issues,
+            path,
+            &format!("{label} must be a safe non-negative integer"),
+        );
     }
 }
 
@@ -1006,6 +1088,41 @@ fn is_fixture_local_path(path: &str) -> bool {
         && path
             .components()
             .all(|component| matches!(component, Component::Normal(_) | Component::CurDir))
+}
+
+fn resolve_fixture_local_path(
+    repository_root: &Path,
+    font_id: &str,
+    kind: GeordiFontPackHashArtifactKind,
+    fixture_path: &str,
+) -> Result<PathBuf, GeordiFontPackHashError> {
+    let lexical_path = repository_root.join(fixture_path);
+    if !path_stays_inside_root(repository_root, &lexical_path) {
+        return Err(GeordiFontPackHashError::escaped_path(
+            font_id,
+            kind,
+            fixture_path,
+        ));
+    }
+
+    let canonical_root = fs::canonicalize(repository_root)
+        .map_err(|error| GeordiFontPackHashError::read(font_id, kind, fixture_path, error))?;
+    let canonical_path = fs::canonicalize(&lexical_path)
+        .map_err(|error| GeordiFontPackHashError::read(font_id, kind, fixture_path, error))?;
+    if !path_stays_inside_root(&canonical_root, &canonical_path) {
+        return Err(GeordiFontPackHashError::escaped_path(
+            font_id,
+            kind,
+            fixture_path,
+        ));
+    }
+
+    Ok(canonical_path)
+}
+
+fn path_stays_inside_root(root: &Path, path: &Path) -> bool {
+    path.strip_prefix(root)
+        .is_ok_and(|relative| !relative.as_os_str().is_empty())
 }
 
 fn validate_version(ir: &GeordiIr, issues: &mut Vec<GeordiIrValidationIssue>) {
@@ -1183,13 +1300,14 @@ fn push_issue(issues: &mut Vec<GeordiIrValidationIssue>, path: &str, message: &s
 #[cfg(test)]
 mod tests {
     use super::{
-        GeordiFontPackHashArtifactKind, GeordiFontPackHashError, GeordiFontPackLoadError,
-        GeordiFontPackParseError, GeordiIrLoadError, GeordiIrParseError, GeordiIrValidationError,
-        GeordiStrictTextFixtureParseError, GeordiStrictTextFixtureValidationError,
-        geordi_sha256_from_bytes, load_geordi_font_pack_manifest, load_geordi_ir,
-        parse_geordi_font_pack_manifest, parse_geordi_ir,
-        parse_geordi_strict_text_fixture_manifest, validate_geordi_font_pack_hashes,
-        validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
+        GEORDI_JSON_SAFE_INTEGER_MAX, GeordiFontPackHashArtifactKind, GeordiFontPackHashError,
+        GeordiFontPackLoadError, GeordiFontPackParseError, GeordiIrLoadError, GeordiIrParseError,
+        GeordiIrValidationError, GeordiStrictTextFixtureParseError,
+        GeordiStrictTextFixtureValidationError, geordi_sha256_from_bytes,
+        load_geordi_font_pack_manifest, load_geordi_ir, parse_geordi_font_pack_manifest,
+        parse_geordi_ir, parse_geordi_strict_text_fixture_manifest,
+        validate_geordi_font_pack_hashes, validate_geordi_ir,
+        validate_geordi_strict_text_fixture_manifest,
     };
     use std::error::Error;
     use std::fmt::{Display, Formatter};
@@ -1200,6 +1318,7 @@ mod tests {
         FontPackLoad(GeordiFontPackLoadError),
         FontPackHash(GeordiFontPackHashError),
         FontPackParse(GeordiFontPackParseError),
+        Io(std::io::Error),
         Load(GeordiIrLoadError),
         Parse(GeordiIrParseError),
         ExpectedFailure,
@@ -1220,6 +1339,7 @@ mod tests {
                 Self::FontPackLoad(source) => Some(source),
                 Self::FontPackHash(source) => Some(source),
                 Self::FontPackParse(source) => Some(source),
+                Self::Io(source) => Some(source),
                 Self::Load(source) => Some(source),
                 Self::Parse(source) => Some(source),
                 Self::ExpectedFailure => None,
@@ -1233,6 +1353,12 @@ mod tests {
     impl From<GeordiIrLoadError> for GeordiIrTestError {
         fn from(error: GeordiIrLoadError) -> Self {
             Self::Load(error)
+        }
+    }
+
+    impl From<std::io::Error> for GeordiIrTestError {
+        fn from(error: std::io::Error) -> Self {
+            Self::Io(error)
         }
     }
 
@@ -1388,6 +1514,46 @@ mod tests {
         assert_eq!(escaped.path(), "../Lato-Regular.ttf");
 
         Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn rejects_font_pack_hash_symlinks_that_escape_repository_root() -> Result<(), GeordiIrTestError>
+    {
+        let temp_root = unique_temp_path("geordi-font-pack-root");
+        let external_root = unique_temp_path("geordi-font-pack-external");
+        let result = (|| -> Result<(), GeordiIrTestError> {
+            std::fs::create_dir_all(&temp_root)?;
+            std::fs::create_dir_all(&external_root)?;
+
+            let external_font_path = external_root.join("external.ttf");
+            let license_path = temp_root.join("license.txt");
+            std::fs::write(&external_font_path, [1_u8, 2, 3])?;
+            std::fs::write(&license_path, b"license")?;
+            std::os::unix::fs::symlink(&external_font_path, temp_root.join("font.ttf"))?;
+
+            let mut manifest =
+                load_geordi_font_pack_manifest(fixture_path("assets/fonts/font-pack.geordi.json"))?;
+            manifest.fonts[0].path = "font.ttf".to_owned();
+            manifest.fonts[0].sha256 =
+                geordi_sha256_from_bytes(&std::fs::read(&external_font_path)?);
+            manifest.fonts[0].license.path = "license.txt".to_owned();
+            manifest.fonts[0].license.sha256 =
+                geordi_sha256_from_bytes(&std::fs::read(&license_path)?);
+
+            let error =
+                font_pack_hash_error(validate_geordi_font_pack_hashes(&manifest, &temp_root))?;
+
+            assert_eq!(error.font_id(), "lato-regular");
+            assert_eq!(error.kind(), GeordiFontPackHashArtifactKind::Font);
+            assert_eq!(error.path(), "font.ttf");
+            Ok(())
+        })();
+
+        drop(std::fs::remove_dir_all(&temp_root));
+        drop(std::fs::remove_dir_all(&external_root));
+
+        result
     }
 
     #[test]
@@ -1555,6 +1721,50 @@ mod tests {
             strict_text_validation_paths(validate_geordi_strict_text_fixture_manifest(&manifest));
 
         assert_paths_include(&paths, "$.glyphRuns[0].glyphs[0].glyphId");
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_unsafe_strict_text_glyph_integer_values() -> Result<(), GeordiIrTestError> {
+        let mut manifest = parse_geordi_strict_text_fixture_manifest(strict_text_fixture_source())?;
+        let unsafe_value = GEORDI_JSON_SAFE_INTEGER_MAX + 1;
+        manifest.glyph_runs[0].glyphs[0].glyph_id = unsafe_value;
+        manifest.glyph_runs[0].glyphs[0].x = unsafe_value;
+        manifest.glyph_runs[0].glyphs[0].y = -unsafe_value;
+        manifest.glyph_runs[0].glyphs[0].x_offset = unsafe_value;
+        manifest.glyph_runs[0].glyphs[0].y_offset = -unsafe_value;
+        manifest.glyph_runs[0].glyphs[0].advance = unsafe_value;
+
+        let paths =
+            strict_text_validation_paths(validate_geordi_strict_text_fixture_manifest(&manifest));
+
+        assert_paths_include(&paths, "$.glyphRuns[0].glyphs[0].glyphId");
+        assert_paths_include(&paths, "$.glyphRuns[0].glyphs[0].x");
+        assert_paths_include(&paths, "$.glyphRuns[0].glyphs[0].y");
+        assert_paths_include(&paths, "$.glyphRuns[0].glyphs[0].xOffset");
+        assert_paths_include(&paths, "$.glyphRuns[0].glyphs[0].yOffset");
+        assert_paths_include(&paths, "$.glyphRuns[0].glyphs[0].advance");
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_unsafe_or_negative_strict_text_line_box_values() -> Result<(), GeordiIrTestError> {
+        let mut manifest = parse_geordi_strict_text_fixture_manifest(strict_text_fixture_source())?;
+        let unsafe_value = GEORDI_JSON_SAFE_INTEGER_MAX + 1;
+        manifest.line_boxes[0].x = unsafe_value;
+        manifest.line_boxes[0].y = -unsafe_value;
+        manifest.line_boxes[0].width = -1;
+        manifest.line_boxes[0].height = unsafe_value;
+        manifest.line_boxes[0].baseline_y = unsafe_value;
+
+        let paths =
+            strict_text_validation_paths(validate_geordi_strict_text_fixture_manifest(&manifest));
+
+        assert_paths_include(&paths, "$.lineBoxes[0].x");
+        assert_paths_include(&paths, "$.lineBoxes[0].y");
+        assert_paths_include(&paths, "$.lineBoxes[0].width");
+        assert_paths_include(&paths, "$.lineBoxes[0].height");
+        assert_paths_include(&paths, "$.lineBoxes[0].baselineY");
         Ok(())
     }
 
@@ -1771,6 +1981,46 @@ mod tests {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../../fixtures/render-everywhere")
             .join(path)
+    }
+
+    fn strict_text_fixture_source() -> &'static str {
+        r#"{
+          "features": ["text.positionedGlyphRuns", "text.fontPack", "text.lineBoxes"],
+          "fixtureVersion": "geordi-strict-text-fixture/1",
+          "fontPackPath": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json",
+          "glyphRuns": [
+            {
+              "fontId": "lato-regular",
+              "glyphs": [
+                {
+                  "advance": 2048,
+                  "glyphId": 43,
+                  "x": 0,
+                  "xOffset": 0,
+                  "y": 3072,
+                  "yOffset": 0
+                }
+              ],
+              "id": "run-0",
+              "lineBoxId": "line-0"
+            }
+          ],
+          "id": "render-everywhere:strict-text:geordi",
+          "lineBoxes": [
+            { "baselineY": 3072, "height": 4096, "id": "line-0", "width": 12288, "x": 0, "y": 0 }
+          ],
+          "positionEncoding": "geordi-fixed-26.6/1",
+          "semanticText": { "affectsPixels": false, "language": "en", "source": "GEORDI" },
+          "textProfile": "geordi-strict-positioned-glyph-run/1"
+        }"#
+    }
+
+    fn unique_temp_path(prefix: &str) -> PathBuf {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |duration| duration.as_nanos());
+
+        std::env::temp_dir().join(format!("{prefix}-{}-{nanos}", std::process::id()))
     }
 
     fn repository_root() -> PathBuf {

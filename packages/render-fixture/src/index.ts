@@ -1449,11 +1449,21 @@ function validateStrictTextLineBox(
   }
 
   validateNonEmptyString(property(value, 'id'), `${path}.id`, 'Strict text line box id', issues);
-  validateFiniteField(property(value, 'x'), `${path}.x`, 'Strict text line box x', issues);
-  validateFiniteField(property(value, 'y'), `${path}.y`, 'Strict text line box y', issues);
-  validateFiniteField(property(value, 'width'), `${path}.width`, 'Strict text line box width', issues);
-  validateFiniteField(property(value, 'height'), `${path}.height`, 'Strict text line box height', issues);
-  validateFiniteField(
+  validateSafeInteger(property(value, 'x'), `${path}.x`, 'Strict text line box x', issues);
+  validateSafeInteger(property(value, 'y'), `${path}.y`, 'Strict text line box y', issues);
+  validateSafeNonNegativeInteger(
+    property(value, 'width'),
+    `${path}.width`,
+    'Strict text line box width',
+    issues,
+  );
+  validateSafeNonNegativeInteger(
+    property(value, 'height'),
+    `${path}.height`,
+    'Strict text line box height',
+    issues,
+  );
+  validateSafeInteger(
     property(value, 'baselineY'),
     `${path}.baselineY`,
     'Strict text line box baseline y',
@@ -2098,17 +2108,6 @@ function validateHexColor(
 ): void {
   if (typeof value !== 'string' || !/^#[0-9a-f]{6}$/u.test(value)) {
     pushIssue(issues, path, `${label} must be lowercase #rrggbb`);
-  }
-}
-
-function validateFiniteField(
-  value: JsonValue | undefined,
-  path: string,
-  label: string,
-  issues: RenderFixtureManifestIssue[],
-): void {
-  if (finiteNumber(value) === undefined) {
-    pushIssue(issues, path, `${label} must be finite`);
   }
 }
 

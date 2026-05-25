@@ -71,12 +71,13 @@ Research notes and source anchors:
 ## Free Slice 2: Proposal
 
 Build a small Geordi Glyph Workbench and matching CLI/API surfaces that make strict text evidence
-visible. The spike should prove four workflows:
+visible. The spike should prove five workflows:
 
 1. Import a font into a verified Geordi font pack.
 2. Inspect glyph inventory and font metadata.
 3. Preview a strict text fixture with overlays.
-4. Diagnose validation and parity failures without reading raw JSON by hand.
+4. Diagnose validation failures without reading raw JSON by hand.
+5. Compare browser/native receipts to diagnose parity failures.
 
 The workbench should treat the existing contract as the source of truth. It must not silently shape,
 fallback, or use platform font APIs as a compliant path. Any “demo convenience” behavior must be

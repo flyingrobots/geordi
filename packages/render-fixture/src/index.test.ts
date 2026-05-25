@@ -903,6 +903,36 @@ describe('render fixture strict text fixture manifest validation', () => {
     ]);
   });
 
+  it('rejects fractional, unsafe, or negative line box fields', () => {
+    const manifest = makeStrictTextFixtureManifest();
+    const lineBox = manifest.lineBoxes[0];
+    const invalid: JsonValue = {
+      ...manifest,
+      lineBoxes: [
+        {
+          ...lineBox,
+          x: 0.5,
+        },
+        {
+          ...lineBox,
+          baselineY: Number.MAX_SAFE_INTEGER + 1,
+          height: -1,
+          width: Number.MAX_SAFE_INTEGER + 1,
+        },
+      ],
+    };
+
+    const result = validateRenderFixtureStrictTextFixtureManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual([
+      '$.lineBoxes[0].x',
+      '$.lineBoxes[1].width',
+      '$.lineBoxes[1].height',
+      '$.lineBoxes[1].baselineY',
+    ]);
+  });
+
   it('throws a custom error for invalid strict text fixture manifests', () => {
     expect(() =>
       parseRenderFixtureStrictTextFixtureManifest(

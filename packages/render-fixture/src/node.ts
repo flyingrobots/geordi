@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 
 import { RENDER_FIXTURE_HASH_PREFIX, type RenderFixtureFontPackManifest } from './index.js';
@@ -126,20 +126,31 @@ function assertRenderFixtureFontPackAssetHash(
 }
 
 function readFixtureLocalBytes(repositoryRoot: string, fixtureLocalPath: string): Uint8Array {
-  const resolvedRoot = resolve(repositoryRoot);
+  const resolvedRoot = realpathSync(resolve(repositoryRoot));
   const resolvedPath = resolve(resolvedRoot, fixtureLocalPath);
-  const pathFromRoot = relative(resolvedRoot, resolvedPath);
-  if (
-    pathFromRoot.length === 0 ||
-    pathFromRoot.startsWith('..') ||
-    isAbsolute(pathFromRoot)
-  ) {
+  if (!isPathWithinRoot(resolvedRoot, resolvedPath)) {
+    throw new RenderFixtureFontPackAssetPathError(fixtureLocalPath);
+  }
+
+  let realPath: string;
+  try {
+    realPath = realpathSync(resolvedPath);
+  } catch {
+    throw new RenderFixtureFontPackAssetReadError(fixtureLocalPath);
+  }
+
+  if (!isPathWithinRoot(resolvedRoot, realPath)) {
     throw new RenderFixtureFontPackAssetPathError(fixtureLocalPath);
   }
 
   try {
-    return readFileSync(resolvedPath);
+    return readFileSync(realPath);
   } catch {
     throw new RenderFixtureFontPackAssetReadError(fixtureLocalPath);
   }
+}
+
+function isPathWithinRoot(resolvedRoot: string, resolvedPath: string): boolean {
+  const pathFromRoot = relative(resolvedRoot, resolvedPath);
+  return pathFromRoot.length > 0 && !pathFromRoot.startsWith('..') && !isAbsolute(pathFromRoot);
 }
