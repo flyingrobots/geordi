@@ -569,6 +569,38 @@ Strict text receipts add text-specific provenance:
 
 If no shaper ran, the receipt must say so. A null or precomputed-fixture value is more honest than pretending HarfBuzz or rustybuzz was part of the pipeline.
 
+Receipt rules:
+
+- `fontPackHash` is the canonical hash of the font pack manifest, not just the raw font file.
+- Each `FontFaceAsset.sha256` still hashes the corresponding font bytes.
+- `glyphRunHash` hashes canonical positioned glyph-run data after JSON normalization.
+- `lineBoxHash` hashes canonical line-box data after JSON normalization.
+- `outlinePackHash` hashes the canonical glyph evidence pack, including bounds, path commands, and
+  winding rule.
+- `textProfile` must match the fixture's declared `textProfile`.
+- `shapingProfile` is `precomputed-fixture/1` until a Geordi-owned text-prep tool produces the
+  glyph run.
+- Receipts must not claim HarfBuzz, rustybuzz, FreeType, browser Canvas, CoreText, DirectWrite, or
+  any other engine unless that engine actually produced the artifact and its configuration is
+  fingerprinted.
+
+Minimum receipt fragment:
+
+~~~json
+{
+  "textProfile": "geordi-strict-positioned-glyph-run/1",
+  "positionEncodingProfile": "geordi-fixed-26.6/1",
+  "fontPackHash": "sha256:...",
+  "glyphRunHash": "sha256:...",
+  "lineBoxHash": "sha256:...",
+  "glyphEvidencePackHash": "sha256:...",
+  "glyphEvidenceKind": "outlinePaths",
+  "shapingProfile": "precomputed-fixture/1"
+}
+~~~
+
+The parity gate compares these fields exactly before looking at pixels.
+
 ## Text Evidence Ladder
 
 ~~~mermaid
