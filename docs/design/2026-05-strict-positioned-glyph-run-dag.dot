@@ -65,8 +65,8 @@ digraph StrictPositionedGlyphRunPlan {
     S039 [label="S039\nFont reference resolution validation", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S040 [label="S040\nLine box validation", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S041 [label="S041\nCanonical strict text fixture A", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S042 [label="S042\nCanonical strict text fixture B", color="#16a34a", penwidth=4];
-    S043 [label="S043\nCanonical JSON normalization test", color="#dc2626", penwidth=4];
+    S042 [label="S042\nCanonical strict text fixture B", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S043 [label="S043\nCanonical JSON normalization test", color="#16a34a", penwidth=4];
     S044 [label="S044\nText fixture receipt design", color="#dc2626", penwidth=4];
     S045 [label="S045\nTypeScript text fixture receipt", color="#dc2626", penwidth=4];
     S046 [label="S046\nRust text fixture receipt/report", color="#dc2626", penwidth=4];

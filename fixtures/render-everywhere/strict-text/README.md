@@ -34,3 +34,13 @@ fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
 The S041 fixture records the semantic text `GEORDI` using the committed Lato Regular font pack. Glyph
 ids and advances were prepared outside the renderer from the checked-in font bytes and stored as
 fixed `geordi-fixed-26.6/1` integers. Runtime shaping remains outside the compliant strict path.
+
+Canonical fixture B:
+
+~~~text
+fixtures/render-everywhere/strict-text/text-0123.strict-text.geordi.json
+~~~
+
+The S042 fixture records the semantic text `text 0123` with lowercase letters, a space glyph, and
+digits in the same Lato Regular font pack. It exists to catch assumptions that only uppercase word
+fixtures are valid strict text evidence.

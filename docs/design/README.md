@@ -39,7 +39,7 @@ Use the DAG, not list order alone, to choose the next slice. A node is OPEN when
 dependencies are complete. After each slice, update the checklist state, update the DOT node status,
 regenerate the SVG, and commit those planning-state changes with the slice.
 
-Current OPEN node: S042.
+Current OPEN node: S043.
 
 ## Completed Slice Map: Bunny Mesh Render Everywhere
 

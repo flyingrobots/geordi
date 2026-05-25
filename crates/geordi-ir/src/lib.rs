@@ -2272,6 +2272,51 @@ mod tests {
     }
 
     #[test]
+    fn loads_canonical_strict_text_fixture_b() -> Result<(), GeordiIrTestError> {
+        let manifest = load_geordi_strict_text_fixture_manifest(fixture_path(
+            "strict-text/text-0123.strict-text.geordi.json",
+        ))?;
+        let font_pack =
+            load_geordi_font_pack_manifest(fixture_path("assets/fonts/font-pack.geordi.json"))?;
+
+        validate_geordi_strict_text_fixture_manifest(&manifest)?;
+        validate_geordi_strict_text_font_references(&manifest, &font_pack)?;
+
+        assert_eq!(manifest.id, "render-everywhere:strict-text:text-0123");
+        assert_eq!(manifest.semantic_text.source, "text 0123");
+        assert_eq!(manifest.line_boxes.len(), 1);
+        assert_eq!(manifest.line_boxes[0].baseline_y, 3072);
+        assert_eq!(manifest.line_boxes[0].height, 4096);
+        assert_eq!(manifest.line_boxes[0].width, 14336);
+        assert_eq!(manifest.glyph_runs.len(), 1);
+        assert_eq!(
+            manifest.glyph_runs[0]
+                .glyphs
+                .iter()
+                .map(|glyph| glyph.glyph_id)
+                .collect::<Vec<_>>(),
+            vec![124, 59, 138, 124, 2, 399, 400, 401, 402]
+        );
+        assert_eq!(
+            manifest.glyph_runs[0]
+                .glyphs
+                .iter()
+                .map(|glyph| glyph.x)
+                .collect::<Vec<_>>(),
+            vec![0, 1094, 2696, 4226, 5327, 6113, 7895, 9677, 11459]
+        );
+        assert_eq!(
+            manifest.glyph_runs[0]
+                .glyphs
+                .iter()
+                .map(|glyph| glyph.advance)
+                .collect::<Vec<_>>(),
+            vec![1094, 1602, 1530, 1101, 786, 1782, 1782, 1782, 1782]
+        );
+        Ok(())
+    }
+
+    #[test]
     fn rejects_unresolved_strict_text_font_references() -> Result<(), GeordiIrTestError> {
         let mut manifest = parse_geordi_strict_text_fixture_manifest(strict_text_fixture_source())?;
         let font_pack =

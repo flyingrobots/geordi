@@ -115,7 +115,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S042**.
+Current OPEN node: **S043**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -574,7 +574,7 @@ Current OPEN node: **S042**.
 
 ### S042: Canonical strict text fixture B
 
-- [ ] **S042: Canonical strict text fixture B** (OPEN)
+- [x] **S042: Canonical strict text fixture B** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with canonical strict text fixture b documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Canonical strict text fixture B.
@@ -585,7 +585,7 @@ Current OPEN node: **S042**.
 
 ### S043: Canonical JSON normalization test
 
-- [ ] **S043: Canonical JSON normalization test** (BLOCKED)
+- [ ] **S043: Canonical JSON normalization test** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with canonical json normalization test documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Canonical JSON normalization test.
