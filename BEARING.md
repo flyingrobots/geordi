@@ -6,6 +6,9 @@
 **Active profile under design**: <code>geordi-strict-positioned-glyph-run/1</code>
 **Active design doc**: [docs/design/2026-05-strict-positioned-glyph-run-plan.md](./docs/design/2026-05-strict-positioned-glyph-run-plan.md)
 **Active DAG SVG**: [docs/design/2026-05-strict-positioned-glyph-run-dag.svg](./docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
+**Drift correction**: shared TypeScript/Rust contract DTOs must be generated from a Wesley common
+schema; see
+[docs/design/2026-05-wesley-common-type-generation.md](./docs/design/2026-05-wesley-common-type-generation.md).
 
 This file is the short-term operating map. Product laws remain in [docs/V0_DESIGN_LAWS.md](./docs/V0_DESIGN_LAWS.md). The active execution plan is the 100-slice strict positioned glyph-run plan below.
 
@@ -14,6 +17,10 @@ This file is the short-term operating map. Product laws remain in [docs/V0_DESIG
 The rectangle render-everywhere proof and Stanford bunny mesh milestone are complete for their stated claim boundaries. The current exact pixel-probe rendering claim remains rectangle-only. The bunny proof establishes shared mesh identity, parser validation, sampled transform metadata, and visible browser/native rotation, not pixel-identical 3D rasterization.
 
 Text remains deferred as a broad feature. The next credibility milestone is not general text support. It is a strict positioned glyph-run proof.
+
+The strict text DTOs currently introduced in TypeScript and Rust are provisional until the Wesley
+common-type generator replaces mirrored hand-authored shapes. Validation, custom errors, IO, and
+rendering behavior remain handwritten around generated DTOs.
 
 ## Milestone Law
 

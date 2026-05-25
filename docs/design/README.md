@@ -25,6 +25,11 @@ Related planning spike:
 import, inspection, preview, debugging, and comparison tools. It should run after S041 unless the
 font-pack import CLI is explicitly pulled forward.
 
+Drift correction:
+[`2026-05-wesley-common-type-generation.md`](./2026-05-wesley-common-type-generation.md) requires
+cross-language serialized contract DTOs to be generated from one Wesley common schema rather than
+hand-maintained separately in TypeScript and Rust.
+
 Use the DAG, not list order alone, to choose the next slice. A node is OPEN when all of its
 dependencies are complete. After each slice, update the checklist state, update the DOT node status,
 regenerate the SVG, and commit those planning-state changes with the slice.

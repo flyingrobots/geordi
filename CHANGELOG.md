@@ -193,6 +193,8 @@
 
 ### Documentation
 
+- Add a Wesley common-type generation drift-correction doc requiring shared TypeScript/Rust
+  serialized contract DTOs to be generated from one schema rather than hand-maintained in parallel.
 - Add a glyph tooling spike proposal covering market research, import/inspect/preview/debug
   workflows, and a 15-slice implementation spike for user-facing strict text tooling.
 - `docs/ERROR_CODES.md`: Added `GEORDI_E_INPUT_INVALID_JSON` and `GEORDI_E_INPUT_INVALID_SDL` entries
