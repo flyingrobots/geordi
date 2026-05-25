@@ -4,191 +4,194 @@
   <img src="assets/geordi-readme-logo.svg" alt="Geordi animated logo" width="460">
 </p>
 
-**Deterministic GPU scene IR for interactive vector UI**
+**Deterministic scene IR and render proof tooling for portable GPU-native UI.**
 
-Formerly SVJif, Geordi is a canonical intermediate representation for building
-high-performance, GPU-native user interfaces with deterministic rendering.
+Geordi is a compile target, artifact contract, and render-everywhere proof system. It sits between
+UI authoring tools and runtimes, producing explicit scene artifacts with deterministic geometry,
+asset identity, feature requirements, receipts, and validation boundaries.
 
-Geordi is a compile target, not a framework. It sits between UI authoring tools
-and GPU runtimes, providing a portable scene representation with explicit
-geometry, explicit transforms, and reproducible output.
+Geordi is not a framework and not a DOM/CSS compatibility layer. The public claim is narrower and
+more useful: a renderer should consume a versioned Geordi artifact, reject unsupported capabilities
+loudly, and produce behavior that can be proven across runtimes.
 
----
+## Current Status
 
-## Status
+**Version**: `0.1.0-dev`
+**Active milestone**: Strict Positioned Glyph-Run Text
+**Current operating map**: [BEARING.md](BEARING.md)
 
-**v0.1.0-dev - active development**
+Completed proof layers:
 
-Core compiler architecture is complete. The current implementation is focused on:
+- The rectangle render-everywhere proof loads one checked-in `geordi-ir/1` artifact in a browser
+  harness and a native Rust harness, with exact pixel probes for the rectangle fixture.
+- The Stanford bunny mesh proof loads one checked-in PLY asset, mesh manifest, and render descriptor
+  in browser and native harnesses, with shared asset identity and deterministic sampled-frame
+  metadata. It is intentionally not a pixel-identical 3D rasterization claim.
+- The compiler core, GraphQL SDL adapter, GPVue fixture compiler path, render fixture contracts,
+  WebGL package scaffold, and Rust native harnesses are present and covered by repo gates.
 
-- GraphQL SDL to canonical AST parsing
-- Semantic validation
-- Deterministic artifact emission
-- WebGL runtime scaffolding
+Active proof layer:
 
-See [BEARING.md](BEARING.md) for the current operating map. The completed bunny mesh
-render-everywhere execution checklist is
-[`docs/design/2026-05-bunny-mesh-slice-plan.md`](docs/design/2026-05-bunny-mesh-slice-plan.md).
-Rust workspace gates are tracked in [`docs/RUST_GATES.md`](docs/RUST_GATES.md).
-For a detailed source-to-rendering walkthrough, see
-[`docs/end-to-end.md`](docs/end-to-end.md).
+- Strict text is being built fixture-first as `geordi-strict-positioned-glyph-run/1`.
+- The work currently proves content-addressed font assets, strict text manifests, positioned glyph
+  evidence, validation, and cross-runtime agreement before any broad text rendering claim is made.
+- The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
+  Wesley/common-type generation.
 
----
+Current nonclaims:
 
-## What is GPVue?
+- no compliant general text rendering;
+- no CSS text;
+- no platform-native text as a compliant path;
+- no host font fallback;
+- no runtime shaping in strict mode;
+- no runtime kerning, ligature substitution, glyph substitution, wrapping, or fallback;
+- no pixel-identical 3D rasterization claim for the bunny path;
+- no required WASM dependency for ordinary TypeScript fixture validation.
 
-GPVue is the first planned developer-facing SDK built on Geordi. It compiles Vue
-components into Geordi IR for deterministic GPU rendering.
+## Start Here
 
-At runtime:
+| Need | Document |
+| --- | --- |
+| Product and architecture north star | [VISION.md](VISION.md) |
+| Current slice, checklist, and active DAG | [BEARING.md](BEARING.md) |
+| Current status summary | [docs/STATUS.md](docs/STATUS.md) |
+| Compiler/package architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Product/runtime laws | [docs/V0_DESIGN_LAWS.md](docs/V0_DESIGN_LAWS.md) |
+| TypeScript/Rust/WASM boundary policy | [docs/design/2026-05-typescript-rust-wasm-boundary.md](docs/design/2026-05-typescript-rust-wasm-boundary.md) |
+| Shared TypeScript/Rust contract generation plan | [docs/design/2026-05-wesley-common-type-generation.md](docs/design/2026-05-wesley-common-type-generation.md) |
+| Active strict text design | [docs/design/2026-05-strict-positioned-glyph-run-plan.md](docs/design/2026-05-strict-positioned-glyph-run-plan.md) |
+| Render-everywhere runnable guide | [docs/render-everywhere.md](docs/render-everywhere.md) |
+| Full source-to-runtime walkthrough | [docs/end-to-end.md](docs/end-to-end.md) |
+| Stable compiler error codes | [docs/ERROR_CODES.md](docs/ERROR_CODES.md) |
+| Rust gates | [docs/RUST_GATES.md](docs/RUST_GATES.md) |
+| Completed-doc archive candidates | [docs/ARCHIVE_CANDIDATES.md](docs/ARCHIVE_CANDIDATES.md) |
 
-- No CSS parsing
-- No cascade
-- No layout thrashing
-- Deterministic subtree recomputation
-- Direct GPU draw calls
-
-## Render-Everywhere Demo Plan
-
-The first rectangle proof renders one GPVue-authored scene as one canonical Geordi IR artifact in a
-browser canvas and a native Rust application. The completed follow-on path proves a Stanford bunny
-mesh asset rendering and rotating in both browser and native harnesses from one checked-in asset
-manifest. The slice checklist lives in
-[`docs/design/2026-05-bunny-mesh-slice-plan.md`](docs/design/2026-05-bunny-mesh-slice-plan.md)
-and records the completed slice history. The runnable demo guide lives in
-[`docs/render-everywhere.md`](docs/render-everywhere.md).
-
----
-
-## System Architecture
-
-```mermaid
-flowchart LR
-  subgraph SDKs
-    A[GPVue]
-    B["GPReact<br/>(planned)"]
-    C["GPSvelte<br/>(planned)"]
-    D["GPFigma<br/>(planned)"]
-  end
-
-  subgraph IR[Geordi IR]
-    E[Geordi Scene IR]
-  end
-
-  subgraph Backends[GPU runtimes]
-    F["WebGL<br/>(browser)"]
-    G["WebGPU<br/>(browser, planned)"]
-    H["Metal<br/>(Apple, planned)"]
-    I["Vulkan<br/>(native, planned)"]
-    J["wgpu<br/>(Rust, planned)"]
-  end
-
-  A --> E
-  B --> E
-  C --> E
-  D --> E
-
-  E --> F
-  E --> G
-  E --> H
-  E --> I
-  E --> J
-```
-
-**Geordi is the stable contract. Runtimes are interchangeable.**
-
----
-
-## Compilation Pipeline
+## Architecture In One Screen
 
 ```mermaid
 flowchart TD
-  A["Vue / Figma / SVG / other frontends"]
-  B["Geordi Compiler<br/>(build time)"]
-  C["Geordi IR<br/>(.geordi.json)"]
-  D["Packed binary<br/>(.geordi.bin, planned)"]
-  E["Geordi Runtime<br/>(WebGL/WebGPU/Metal/Vulkan/wgpu)"]
+  subgraph Authors["Authoring inputs"]
+    GPVue["Constrained GPVue"]
+    SDL["GraphQL SDL"]
+    Future["Future adapters"]
+  end
 
-  A --> B --> C --> D --> E
+  subgraph Compiler["Compile and contract layer"]
+    Core["compiler-core"]
+    IR["geordi-ir/1"]
+    Fixture["render fixtures"]
+    Receipts["receipts and hashes"]
+  end
+
+  subgraph Contracts["Shared contract source"]
+    Wesley["Wesley/common-type schema"]
+    TsDtos["Generated TypeScript DTOs"]
+    RsDtos["Generated Rust DTOs"]
+  end
+
+  subgraph Runtimes["Runtime proofs"]
+    Browser["Browser canvas/WebGL path"]
+    Native["Native Rust path"]
+    Kernel["Optional Rust/WASM hard kernels"]
+  end
+
+  GPVue --> Core
+  SDL --> Core
+  Future --> Core
+  Core --> IR
+  Core --> Receipts
+  IR --> Fixture
+  Wesley --> TsDtos
+  Wesley --> RsDtos
+  TsDtos --> Fixture
+  RsDtos --> Native
+  Fixture --> Browser
+  Fixture --> Native
+  Kernel -. font/glyph/raster only .-> Browser
+  Kernel -. font/glyph/raster only .-> Native
 ```
 
----
+The current boundary rule is:
 
-## Core Principles
-
-1. **Deterministic** - Same IR input always produces identical output.
-2. **Explicit geometry** - Coordinate space, units, and transforms are fully defined.
-3. **No runtime CSS** - Layout and styling are resolved before runtime rendering.
-4. **Incremental layout VM** - Only dirty subtrees are recomputed.
-5. **GPU-native rendering** - No DOM, no layout engine, no abstraction leakage.
-6. **Fail loud** - Unsupported features are compile-time errors, not runtime surprises.
-
----
-
-## Runtime Interface
-
-All Geordi runtimes implement a shared contract:
-
-```ts
-interface GeordiRuntime {
-  load(ir: GeordiIr): Promise<void>;
-  render(): void;
-  updateNode(id: string, props: JsonObject): void;
-  hitTest(x: number, y: number): HitResult | null;
-  dispose(): void;
-}
+```text
+TypeScript-native at the edges.
+Rust-native at the rendering core.
+Generated at the contract boundary.
+WASM-backed only for hard deterministic kernels.
 ```
-
-**Same scene. Same API. Any backend.**
-
-Planned runtime packages:
-
-- Browser: `@flyingrobots/geordi-runtime-webgl`, `@flyingrobots/geordi-runtime-webgpu`
-- Apple platforms: `@flyingrobots/geordi-runtime-metal`
-- Native cross-platform: `@flyingrobots/geordi-runtime-vulkan`
-- Rust ecosystem: `@flyingrobots/geordi-runtime-wgpu`
-
----
-
-## Supported CSS Subset
-
-Geordi v0 design work is intentionally narrowing the supported surface area.
-See [docs/V0_DESIGN_LAWS.md](docs/V0_DESIGN_LAWS.md) for the current design law.
-
-Baseline areas under specification:
-
-- Layout: flex, absolute positioning, intrinsic sizing
-- Paint: solid color, opacity, borders, border radius
-- Text: deterministic font packs, shaping, line breaking
-- Assets: explicit resource identity and fixed material models
-- Interaction: deterministic hit testing with host-owned event routing
-
----
 
 ## Repository Structure
 
 ```text
 geordi/
   packages/
-    core/              # @flyingrobots/geordi-core - IR types and domain models
-    compiler-core/     # @flyingrobots/geordi-compiler-core - Compilation engine
+    core/              # @flyingrobots/geordi-core - IR types, JSON port, feature profile
+    compiler-core/     # @flyingrobots/geordi-compiler-core - compile orchestration
     schema-graphql/    # @flyingrobots/geordi-schema-graphql - GraphQL SDL adapter
     gpvue/             # @flyingrobots/geordi-gpvue - constrained GPVue fixture compiler
+    render-fixture/    # @flyingrobots/geordi-render-fixture - shared fixture contracts
+    runtime-webgl/     # @flyingrobots/geordi-runtime-webgl - browser runtime package
     wesley-generator/  # @flyingrobots/geordi-wesley-generator - Wesley integration
-    runtime-webgl/     # @flyingrobots/geordi-runtime-webgl - WebGL runtime
 
-  crates/              # Rust crates for native render-everywhere support
-  examples/            # Browser and native demo harnesses
+  crates/
+    geordi-ir/         # Rust IR and fixture DTOs/validators
+    geordi-mesh/       # Rust mesh asset parsing and validation
+    geordi-renderer/   # Native Rust renderer support
+
+  examples/
+    browser-render-everywhere/
+    native-render-everywhere/
+
+  fixtures/
+    render-everywhere/
 
   docs/
-    ARCHITECTURE.md
-    ERROR_CODES.md
-    V0_DESIGN_LAWS.md
+    design/
 ```
 
----
+## Common Commands
 
-## Current Compiler Usage
+Install dependencies:
+
+```bash
+pnpm install
+```
+
+Run the TypeScript workspace gates:
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+```
+
+Run documentation and repository hygiene gates:
+
+```bash
+pnpm test:docs
+pnpm test:package-names
+pnpm test:repo-sludge
+pnpm test:placeholders
+pnpm test:exports
+```
+
+Run Rust gates after changing Rust code:
+
+```bash
+cargo fmt --check
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+```
+
+Run the render-everywhere smoke paths:
+
+```bash
+pnpm test:render-everywhere:gpvue
+pnpm test:render-everywhere:bunny
+```
+
+## Compiler Usage
 
 ```ts
 import { compile } from '@flyingrobots/geordi-compiler-core';
@@ -203,27 +206,18 @@ if (!result.ok) {
 }
 ```
 
----
-
 ## Engineering Principles
 
-- Apache 2.0 license
-- Hexagonal architecture at package boundaries
-- Strict TypeScript
-- Strict linting with type-aware rules
-- Custom error types for all thrown errors
-- Encoding and JSON handling through explicit ports
-- Tests define behavior; target 90% or better coverage
-
----
+- Public artifacts are versioned and validated.
+- Unsupported features fail loudly; renderers do not silently approximate.
+- Production JSON ingress and egress goes through explicit JSON ports.
+- Feature requirements and numeric profiles are part of the artifact contract.
+- Content-addressed assets and receipts make proofs reviewable.
+- TypeScript and Rust behavior must agree through shared contracts and conformance fixtures.
+- Hard algorithms may be centralized in Rust/WASM only when the determinism payoff justifies the
+  packaging and runtime cost.
+- No broad rendering claim is made before browser and native gates prove it.
 
 ## License
 
 Apache 2.0
-
----
-
-## Contributing
-
-Geordi is in early development. Issues, discussions, and small PRs are welcome as
-the core stabilizes.

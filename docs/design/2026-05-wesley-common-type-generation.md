@@ -16,6 +16,12 @@ Geordi now has strict text contract shapes that naturally appear in both TypeScr
 Those shapes must not keep drifting as hand-authored TypeScript interfaces and Rust structs. The
 correct long-term boundary is one common schema and generated target-language DTOs.
 
+This document owns DTO generation. The broader runtime boundary policy lives in
+[`2026-05-typescript-rust-wasm-boundary.md`](./2026-05-typescript-rust-wasm-boundary.md): TypeScript
+packages remain native at browser, Node, tooling, and fixture-authoring edges; Rust remains native at
+the renderer and CLI core; WASM is reserved for hard deterministic kernels such as font parsing,
+glyph extraction, shaping, and reference raster work.
+
 ## Law
 
 Common serialized contract types are generated from a single Wesley schema.
@@ -45,6 +51,11 @@ literal profile constants, and target-language derives/interfaces.
 The generator does not own behavior. It does not validate semantic invariants such as duplicate IDs,
 path locality, glyph ID non-negativity, line-box references, font references, hash equality, or
 profile compatibility. Those remain handwritten and tested at package boundaries.
+
+Handwritten validators that exist in both TypeScript and Rust must emit stable diagnostic identities
+and be covered by shared conformance fixtures. Conformance tests compare acceptance, diagnostic code,
+JSON path, canonical hash, and receipt identity where applicable. They do not compare prose error
+messages as contract text.
 
 ## Proposed Schema Location
 

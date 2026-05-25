@@ -1,12 +1,14 @@
 # Geordi Design Pack
 
 **Status**: Draft
-**Date**: 2026-05-23
-**Baseline**: `main` after feature-registry hit-list merge `654adba`
+**Date**: 2026-05-25
+**Baseline**: `main` at `78c4636`, after strict positioned glyph-run plan merge
 
 This directory holds implementation design documents for P0 slice sequences. The design pack is
 intentionally separate from [`../V0_DESIGN_LAWS.md`](../V0_DESIGN_LAWS.md): the laws define product
-semantics, while these documents define implementation slices.
+semantics, while these documents define implementation slices. The product north star lives in
+[`../../VISION.md`](../../VISION.md), and archive candidates are tracked in
+[`../ARCHIVE_CANDIDATES.md`](../ARCHIVE_CANDIDATES.md).
 
 ## Active Slice Map: Strict Positioned Glyph-Run Text
 
@@ -29,12 +31,15 @@ Drift correction:
 [`2026-05-wesley-common-type-generation.md`](./2026-05-wesley-common-type-generation.md) requires
 cross-language serialized contract DTOs to be generated from one Wesley common schema rather than
 hand-maintained separately in TypeScript and Rust.
+[`2026-05-typescript-rust-wasm-boundary.md`](./2026-05-typescript-rust-wasm-boundary.md) defines
+the matching runtime boundary: TypeScript stays native at the edges, Rust stays native at the
+rendering core, contracts are generated, and WASM is reserved for hard deterministic kernels.
 
 Use the DAG, not list order alone, to choose the next slice. A node is OPEN when all of its
 dependencies are complete. After each slice, update the checklist state, update the DOT node status,
 regenerate the SVG, and commit those planning-state changes with the slice.
 
-Current OPEN node: S039.
+Current OPEN node: S040.
 
 ## Completed Slice Map: Bunny Mesh Render Everywhere
 
