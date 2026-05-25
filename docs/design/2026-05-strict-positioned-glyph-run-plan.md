@@ -575,6 +575,11 @@ Planned evidence feature names:
 
 Strict text receipts add text-specific provenance:
 
+S044 formalizes the first receipt schema in
+`fixtures/render-everywhere/strict-text/strict-text-fixture-receipt.schema.md`. The schema fixes
+receipt versioning, hash inputs, canonical fragment bytes, and the rule that glyph evidence hashes
+are omitted until real evidence packs exist.
+
 ~~~json
 {
   "textProfile": "geordi-strict-positioned-glyph-run/1",

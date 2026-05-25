@@ -115,7 +115,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S044**.
+Current OPEN node: **S045**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -596,7 +596,7 @@ Current OPEN node: **S044**.
 
 ### S044: Text fixture receipt design
 
-- [ ] **S044: Text fixture receipt design** (OPEN)
+- [x] **S044: Text fixture receipt design** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with text fixture receipt design documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Text fixture receipt design.
@@ -607,7 +607,7 @@ Current OPEN node: **S044**.
 
 ### S045: TypeScript text fixture receipt
 
-- [ ] **S045: TypeScript text fixture receipt** (BLOCKED)
+- [ ] **S045: TypeScript text fixture receipt** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with typescript text fixture receipt documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: TypeScript text fixture receipt.
@@ -618,7 +618,7 @@ Current OPEN node: **S044**.
 
 ### S046: Rust text fixture receipt/report
 
-- [ ] **S046: Rust text fixture receipt/report** (BLOCKED)
+- [ ] **S046: Rust text fixture receipt/report** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with rust text fixture receipt/report documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Rust text fixture receipt/report.

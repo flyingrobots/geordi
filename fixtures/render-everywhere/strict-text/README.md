@@ -23,6 +23,7 @@ Schema:
 
 ~~~text
 fixtures/render-everywhere/strict-text/strict-text-fixture.schema.md
+fixtures/render-everywhere/strict-text/strict-text-fixture-receipt.schema.md
 ~~~
 
 Canonical fixture A:

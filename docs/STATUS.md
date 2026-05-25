@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the active open node is `S044`, text fixture receipt design, after `S043` added canonical JSON
-normalization coverage for the committed strict text fixtures.
+the active open node is `S045`, TypeScript text fixture receipt, after `S044` defined the strict text
+fixture receipt schema. `S046` is also unblocked for the Rust receipt/report path.
 
 ## Completed Capabilities
 
@@ -38,6 +38,7 @@ normalization coverage for the committed strict text fixtures.
 | Mesh asset proof | Stanford bunny PLY bytes are content-addressed, parsed, bounded, and exercised by browser/native gates. |
 | Strict font assets | Lato font pack and failure fixtures prove content-addressed font/license boundaries. |
 | Strict text manifests | TypeScript and Rust can validate strict text manifest structure, font references, line-box geometry, both canonical checked-in fixtures, and canonical fixture JSON normalization. |
+| Strict text receipts | The receipt schema defines fixture, font-pack, glyph-run, line-box, semantic-text, and future glyph-evidence hash inputs. |
 
 ## Active Work
 
