@@ -898,6 +898,29 @@ The directory rules are intentionally stricter than a normal asset folder:
 - Derived glyph evidence assets live in later evidence packs so source fonts, outline evidence, and
   raster evidence remain separately hashable.
 
+## First Font Asset Selection
+
+S018 records Lato Regular as the first fixture font selection without landing font bytes yet.
+
+Selection record:
+
+~~~text
+fixtures/render-everywhere/assets/fonts/lato/SELECTION.md
+~~~
+
+Decision:
+
+- Selected asset: `Lato-Regular.ttf`.
+- Source path: `google/fonts/ofl/lato/Lato-Regular.ttf`.
+- License path: `google/fonts/ofl/lato/OFL.txt`.
+- Format: static TrueType font.
+- Face index: `0`.
+- License: SIL OFL 1.1.
+- Reserved Font Name: `Lato`.
+
+The selection is intentionally separate from the asset landing so reviewers can audit why this font
+was chosen before reviewing vendored bytes or hash manifests.
+
 ## Active DAG
 
 The active dependency graph is rendered from [2026-05-strict-positioned-glyph-run-dag.dot](./2026-05-strict-positioned-glyph-run-dag.dot) to [2026-05-strict-positioned-glyph-run-dag.svg](./2026-05-strict-positioned-glyph-run-dag.svg).
