@@ -63,7 +63,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S005**.
+Current OPEN node: **S006**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -115,7 +115,7 @@ Current OPEN node: **S005**.
 
 ### S005: Font-local glyph identity law
 
-- [ ] **S005: Font-local glyph identity law** (OPEN)
+- [x] **S005: Font-local glyph identity law** (COMPLETE)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with font-local glyph identity law documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Font-local glyph identity law.
@@ -126,7 +126,7 @@ Current OPEN node: **S005**.
 
 ### S006: Text coordinate and numeric law
 
-- [ ] **S006: Text coordinate and numeric law** (BLOCKED)
+- [ ] **S006: Text coordinate and numeric law** (OPEN)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with text coordinate and numeric law documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Text coordinate and numeric law.

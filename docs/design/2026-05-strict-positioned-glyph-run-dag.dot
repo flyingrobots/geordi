@@ -18,8 +18,8 @@ digraph StrictPositionedGlyphRunPlan {
     S002 [label="S002\nProfile name and feature vocabulary", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S003 [label="S003\nSource text versus render evidence law", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S004 [label="S004\nUnsupported raw/platform text rejection law", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S005 [label="S005\nFont-local glyph identity law", color="#16a34a", penwidth=4];
-    S006 [label="S006\nText coordinate and numeric law", color="#dc2626", penwidth=4];
+    S005 [label="S005\nFont-local glyph identity law", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S006 [label="S006\nText coordinate and numeric law", color="#16a34a", penwidth=4];
     S007 [label="S007\nLine box and baseline law", color="#dc2626", penwidth=4];
     S008 [label="S008\nText receipt provenance law", color="#dc2626", penwidth=4];
     S009 [label="S009\nGlyph evidence ladder and evidence kinds", color="#dc2626", penwidth=4];

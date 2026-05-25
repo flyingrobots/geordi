@@ -408,6 +408,53 @@ A glyph id is only meaningful relative to:
 font file hash + face index + shaping profile + glyph-run schema version
 ~~~
 
+## Font-Local Glyph Identity Law
+
+Glyph ids are never global identifiers. A glyph id is a compact pointer into one concrete font face.
+The same integer can mean different outlines in different fonts, different faces in the same font
+collection, or different generated subsets.
+
+Strict glyph identity is the tuple:
+
+~~~text
+fontSha256
+faceIndex
+fontFormat
+textProfile
+glyphRunSchemaVersion
+shapingProfile
+glyphId
+~~~
+
+Rules:
+
+- `glyphId` must be a non-negative safe integer.
+- `glyphId` must resolve through the fixture's declared `fontRef`.
+- `fontRef` must resolve to exactly one `FontFaceAsset`.
+- `FontFaceAsset.sha256` must match the bytes loaded from `sourcePath`.
+- `faceIndex` is mandatory even when it is `0`.
+- Font subsetting must produce a new font hash. A glyph id from the original font is not assumed to
+  survive subsetting unless the evidence pack declares that relationship.
+- Glyph evidence must carry the same `fontHash` and `fontRef` as the glyph run it satisfies.
+
+Invalid examples:
+
+~~~json
+{ "glyphId": 43 }
+~~~
+
+The example is invalid by itself because it has no font-local context.
+
+~~~json
+{
+  "fontRef": "body",
+  "glyphId": 43
+}
+~~~
+
+This example is still insufficient unless `body` resolves to a content-addressed font face and the
+fixture declares the profile and schema versions that make the glyph id meaningful.
+
 ## Glyph Evidence Pack
 
 A positioned glyph run says which glyph goes where. It does not by itself say how to draw the glyph. The first strict profile uses an explicit glyph evidence pack. The first evidence kind should be outline paths because it keeps text close to Geordi's explicit geometry model.
