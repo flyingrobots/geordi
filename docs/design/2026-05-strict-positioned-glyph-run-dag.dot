@@ -35,8 +35,8 @@ digraph StrictPositionedGlyphRunPlan {
     label="Arc 2: Font Assets";
     color="#e2e8f0";
     S016 [label="S016\nFont license candidate review", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S017 [label="S017\nFont asset directory contract", color="#16a34a", penwidth=4];
-    S018 [label="S018\nFirst font asset selection", color="#dc2626", penwidth=4];
+    S017 [label="S017\nFont asset directory contract", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S018 [label="S018\nFirst font asset selection", color="#16a34a", penwidth=4];
     S019 [label="S019\nFont manifest schema design", color="#dc2626", penwidth=4];
     S020 [label="S020\nFont fixture asset landing", color="#dc2626", penwidth=4];
     S021 [label="S021\nFont hash manifest record", color="#dc2626", penwidth=4];

@@ -81,7 +81,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S017**.
+Current OPEN node: **S018**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -265,7 +265,7 @@ Current OPEN node: **S017**.
 
 ### S017: Font asset directory contract
 
-- [ ] **S017: Font asset directory contract** (OPEN)
+- [x] **S017: Font asset directory contract** (COMPLETE)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with font asset directory contract documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Font asset directory contract.
@@ -276,7 +276,7 @@ Current OPEN node: **S017**.
 
 ### S018: First font asset selection
 
-- [ ] **S018: First font asset selection** (BLOCKED)
+- [ ] **S018: First font asset selection** (OPEN)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with first font asset selection documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: First font asset selection.

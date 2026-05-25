@@ -872,6 +872,32 @@ S016 does not land font bytes and does not create the final manifest. Those are 
 into S020 and S021 so the review, directory contract, selection record, byte landing, and hash record
 remain separately inspectable commits.
 
+## Font Asset Directory Contract
+
+S017 defines the fixture-local directory contract before the first font asset lands.
+
+~~~text
+fixtures/render-everywhere/assets/fonts/
+  README.md
+  <font-family-slug>/
+    <upstream-font-file>.ttf
+    OFL.txt
+    SELECTION.md
+~~~
+
+The directory rules are intentionally stricter than a normal asset folder:
+
+- Family directory slugs are lowercase kebab-case.
+- Font bytes remain exact upstream bytes; Geordi does not silently subset or mutate the source font.
+- License text sits beside the bytes it governs.
+- Selection rationale sits beside the selected family in `SELECTION.md`.
+- Manifests use repository-relative POSIX paths, never absolute paths.
+- Identity includes font id, path, format, face index, and `sha256:<hex>`.
+- Runtime and validator boundaries reject missing files, hash mismatches, unsupported formats,
+  absolute paths, path traversal, and host font fallback.
+- Derived glyph evidence assets live in later evidence packs so source fonts, outline evidence, and
+  raster evidence remain separately hashable.
+
 ## Active DAG
 
 The active dependency graph is rendered from [2026-05-strict-positioned-glyph-run-dag.dot](./2026-05-strict-positioned-glyph-run-dag.dot) to [2026-05-strict-positioned-glyph-run-dag.svg](./2026-05-strict-positioned-glyph-run-dag.svg).
