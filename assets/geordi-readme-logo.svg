@@ -1,0 +1,45 @@
+<svg width="572.4" height="137.4" viewBox="0 0 572.4 137.4" xmlns="http://www.w3.org/2000/svg">
+  <title>Geordi</title>
+  <g
+    id="svgGroup"
+    stroke-linecap="round"
+    fill-rule="evenodd"
+    font-size="9pt"
+    stroke-width="0.25mm"
+  >
+    <g id="geordi-forward-half" stroke="#ffe8f5" fill="#d72752">
+      <animate
+        attributeName="fill"
+        values="#d72752;#f87aa7;#fec9e2;#ffe8f5;#0f0706;#250f10;#66232d;#d72752"
+        dur="6s"
+        repeatCount="indefinite"
+      />
+      <animate
+        attributeName="stroke"
+        values="#ffe8f5;#fec9e2;#f87aa7;#d72752;#66232d;#250f10;#0f0706;#ffe8f5"
+        dur="6s"
+        repeatCount="indefinite"
+      />
+      <path d="M 82 124.4 L 8.6 137.4 L 5.2 119 L 70.8 107.4 L 69.2 73 L 11.2 85.2 L 0 74.2 L 11.6 14.4 L 21.8 6.8 L 77.2 12 L 85.8 20.8 L 89.8 115 L 82 124.4 Z M 67.2 30 L 68.2 54 L 21.2 64 L 28.6 26.2 L 67.2 30 Z" id="0" vector-effect="non-scaling-stroke"/>
+      <path d="M 198.4 110 L 194.8 128.4 L 117.4 114 L 109.8 103.4 L 119.4 32.2 L 127.8 24.2 L 186.4 19.4 L 195.6 24.4 L 212.6 58 L 206 71.4 L 143.8 84.4 L 139.8 66.2 L 190 55.4 L 181.6 38.8 L 136.8 42.2 L 129.6 97.2 L 198.4 110 Z" id="1" vector-effect="non-scaling-stroke"/>
+      <path d="M 318.6 109.8 L 308.6 119.4 L 235.4 115.2 L 226.6 105 L 231.4 36.4 L 240.4 27.8 L 306.8 25 L 316.6 34.2 L 318.6 109.8 Z M 249.6 46.2 L 298.2 44.2 L 299.6 100 L 246.2 97 L 249.6 46.2 Z" id="2" vector-effect="non-scaling-stroke"/>
+    </g>
+    <g id="geordi-reverse-half" stroke="#ffe8f5" fill="#d72752">
+      <animate
+        attributeName="fill"
+        values="#d72752;#66232d;#250f10;#0f0706;#ffe8f5;#fec9e2;#f87aa7;#d72752"
+        dur="6s"
+        repeatCount="indefinite"
+      />
+      <animate
+        attributeName="stroke"
+        values="#ffe8f5;#0f0706;#250f10;#66232d;#d72752;#f87aa7;#fec9e2;#ffe8f5"
+        dur="6s"
+        repeatCount="indefinite"
+      />
+      <path d="M 364.6 124.6 L 345.6 125 L 342.6 19.6 L 361.4 19 L 362 43.6 L 407.6 22 L 415.6 39.4 L 362.6 64.2 L 364.6 124.6 Z" id="3" vector-effect="non-scaling-stroke"/>
+      <path d="M 514.8 115.2 L 431.8 124.2 L 421.6 113.6 L 430.8 44.6 L 441.6 36.6 L 500.4 46 L 497.2 1.2 L 516.2 0 L 523.2 105.2 L 514.8 115.2 Z M 501.6 65.2 L 503.8 97.6 L 441.8 104.2 L 448.2 56.6 L 501.6 65.2 Z" id="4" vector-effect="non-scaling-stroke"/>
+      <path d="M 571.8 45 L 562 124.4 L 543.2 122.2 L 553 42.8 L 571.8 45 Z M 572.4 26.2 L 554.2 31.2 L 548.2 8.8 L 566.4 3.8 L 572.4 26.2 Z" id="5" vector-effect="non-scaling-stroke"/>
+    </g>
+  </g>
+</svg>

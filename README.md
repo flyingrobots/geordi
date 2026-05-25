@@ -1,7 +1,7 @@
 # Geordi
 
 <p align="center">
-  <img src="assets/geordi-animated-palette.svg" alt="Geordi animated logo" width="460">
+  <img src="assets/geordi-readme-logo.svg" alt="Geordi animated logo" width="460">
 </p>
 
 **Deterministic GPU scene IR for interactive vector UI**
