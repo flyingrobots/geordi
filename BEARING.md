@@ -63,7 +63,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S013**.
+Current OPEN node: **S014**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -203,7 +203,7 @@ Current OPEN node: **S013**.
 
 ### S013: Why this is not CSS text section
 
-- [ ] **S013: Why this is not CSS text section** (OPEN)
+- [x] **S013: Why this is not CSS text section** (COMPLETE)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with why this is not css text section documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Why this is not CSS text section.
@@ -214,7 +214,7 @@ Current OPEN node: **S013**.
 
 ### S014: Backlog and design index alignment
 
-- [ ] **S014: Backlog and design index alignment** (BLOCKED)
+- [ ] **S014: Backlog and design index alignment** (OPEN)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with backlog and design index alignment documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Backlog and design index alignment.

@@ -684,6 +684,37 @@ This profile does not implement CSS text. It does not ask the browser for glyph 
 
 That distinction protects Geordi from accidentally inheriting the DOM and platform text stacks it is trying to avoid.
 
+CSS text is intentionally outside this profile because CSS text behavior depends on a large runtime
+surface:
+
+- font-family lookup;
+- font-face loading and timing;
+- fallback stacks;
+- browser shaping;
+- browser line breaking;
+- white-space processing;
+- bidi processing;
+- text-transform;
+- font-feature settings;
+- font-variation settings;
+- platform antialiasing and hinting;
+- browser-specific metric choices.
+
+The strict profile replaces those runtime decisions with prepared evidence:
+
+| CSS/browser concept | Strict positioned glyph-run replacement |
+| --- | --- |
+| `font-family` | `FontFaceAsset` with content hash and face index. |
+| Runtime shaping | Precomputed glyph ids and positions. |
+| Runtime line metrics | Explicit line boxes. |
+| Fallback stack | Rejected in first profile. |
+| CSS line wrapping | Rejected in first profile. |
+| Glyph rasterization style | Explicit glyph evidence kind. |
+| Text content determining pixels | Non-rendering `semanticText` plus render evidence. |
+
+Future authoring layers can expose CSS-like syntax if useful, but the compiler must lower that
+syntax into strict evidence before the renderer sees it.
+
 ## Fixture First, IR Later
 
 Strict text starts as a render-everywhere fixture artifact, not as a direct `geordi-ir/1` text node. That keeps the first proof narrow and lets the evidence model mature independently:
