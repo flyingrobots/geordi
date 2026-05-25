@@ -855,6 +855,18 @@ describe('render fixture strict text fixture manifest validation', () => {
     expect(parsed.glyphRuns[0]?.glyphs[0]?.glyphId).toBe(43);
   });
 
+  it('keeps committed strict text fixtures canonical JSON normalized', () => {
+    const sources = [strictTextFixtureASource(), strictTextFixtureBSource()];
+
+    for (const source of sources) {
+      const normalized = canonicalJsonPort.stringify(canonicalJsonPort.parse(source), {
+        space: 2,
+      });
+
+      expect(source).toBe(`${normalized}\n`);
+    }
+  });
+
   it('validates strict text font references against a font pack', () => {
     const input = {
       fontPack: makeFontPackManifest(),

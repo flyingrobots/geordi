@@ -81,6 +81,8 @@ Field laws:
   than `9007199254740991`.
 - Derived line-box right and bottom edges must remain safe fixed-point integers.
 - `lineBoxes[].baselineY` must be inside the line box's vertical bounds, inclusive.
+- Committed fixture JSON files must match `canonicalJsonPort.stringify(parsed, { space: 2 })` plus
+  a final newline.
 - Renderers must not infer kerning, ligatures, fallback, line metrics, wrapping, or shaping from the
   host platform.
 
