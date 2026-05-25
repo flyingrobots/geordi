@@ -1,0 +1,102 @@
+<svg width="1280" height="760" viewBox="0 0 1280 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Geordi Glyph Workbench receipt comparison mockup</title>
+  <desc id="desc">A later receipt comparison screen comparing browser and native render receipts across profile, font pack hash, glyph-run hash, line-box hash, evidence hash, probe results, and an optional overlay.</desc>
+  <style>
+    .bg { fill: #eef2f6; }
+    .frame { fill: #ffffff; stroke: #cfd8e3; }
+    .nav { fill: #111827; }
+    .nav-text { fill: #cbd5e1; font: 500 14px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .nav-active { fill: #a78bfa; }
+    .top { fill: #f8fafc; stroke: #d8e1ec; }
+    .title { fill: #111827; font: 700 20px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .small { fill: #64748b; font: 500 12px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .label { fill: #475569; font: 700 11px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .body { fill: #1f2937; font: 500 14px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .strong { fill: #111827; font: 700 14px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .mono { fill: #334155; font: 500 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mono-light { fill: #e2e8f0; font: 500 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .panel { fill: #ffffff; stroke: #d8e1ec; }
+    .field { fill: #f8fafc; stroke: #cbd5e1; }
+    .ok { fill: #ecfdf5; stroke: #86efac; }
+    .warn { fill: #fff7ed; stroke: #fdba74; }
+    .danger { fill: #fee2e2; stroke: #fca5a5; }
+    .overlay { fill: #0f172a; stroke: #1e293b; }
+    .browser { stroke: #38bdf8; stroke-width: 3; fill: none; }
+    .native { stroke: #fb7185; stroke-width: 3; fill: none; stroke-dasharray: 8 6; }
+    .divider { stroke: #e2e8f0; }
+  </style>
+  <rect class="bg" width="1280" height="760"/>
+  <rect class="frame" x="20" y="20" width="1240" height="720" rx="8"/>
+  <rect class="nav" x="20" y="20" width="184" height="720" rx="8"/>
+  <rect class="nav" x="188" y="20" width="16" height="720"/>
+  <text class="nav-active" x="44" y="58">Geordi</text>
+  <text class="nav-text" x="44" y="92">Glyph Workbench</text>
+  <line x1="44" y1="116" x2="180" y2="116" stroke="#334155"/>
+  <text class="nav-text" x="44" y="154">Font Pack</text>
+  <text class="nav-text" x="44" y="196">Fixture</text>
+  <text class="nav-text" x="44" y="238">Preview</text>
+  <text class="nav-text" x="44" y="280">Failures</text>
+  <text class="nav-text" x="44" y="322">Compare</text>
+  <rect x="32" y="300" width="4" height="34" fill="#a78bfa" rx="2"/>
+  <text class="small" x="44" y="666" fill="#94a3b8">Later spike surface</text>
+  <text class="small" x="44" y="690" fill="#94a3b8">receipts only</text>
+
+  <rect class="top" x="204" y="20" width="1056" height="72" rx="8"/>
+  <text class="title" x="232" y="56">Receipt comparison</text>
+  <rect class="warn" x="754" y="38" width="156" height="30" rx="15"/>
+  <text class="small" x="778" y="57">later spike view</text>
+  <rect class="danger" x="926" y="38" width="280" height="30" rx="15"/>
+  <text class="small" x="946" y="57">1 evidence mismatch found</text>
+
+  <rect class="panel" x="232" y="116" width="470" height="202" rx="8"/>
+  <text class="strong" x="256" y="148">Browser receipt</text>
+  <rect class="field" x="256" y="174" width="422" height="44" rx="6"/>
+  <text class="mono" x="276" y="201">receipts/browser-lato-canonical.json</text>
+  <text class="label" x="256" y="250">PROFILE</text>
+  <text class="body" x="340" y="250">strict glyph run / 1</text>
+  <text class="label" x="256" y="282">PROBE</text>
+  <text class="body" x="340" y="282">webgl2, msdf unavailable, canvas ok</text>
+
+  <rect class="panel" x="730" y="116" width="494" height="202" rx="8"/>
+  <text class="strong" x="754" y="148">Native receipt</text>
+  <rect class="field" x="754" y="174" width="446" height="44" rx="6"/>
+  <text class="mono" x="774" y="201">receipts/native-lato-canonical.json</text>
+  <text class="label" x="754" y="250">PROFILE</text>
+  <text class="body" x="838" y="250">strict glyph run / 1</text>
+  <text class="label" x="754" y="282">PROBE</text>
+  <text class="body" x="838" y="282">wgpu, msdf unavailable, screenshot ok</text>
+
+  <rect class="panel" x="232" y="342" width="430" height="334" rx="8"/>
+  <text class="strong" x="256" y="374">Evidence agreement</text>
+  <line class="divider" x1="256" y1="396" x2="638" y2="396"/>
+  <rect class="ok" x="256" y="414" width="382" height="38" rx="7"/>
+  <text class="body" x="276" y="438">Profile match</text>
+  <text class="mono" x="550" y="438">OK</text>
+  <rect class="ok" x="256" y="464" width="382" height="38" rx="7"/>
+  <text class="body" x="276" y="488">Font pack hash</text>
+  <text class="mono" x="550" y="488">OK</text>
+  <rect class="ok" x="256" y="514" width="382" height="38" rx="7"/>
+  <text class="body" x="276" y="538">Glyph-run hash</text>
+  <text class="mono" x="550" y="538">OK</text>
+  <rect class="ok" x="256" y="564" width="382" height="38" rx="7"/>
+  <text class="body" x="276" y="588">Line-box hash</text>
+  <text class="mono" x="550" y="588">OK</text>
+  <rect class="danger" x="256" y="614" width="382" height="38" rx="7"/>
+  <text class="body" x="276" y="638">Evidence hash</text>
+  <text class="mono" x="510" y="638">Mismatch</text>
+
+  <rect class="panel" x="690" y="342" width="534" height="334" rx="8"/>
+  <text class="strong" x="714" y="374">Canvas or screenshot overlay</text>
+  <text class="small" x="714" y="398">Optional when both receipts include comparable image evidence.</text>
+  <rect class="overlay" x="714" y="420" width="486" height="206" rx="8"/>
+  <text class="mono-light" x="734" y="448">browser: cyan outline</text>
+  <text class="mono-light" x="734" y="470">native: rose dashed outline</text>
+  <rect x="802" y="502" width="236" height="74" fill="none" stroke="#38bdf8" stroke-width="3"/>
+  <rect x="810" y="498" width="236" height="74" fill="none" stroke="#fb7185" stroke-width="3" stroke-dasharray="8 6"/>
+  <line x1="810" y1="576" x2="1038" y2="576" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6 5"/>
+  <circle cx="802" cy="576" r="5" fill="#38bdf8"/>
+  <circle cx="810" cy="576" r="5" fill="#fb7185"/>
+  <text class="mono-light" x="838" y="606">origin delta: x +8 px, y -4 px</text>
+  <rect class="warn" x="714" y="642" width="486" height="20" rx="10"/>
+  <text class="small" x="734" y="657">Comparator reports exact mismatch paths without requiring screenshots.</text>
+</svg>

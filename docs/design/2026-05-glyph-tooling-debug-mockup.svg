@@ -1,0 +1,110 @@
+<svg width="1280" height="760" viewBox="0 0 1280 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Geordi Glyph Workbench validation issue navigator mockup</title>
+  <desc id="desc">A validation and failure fixture screen grouping issues by artifact and JSON path, with explanations, blocked capability, expected versus actual hash values, and a reproducible CLI command.</desc>
+  <style>
+    .bg { fill: #f1f5f9; }
+    .frame { fill: #ffffff; stroke: #cfd8e3; }
+    .nav { fill: #111827; }
+    .nav-text { fill: #cbd5e1; font: 500 14px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .nav-active { fill: #fb7185; }
+    .top { fill: #f8fafc; stroke: #d8e1ec; }
+    .title { fill: #111827; font: 700 20px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .small { fill: #64748b; font: 500 12px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .label { fill: #475569; font: 700 11px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .body { fill: #1f2937; font: 500 14px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .strong { fill: #111827; font: 700 14px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .mono { fill: #334155; font: 500 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .panel { fill: #ffffff; stroke: #d8e1ec; }
+    .field { fill: #f8fafc; stroke: #cbd5e1; }
+    .danger { fill: #fee2e2; stroke: #fca5a5; }
+    .warn { fill: #fff7ed; stroke: #fdba74; }
+    .ok { fill: #ecfdf5; stroke: #86efac; }
+    .selected { fill: #fff1f2; stroke: #fb7185; }
+    .divider { stroke: #e2e8f0; }
+  </style>
+  <rect class="bg" width="1280" height="760"/>
+  <rect class="frame" x="20" y="20" width="1240" height="720" rx="8"/>
+  <rect class="nav" x="20" y="20" width="184" height="720" rx="8"/>
+  <rect class="nav" x="188" y="20" width="16" height="720"/>
+  <text class="nav-active" x="44" y="58">Geordi</text>
+  <text class="nav-text" x="44" y="92">Glyph Workbench</text>
+  <line x1="44" y1="116" x2="180" y2="116" stroke="#334155"/>
+  <text class="nav-text" x="44" y="154">Font Pack</text>
+  <text class="nav-text" x="44" y="196">Fixture</text>
+  <text class="nav-text" x="44" y="238">Preview</text>
+  <text class="nav-text" x="44" y="280">Failures</text>
+  <rect x="32" y="258" width="4" height="34" fill="#fb7185" rx="2"/>
+  <text class="nav-text" x="44" y="322">Compare</text>
+  <text class="small" x="44" y="666" fill="#94a3b8">Validator output</text>
+  <text class="small" x="44" y="690" fill="#94a3b8">not raw JSON triage</text>
+
+  <rect class="top" x="204" y="20" width="1056" height="72" rx="8"/>
+  <text class="title" x="232" y="56">Validation issue navigator</text>
+  <rect class="danger" x="752" y="38" width="160" height="30" rx="15"/>
+  <text class="small" x="774" y="57">invalid: 4 issues</text>
+  <rect class="field" x="928" y="38" width="278" height="30" rx="15"/>
+  <text class="mono" x="948" y="57">artifact failures/bad-hash.json</text>
+
+  <rect class="panel" x="232" y="116" width="286" height="560" rx="8"/>
+  <text class="strong" x="256" y="148">Failure fixture gallery</text>
+  <text class="small" x="256" y="172">Expected class versus current result.</text>
+  <line class="divider" x1="256" y1="194" x2="494" y2="194"/>
+  <rect class="selected" x="256" y="216" width="238" height="70" rx="8"/>
+  <text class="strong" x="276" y="242">bad-font-hash</text>
+  <text class="small" x="276" y="264">expected: FontHashMismatch</text>
+  <text class="small" x="414" y="264" fill="#be123c">FAIL</text>
+  <rect class="field" x="256" y="302" width="238" height="64" rx="8"/>
+  <text class="body" x="276" y="328">absolute-font-path</text>
+  <text class="small" x="276" y="350">expected: PathPolicyViolation</text>
+  <rect class="field" x="256" y="382" width="238" height="64" rx="8"/>
+  <text class="body" x="276" y="408">missing-feature</text>
+  <text class="small" x="276" y="430">expected: RequiredFeatureMissing</text>
+  <rect class="field" x="256" y="462" width="238" height="64" rx="8"/>
+  <text class="body" x="276" y="488">unresolved-font-id</text>
+  <text class="small" x="276" y="510">expected: FontReferenceError</text>
+  <rect class="ok" x="256" y="586" width="238" height="54" rx="8"/>
+  <text class="strong" x="276" y="610" fill="#166534">Gallery invariant</text>
+  <text class="small" x="276" y="630">Unexpected pass is a hard failure.</text>
+
+  <rect class="panel" x="542" y="116" width="390" height="560" rx="8"/>
+  <text class="strong" x="566" y="148">Issues grouped by artifact path</text>
+  <text class="small" x="566" y="172">Each row links to exact JSON path.</text>
+  <line class="divider" x1="566" y1="194" x2="908" y2="194"/>
+  <rect class="selected" x="566" y="216" width="342" height="86" rx="8"/>
+  <text class="label" x="586" y="242">FontHashMismatch</text>
+  <text class="mono" x="586" y="266">$.fonts[0].fontHash</text>
+  <text class="small" x="586" y="288">Font bytes do not match the manifest receipt.</text>
+  <rect class="field" x="566" y="318" width="342" height="74" rx="8"/>
+  <text class="label" x="586" y="344">LicenseHashMismatch</text>
+  <text class="mono" x="586" y="368">$.fonts[0].licenseHash</text>
+  <rect class="field" x="566" y="408" width="342" height="74" rx="8"/>
+  <text class="label" x="586" y="434">PathPolicyViolation</text>
+  <text class="mono" x="586" y="458">$.fonts[0].sourcePath</text>
+  <rect class="field" x="566" y="498" width="342" height="74" rx="8"/>
+  <text class="label" x="586" y="524">BlockedCapability</text>
+  <text class="mono" x="586" y="548">$.requiredFeatures[2]</text>
+  <rect class="warn" x="566" y="600" width="342" height="40" rx="8"/>
+  <text class="small" x="586" y="624">Multiple issues at the same path remain separate rows.</text>
+
+  <rect class="panel" x="956" y="116" width="268" height="560" rx="8"/>
+  <text class="strong" x="980" y="148">Selected issue</text>
+  <rect class="danger" x="980" y="174" width="220" height="72" rx="8"/>
+  <text class="label" x="1000" y="198">ERROR CLASS</text>
+  <text class="body" x="1000" y="222">FontHashMismatch</text>
+  <rect class="field" x="980" y="266" width="220" height="92" rx="8"/>
+  <text class="label" x="1000" y="290">EXPECTED</text>
+  <text class="mono" x="1000" y="314">sha256:d6b4f5...</text>
+  <text class="label" x="1000" y="338">ACTUAL</text>
+  <text class="mono" x="1000" y="352">sha256:1e918c...</text>
+  <rect class="field" x="980" y="378" width="220" height="86" rx="8"/>
+  <text class="label" x="1000" y="402">BLOCKED CAPABILITY</text>
+  <text class="small" x="1000" y="426">Renderer cannot consume this</text>
+  <text class="small" x="1000" y="446">font pack as evidence.</text>
+  <rect class="warn" x="980" y="484" width="220" height="76" rx="8"/>
+  <text class="label" x="1000" y="508">REMEDIATION</text>
+  <text class="small" x="1000" y="532">Re-run import or restore the</text>
+  <text class="small" x="1000" y="550">exact font bytes.</text>
+  <rect x="980" y="584" width="220" height="56" rx="6" fill="#0f172a"/>
+  <text class="mono" x="998" y="608" fill="#cbd5e1">pnpm geordi-glyph</text>
+  <text class="mono" x="998" y="628" fill="#cbd5e1">font verify failures/bad...</text>
+</svg>
