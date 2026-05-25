@@ -731,6 +731,11 @@ export function validateRenderFixtureStrictTextFixtureManifest(
   validateStrictTextSemanticText(property(value, 'semanticText'), '$.semanticText', issues);
   validateStrictTextLineBoxes(property(value, 'lineBoxes'), '$.lineBoxes', issues);
   validateGlyphRuns(property(value, 'glyphRuns'), '$.glyphRuns', issues);
+  validateStrictTextLinkage(
+    property(value, 'lineBoxes'),
+    property(value, 'glyphRuns'),
+    issues,
+  );
 
   return { ok: issues.length === 0, issues };
 }
@@ -1510,6 +1515,61 @@ function validateGlyphRun(
     issues,
   );
   validatePositionedGlyphs(property(value, 'glyphs'), `${path}.glyphs`, issues);
+}
+
+function validateStrictTextLinkage(
+  lineBoxes: JsonValue | undefined,
+  glyphRuns: JsonValue | undefined,
+  issues: RenderFixtureStrictTextFixtureManifestIssue[],
+): void {
+  if (!isJsonArray(lineBoxes) || !isJsonArray(glyphRuns)) {
+    return;
+  }
+
+  const lineBoxIds = new Set<string>();
+  for (let index = 0; index < lineBoxes.length; index++) {
+    const lineBox = lineBoxes[index];
+    if (!isJsonObject(lineBox)) {
+      continue;
+    }
+
+    const id = property(lineBox, 'id');
+    if (typeof id !== 'string' || id.length === 0) {
+      continue;
+    }
+
+    if (lineBoxIds.has(id)) {
+      pushIssue(issues, `$.lineBoxes[${index}].id`, 'Strict text line box id must not be duplicated');
+      continue;
+    }
+    lineBoxIds.add(id);
+  }
+
+  const glyphRunIds = new Set<string>();
+  for (let index = 0; index < glyphRuns.length; index++) {
+    const glyphRun = glyphRuns[index];
+    if (!isJsonObject(glyphRun)) {
+      continue;
+    }
+
+    const id = property(glyphRun, 'id');
+    if (typeof id === 'string' && id.length > 0) {
+      if (glyphRunIds.has(id)) {
+        pushIssue(issues, `$.glyphRuns[${index}].id`, 'Strict text glyph run id must not be duplicated');
+      } else {
+        glyphRunIds.add(id);
+      }
+    }
+
+    const lineBoxId = property(glyphRun, 'lineBoxId');
+    if (typeof lineBoxId === 'string' && lineBoxId.length > 0 && !lineBoxIds.has(lineBoxId)) {
+      pushIssue(
+        issues,
+        `$.glyphRuns[${index}].lineBoxId`,
+        'Strict text glyph run line box id must reference an existing line box',
+      );
+    }
+  }
 }
 
 function validatePositionedGlyphs(

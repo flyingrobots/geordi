@@ -126,7 +126,13 @@ function assertRenderFixtureFontPackAssetHash(
 }
 
 function readFixtureLocalBytes(repositoryRoot: string, fixtureLocalPath: string): Uint8Array {
-  const resolvedRoot = realpathSync(resolve(repositoryRoot));
+  let resolvedRoot: string;
+  try {
+    resolvedRoot = realpathSync(resolve(repositoryRoot));
+  } catch {
+    throw new RenderFixtureFontPackAssetReadError(repositoryRoot);
+  }
+
   const resolvedPath = resolve(resolvedRoot, fixtureLocalPath);
   if (!isPathWithinRoot(resolvedRoot, resolvedPath)) {
     throw new RenderFixtureFontPackAssetPathError(fixtureLocalPath);

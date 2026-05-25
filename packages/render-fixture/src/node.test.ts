@@ -162,6 +162,7 @@ describe('Node render fixture hash helpers', () => {
 
   it('throws custom errors for unreadable or escaped font pack asset paths', () => {
     const manifest = parseRenderFixtureFontPackManifest(fontPackManifestSource());
+    const missingRoot = join(tmpdir(), `geordi-missing-root-${process.pid}-${Date.now()}`);
 
     expect(() =>
       assertRenderFixtureFontPackHashes(
@@ -192,6 +193,10 @@ describe('Node render fixture hash helpers', () => {
         repositoryRoot(),
       ),
     ).toThrow(RenderFixtureFontPackAssetReadError);
+
+    expect(() => assertRenderFixtureFontPackHashes(manifest, missingRoot)).toThrow(
+      RenderFixtureFontPackAssetReadError,
+    );
   });
 
   it('rejects font pack asset symlinks that resolve outside the repository root', () => {

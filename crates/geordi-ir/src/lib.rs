@@ -568,6 +568,7 @@ pub struct GeordiFontPackHashError {
 #[derive(Debug)]
 enum GeordiFontPackHashErrorSource {
     EscapedPath,
+    InvalidManifest { message: String },
     Read(std::io::Error),
     Mismatch { actual: String, expected: String },
 }
@@ -579,6 +580,17 @@ impl GeordiFontPackHashError {
             kind,
             path: path.to_owned(),
             source: GeordiFontPackHashErrorSource::EscapedPath,
+        }
+    }
+
+    fn invalid_manifest(path: &str, message: &str) -> Self {
+        Self {
+            font_id: String::new(),
+            kind: GeordiFontPackHashArtifactKind::Font,
+            path: path.to_owned(),
+            source: GeordiFontPackHashErrorSource::InvalidManifest {
+                message: message.to_owned(),
+            },
         }
     }
 
@@ -637,9 +649,9 @@ impl GeordiFontPackHashError {
     pub fn actual(&self) -> Option<&str> {
         match &self.source {
             GeordiFontPackHashErrorSource::Mismatch { actual, .. } => Some(actual),
-            GeordiFontPackHashErrorSource::EscapedPath | GeordiFontPackHashErrorSource::Read(_) => {
-                None
-            }
+            GeordiFontPackHashErrorSource::EscapedPath
+            | GeordiFontPackHashErrorSource::InvalidManifest { .. }
+            | GeordiFontPackHashErrorSource::Read(_) => None,
         }
     }
 
@@ -648,9 +660,20 @@ impl GeordiFontPackHashError {
     pub fn expected(&self) -> Option<&str> {
         match &self.source {
             GeordiFontPackHashErrorSource::Mismatch { expected, .. } => Some(expected),
-            GeordiFontPackHashErrorSource::EscapedPath | GeordiFontPackHashErrorSource::Read(_) => {
-                None
-            }
+            GeordiFontPackHashErrorSource::EscapedPath
+            | GeordiFontPackHashErrorSource::InvalidManifest { .. }
+            | GeordiFontPackHashErrorSource::Read(_) => None,
+        }
+    }
+
+    /// Manifest contract failure message when hash verification rejected structure before I/O.
+    #[must_use]
+    pub fn manifest_message(&self) -> Option<&str> {
+        match &self.source {
+            GeordiFontPackHashErrorSource::InvalidManifest { message } => Some(message),
+            GeordiFontPackHashErrorSource::EscapedPath
+            | GeordiFontPackHashErrorSource::Read(_)
+            | GeordiFontPackHashErrorSource::Mismatch { .. } => None,
         }
     }
 }
@@ -666,6 +689,7 @@ impl Error for GeordiFontPackHashError {
         match &self.source {
             GeordiFontPackHashErrorSource::Read(source) => Some(source),
             GeordiFontPackHashErrorSource::EscapedPath
+            | GeordiFontPackHashErrorSource::InvalidManifest { .. }
             | GeordiFontPackHashErrorSource::Mismatch { .. } => None,
         }
     }
@@ -858,6 +882,8 @@ pub fn validate_geordi_font_pack_hashes(
     manifest: &GeordiFontPackManifest,
     repository_root: impl AsRef<Path>,
 ) -> Result<Vec<GeordiFontPackHashVerification>, GeordiFontPackHashError> {
+    validate_geordi_font_pack_manifest_contract(manifest)?;
+
     let repository_root = repository_root.as_ref();
     let mut verifications = Vec::with_capacity(manifest.fonts.len() * 2);
 
@@ -881,6 +907,195 @@ pub fn validate_geordi_font_pack_hashes(
     Ok(verifications)
 }
 
+fn validate_geordi_font_pack_manifest_contract(
+    manifest: &GeordiFontPackManifest,
+) -> Result<(), GeordiFontPackHashError> {
+    if manifest.font_pack_version != GEORDI_FONT_PACK_VERSION {
+        return Err(GeordiFontPackHashError::invalid_manifest(
+            "$.fontPackVersion",
+            "Font pack version is not supported",
+        ));
+    }
+
+    if manifest.fonts.is_empty() {
+        return Err(GeordiFontPackHashError::invalid_manifest(
+            "$.fonts",
+            "Font pack fonts must not be empty",
+        ));
+    }
+
+    let mut font_ids = Vec::<&str>::new();
+    for (index, font) in manifest.fonts.iter().enumerate() {
+        let font_path = format!("$.fonts[{index}]");
+        validate_font_pack_non_empty(&font.id, &format!("{font_path}.id"), "Font id")?;
+        if font_ids.contains(&font.id.as_str()) {
+            return Err(GeordiFontPackHashError::invalid_manifest(
+                &format!("{font_path}.id"),
+                "Font id must not be duplicated",
+            ));
+        }
+        font_ids.push(&font.id);
+
+        if font.format != GEORDI_FONT_FORMAT_TTF {
+            return Err(GeordiFontPackHashError::invalid_manifest(
+                &format!("{font_path}.format"),
+                "Font format is not supported",
+            ));
+        }
+        validate_font_pack_local_path(&font.path, &format!("{font_path}.path"), "Font path")?;
+        validate_font_pack_hash(&font.sha256, &format!("{font_path}.sha256"), "Font hash")?;
+        if font.weight == 0 || font.weight > 1000 {
+            return Err(GeordiFontPackHashError::invalid_manifest(
+                &format!("{font_path}.weight"),
+                "Font weight must be an integer from 1 through 1000",
+            ));
+        }
+        validate_font_pack_non_empty(
+            &font.family_name,
+            &format!("{font_path}.familyName"),
+            "Font family name",
+        )?;
+        validate_font_pack_non_empty(
+            &font.style_name,
+            &format!("{font_path}.styleName"),
+            "Font style name",
+        )?;
+        validate_font_pack_license_contract(&font.license, &font_path)?;
+        validate_font_pack_source_contract(&font.source, &font_path)?;
+    }
+
+    Ok(())
+}
+
+fn validate_font_pack_license_contract(
+    license: &GeordiFontLicense,
+    font_path: &str,
+) -> Result<(), GeordiFontPackHashError> {
+    validate_font_pack_non_empty(
+        &license.name,
+        &format!("{font_path}.license.name"),
+        "Font license name",
+    )?;
+    validate_font_pack_local_path(
+        &license.path,
+        &format!("{font_path}.license.path"),
+        "Font license path",
+    )?;
+    validate_font_pack_hash(
+        &license.sha256,
+        &format!("{font_path}.license.sha256"),
+        "Font license hash",
+    )?;
+
+    let mut names = Vec::<&str>::new();
+    for (index, name) in license.reserved_font_names.iter().enumerate() {
+        let name_path = format!("{font_path}.license.reservedFontNames[{index}]");
+        validate_font_pack_non_empty(name, &name_path, "Reserved font name")?;
+        if names.contains(&name.as_str()) {
+            return Err(GeordiFontPackHashError::invalid_manifest(
+                &name_path,
+                "Reserved font name must not be duplicated",
+            ));
+        }
+        names.push(name);
+    }
+
+    Ok(())
+}
+
+fn validate_font_pack_source_contract(
+    source: &GeordiFontSource,
+    font_path: &str,
+) -> Result<(), GeordiFontPackHashError> {
+    validate_font_pack_non_empty(
+        &source.repository,
+        &format!("{font_path}.source.repository"),
+        "Font source repository",
+    )?;
+    if !is_full_lowercase_hex(&source.commit, 40) {
+        return Err(GeordiFontPackHashError::invalid_manifest(
+            &format!("{font_path}.source.commit"),
+            "Font source commit must be a lowercase full git commit hash",
+        ));
+    }
+    validate_font_pack_non_empty(
+        &source.path,
+        &format!("{font_path}.source.path"),
+        "Font source path",
+    )?;
+    validate_font_pack_non_empty(
+        &source.license_path,
+        &format!("{font_path}.source.licensePath"),
+        "Font source license path",
+    )?;
+    validate_font_pack_hash(
+        &source.font_sha256,
+        &format!("{font_path}.source.fontSha256"),
+        "Font source font hash",
+    )?;
+    validate_font_pack_hash(
+        &source.license_sha256,
+        &format!("{font_path}.source.licenseSha256"),
+        "Font source license hash",
+    )?;
+    if source.license_normalization
+        != GEORDI_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE
+    {
+        return Err(GeordiFontPackHashError::invalid_manifest(
+            &format!("{font_path}.source.licenseNormalization"),
+            "Font source license normalization is not supported",
+        ));
+    }
+
+    Ok(())
+}
+
+fn validate_font_pack_non_empty(
+    value: &str,
+    path: &str,
+    label: &str,
+) -> Result<(), GeordiFontPackHashError> {
+    if value.is_empty() {
+        return Err(GeordiFontPackHashError::invalid_manifest(
+            path,
+            &format!("{label} must be a non-empty string"),
+        ));
+    }
+
+    Ok(())
+}
+
+fn validate_font_pack_local_path(
+    value: &str,
+    path: &str,
+    label: &str,
+) -> Result<(), GeordiFontPackHashError> {
+    validate_font_pack_non_empty(value, path, label)?;
+    if !is_fixture_local_path(value) {
+        return Err(GeordiFontPackHashError::invalid_manifest(
+            path,
+            &format!("{label} must be a relative fixture-local path"),
+        ));
+    }
+
+    Ok(())
+}
+
+fn validate_font_pack_hash(
+    value: &str,
+    path: &str,
+    label: &str,
+) -> Result<(), GeordiFontPackHashError> {
+    if !is_geordi_sha256(value) {
+        return Err(GeordiFontPackHashError::invalid_manifest(
+            path,
+            &format!("{label} must be a lowercase sha256 hex digest"),
+        ));
+    }
+
+    Ok(())
+}
+
 /// Validate typed strict text fixture semantics beyond JSON shape.
 ///
 /// # Errors
@@ -892,8 +1107,9 @@ pub fn validate_geordi_strict_text_fixture_manifest(
 ) -> Result<(), GeordiStrictTextFixtureValidationError> {
     let mut issues = Vec::new();
 
-    validate_strict_text_line_boxes(manifest, &mut issues);
-    validate_strict_text_glyphs(manifest, &mut issues);
+    validate_strict_text_fixture_contract(manifest, &mut issues);
+    let line_box_ids = validate_strict_text_line_boxes(manifest, &mut issues);
+    validate_strict_text_glyphs(manifest, &line_box_ids, &mut issues);
 
     if issues.is_empty() {
         Ok(())
@@ -962,12 +1178,117 @@ fn validate_geordi_font_pack_asset_hash(
     })
 }
 
-fn validate_strict_text_line_boxes(
+fn validate_strict_text_fixture_contract(
     manifest: &GeordiStrictTextFixtureManifest,
     issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
 ) {
+    if manifest.fixture_version != GEORDI_STRICT_TEXT_FIXTURE_VERSION {
+        push_strict_text_issue(
+            issues,
+            "$.fixtureVersion",
+            "Strict text fixture version is not supported",
+        );
+    }
+    if manifest.text_profile != GEORDI_STRICT_POSITIONED_GLYPH_RUN_PROFILE {
+        push_strict_text_issue(
+            issues,
+            "$.textProfile",
+            "Strict text profile is not supported",
+        );
+    }
+    if manifest.position_encoding != GEORDI_FIXED_26_6_POSITION_ENCODING {
+        push_strict_text_issue(
+            issues,
+            "$.positionEncoding",
+            "Strict text position encoding is not supported",
+        );
+    }
+    if !is_fixture_local_path(&manifest.font_pack_path) {
+        push_strict_text_issue(
+            issues,
+            "$.fontPackPath",
+            "Strict text font pack path must be a relative fixture-local path",
+        );
+    }
+    validate_strict_text_features(manifest, issues);
+    if manifest.semantic_text.affects_pixels {
+        push_strict_text_issue(
+            issues,
+            "$.semanticText.affectsPixels",
+            "Semantic text must not affect pixels",
+        );
+    }
+    if manifest.semantic_text.language.is_empty() {
+        push_strict_text_issue(
+            issues,
+            "$.semanticText.language",
+            "Semantic text language must be a non-empty string",
+        );
+    }
+    if manifest.semantic_text.source.is_empty() {
+        push_strict_text_issue(
+            issues,
+            "$.semanticText.source",
+            "Semantic text source must be a non-empty string",
+        );
+    }
+}
+
+fn validate_strict_text_features(
+    manifest: &GeordiStrictTextFixtureManifest,
+    issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
+) {
+    let required = [
+        GEORDI_TEXT_FEATURE_POSITIONED_GLYPH_RUNS,
+        GEORDI_TEXT_FEATURE_FONT_PACK,
+        GEORDI_TEXT_FEATURE_LINE_BOXES,
+    ];
+    let mut seen = Vec::<&str>::new();
+
+    for (index, feature) in manifest.features.iter().enumerate() {
+        let path = format!("$.features[{index}]");
+        if !required.contains(&feature.as_str()) {
+            push_strict_text_issue(issues, &path, "Strict text feature is not supported");
+        }
+        if seen.contains(&feature.as_str()) {
+            push_strict_text_issue(issues, &path, "Strict text feature must not be duplicated");
+        }
+        seen.push(feature);
+    }
+
+    for feature in required {
+        if !seen.contains(&feature) {
+            push_strict_text_issue(
+                issues,
+                "$.features",
+                &format!("Strict text features must include {feature}"),
+            );
+        }
+    }
+}
+
+fn validate_strict_text_line_boxes<'a>(
+    manifest: &'a GeordiStrictTextFixtureManifest,
+    issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
+) -> Vec<&'a str> {
+    let mut line_box_ids = Vec::<&str>::new();
     for (line_box_index, line_box) in manifest.line_boxes.iter().enumerate() {
         let line_box_path = format!("$.lineBoxes[{line_box_index}]");
+        if line_box.id.is_empty() {
+            push_strict_text_issue(
+                issues,
+                &format!("{line_box_path}.id"),
+                "Strict text line box id must be a non-empty string",
+            );
+        } else if line_box_ids.contains(&line_box.id.as_str()) {
+            push_strict_text_issue(
+                issues,
+                &format!("{line_box_path}.id"),
+                "Strict text line box id must not be duplicated",
+            );
+        } else {
+            line_box_ids.push(&line_box.id);
+        }
         validate_strict_text_safe_integer(
             line_box.x,
             &format!("{line_box_path}.x"),
@@ -999,13 +1320,54 @@ fn validate_strict_text_line_boxes(
             issues,
         );
     }
+
+    line_box_ids
 }
 
 fn validate_strict_text_glyphs(
     manifest: &GeordiStrictTextFixtureManifest,
+    line_box_ids: &[&str],
     issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
 ) {
+    let mut run_ids = Vec::<&str>::new();
     for (run_index, run) in manifest.glyph_runs.iter().enumerate() {
+        let run_path = format!("$.glyphRuns[{run_index}]");
+        if run.id.is_empty() {
+            push_strict_text_issue(
+                issues,
+                &format!("{run_path}.id"),
+                "Strict text glyph run id must be a non-empty string",
+            );
+        } else if run_ids.contains(&run.id.as_str()) {
+            push_strict_text_issue(
+                issues,
+                &format!("{run_path}.id"),
+                "Strict text glyph run id must not be duplicated",
+            );
+        } else {
+            run_ids.push(&run.id);
+        }
+        if run.font_id.is_empty() {
+            push_strict_text_issue(
+                issues,
+                &format!("{run_path}.fontId"),
+                "Strict text glyph run font id must be a non-empty string",
+            );
+        }
+        if run.line_box_id.is_empty() {
+            push_strict_text_issue(
+                issues,
+                &format!("{run_path}.lineBoxId"),
+                "Strict text glyph run line box id must be a non-empty string",
+            );
+        } else if !line_box_ids.contains(&run.line_box_id.as_str()) {
+            push_strict_text_issue(
+                issues,
+                &format!("{run_path}.lineBoxId"),
+                "Strict text glyph run line box id must reference an existing line box",
+            );
+        }
+
         for (glyph_index, glyph) in run.glyphs.iter().enumerate() {
             let glyph_path = format!("$.glyphRuns[{run_index}].glyphs[{glyph_index}]");
             validate_strict_text_safe_non_negative_integer(
@@ -1083,11 +1445,47 @@ fn push_strict_text_issue(
 }
 
 fn is_fixture_local_path(path: &str) -> bool {
-    let path = Path::new(path);
-    !path.as_os_str().is_empty()
-        && path
+    !path.is_empty()
+        && !path.contains('\\')
+        && !has_path_scheme(path)
+        && Path::new(path)
             .components()
             .all(|component| matches!(component, Component::Normal(_) | Component::CurDir))
+}
+
+fn has_path_scheme(path: &str) -> bool {
+    let mut chars = path.chars();
+    match chars.next() {
+        Some(first) if first.is_ascii_alphabetic() => {}
+        _ => return false,
+    }
+
+    for character in chars {
+        if character == ':' {
+            return true;
+        }
+        if character == '/' || character == '\\' {
+            return false;
+        }
+        if !(character.is_ascii_alphanumeric() || matches!(character, '+' | '-' | '.')) {
+            return false;
+        }
+    }
+
+    false
+}
+
+fn is_geordi_sha256(value: &str) -> bool {
+    let hex = value.strip_prefix(GEORDI_SHA256_PREFIX).unwrap_or_default();
+    is_full_lowercase_hex(hex, 64)
+}
+
+fn is_full_lowercase_hex(value: &str, len: usize) -> bool {
+    value.len() == len
+        && value
+            .as_bytes()
+            .iter()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(byte))
 }
 
 fn resolve_fixture_local_path(
@@ -1300,14 +1698,15 @@ fn push_issue(issues: &mut Vec<GeordiIrValidationIssue>, path: &str, message: &s
 #[cfg(test)]
 mod tests {
     use super::{
-        GEORDI_JSON_SAFE_INTEGER_MAX, GeordiFontPackHashArtifactKind, GeordiFontPackHashError,
-        GeordiFontPackLoadError, GeordiFontPackParseError, GeordiIrLoadError, GeordiIrParseError,
-        GeordiIrValidationError, GeordiStrictTextFixtureParseError,
-        GeordiStrictTextFixtureValidationError, geordi_sha256_from_bytes,
-        load_geordi_font_pack_manifest, load_geordi_ir, parse_geordi_font_pack_manifest,
-        parse_geordi_ir, parse_geordi_strict_text_fixture_manifest,
-        validate_geordi_font_pack_hashes, validate_geordi_ir,
-        validate_geordi_strict_text_fixture_manifest,
+        GEORDI_FONT_FORMAT_TTF, GEORDI_FONT_PACK_VERSION, GEORDI_JSON_SAFE_INTEGER_MAX,
+        GEORDI_TEXT_FEATURE_POSITIONED_GLYPH_RUNS, GeordiFontPackHashArtifactKind,
+        GeordiFontPackHashError, GeordiFontPackLoadError, GeordiFontPackParseError,
+        GeordiIrLoadError, GeordiIrParseError, GeordiIrValidationError,
+        GeordiStrictTextFixtureParseError, GeordiStrictTextFixtureValidationError,
+        geordi_sha256_from_bytes, load_geordi_font_pack_manifest, load_geordi_ir,
+        parse_geordi_font_pack_manifest, parse_geordi_ir,
+        parse_geordi_strict_text_fixture_manifest, validate_geordi_font_pack_hashes,
+        validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
     };
     use std::error::Error;
     use std::fmt::{Display, Formatter};
@@ -1511,7 +1910,39 @@ mod tests {
             repository_root(),
         ))?;
 
-        assert_eq!(escaped.path(), "../Lato-Regular.ttf");
+        assert_eq!(escaped.path(), "$.fonts[0].path");
+
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_structurally_invalid_font_pack_manifests_before_hashing()
+    -> Result<(), GeordiIrTestError> {
+        let mut manifest =
+            load_geordi_font_pack_manifest(fixture_path("assets/fonts/font-pack.geordi.json"))?;
+
+        manifest.font_pack_version = "geordi-font-pack/2".to_owned();
+        let invalid_version = font_pack_hash_error(validate_geordi_font_pack_hashes(
+            &manifest,
+            repository_root(),
+        ))?;
+        assert_eq!(invalid_version.path(), "$.fontPackVersion");
+
+        manifest.font_pack_version = GEORDI_FONT_PACK_VERSION.to_owned();
+        manifest.fonts[0].format = "woff2".to_owned();
+        let invalid_format = font_pack_hash_error(validate_geordi_font_pack_hashes(
+            &manifest,
+            repository_root(),
+        ))?;
+        assert_eq!(invalid_format.path(), "$.fonts[0].format");
+
+        manifest.fonts[0].format = GEORDI_FONT_FORMAT_TTF.to_owned();
+        manifest.fonts.push(manifest.fonts[0].clone());
+        let duplicate_id = font_pack_hash_error(validate_geordi_font_pack_hashes(
+            &manifest,
+            repository_root(),
+        ))?;
+        assert_eq!(duplicate_id.path(), "$.fonts[1].id");
 
         Ok(())
     }
@@ -1721,6 +2152,45 @@ mod tests {
             strict_text_validation_paths(validate_geordi_strict_text_fixture_manifest(&manifest));
 
         assert_paths_include(&paths, "$.glyphRuns[0].glyphs[0].glyphId");
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_invalid_strict_text_fixture_contract() -> Result<(), GeordiIrTestError> {
+        let mut manifest = parse_geordi_strict_text_fixture_manifest(strict_text_fixture_source())?;
+        manifest.fixture_version = "geordi-strict-text-fixture/2".to_owned();
+        manifest.text_profile = "geordi-css-text/1".to_owned();
+        manifest.position_encoding = "geordi-fixed-24.8/1".to_owned();
+        manifest.font_pack_path = "https://example.test/font-pack.geordi.json".to_owned();
+        manifest.features = vec![
+            GEORDI_TEXT_FEATURE_POSITIONED_GLYPH_RUNS.to_owned(),
+            GEORDI_TEXT_FEATURE_POSITIONED_GLYPH_RUNS.to_owned(),
+            "text.host-font-fallback".to_owned(),
+        ];
+        manifest.semantic_text.affects_pixels = true;
+        manifest.semantic_text.language.clear();
+        manifest.semantic_text.source.clear();
+        manifest.line_boxes.push(manifest.line_boxes[0].clone());
+        let duplicate_run = manifest.glyph_runs[0].clone();
+        manifest.glyph_runs[0].line_box_id = "missing-line".to_owned();
+        manifest.glyph_runs.push(duplicate_run);
+
+        let paths =
+            strict_text_validation_paths(validate_geordi_strict_text_fixture_manifest(&manifest));
+
+        assert_paths_include(&paths, "$.fixtureVersion");
+        assert_paths_include(&paths, "$.textProfile");
+        assert_paths_include(&paths, "$.positionEncoding");
+        assert_paths_include(&paths, "$.fontPackPath");
+        assert_paths_include(&paths, "$.features[1]");
+        assert_paths_include(&paths, "$.features[2]");
+        assert_paths_include(&paths, "$.features");
+        assert_paths_include(&paths, "$.semanticText.affectsPixels");
+        assert_paths_include(&paths, "$.semanticText.language");
+        assert_paths_include(&paths, "$.semanticText.source");
+        assert_paths_include(&paths, "$.lineBoxes[1].id");
+        assert_paths_include(&paths, "$.glyphRuns[0].lineBoxId");
+        assert_paths_include(&paths, "$.glyphRuns[1].id");
         Ok(())
     }
 
@@ -2067,6 +2537,6 @@ mod tests {
     fn assert_paths_include(paths: &[String], path: &str) {
         let has_issue = paths.iter().any(|issue_path| issue_path == path);
 
-        assert!(has_issue);
+        assert!(has_issue, "{path} missing from {paths:?}");
     }
 }

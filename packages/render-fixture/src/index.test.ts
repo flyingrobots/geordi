@@ -917,6 +917,7 @@ describe('render fixture strict text fixture manifest validation', () => {
           ...lineBox,
           baselineY: Number.MAX_SAFE_INTEGER + 1,
           height: -1,
+          id: 'line-1',
           width: Number.MAX_SAFE_INTEGER + 1,
         },
       ],
@@ -930,6 +931,40 @@ describe('render fixture strict text fixture manifest validation', () => {
       '$.lineBoxes[1].width',
       '$.lineBoxes[1].height',
       '$.lineBoxes[1].baselineY',
+    ]);
+  });
+
+  it('rejects duplicate strict text ids and missing line box references', () => {
+    const manifest = makeStrictTextFixtureManifest();
+    const lineBox = manifest.lineBoxes[0];
+    const run = manifest.glyphRuns[0];
+    const invalid: JsonValue = {
+      ...manifest,
+      glyphRuns: [
+        {
+          ...run,
+          lineBoxId: 'missing-line',
+        },
+        {
+          ...run,
+          lineBoxId: lineBox.id,
+        },
+      ],
+      lineBoxes: [
+        lineBox,
+        {
+          ...lineBox,
+        },
+      ],
+    };
+
+    const result = validateRenderFixtureStrictTextFixtureManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual([
+      '$.lineBoxes[1].id',
+      '$.glyphRuns[0].lineBoxId',
+      '$.glyphRuns[1].id',
     ]);
   });
 

@@ -75,7 +75,10 @@ Field laws:
 - `x`, `y`, `xOffset`, `yOffset`, `advance`, `lineBoxes[].x`, `lineBoxes[].y`,
   `lineBoxes[].width`, `lineBoxes[].height`, and `lineBoxes[].baselineY` are signed fixed-point
   integers in `geordi-fixed-26.6/1` units.
-- `advance`, `lineBoxes[].width`, and `lineBoxes[].height` must be non-negative.
+- All fixed-point integer fields must be within the inclusive shared safe integer range
+  `-9007199254740991` through `9007199254740991`.
+- `advance`, `lineBoxes[].width`, and `lineBoxes[].height` must be non-negative and no greater
+  than `9007199254740991`.
 - Renderers must not infer kerning, ligatures, fallback, line metrics, wrapping, or shaping from the
   host platform.
 
@@ -89,6 +92,7 @@ Known failures for later slices:
 - negative glyph id;
 - non-integer fixed-point coordinate;
 - negative advance;
+- negative line-box width or height;
 - unresolved `fontId`;
 - unresolved `lineBoxId`;
 - duplicate run id or line-box id.
