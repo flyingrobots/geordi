@@ -414,6 +414,42 @@ The renderer may use floating-point internally after decoding fixed values, but 
 metadata reports, receipts, and parity checks use the fixed-point integer representation as the
 source of truth.
 
+## Line Box And Baseline Law
+
+Line boxes are explicit evidence. They are not measured by the renderer.
+
+Initial line box shape:
+
+~~~json
+{
+  "lineId": "line-0",
+  "x": 0,
+  "y": 0,
+  "width": 11520,
+  "height": 4096,
+  "baselineY": 3072,
+  "ascent": 2816,
+  "descent": 768
+}
+~~~
+
+All numeric fields use the fixture's `positionEncoding`.
+
+Rules:
+
+- `baselineY` is the y coordinate used by glyph runs that belong to the line.
+- `ascent` is the non-negative distance from baseline upward to the line's ascent edge.
+- `descent` is the non-negative distance from baseline downward to the line's descent edge.
+- `height` must be at least `ascent + descent`.
+- `width` and `height` must be non-negative.
+- A glyph run references exactly one line box in the first profile.
+- Line boxes are used for metadata, hit-test planning, clipping decisions, and explainability.
+- Line boxes are not used to ask the platform for metrics.
+
+The renderer may reject glyph evidence whose bounds fall outside its declared line box unless the
+fixture explicitly declares overflow behavior in a future profile. For the first profile, overflow is
+a known-failure case, not a best-effort clipping rule.
+
 ## Font Identity Law
 
 Font identity is not a family name. It is a concrete content-addressed asset plus face metadata.

@@ -63,7 +63,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S007**.
+Current OPEN node: **S008**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -137,7 +137,7 @@ Current OPEN node: **S007**.
 
 ### S007: Line box and baseline law
 
-- [ ] **S007: Line box and baseline law** (OPEN)
+- [x] **S007: Line box and baseline law** (COMPLETE)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with line box and baseline law documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Line box and baseline law.
@@ -148,7 +148,7 @@ Current OPEN node: **S007**.
 
 ### S008: Text receipt provenance law
 
-- [ ] **S008: Text receipt provenance law** (BLOCKED)
+- [ ] **S008: Text receipt provenance law** (OPEN)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with text receipt provenance law documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Text receipt provenance law.
