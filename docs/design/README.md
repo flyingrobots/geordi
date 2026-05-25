@@ -20,6 +20,11 @@ the rendered graph is
 The matching P0 backlog item is
 [`Define the strict positioned glyph-run profile`](../../BACKLOG.md#define-the-strict-positioned-glyph-run-profile).
 
+Related planning spike:
+[`2026-05-glyph-tooling-spike.md`](./2026-05-glyph-tooling-spike.md) proposes user-facing glyph
+import, inspection, preview, debugging, and comparison tools. It should run after S041 unless the
+font-pack import CLI is explicitly pulled forward.
+
 Use the DAG, not list order alone, to choose the next slice. A node is OPEN when all of its
 dependencies are complete. After each slice, update the checklist state, update the DOT node status,
 regenerate the SVG, and commit those planning-state changes with the slice.

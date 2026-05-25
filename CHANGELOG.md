@@ -193,6 +193,8 @@
 
 ### Documentation
 
+- Add a glyph tooling spike proposal covering market research, import/inspect/preview/debug
+  workflows, and a 15-slice implementation spike for user-facing strict text tooling.
 - `docs/ERROR_CODES.md`: Added `GEORDI_E_INPUT_INVALID_JSON` and `GEORDI_E_INPUT_INVALID_SDL` entries
 - `docs/ERROR_CODES.md`: Corrected `GEORDI_E_REF_TARGET_NOT_FOUND` — `refKind` detail is `"animation"` only; bindings use `GEORDI_E_BIND_TARGET_NOT_FOUND`
 - Render-everywhere docs now describe the completed bunny milestone, browser/native bunny commands,
