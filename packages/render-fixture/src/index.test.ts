@@ -16,23 +16,32 @@ import {
   assertRenderFixtureMeshFixtureManifest,
   assertRenderFixturePixelProbe,
   assertRenderFixturePixelProbes,
+  assertRenderFixtureStrictTextFixtureManifest,
   createRenderFixtureMeshPlaybackFrame,
   isRenderFixtureFontPackManifest,
   isRenderFixtureMeshAssetManifest,
   isRenderFixtureMeshFixtureManifest,
   isRenderFixtureManifest,
+  isRenderFixtureStrictTextFixtureManifest,
   parseRenderFixtureAsciiPlyTriangleMesh,
   parseRenderFixtureFontPackManifest,
   parseRenderFixtureMeshAssetManifest,
   parseRenderFixtureMeshFixtureManifest,
   parseRenderFixtureManifest,
+  parseRenderFixtureStrictTextFixtureManifest,
   RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE,
+  RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING,
   RENDER_FIXTURE_FONT_FORMAT_TTF,
   RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE,
   RENDER_FIXTURE_FONT_PACK_VERSION,
   RENDER_FIXTURE_MESH_FIXTURE_VERSION,
   RENDER_FIXTURE_MESH_ASSET_VERSION,
   RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
+  RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
+  RENDER_FIXTURE_STRICT_TEXT_FIXTURE_VERSION,
+  RENDER_FIXTURE_TEXT_FEATURE_FONT_PACK,
+  RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES,
+  RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS,
   RENDER_FIXTURE_VERSION,
   RenderFixtureArtifactValidationError,
   RenderFixtureInvalidFontPackManifestError,
@@ -42,6 +51,7 @@ import {
   RenderFixtureInvalidMeshPlaybackError,
   RenderFixtureInvalidPixelSampleError,
   RenderFixtureInvalidPlaybackFrameError,
+  RenderFixtureInvalidStrictTextFixtureManifestError,
   RenderFixturePlyFaceError,
   RenderFixturePlyHeaderError,
   RenderFixturePlyVertexError,
@@ -52,11 +62,13 @@ import {
   validateRenderFixtureMeshAssetManifest,
   validateRenderFixtureMeshFixtureManifest,
   validateRenderFixtureManifest,
+  validateRenderFixtureStrictTextFixtureManifest,
   type RenderFixtureFontPackManifest,
   type RenderFixtureManifest,
   type RenderFixtureMeshAssetManifest,
   type RenderFixtureMeshFixtureManifest,
   type RenderFixturePixelProbe,
+  type RenderFixtureStrictTextFixtureManifest,
 } from './index.js';
 
 function makeManifest(): RenderFixtureManifest {
@@ -181,6 +193,53 @@ function makeFontPackManifest(): RenderFixtureFontPackManifest {
         weight: 400,
       },
     ],
+  };
+}
+
+function makeStrictTextFixtureManifest(): RenderFixtureStrictTextFixtureManifest {
+  return {
+    features: [
+      RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS,
+      RENDER_FIXTURE_TEXT_FEATURE_FONT_PACK,
+      RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES,
+    ],
+    fixtureVersion: RENDER_FIXTURE_STRICT_TEXT_FIXTURE_VERSION,
+    fontPackPath: 'fixtures/render-everywhere/assets/fonts/font-pack.geordi.json',
+    glyphRuns: [
+      {
+        fontId: 'lato-regular',
+        glyphs: [
+          {
+            advance: 2048,
+            glyphId: 43,
+            x: 0,
+            xOffset: 0,
+            y: 3072,
+            yOffset: 0,
+          },
+        ],
+        id: 'run-0',
+        lineBoxId: 'line-0',
+      },
+    ],
+    id: 'render-everywhere:strict-text:geordi',
+    lineBoxes: [
+      {
+        baselineY: 3072,
+        height: 4096,
+        id: 'line-0',
+        width: 12288,
+        x: 0,
+        y: 0,
+      },
+    ],
+    positionEncoding: RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING,
+    semanticText: {
+      affectsPixels: false,
+      language: 'en',
+      source: 'GEORDI',
+    },
+    textProfile: RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
   };
 }
 
@@ -749,6 +808,113 @@ describe('render fixture font pack manifest validation', () => {
     expect(() =>
       parseRenderFixtureFontPackManifest(fontPackFailureManifestSource('unsupported-format')),
     ).toThrow(RenderFixtureInvalidFontPackManifestError);
+  });
+});
+
+describe('render fixture strict text fixture manifest validation', () => {
+  it('accepts a typed valid strict text fixture manifest object', () => {
+    const manifest = makeStrictTextFixtureManifest();
+
+    expect(validateRenderFixtureStrictTextFixtureManifest(manifest)).toEqual({
+      ok: true,
+      issues: [],
+    });
+    expect(isRenderFixtureStrictTextFixtureManifest(manifest)).toBe(true);
+    expect(assertRenderFixtureStrictTextFixtureManifest(manifest)).toBe(manifest);
+  });
+
+  it('parses strict text fixture manifests through the canonical JSON port', () => {
+    const source = canonicalJsonPort.stringify(makeStrictTextFixtureManifest(), { space: 2 });
+
+    const parsed = parseRenderFixtureStrictTextFixtureManifest(source);
+
+    expect(parsed.textProfile).toBe(RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE);
+    expect(parsed.glyphRuns[0]?.glyphs[0]?.glyphId).toBe(43);
+  });
+
+  it('rejects invalid strict text fixture metadata', () => {
+    const invalid: JsonValue = {
+      ...makeStrictTextFixtureManifest(),
+      features: [
+        RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS,
+        RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS,
+        'text.host-font-fallback',
+      ],
+      fixtureVersion: 'geordi-strict-text-fixture/2',
+      fontPackPath: 'https://example.test/font-pack.geordi.json',
+      glyphRuns: [
+        {
+          fontId: 'Lato Regular',
+          glyphs: [
+            {
+              advance: Number.POSITIVE_INFINITY,
+              glyphId: '43',
+              x: 0,
+              xOffset: 0,
+              y: 3072,
+              yOffset: 0,
+            },
+          ],
+          id: '',
+          lineBoxId: '',
+        },
+      ],
+      lineBoxes: [
+        {
+          baselineY: Number.NaN,
+          height: 4096,
+          id: '',
+          width: 12288,
+          x: 0,
+          y: 0,
+        },
+      ],
+      positionEncoding: 'geordi-fixed-24.8/1',
+      semanticText: {
+        affectsPixels: true,
+        language: '',
+        source: '',
+      },
+      textProfile: 'geordi-css-text/1',
+    };
+
+    const result = validateRenderFixtureStrictTextFixtureManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual([
+      '$.fixtureVersion',
+      '$.textProfile',
+      '$.positionEncoding',
+      '$.fontPackPath',
+      '$.features[1]',
+      '$.features[2]',
+      '$.features',
+      '$.features',
+      '$.semanticText.affectsPixels',
+      '$.semanticText.language',
+      '$.semanticText.source',
+      '$.lineBoxes[0].id',
+      '$.lineBoxes[0].baselineY',
+      '$.glyphRuns[0].id',
+      '$.glyphRuns[0].fontId',
+      '$.glyphRuns[0].lineBoxId',
+      '$.glyphRuns[0].glyphs[0].glyphId',
+      '$.glyphRuns[0].glyphs[0].advance',
+    ]);
+  });
+
+  it('throws a custom error for invalid strict text fixture manifests', () => {
+    expect(() =>
+      parseRenderFixtureStrictTextFixtureManifest(
+        canonicalJsonPort.stringify(
+          {
+            ...makeStrictTextFixtureManifest(),
+            glyphRuns: [],
+          },
+          { space: 2 },
+        ),
+      ),
+    ).toThrow(RenderFixtureInvalidStrictTextFixtureManifestError);
   });
 });
 

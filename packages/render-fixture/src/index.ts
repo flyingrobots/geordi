@@ -75,6 +75,13 @@ export interface RenderFixtureFontPackManifestValidationResult {
   readonly issues: readonly RenderFixtureFontPackManifestIssue[];
 }
 
+export type RenderFixtureStrictTextFixtureManifestIssue = RenderFixtureManifestIssue;
+
+export interface RenderFixtureStrictTextFixtureManifestValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureStrictTextFixtureManifestIssue[];
+}
+
 export interface RenderFixtureArtifactIssue extends JsonObject {
   readonly path: string;
   readonly message: string;
@@ -378,6 +385,16 @@ export class RenderFixtureInvalidFontPackManifestError extends Error {
   }
 }
 
+export class RenderFixtureInvalidStrictTextFixtureManifestError extends Error {
+  public readonly issues: readonly RenderFixtureStrictTextFixtureManifestIssue[];
+
+  constructor(issues: readonly RenderFixtureStrictTextFixtureManifestIssue[]) {
+    super('Invalid render fixture strict text fixture manifest');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
+
 export class RenderFixturePlyHeaderError extends Error {
   public readonly lineNumber: number;
 
@@ -501,6 +518,13 @@ export function parseRenderFixtureFontPackManifest(
   return assertRenderFixtureFontPackManifest(jsonPort.parse(source));
 }
 
+export function parseRenderFixtureStrictTextFixtureManifest(
+  source: string,
+  jsonPort: JsonPort = canonicalJsonPort,
+): RenderFixtureStrictTextFixtureManifest {
+  return assertRenderFixtureStrictTextFixtureManifest(jsonPort.parse(source));
+}
+
 export function assertRenderFixtureManifest(
   value: JsonValue | undefined,
 ): RenderFixtureManifest {
@@ -545,6 +569,17 @@ export function assertRenderFixtureFontPackManifest(
   throw new RenderFixtureInvalidFontPackManifestError(result.issues);
 }
 
+export function assertRenderFixtureStrictTextFixtureManifest(
+  value: JsonValue | undefined,
+): RenderFixtureStrictTextFixtureManifest {
+  const result = validateRenderFixtureStrictTextFixtureManifest(value);
+  if (result.ok && isJsonObject(value)) {
+    return value as RenderFixtureStrictTextFixtureManifest;
+  }
+
+  throw new RenderFixtureInvalidStrictTextFixtureManifestError(result.issues);
+}
+
 export function isRenderFixtureManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureManifest {
@@ -567,6 +602,12 @@ export function isRenderFixtureFontPackManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureFontPackManifest {
   return validateRenderFixtureFontPackManifest(value).ok;
+}
+
+export function isRenderFixtureStrictTextFixtureManifest(
+  value: JsonValue | undefined,
+): value is RenderFixtureStrictTextFixtureManifest {
+  return validateRenderFixtureStrictTextFixtureManifest(value).ok;
 }
 
 export function validateRenderFixtureManifest(
@@ -644,6 +685,52 @@ export function validateRenderFixtureMeshAssetManifest(
     'Face property',
     issues,
   );
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function validateRenderFixtureStrictTextFixtureManifest(
+  value: JsonValue | undefined,
+): RenderFixtureStrictTextFixtureManifestValidationResult {
+  const issues: RenderFixtureStrictTextFixtureManifestIssue[] = [];
+
+  if (!isJsonObject(value)) {
+    pushIssue(issues, '$', 'Strict text fixture manifest must be an object');
+    return { ok: false, issues };
+  }
+
+  validateLiteral(
+    property(value, 'fixtureVersion'),
+    RENDER_FIXTURE_STRICT_TEXT_FIXTURE_VERSION,
+    '$.fixtureVersion',
+    'Strict text fixture version',
+    issues,
+  );
+  validateNonEmptyString(property(value, 'id'), '$.id', 'Strict text fixture id', issues);
+  validateLiteral(
+    property(value, 'textProfile'),
+    RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
+    '$.textProfile',
+    'Strict text profile',
+    issues,
+  );
+  validateLiteral(
+    property(value, 'positionEncoding'),
+    RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING,
+    '$.positionEncoding',
+    'Strict text position encoding',
+    issues,
+  );
+  validateRelativePath(
+    property(value, 'fontPackPath'),
+    '$.fontPackPath',
+    'Strict text font pack path',
+    issues,
+  );
+  validateStrictTextFeatures(property(value, 'features'), '$.features', issues);
+  validateStrictTextSemanticText(property(value, 'semanticText'), '$.semanticText', issues);
+  validateStrictTextLineBoxes(property(value, 'lineBoxes'), '$.lineBoxes', issues);
+  validateGlyphRuns(property(value, 'glyphRuns'), '$.glyphRuns', issues);
 
   return { ok: issues.length === 0, issues };
 }
@@ -1274,6 +1361,185 @@ function validateFontSource(
   );
 }
 
+function validateStrictTextFeatures(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextFixtureManifestIssue[],
+): void {
+  if (!isJsonArray(value)) {
+    pushIssue(issues, path, 'Strict text features must be an array');
+    return;
+  }
+
+  const required = [
+    RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS,
+    RENDER_FIXTURE_TEXT_FEATURE_FONT_PACK,
+    RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES,
+  ];
+  const seen = new Set<string>();
+  for (let index = 0; index < value.length; index++) {
+    const feature = value[index];
+    const itemPath = `${path}[${index}]`;
+    if (typeof feature !== 'string') {
+      pushIssue(issues, itemPath, 'Strict text feature must be a string');
+      continue;
+    }
+
+    if (!required.includes(feature as (typeof required)[number])) {
+      pushIssue(issues, itemPath, 'Strict text feature is not supported');
+    }
+    if (seen.has(feature)) {
+      pushIssue(issues, itemPath, 'Strict text feature must not be duplicated');
+    }
+    seen.add(feature);
+  }
+
+  for (const feature of required) {
+    if (!seen.has(feature)) {
+      pushIssue(issues, path, `Strict text features must include ${feature}`);
+    }
+  }
+}
+
+function validateStrictTextSemanticText(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Strict text semantic text must be an object');
+    return;
+  }
+
+  if (property(value, 'affectsPixels') !== false) {
+    pushIssue(issues, `${path}.affectsPixels`, 'Semantic text must not affect pixels');
+  }
+  validateNonEmptyString(property(value, 'language'), `${path}.language`, 'Semantic text language', issues);
+  validateNonEmptyString(property(value, 'source'), `${path}.source`, 'Semantic text source', issues);
+}
+
+function validateStrictTextLineBoxes(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextFixtureManifestIssue[],
+): void {
+  if (!isJsonArray(value)) {
+    pushIssue(issues, path, 'Strict text line boxes must be an array');
+    return;
+  }
+
+  if (value.length === 0) {
+    pushIssue(issues, path, 'Strict text line boxes must not be empty');
+    return;
+  }
+
+  for (let index = 0; index < value.length; index++) {
+    validateStrictTextLineBox(value[index], `${path}[${index}]`, issues);
+  }
+}
+
+function validateStrictTextLineBox(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Strict text line box must be an object');
+    return;
+  }
+
+  validateNonEmptyString(property(value, 'id'), `${path}.id`, 'Strict text line box id', issues);
+  validateFiniteField(property(value, 'x'), `${path}.x`, 'Strict text line box x', issues);
+  validateFiniteField(property(value, 'y'), `${path}.y`, 'Strict text line box y', issues);
+  validateFiniteField(property(value, 'width'), `${path}.width`, 'Strict text line box width', issues);
+  validateFiniteField(property(value, 'height'), `${path}.height`, 'Strict text line box height', issues);
+  validateFiniteField(
+    property(value, 'baselineY'),
+    `${path}.baselineY`,
+    'Strict text line box baseline y',
+    issues,
+  );
+}
+
+function validateGlyphRuns(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextFixtureManifestIssue[],
+): void {
+  if (!isJsonArray(value)) {
+    pushIssue(issues, path, 'Strict text glyph runs must be an array');
+    return;
+  }
+
+  if (value.length === 0) {
+    pushIssue(issues, path, 'Strict text glyph runs must not be empty');
+    return;
+  }
+
+  for (let index = 0; index < value.length; index++) {
+    validateGlyphRun(value[index], `${path}[${index}]`, issues);
+  }
+}
+
+function validateGlyphRun(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Strict text glyph run must be an object');
+    return;
+  }
+
+  validateNonEmptyString(property(value, 'id'), `${path}.id`, 'Strict text glyph run id', issues);
+  validateFontId(property(value, 'fontId'), `${path}.fontId`, issues);
+  validateNonEmptyString(
+    property(value, 'lineBoxId'),
+    `${path}.lineBoxId`,
+    'Strict text glyph run line box id',
+    issues,
+  );
+  validatePositionedGlyphs(property(value, 'glyphs'), `${path}.glyphs`, issues);
+}
+
+function validatePositionedGlyphs(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextFixtureManifestIssue[],
+): void {
+  if (!isJsonArray(value)) {
+    pushIssue(issues, path, 'Strict text glyphs must be an array');
+    return;
+  }
+
+  if (value.length === 0) {
+    pushIssue(issues, path, 'Strict text glyphs must not be empty');
+    return;
+  }
+
+  for (let index = 0; index < value.length; index++) {
+    validatePositionedGlyph(value[index], `${path}[${index}]`, issues);
+  }
+}
+
+function validatePositionedGlyph(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextFixtureManifestIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Strict text glyph must be an object');
+    return;
+  }
+
+  validateFiniteField(property(value, 'glyphId'), `${path}.glyphId`, 'Strict text glyph id', issues);
+  validateFiniteField(property(value, 'x'), `${path}.x`, 'Strict text glyph x', issues);
+  validateFiniteField(property(value, 'y'), `${path}.y`, 'Strict text glyph y', issues);
+  validateFiniteField(property(value, 'xOffset'), `${path}.xOffset`, 'Strict text glyph x offset', issues);
+  validateFiniteField(property(value, 'yOffset'), `${path}.yOffset`, 'Strict text glyph y offset', issues);
+  validateFiniteField(property(value, 'advance'), `${path}.advance`, 'Strict text glyph advance', issues);
+}
+
 function validateMeshRuntimeProfile(
   value: JsonValue | undefined,
   path: string,
@@ -1812,6 +2078,17 @@ function validateHexColor(
 ): void {
   if (typeof value !== 'string' || !/^#[0-9a-f]{6}$/u.test(value)) {
     pushIssue(issues, path, `${label} must be lowercase #rrggbb`);
+  }
+}
+
+function validateFiniteField(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (finiteNumber(value) === undefined) {
+    pushIssue(issues, path, `${label} must be finite`);
   }
 }
 

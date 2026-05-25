@@ -518,15 +518,15 @@
 <!-- S034 -->
 <g id="node37" class="node">
 <title>S034</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M465.38,-2279C465.38,-2279 358.62,-2279 358.62,-2279 352.62,-2279 346.62,-2273 346.62,-2267 346.62,-2267 346.62,-2255 346.62,-2255 346.62,-2249 352.62,-2243 358.62,-2243 358.62,-2243 465.38,-2243 465.38,-2243 471.38,-2243 477.38,-2249 477.38,-2255 477.38,-2255 477.38,-2267 477.38,-2267 477.38,-2273 471.38,-2279 465.38,-2279"/>
-<text xml:space="preserve" text-anchor="middle" x="412" y="-2262.75" font-family="Helvetica,sans-Serif" font-size="10.00">S034</text>
-<text xml:space="preserve" text-anchor="middle" x="412" y="-2251.5" font-family="Helvetica,sans-Serif" font-size="10.00">TypeScript glyph&#45;run parser</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M465.38,-2279C465.38,-2279 358.62,-2279 358.62,-2279 352.62,-2279 346.62,-2273 346.62,-2267 346.62,-2267 346.62,-2255 346.62,-2255 346.62,-2249 352.62,-2243 358.62,-2243 358.62,-2243 465.38,-2243 465.38,-2243 471.38,-2243 477.38,-2249 477.38,-2255 477.38,-2255 477.38,-2267 477.38,-2267 477.38,-2273 471.38,-2279 465.38,-2279"/>
+<text xml:space="preserve" text-anchor="middle" x="412" y="-2262.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S034</text>
+<text xml:space="preserve" text-anchor="middle" x="412" y="-2251.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">TypeScript glyph&#45;run parser</text>
 </g>
 <!-- S032&#45;&gt;S034 -->
 <g id="edge34" class="edge">
 <title>S032&#45;&gt;S034</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M413.47,-2313.61C413.25,-2305.87 412.99,-2296.73 412.75,-2288.3"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="414.85,-2288.26 412.58,-2282.33 410.65,-2288.38 414.85,-2288.26"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M413.47,-2313.61C413.25,-2305.67 412.98,-2296.25 412.73,-2287.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="414.84,-2287.78 412.57,-2281.84 410.64,-2287.9 414.84,-2287.78"/>
 </g>
 <!-- S035 -->
 <g id="node38" class="node">
@@ -551,8 +551,8 @@
 <!-- S034&#45;&gt;S036 -->
 <g id="edge36" class="edge">
 <title>S034&#45;&gt;S036</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M414.41,-2241.24C415.39,-2233.63 416.54,-2224.7 417.6,-2216.45"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="419.67,-2216.83 418.35,-2210.61 415.5,-2216.3 419.67,-2216.83"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M414.36,-2241.61C415.37,-2233.79 416.56,-2224.54 417.65,-2216.04"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="419.71,-2216.53 418.39,-2210.31 415.54,-2216 419.71,-2216.53"/>
 </g>
 <!-- S035&#45;&gt;S036 -->
 <g id="edge37" class="edge">

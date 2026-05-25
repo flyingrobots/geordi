@@ -57,7 +57,7 @@ digraph StrictPositionedGlyphRunPlan {
     S031 [label="S031\nPositioned glyph-run schema design", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S032 [label="S032\nTypeScript glyph-run type", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S033 [label="S033\nRust glyph-run type", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S034 [label="S034\nTypeScript glyph-run parser", color="#16a34a", penwidth=4];
+    S034 [label="S034\nTypeScript glyph-run parser", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S035 [label="S035\nRust glyph-run parser", color="#16a34a", penwidth=4];
     S036 [label="S036\nGlyph id validation", color="#dc2626", penwidth=4];
     S037 [label="S037\nGlyph position validation", color="#dc2626", penwidth=4];
