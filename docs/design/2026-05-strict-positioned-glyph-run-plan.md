@@ -167,6 +167,23 @@ Failure behavior:
 The known-failure fixture family should include one fixture per rejected requirement so future
 contributors cannot accidentally make platform text look compliant.
 
+## Font Asset Checkpoint
+
+S030 closes the font-asset arc. The checkpoint is deliberately narrow:
+
+- `geordi-font-pack/1` identifies fixture-local font assets by content hash, format, face index,
+  license proof, and upstream source proof.
+- TypeScript and Rust both parse the manifest through typed boundary APIs and custom error types.
+- TypeScript and Rust both verify vendored font and license bytes against declared `sha256:` hashes.
+- Failure fixtures prove absolute paths, duplicate ids, unsupported formats, and mismatched bytes
+  remain rejected.
+- `font-pack.geordi.json.receipt` records the manifest bytes and hash-verification outputs for
+  review.
+
+The checkpoint does not support text rendering. It gives later glyph-run slices a trustworthy font
+identity surface. Glyph IDs remain meaningless unless interpreted relative to this font pack,
+specific face index, strict text profile, and glyph-run schema version.
+
 ## End-To-End Pipeline
 
 ~~~mermaid

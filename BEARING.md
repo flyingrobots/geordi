@@ -64,6 +64,25 @@ claim:
 - Next OPEN nodes after this checkpoint: `S016` and `S031`. The selected next slice is `S016`
   because the execution rule prefers the lowest-numbered OPEN node.
 
+## S030 Font Asset Checkpoint
+
+The font asset arc is complete when S030 is checked off. Its result is a verified asset boundary,
+not text rendering:
+
+- Current claim: strict text has a documented `geordi-font-pack/1` manifest shape with
+  repository-relative font and license paths.
+- Current claim: TypeScript and Rust can load the font-pack manifest and verify checked-in font and
+  license bytes by `sha256:` identity.
+- Current claim: committed failure fixtures cover absolute paths, duplicate font ids, unsupported
+  formats, and mismatched bytes.
+- Current claim: `font-pack.geordi.json.receipt` records the manifest hash and verifier outputs for
+  review and CI provenance.
+- Current nonclaim: Geordi still does not shape, line-break, render, rasterize, or compare text.
+- Current nonclaim: the Lato font asset pack does not imply host font lookup, fallback, platform
+  metrics, or runtime text APIs are compliant.
+- Next OPEN node after this checkpoint: `S031`, because `S039` remains blocked until glyph-run
+  validation slices complete.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -81,7 +100,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S030**.
+Current OPEN node: **S031**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -408,7 +427,7 @@ Current OPEN node: **S030**.
 
 ### S030: Font asset checkpoint gate
 
-- [ ] **S030: Font asset checkpoint gate** (OPEN)
+- [x] **S030: Font asset checkpoint gate** (COMPLETE)
 - **User Stories**: As a fixture author, I need fonts to be explicit content-addressed assets so every runtime sees the same bytes.
 - **Acceptance Criteria**: The slice lands with font asset checkpoint gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: All font bytes and metadata must be fixture-local, content-addressed, license-recorded, and parsed through typed boundaries. Slice-specific requirement: Font asset checkpoint gate.

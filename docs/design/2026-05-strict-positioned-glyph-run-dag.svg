@@ -466,15 +466,15 @@
 <!-- S030 -->
 <g id="node33" class="node">
 <title>S030</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M300.01,-2063C300.01,-2063 193.99,-2063 193.99,-2063 187.99,-2063 181.99,-2057 181.99,-2051 181.99,-2051 181.99,-2039 181.99,-2039 181.99,-2033 187.99,-2027 193.99,-2027 193.99,-2027 300.01,-2027 300.01,-2027 306.01,-2027 312.01,-2033 312.01,-2039 312.01,-2039 312.01,-2051 312.01,-2051 312.01,-2057 306.01,-2063 300.01,-2063"/>
-<text xml:space="preserve" text-anchor="middle" x="247" y="-2046.75" font-family="Helvetica,sans-Serif" font-size="10.00">S030</text>
-<text xml:space="preserve" text-anchor="middle" x="247" y="-2035.5" font-family="Helvetica,sans-Serif" font-size="10.00">Font asset checkpoint gate</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M300.01,-2063C300.01,-2063 193.99,-2063 193.99,-2063 187.99,-2063 181.99,-2057 181.99,-2051 181.99,-2051 181.99,-2039 181.99,-2039 181.99,-2033 187.99,-2027 193.99,-2027 193.99,-2027 300.01,-2027 300.01,-2027 306.01,-2027 312.01,-2033 312.01,-2039 312.01,-2039 312.01,-2051 312.01,-2051 312.01,-2057 306.01,-2063 300.01,-2063"/>
+<text xml:space="preserve" text-anchor="middle" x="247" y="-2046.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S030</text>
+<text xml:space="preserve" text-anchor="middle" x="247" y="-2035.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Font asset checkpoint gate</text>
 </g>
 <!-- S029&#45;&gt;S030 -->
 <g id="edge30" class="edge">
 <title>S029&#45;&gt;S030</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M245.53,-2097.61C245.75,-2089.87 246.01,-2080.73 246.25,-2072.3"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="248.35,-2072.38 246.42,-2066.33 244.15,-2072.26 248.35,-2072.38"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M245.53,-2097.61C245.75,-2089.67 246.02,-2080.25 246.27,-2071.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="248.36,-2071.9 246.43,-2065.84 244.16,-2071.78 248.36,-2071.9"/>
 </g>
 <!-- S039 -->
 <g id="node42" class="node">
@@ -486,8 +486,8 @@
 <!-- S030&#45;&gt;S039 -->
 <g id="edge42" class="edge">
 <title>S030&#45;&gt;S039</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M294.09,-2025.06C316.52,-2016.03 343.48,-2005.18 366.77,-1995.81"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="367.41,-1997.82 372.19,-1993.64 365.84,-1993.93 367.41,-1997.82"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M292.72,-2025.61C315.44,-2016.47 343.05,-2005.36 366.83,-1995.79"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="367.61,-1997.74 372.39,-1993.56 366.04,-1993.85 367.61,-1997.74"/>
 </g>
 <!-- S032 -->
 <g id="node35" class="node">
