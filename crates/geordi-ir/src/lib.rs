@@ -713,6 +713,50 @@ impl Display for GeordiIrValidationError {
 
 impl Error for GeordiIrValidationError {}
 
+/// One structural validation failure for a Geordi strict text fixture.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GeordiStrictTextFixtureValidationIssue {
+    /// JSON-path-like location of the invalid field.
+    pub path: String,
+    /// Human-readable validation message.
+    pub message: String,
+}
+
+impl GeordiStrictTextFixtureValidationIssue {
+    fn new(path: &str, message: &str) -> Self {
+        Self {
+            path: path.to_owned(),
+            message: message.to_owned(),
+        }
+    }
+}
+
+/// Custom error returned when typed strict text fixture validation fails.
+#[derive(Debug)]
+pub struct GeordiStrictTextFixtureValidationError {
+    issues: Vec<GeordiStrictTextFixtureValidationIssue>,
+}
+
+impl GeordiStrictTextFixtureValidationError {
+    const fn new(issues: Vec<GeordiStrictTextFixtureValidationIssue>) -> Self {
+        Self { issues }
+    }
+
+    /// Validation issues collected in deterministic traversal order.
+    #[must_use]
+    pub fn issues(&self) -> &[GeordiStrictTextFixtureValidationIssue] {
+        &self.issues
+    }
+}
+
+impl Display for GeordiStrictTextFixtureValidationError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Geordi strict text fixture validation failed")
+    }
+}
+
+impl Error for GeordiStrictTextFixtureValidationError {}
+
 /// Parse a Geordi IR JSON string into typed Rust structs.
 ///
 /// # Errors
@@ -835,6 +879,26 @@ pub fn validate_geordi_font_pack_hashes(
     Ok(verifications)
 }
 
+/// Validate typed strict text fixture semantics beyond JSON shape.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextFixtureValidationError` when positioned glyph ids violate the strict
+/// glyph-run contract.
+pub fn validate_geordi_strict_text_fixture_manifest(
+    manifest: &GeordiStrictTextFixtureManifest,
+) -> Result<(), GeordiStrictTextFixtureValidationError> {
+    let mut issues = Vec::new();
+
+    validate_strict_text_glyph_ids(manifest, &mut issues);
+
+    if issues.is_empty() {
+        Ok(())
+    } else {
+        Err(GeordiStrictTextFixtureValidationError::new(issues))
+    }
+}
+
 /// Validate typed Geordi IR for the rectangle-only Rust MVP subset.
 ///
 /// # Errors
@@ -891,6 +955,31 @@ fn validate_geordi_font_pack_asset_hash(
         path: fixture_path.to_owned(),
         sha256: actual,
     })
+}
+
+fn validate_strict_text_glyph_ids(
+    manifest: &GeordiStrictTextFixtureManifest,
+    issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
+) {
+    for (run_index, run) in manifest.glyph_runs.iter().enumerate() {
+        for (glyph_index, glyph) in run.glyphs.iter().enumerate() {
+            if glyph.glyph_id < 0 {
+                push_strict_text_issue(
+                    issues,
+                    &format!("$.glyphRuns[{run_index}].glyphs[{glyph_index}].glyphId"),
+                    "Strict text glyph id must be a non-negative integer",
+                );
+            }
+        }
+    }
+}
+
+fn push_strict_text_issue(
+    issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
+    path: &str,
+    message: &str,
+) {
+    issues.push(GeordiStrictTextFixtureValidationIssue::new(path, message));
 }
 
 fn is_fixture_local_path(path: &str) -> bool {
@@ -1078,10 +1167,11 @@ mod tests {
     use super::{
         GeordiFontPackHashArtifactKind, GeordiFontPackHashError, GeordiFontPackLoadError,
         GeordiFontPackParseError, GeordiIrLoadError, GeordiIrParseError, GeordiIrValidationError,
-        GeordiStrictTextFixtureParseError, geordi_sha256_from_bytes,
-        load_geordi_font_pack_manifest, load_geordi_ir, parse_geordi_font_pack_manifest,
-        parse_geordi_ir, parse_geordi_strict_text_fixture_manifest,
-        validate_geordi_font_pack_hashes, validate_geordi_ir,
+        GeordiStrictTextFixtureParseError, GeordiStrictTextFixtureValidationError,
+        geordi_sha256_from_bytes, load_geordi_font_pack_manifest, load_geordi_ir,
+        parse_geordi_font_pack_manifest, parse_geordi_ir,
+        parse_geordi_strict_text_fixture_manifest, validate_geordi_font_pack_hashes,
+        validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
     };
     use std::error::Error;
     use std::fmt::{Display, Formatter};
@@ -1096,6 +1186,7 @@ mod tests {
         Parse(GeordiIrParseError),
         ExpectedFailure,
         StrictTextParse(GeordiStrictTextFixtureParseError),
+        StrictTextValidation(GeordiStrictTextFixtureValidationError),
         Validation(GeordiIrValidationError),
     }
 
@@ -1115,6 +1206,7 @@ mod tests {
                 Self::Parse(source) => Some(source),
                 Self::ExpectedFailure => None,
                 Self::StrictTextParse(source) => Some(source),
+                Self::StrictTextValidation(source) => Some(source),
                 Self::Validation(source) => Some(source),
             }
         }
@@ -1153,6 +1245,12 @@ mod tests {
     impl From<GeordiStrictTextFixtureParseError> for GeordiIrTestError {
         fn from(error: GeordiStrictTextFixtureParseError) -> Self {
             Self::StrictTextParse(error)
+        }
+    }
+
+    impl From<GeordiStrictTextFixtureValidationError> for GeordiIrTestError {
+        fn from(error: GeordiStrictTextFixtureValidationError) -> Self {
+            Self::StrictTextValidation(error)
         }
     }
 
@@ -1402,6 +1500,47 @@ mod tests {
     }
 
     #[test]
+    fn rejects_negative_strict_text_glyph_ids() -> Result<(), GeordiIrTestError> {
+        let source = r#"{
+          "features": ["text.positionedGlyphRuns", "text.fontPack", "text.lineBoxes"],
+          "fixtureVersion": "geordi-strict-text-fixture/1",
+          "fontPackPath": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json",
+          "glyphRuns": [
+            {
+              "fontId": "lato-regular",
+              "glyphs": [
+                {
+                  "advance": 2048,
+                  "glyphId": 43,
+                  "x": 0,
+                  "xOffset": 0,
+                  "y": 3072,
+                  "yOffset": 0
+                }
+              ],
+              "id": "run-0",
+              "lineBoxId": "line-0"
+            }
+          ],
+          "id": "render-everywhere:strict-text:geordi",
+          "lineBoxes": [
+            { "baselineY": 3072, "height": 4096, "id": "line-0", "width": 12288, "x": 0, "y": 0 }
+          ],
+          "positionEncoding": "geordi-fixed-26.6/1",
+          "semanticText": { "affectsPixels": false, "language": "en", "source": "GEORDI" },
+          "textProfile": "geordi-strict-positioned-glyph-run/1"
+        }"#;
+        let mut manifest = parse_geordi_strict_text_fixture_manifest(source)?;
+        manifest.glyph_runs[0].glyphs[0].glyph_id = -1;
+
+        let paths =
+            strict_text_validation_paths(validate_geordi_strict_text_fixture_manifest(&manifest));
+
+        assert_paths_include(&paths, "$.glyphRuns[0].glyphs[0].glyphId");
+        Ok(())
+    }
+
+    #[test]
     fn parses_the_rectangle_subset_without_leaking_json_values() -> Result<(), GeordiIrTestError> {
         let source = r##"{
           "irVersion": "geordi-ir/1",
@@ -1524,6 +1663,19 @@ mod tests {
     }
 
     fn validation_paths(result: Result<(), GeordiIrValidationError>) -> Vec<String> {
+        match result {
+            Ok(()) => Vec::new(),
+            Err(error) => error
+                .issues()
+                .iter()
+                .map(|issue| issue.path.clone())
+                .collect(),
+        }
+    }
+
+    fn strict_text_validation_paths(
+        result: Result<(), GeordiStrictTextFixtureValidationError>,
+    ) -> Vec<String> {
         match result {
             Ok(()) => Vec::new(),
             Err(error) => error

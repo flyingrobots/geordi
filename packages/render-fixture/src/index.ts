@@ -1532,7 +1532,12 @@ function validatePositionedGlyph(
     return;
   }
 
-  validateFiniteField(property(value, 'glyphId'), `${path}.glyphId`, 'Strict text glyph id', issues);
+  validateSafeNonNegativeInteger(
+    property(value, 'glyphId'),
+    `${path}.glyphId`,
+    'Strict text glyph id',
+    issues,
+  );
   validateFiniteField(property(value, 'x'), `${path}.x`, 'Strict text glyph x', issues);
   validateFiniteField(property(value, 'y'), `${path}.y`, 'Strict text glyph y', issues);
   validateFiniteField(property(value, 'xOffset'), `${path}.xOffset`, 'Strict text glyph x offset', issues);
@@ -2137,6 +2142,17 @@ function validateNonNegativeInteger(
   }
 }
 
+function validateSafeNonNegativeInteger(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  if (safeNonNegativeInteger(value) === undefined) {
+    pushIssue(issues, path, `${label} must be a safe non-negative integer`);
+  }
+}
+
 function validateBoolean(
   value: JsonValue | undefined,
   path: string,
@@ -2211,6 +2227,12 @@ function positiveInteger(value: JsonValue | undefined): number | undefined {
 
 function nonNegativeInteger(value: JsonValue | undefined): number | undefined {
   return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : undefined;
+}
+
+function safeNonNegativeInteger(value: JsonValue | undefined): number | undefined {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+    ? value
+    : undefined;
 }
 
 function finiteNumber(value: JsonValue | undefined): number | undefined {

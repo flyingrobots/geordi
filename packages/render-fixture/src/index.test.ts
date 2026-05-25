@@ -916,6 +916,38 @@ describe('render fixture strict text fixture manifest validation', () => {
       ),
     ).toThrow(RenderFixtureInvalidStrictTextFixtureManifestError);
   });
+
+  it('rejects negative or unsafe glyph ids', () => {
+    const manifest = makeStrictTextFixtureManifest();
+    const run = manifest.glyphRuns[0];
+    const glyph = run.glyphs[0];
+    const invalid: JsonValue = {
+      ...manifest,
+      glyphRuns: [
+        {
+          ...run,
+          glyphs: [
+            {
+              ...glyph,
+              glyphId: -1,
+            },
+            {
+              ...glyph,
+              glyphId: Number.MAX_SAFE_INTEGER + 1,
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = validateRenderFixtureStrictTextFixtureManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual([
+      '$.glyphRuns[0].glyphs[0].glyphId',
+      '$.glyphRuns[0].glyphs[1].glyphId',
+    ]);
+  });
 });
 
 describe('render fixture mesh fixture manifest validation', () => {
