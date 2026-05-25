@@ -213,28 +213,28 @@
 <!-- S012 -->
 <g id="node15" class="node">
 <title>S012</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M446.13,-3176.5C446.13,-3176.5 307.87,-3176.5 307.87,-3176.5 301.87,-3176.5 295.87,-3170.5 295.87,-3164.5 295.87,-3164.5 295.87,-3152.5 295.87,-3152.5 295.87,-3146.5 301.87,-3140.5 307.87,-3140.5 307.87,-3140.5 446.13,-3140.5 446.13,-3140.5 452.13,-3140.5 458.13,-3146.5 458.13,-3152.5 458.13,-3152.5 458.13,-3164.5 458.13,-3164.5 458.13,-3170.5 452.13,-3176.5 446.13,-3176.5"/>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3160.25" font-family="Helvetica,sans-Serif" font-size="10.00">S012</text>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3149" font-family="Helvetica,sans-Serif" font-size="10.00">Text compliance badge vocabulary</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M446.13,-3176.5C446.13,-3176.5 307.87,-3176.5 307.87,-3176.5 301.87,-3176.5 295.87,-3170.5 295.87,-3164.5 295.87,-3164.5 295.87,-3152.5 295.87,-3152.5 295.87,-3146.5 301.87,-3140.5 307.87,-3140.5 307.87,-3140.5 446.13,-3140.5 446.13,-3140.5 452.13,-3140.5 458.13,-3146.5 458.13,-3152.5 458.13,-3152.5 458.13,-3164.5 458.13,-3164.5 458.13,-3170.5 452.13,-3176.5 446.13,-3176.5"/>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3160.25" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S012</text>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3149" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Text compliance badge vocabulary</text>
 </g>
 <!-- S011&#45;&gt;S012 -->
 <g id="edge11" class="edge">
 <title>S011&#45;&gt;S012</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3211.11C377,-3203.37 377,-3194.23 377,-3185.8"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3185.83 377,-3179.83 374.9,-3185.83 379.1,-3185.83"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3211.11C377,-3203.17 377,-3193.75 377,-3185.14"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3185.34 377,-3179.34 374.9,-3185.34 379.1,-3185.34"/>
 </g>
 <!-- S013 -->
 <g id="node16" class="node">
 <title>S013</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M442.76,-3104.5C442.76,-3104.5 311.24,-3104.5 311.24,-3104.5 305.24,-3104.5 299.24,-3098.5 299.24,-3092.5 299.24,-3092.5 299.24,-3080.5 299.24,-3080.5 299.24,-3074.5 305.24,-3068.5 311.24,-3068.5 311.24,-3068.5 442.76,-3068.5 442.76,-3068.5 448.76,-3068.5 454.76,-3074.5 454.76,-3080.5 454.76,-3080.5 454.76,-3092.5 454.76,-3092.5 454.76,-3098.5 448.76,-3104.5 442.76,-3104.5"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M442.76,-3104.5C442.76,-3104.5 311.24,-3104.5 311.24,-3104.5 305.24,-3104.5 299.24,-3098.5 299.24,-3092.5 299.24,-3092.5 299.24,-3080.5 299.24,-3080.5 299.24,-3074.5 305.24,-3068.5 311.24,-3068.5 311.24,-3068.5 442.76,-3068.5 442.76,-3068.5 448.76,-3068.5 454.76,-3074.5 454.76,-3080.5 454.76,-3080.5 454.76,-3092.5 454.76,-3092.5 454.76,-3098.5 448.76,-3104.5 442.76,-3104.5"/>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3088.25" font-family="Helvetica,sans-Serif" font-size="10.00">S013</text>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3077" font-family="Helvetica,sans-Serif" font-size="10.00">Why this is not CSS text section</text>
 </g>
 <!-- S012&#45;&gt;S013 -->
 <g id="edge12" class="edge">
 <title>S012&#45;&gt;S013</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3138.74C377,-3131.13 377,-3122.2 377,-3113.95"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3114.13 377,-3108.13 374.9,-3114.13 379.1,-3114.13"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3139.11C377,-3131.37 377,-3122.23 377,-3113.8"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3113.83 377,-3107.83 374.9,-3113.83 379.1,-3113.83"/>
 </g>
 <!-- S014 -->
 <g id="node17" class="node">

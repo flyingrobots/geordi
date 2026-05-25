@@ -63,7 +63,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S012**.
+Current OPEN node: **S013**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -192,7 +192,7 @@ Current OPEN node: **S012**.
 
 ### S012: Text compliance badge vocabulary
 
-- [ ] **S012: Text compliance badge vocabulary** (OPEN)
+- [x] **S012: Text compliance badge vocabulary** (COMPLETE)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with text compliance badge vocabulary documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Text compliance badge vocabulary.
@@ -203,7 +203,7 @@ Current OPEN node: **S012**.
 
 ### S013: Why this is not CSS text section
 
-- [ ] **S013: Why this is not CSS text section** (BLOCKED)
+- [ ] **S013: Why this is not CSS text section** (OPEN)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with why this is not css text section documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Why this is not CSS text section.

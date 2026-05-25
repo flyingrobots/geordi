@@ -601,6 +601,42 @@ Minimum receipt fragment:
 
 The parity gate compares these fields exactly before looking at pixels.
 
+## Text Compliance Badge Vocabulary
+
+Demo UIs, CLI reports, receipts, and docs should expose strict text status with the same vocabulary.
+The badge is explanatory evidence, not branding.
+
+Initial badge fields:
+
+| Field | Pass condition |
+| --- | --- |
+| `profile` | Fixture declares `geordi-strict-positioned-glyph-run/1`. |
+| `fontHashVerified` | Every declared font asset hash matches loaded bytes. |
+| `glyphRunVerified` | Positioned glyph-run hash matches canonical fixture data. |
+| `lineBoxVerified` | Line-box hash matches canonical fixture data. |
+| `glyphEvidenceVerified` | Evidence pack hash and glyph references are valid. |
+| `runtimeShaping` | Must be `false` for strict compliance. |
+| `hostFallback` | Must be `false` for strict compliance. |
+| `platformMetrics` | Must be `false` for strict compliance. |
+| `multiline` | Must be `false` for the first profile. |
+
+Suggested display:
+
+~~~text
+Text compliance:
+strict positioned glyph run: yes
+font hash verified: yes
+glyph run verified: yes
+line box verified: yes
+glyph evidence verified: yes
+runtime shaping: no
+host fallback: no
+platform metrics: no
+~~~
+
+The badge must never collapse failures into a single generic "not supported" value. Each field is a
+debuggable contract point and later becomes a useful parity report input.
+
 ## Text Evidence Ladder
 
 ~~~mermaid
