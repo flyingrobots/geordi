@@ -1540,9 +1540,24 @@ function validatePositionedGlyph(
   );
   validateSafeInteger(property(value, 'x'), `${path}.x`, 'Strict text glyph x', issues);
   validateSafeInteger(property(value, 'y'), `${path}.y`, 'Strict text glyph y', issues);
-  validateFiniteField(property(value, 'xOffset'), `${path}.xOffset`, 'Strict text glyph x offset', issues);
-  validateFiniteField(property(value, 'yOffset'), `${path}.yOffset`, 'Strict text glyph y offset', issues);
-  validateFiniteField(property(value, 'advance'), `${path}.advance`, 'Strict text glyph advance', issues);
+  validateSafeInteger(
+    property(value, 'xOffset'),
+    `${path}.xOffset`,
+    'Strict text glyph x offset',
+    issues,
+  );
+  validateSafeInteger(
+    property(value, 'yOffset'),
+    `${path}.yOffset`,
+    'Strict text glyph y offset',
+    issues,
+  );
+  validateSafeNonNegativeInteger(
+    property(value, 'advance'),
+    `${path}.advance`,
+    'Strict text glyph advance',
+    issues,
+  );
 }
 
 function validateMeshRuntimeProfile(

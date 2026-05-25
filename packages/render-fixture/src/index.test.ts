@@ -980,6 +980,43 @@ describe('render fixture strict text fixture manifest validation', () => {
       '$.glyphRuns[0].glyphs[1].y',
     ]);
   });
+
+  it('rejects fractional offsets and negative advances', () => {
+    const manifest = makeStrictTextFixtureManifest();
+    const run = manifest.glyphRuns[0];
+    const glyph = run.glyphs[0];
+    const invalid: JsonValue = {
+      ...manifest,
+      glyphRuns: [
+        {
+          ...run,
+          glyphs: [
+            {
+              ...glyph,
+              xOffset: 0.25,
+            },
+            {
+              ...glyph,
+              yOffset: Number.MAX_SAFE_INTEGER + 1,
+            },
+            {
+              ...glyph,
+              advance: -1,
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = validateRenderFixtureStrictTextFixtureManifest(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual([
+      '$.glyphRuns[0].glyphs[0].xOffset',
+      '$.glyphRuns[0].glyphs[1].yOffset',
+      '$.glyphRuns[0].glyphs[2].advance',
+    ]);
+  });
 });
 
 describe('render fixture mesh fixture manifest validation', () => {

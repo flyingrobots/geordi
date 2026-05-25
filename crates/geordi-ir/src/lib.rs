@@ -891,6 +891,7 @@ pub fn validate_geordi_strict_text_fixture_manifest(
     let mut issues = Vec::new();
 
     validate_strict_text_glyph_ids(manifest, &mut issues);
+    validate_strict_text_glyph_advances(manifest, &mut issues);
 
     if issues.is_empty() {
         Ok(())
@@ -968,6 +969,23 @@ fn validate_strict_text_glyph_ids(
                     issues,
                     &format!("$.glyphRuns[{run_index}].glyphs[{glyph_index}].glyphId"),
                     "Strict text glyph id must be a non-negative integer",
+                );
+            }
+        }
+    }
+}
+
+fn validate_strict_text_glyph_advances(
+    manifest: &GeordiStrictTextFixtureManifest,
+    issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
+) {
+    for (run_index, run) in manifest.glyph_runs.iter().enumerate() {
+        for (glyph_index, glyph) in run.glyphs.iter().enumerate() {
+            if glyph.advance < 0 {
+                push_strict_text_issue(
+                    issues,
+                    &format!("$.glyphRuns[{run_index}].glyphs[{glyph_index}].advance"),
+                    "Strict text glyph advance must be a non-negative integer",
                 );
             }
         }
@@ -1551,6 +1569,77 @@ mod tests {
               "fontId": "lato-regular",
               "glyphs": [
                 { "advance": 2048, "glyphId": 43, "x": 0.5, "xOffset": 0, "y": 3072, "yOffset": 0 }
+              ],
+              "id": "run-0",
+              "lineBoxId": "line-0"
+            }
+          ],
+          "id": "render-everywhere:strict-text:geordi",
+          "lineBoxes": [
+            { "baselineY": 3072, "height": 4096, "id": "line-0", "width": 12288, "x": 0, "y": 0 }
+          ],
+          "positionEncoding": "geordi-fixed-26.6/1",
+          "semanticText": { "affectsPixels": false, "language": "en", "source": "GEORDI" },
+          "textProfile": "geordi-strict-positioned-glyph-run/1"
+        }"#;
+
+        let result = parse_geordi_strict_text_fixture_manifest(source);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn rejects_negative_strict_text_advances() -> Result<(), GeordiIrTestError> {
+        let source = r#"{
+          "features": ["text.positionedGlyphRuns", "text.fontPack", "text.lineBoxes"],
+          "fixtureVersion": "geordi-strict-text-fixture/1",
+          "fontPackPath": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json",
+          "glyphRuns": [
+            {
+              "fontId": "lato-regular",
+              "glyphs": [
+                {
+                  "advance": 2048,
+                  "glyphId": 43,
+                  "x": 0,
+                  "xOffset": 0,
+                  "y": 3072,
+                  "yOffset": 0
+                }
+              ],
+              "id": "run-0",
+              "lineBoxId": "line-0"
+            }
+          ],
+          "id": "render-everywhere:strict-text:geordi",
+          "lineBoxes": [
+            { "baselineY": 3072, "height": 4096, "id": "line-0", "width": 12288, "x": 0, "y": 0 }
+          ],
+          "positionEncoding": "geordi-fixed-26.6/1",
+          "semanticText": { "affectsPixels": false, "language": "en", "source": "GEORDI" },
+          "textProfile": "geordi-strict-positioned-glyph-run/1"
+        }"#;
+        let mut manifest = parse_geordi_strict_text_fixture_manifest(source)?;
+        manifest.glyph_runs[0].glyphs[0].advance = -1;
+
+        let paths =
+            strict_text_validation_paths(validate_geordi_strict_text_fixture_manifest(&manifest));
+
+        assert_paths_include(&paths, "$.glyphRuns[0].glyphs[0].advance");
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_fractional_strict_text_offsets_at_parse_boundary() {
+        let source = r#"{
+          "features": ["text.positionedGlyphRuns", "text.fontPack", "text.lineBoxes"],
+          "fixtureVersion": "geordi-strict-text-fixture/1",
+          "fontPackPath": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json",
+          "glyphRuns": [
+            {
+              "fontId": "lato-regular",
+              "glyphs": [
+                { "advance": 2048, "glyphId": 43, "x": 0, "xOffset": 0.5, "y": 3072, "yOffset": 0 }
               ],
               "id": "run-0",
               "lineBoxId": "line-0"
