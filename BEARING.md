@@ -107,7 +107,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S039**.
+Current OPEN node: **S040**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -533,7 +533,7 @@ Current OPEN node: **S039**.
 
 ### S039: Font reference resolution validation
 
-- [ ] **S039: Font reference resolution validation** (OPEN)
+- [x] **S039: Font reference resolution validation** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with font reference resolution validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Font reference resolution validation.
@@ -544,7 +544,7 @@ Current OPEN node: **S039**.
 
 ### S040: Line box validation
 
-- [ ] **S040: Line box validation** (BLOCKED)
+- [ ] **S040: Line box validation** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with line box validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Line box validation.

@@ -1118,6 +1118,40 @@ pub fn validate_geordi_strict_text_fixture_manifest(
     }
 }
 
+/// Validate that every strict text glyph run resolves its font id through a font pack.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextFixtureValidationError` when a positioned glyph run references a font id
+/// not declared by the supplied font-pack manifest.
+pub fn validate_geordi_strict_text_font_references(
+    manifest: &GeordiStrictTextFixtureManifest,
+    font_pack: &GeordiFontPackManifest,
+) -> Result<(), GeordiStrictTextFixtureValidationError> {
+    let font_ids = font_pack
+        .fonts
+        .iter()
+        .map(|font| font.id.as_str())
+        .collect::<Vec<_>>();
+    let mut issues = Vec::new();
+
+    for (run_index, run) in manifest.glyph_runs.iter().enumerate() {
+        if !font_ids.contains(&run.font_id.as_str()) {
+            push_strict_text_issue(
+                &mut issues,
+                &format!("$.glyphRuns[{run_index}].fontId"),
+                "Strict text glyph run font id must reference an existing font pack font",
+            );
+        }
+    }
+
+    if issues.is_empty() {
+        Ok(())
+    } else {
+        Err(GeordiStrictTextFixtureValidationError::new(issues))
+    }
+}
+
 /// Validate typed Geordi IR for the rectangle-only Rust MVP subset.
 ///
 /// # Errors
@@ -1707,6 +1741,7 @@ mod tests {
         parse_geordi_font_pack_manifest, parse_geordi_ir,
         parse_geordi_strict_text_fixture_manifest, validate_geordi_font_pack_hashes,
         validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
+        validate_geordi_strict_text_font_references,
     };
     use std::error::Error;
     use std::fmt::{Display, Formatter};
@@ -2112,6 +2147,33 @@ mod tests {
         let result = parse_geordi_strict_text_fixture_manifest("{");
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn validates_strict_text_font_references() -> Result<(), GeordiIrTestError> {
+        let manifest = parse_geordi_strict_text_fixture_manifest(strict_text_fixture_source())?;
+        let font_pack =
+            load_geordi_font_pack_manifest(fixture_path("assets/fonts/font-pack.geordi.json"))?;
+
+        validate_geordi_strict_text_font_references(&manifest, &font_pack)?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_unresolved_strict_text_font_references() -> Result<(), GeordiIrTestError> {
+        let mut manifest = parse_geordi_strict_text_fixture_manifest(strict_text_fixture_source())?;
+        let font_pack =
+            load_geordi_font_pack_manifest(fixture_path("assets/fonts/font-pack.geordi.json"))?;
+        manifest.glyph_runs[0].font_id = "missing-font".to_owned();
+
+        let paths =
+            strict_text_validation_paths(validate_geordi_strict_text_font_references(
+                &manifest, &font_pack,
+            ));
+
+        assert_paths_include(&paths, "$.glyphRuns[0].fontId");
+        Ok(())
     }
 
     #[test]
