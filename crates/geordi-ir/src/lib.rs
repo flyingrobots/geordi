@@ -26,6 +26,24 @@ pub const GEORDI_FONT_FORMAT_TTF: &str = "ttf";
 pub const GEORDI_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE: &str =
     "trim-trailing-ascii-whitespace/1";
 
+/// Current supported strict text fixture version.
+pub const GEORDI_STRICT_TEXT_FIXTURE_VERSION: &str = "geordi-strict-text-fixture/1";
+
+/// Current supported strict positioned glyph-run profile.
+pub const GEORDI_STRICT_POSITIONED_GLYPH_RUN_PROFILE: &str = "geordi-strict-positioned-glyph-run/1";
+
+/// Current supported fixed-point encoding for glyph positions.
+pub const GEORDI_FIXED_26_6_POSITION_ENCODING: &str = "geordi-fixed-26.6/1";
+
+/// Required feature for strict positioned glyph-run evidence.
+pub const GEORDI_TEXT_FEATURE_POSITIONED_GLYPH_RUNS: &str = "text.positionedGlyphRuns";
+
+/// Required feature for strict text font-pack evidence.
+pub const GEORDI_TEXT_FEATURE_FONT_PACK: &str = "text.fontPack";
+
+/// Required feature for strict text line-box evidence.
+pub const GEORDI_TEXT_FEATURE_LINE_BOXES: &str = "text.lineBoxes";
+
 /// Prefix used by Geordi SHA-256 content identity strings.
 pub const GEORDI_SHA256_PREFIX: &str = "sha256:";
 
@@ -128,6 +146,92 @@ pub struct GeordiFontSource {
     pub license_sha256: String,
     /// License normalization profile used before hashing upstream license bytes.
     pub license_normalization: String,
+}
+
+/// Strict positioned glyph-run fixture manifest.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiStrictTextFixtureManifest {
+    /// Strict text fixture schema version.
+    pub fixture_version: String,
+    /// Stable fixture identifier.
+    pub id: String,
+    /// Strict text profile name.
+    pub text_profile: String,
+    /// Fixed-point coordinate encoding.
+    pub position_encoding: String,
+    /// Repository-relative path to the font pack manifest.
+    pub font_pack_path: String,
+    /// Required strict text features.
+    pub features: Vec<String>,
+    /// Non-rendering semantic/source text metadata.
+    pub semantic_text: GeordiStrictTextSemanticText,
+    /// Explicit line boxes used by glyph runs.
+    pub line_boxes: Vec<GeordiStrictTextLineBox>,
+    /// Positioned glyph runs.
+    pub glyph_runs: Vec<GeordiGlyphRun>,
+}
+
+/// Non-rendering semantic/source text metadata.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiStrictTextSemanticText {
+    /// Whether this text metadata affects rendered pixels. Strict fixtures require `false`.
+    pub affects_pixels: bool,
+    /// BCP-47-like language tag for semantic/debug use.
+    pub language: String,
+    /// Source string for semantic/debug use.
+    pub source: String,
+}
+
+/// Explicit fixed-point line box used by positioned glyph runs.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiStrictTextLineBox {
+    /// Stable line box identifier.
+    pub id: String,
+    /// Fixed-point x coordinate.
+    pub x: i64,
+    /// Fixed-point y coordinate.
+    pub y: i64,
+    /// Fixed-point line box width.
+    pub width: i64,
+    /// Fixed-point line box height.
+    pub height: i64,
+    /// Fixed-point baseline y coordinate.
+    pub baseline_y: i64,
+}
+
+/// One positioned glyph run.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiGlyphRun {
+    /// Stable glyph-run identifier.
+    pub id: String,
+    /// Font id resolved through the referenced font pack.
+    pub font_id: String,
+    /// Line box id resolved through the fixture line boxes.
+    pub line_box_id: String,
+    /// Positioned glyphs in draw order.
+    pub glyphs: Vec<GeordiPositionedGlyph>,
+}
+
+/// One positioned glyph in a strict text fixture.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiPositionedGlyph {
+    /// Font-local glyph id.
+    pub glyph_id: i64,
+    /// Fixed-point glyph origin x coordinate.
+    pub x: i64,
+    /// Fixed-point glyph origin y coordinate.
+    pub y: i64,
+    /// Fixed-point x offset.
+    pub x_offset: i64,
+    /// Fixed-point y offset.
+    pub y_offset: i64,
+    /// Fixed-point advance.
+    pub advance: i64,
 }
 
 /// Kind of font-pack artifact hash verified by the Rust boundary.
