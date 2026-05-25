@@ -63,7 +63,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S014**.
+Current OPEN node: **S015**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -214,7 +214,7 @@ Current OPEN node: **S014**.
 
 ### S014: Backlog and design index alignment
 
-- [ ] **S014: Backlog and design index alignment** (OPEN)
+- [x] **S014: Backlog and design index alignment** (COMPLETE)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with backlog and design index alignment documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Backlog and design index alignment.
@@ -225,7 +225,7 @@ Current OPEN node: **S014**.
 
 ### S015: Law checkpoint review gate
 
-- [ ] **S015: Law checkpoint review gate** (BLOCKED)
+- [ ] **S015: Law checkpoint review gate** (OPEN)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with law checkpoint review gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Law checkpoint review gate.

@@ -85,22 +85,27 @@ Acceptance criteria:
 
 ---
 
-### Define the strict text/font profile
+### Define the strict positioned glyph-run profile
 **Priority**: P0
 **Source**: v0 design laws,
-[`docs/design/2026-05-strict-text-font-profile.md`](./docs/design/2026-05-strict-text-font-profile.md)
-**Status**: Ready for implementation. The current baseline remains `text.raw-runtime-shaping`;
-strict text features must be known to the IR contract without being emitted by default until the
-compiler can lower text deterministically.
+[`docs/design/2026-05-strict-text-font-profile.md`](./docs/design/2026-05-strict-text-font-profile.md),
+[`docs/design/2026-05-strict-positioned-glyph-run-plan.md`](./docs/design/2026-05-strict-positioned-glyph-run-plan.md)
+**Status**: Active execution plan. `BEARING.md` owns the 100-slice checklist and
+[`docs/design/2026-05-strict-positioned-glyph-run-dag.svg`](./docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
+owns the dependency graph. The current baseline remains `text.raw-runtime-shaping`; strict text
+features must remain explicit and fail-loud until the compiler can lower text deterministically.
 
 The current renderer path lets the runtime shape raw text. That is useful for v0 rendering, but it
 cannot support a pixel-identical cross-runtime text claim because font lookup, glyph fallback,
-shaping, line breaking, and metrics vary by platform. Strict text needs an explicit profile that
-uses content-addressed fonts and precomputed glyph runs.
+shaping, line breaking, and metrics vary by platform. The active profile is
+`geordi-strict-positioned-glyph-run/1`: content-addressed fonts, precomputed positioned glyph runs,
+explicit line boxes, glyph evidence packs, and exact receipt provenance.
 
 Acceptance criteria:
 - Core owns strict text feature names for font packs, shaping profile, line-breaking profile,
   fallback chain, glyph runs, and line boxes.
+- The active profile starts fixture-first and graduates to `geordi-ir/1` only after browser/native
+  validation and rendering are proven.
 - `GEORDI_BASELINE_FEATURES` continues to emit `text.raw-runtime-shaping` until strict text
   lowering exists.
 - Compiler-core does not emit strict text requirements until it emits deterministic glyph runs and

@@ -807,6 +807,25 @@ flowchart LR
   Prep --> Receipt[Text provenance receipt]
 ~~~
 
+## Backlog And Design Index Alignment
+
+This plan is the active execution source for the P0 backlog item named `Define the strict
+positioned glyph-run profile`. The older strict text/font profile document remains useful historical
+seed material, but it is no longer the scheduler for implementation.
+
+The source-of-truth map is:
+
+- `BACKLOG.md`: product-priority entry and acceptance criteria.
+- `BEARING.md`: executable 100-slice checklist with per-slice state.
+- `docs/design/2026-05-strict-positioned-glyph-run-plan.md`: detailed law, pipeline, and evidence
+  model.
+- `docs/design/2026-05-strict-positioned-glyph-run-dag.dot`: dependency source.
+- `docs/design/2026-05-strict-positioned-glyph-run-dag.svg`: rendered dependency graph.
+- `docs/design/README.md`: design-pack index pointing readers to the active documents.
+
+Any future slice that changes milestone scope must update all of these surfaces in the same commit.
+If they disagree, the next implementation slice is blocked until the planning state is reconciled.
+
 ## Active DAG
 
 The active dependency graph is rendered from [2026-05-strict-positioned-glyph-run-dag.dot](./2026-05-strict-positioned-glyph-run-dag.dot) to [2026-05-strict-positioned-glyph-run-dag.svg](./2026-05-strict-positioned-glyph-run-dag.svg).

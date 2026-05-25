@@ -27,8 +27,8 @@ digraph StrictPositionedGlyphRunPlan {
     S011 [label="S011\nSlice DAG operating rule", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S012 [label="S012\nText compliance badge vocabulary", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S013 [label="S013\nWhy this is not CSS text section", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S014 [label="S014\nBacklog and design index alignment", color="#16a34a", penwidth=4];
-    S015 [label="S015\nLaw checkpoint review gate", color="#dc2626", penwidth=4];
+    S014 [label="S014\nBacklog and design index alignment", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S015 [label="S015\nLaw checkpoint review gate", color="#16a34a", penwidth=4];
   }
 
   subgraph cluster_assets {

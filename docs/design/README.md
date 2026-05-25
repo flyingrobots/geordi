@@ -17,12 +17,14 @@ The dependency graph source is
 [`2026-05-strict-positioned-glyph-run-dag.dot`](./2026-05-strict-positioned-glyph-run-dag.dot) and
 the rendered graph is
 [`2026-05-strict-positioned-glyph-run-dag.svg`](./2026-05-strict-positioned-glyph-run-dag.svg).
+The matching P0 backlog item is
+[`Define the strict positioned glyph-run profile`](../../BACKLOG.md#define-the-strict-positioned-glyph-run-profile).
 
 Use the DAG, not list order alone, to choose the next slice. A node is OPEN when all of its
 dependencies are complete. After each slice, update the checklist state, update the DOT node status,
 regenerate the SVG, and commit those planning-state changes with the slice.
 
-Current OPEN node: S014.
+Current OPEN node: S015.
 
 ## Completed Slice Map: Bunny Mesh Render Everywhere
 
@@ -82,15 +84,18 @@ The executable checklist for this sequence lives in
 | Slice | Working Title | Design Document |
 | ---: | --- | --- |
 | 1 | Refresh operating docs post-merge | [`2026-05-operating-docs-and-pr-gates.md`](./2026-05-operating-docs-and-pr-gates.md) |
-| 2 | Backlog strict text profile | [`2026-05-strict-text-font-profile.md`](./2026-05-strict-text-font-profile.md) |
+| 2 | Backlog strict text profile seed | [`2026-05-strict-text-font-profile.md`](./2026-05-strict-text-font-profile.md) |
 | 3 | Feature registry split | [`2026-05-feature-registry-runtime-capabilities.md`](./2026-05-feature-registry-runtime-capabilities.md) |
-| 4 | Strict text feature vocabulary | [`2026-05-strict-text-font-profile.md`](./2026-05-strict-text-font-profile.md) |
+| 4 | Strict text feature vocabulary seed | [`2026-05-strict-text-font-profile.md`](./2026-05-strict-text-font-profile.md) |
 | 5 | Runtime feature support model | [`2026-05-feature-registry-runtime-capabilities.md`](./2026-05-feature-registry-runtime-capabilities.md) |
 | 6 | Capability subset tests | [`2026-05-feature-registry-runtime-capabilities.md`](./2026-05-feature-registry-runtime-capabilities.md) |
 | 7 | Compiler baseline requirement lock | [`2026-05-feature-registry-runtime-capabilities.md`](./2026-05-feature-registry-runtime-capabilities.md) |
 | 8 | Issue #6: Group zero-required-props type test | [`2026-05-compiler-test-hardening.md`](./2026-05-compiler-test-hardening.md) |
 | 9 | Issue #5: CI-gated generated-type TSC check | [`2026-05-compiler-test-hardening.md`](./2026-05-compiler-test-hardening.md) |
 | 10 | Final gates and PR | [`2026-05-operating-docs-and-pr-gates.md`](./2026-05-operating-docs-and-pr-gates.md) |
+
+The older strict text/font profile document is retained as historical seed material. The active
+execution source of truth is the strict positioned glyph-run design, checklist, and DAG above.
 
 ## Common Invariants
 
