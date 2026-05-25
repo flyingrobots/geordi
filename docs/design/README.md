@@ -8,7 +8,35 @@ This directory holds implementation design documents for P0 slice sequences. The
 intentionally separate from [`../V0_DESIGN_LAWS.md`](../V0_DESIGN_LAWS.md): the laws define product
 semantics, while these documents define implementation slices.
 
-## Active Slice Map: Bunny Mesh Render Everywhere
+## Active Slice Map: Strict Positioned Glyph-Run Text
+
+The executable checklist for this sequence lives in
+[`../../BEARING.md`](../../BEARING.md). The detailed design document is
+[`2026-05-strict-positioned-glyph-run-plan.md`](./2026-05-strict-positioned-glyph-run-plan.md).
+The dependency graph source is
+[`2026-05-strict-positioned-glyph-run-dag.dot`](./2026-05-strict-positioned-glyph-run-dag.dot) and
+the rendered graph is
+[`2026-05-strict-positioned-glyph-run-dag.svg`](./2026-05-strict-positioned-glyph-run-dag.svg).
+The matching P0 backlog item is
+[`Define the strict positioned glyph-run profile`](../../BACKLOG.md#define-the-strict-positioned-glyph-run-profile).
+
+Related planning spike:
+[`2026-05-glyph-tooling-spike.md`](./2026-05-glyph-tooling-spike.md) proposes user-facing glyph
+import, inspection, preview, debugging, and comparison tools. It should run after S041 unless the
+font-pack import CLI is explicitly pulled forward.
+
+Drift correction:
+[`2026-05-wesley-common-type-generation.md`](./2026-05-wesley-common-type-generation.md) requires
+cross-language serialized contract DTOs to be generated from one Wesley common schema rather than
+hand-maintained separately in TypeScript and Rust.
+
+Use the DAG, not list order alone, to choose the next slice. A node is OPEN when all of its
+dependencies are complete. After each slice, update the checklist state, update the DOT node status,
+regenerate the SVG, and commit those planning-state changes with the slice.
+
+Current OPEN node: S039.
+
+## Completed Slice Map: Bunny Mesh Render Everywhere
 
 The executable checklist for this sequence lives in
 [`2026-05-bunny-mesh-slice-plan.md`](./2026-05-bunny-mesh-slice-plan.md). Keep that checklist
@@ -66,15 +94,18 @@ The executable checklist for this sequence lives in
 | Slice | Working Title | Design Document |
 | ---: | --- | --- |
 | 1 | Refresh operating docs post-merge | [`2026-05-operating-docs-and-pr-gates.md`](./2026-05-operating-docs-and-pr-gates.md) |
-| 2 | Backlog strict text profile | [`2026-05-strict-text-font-profile.md`](./2026-05-strict-text-font-profile.md) |
+| 2 | Backlog strict text profile seed | [`2026-05-strict-text-font-profile.md`](./2026-05-strict-text-font-profile.md) |
 | 3 | Feature registry split | [`2026-05-feature-registry-runtime-capabilities.md`](./2026-05-feature-registry-runtime-capabilities.md) |
-| 4 | Strict text feature vocabulary | [`2026-05-strict-text-font-profile.md`](./2026-05-strict-text-font-profile.md) |
+| 4 | Strict text feature vocabulary seed | [`2026-05-strict-text-font-profile.md`](./2026-05-strict-text-font-profile.md) |
 | 5 | Runtime feature support model | [`2026-05-feature-registry-runtime-capabilities.md`](./2026-05-feature-registry-runtime-capabilities.md) |
 | 6 | Capability subset tests | [`2026-05-feature-registry-runtime-capabilities.md`](./2026-05-feature-registry-runtime-capabilities.md) |
 | 7 | Compiler baseline requirement lock | [`2026-05-feature-registry-runtime-capabilities.md`](./2026-05-feature-registry-runtime-capabilities.md) |
 | 8 | Issue #6: Group zero-required-props type test | [`2026-05-compiler-test-hardening.md`](./2026-05-compiler-test-hardening.md) |
 | 9 | Issue #5: CI-gated generated-type TSC check | [`2026-05-compiler-test-hardening.md`](./2026-05-compiler-test-hardening.md) |
 | 10 | Final gates and PR | [`2026-05-operating-docs-and-pr-gates.md`](./2026-05-operating-docs-and-pr-gates.md) |
+
+The older strict text/font profile document is retained as historical seed material. The active
+execution source of truth is the strict positioned glyph-run design, checklist, and DAG above.
 
 ## Common Invariants
 

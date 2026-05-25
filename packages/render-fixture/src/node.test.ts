@@ -1,11 +1,19 @@
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   parseRenderFixtureAsciiPlyTriangleMesh,
+  parseRenderFixtureFontPackManifest,
   parseRenderFixtureMeshAssetManifest,
 } from './index.js';
 import {
+  assertRenderFixtureFontPackHashes,
   assertRenderFixtureSha256,
+  RenderFixtureFontPackAssetPathError,
+  RenderFixtureFontPackAssetReadError,
+  RenderFixtureFontPackHashMismatchError,
   RenderFixtureHashMismatchError,
   renderFixtureSha256FromBytes,
 } from './node.js';
@@ -39,6 +47,30 @@ function bunnyManifestSource(): string {
     ),
     'utf8',
   );
+}
+
+function fontPackManifestSource(): string {
+  return readFileSync(
+    new URL(
+      '../../../fixtures/render-everywhere/assets/fonts/font-pack.geordi.json',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
+function fontPackFailureManifestSource(name: string): string {
+  return readFileSync(
+    new URL(
+      `../../../fixtures/render-everywhere/assets/fonts/failures/${name}.font-pack.geordi.json`,
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
+function repositoryRoot(): string {
+  return fileURLToPath(new URL('../../..', import.meta.url));
 }
 
 describe('Node render fixture hash helpers', () => {
@@ -77,6 +109,146 @@ describe('Node render fixture hash helpers', () => {
         expect(index).toBeGreaterThanOrEqual(0);
         expect(index).toBeLessThan(mesh.vertices.length);
       }
+    }
+  });
+
+  it('verifies font pack asset and license hashes from committed bytes', () => {
+    const manifest = parseRenderFixtureFontPackManifest(fontPackManifestSource());
+
+    expect(assertRenderFixtureFontPackHashes(manifest, repositoryRoot())).toEqual([
+      {
+        fontId: 'lato-regular',
+        kind: 'font',
+        path: 'fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf',
+        sha256: 'sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251',
+      },
+      {
+        fontId: 'lato-regular',
+        kind: 'license',
+        path: 'fixtures/render-everywhere/assets/fonts/lato/OFL.txt',
+        sha256: 'sha256:19e7e97ffc31e58fa0e54919b8189b2ddcc6fd75539f387e2822b107b6a51423',
+      },
+    ]);
+  });
+
+  it('throws a custom error when a font pack hash does not match', () => {
+    const manifest = parseRenderFixtureFontPackManifest(fontPackManifestSource());
+
+    expect(() =>
+      assertRenderFixtureFontPackHashes(
+        {
+          ...manifest,
+          fonts: [
+            {
+              ...manifest.fonts[0],
+              sha256: 'sha256:0000000000000000000000000000000000000000000000000000000000000000',
+            },
+          ],
+        },
+        repositoryRoot(),
+      ),
+    ).toThrow(RenderFixtureFontPackHashMismatchError);
+  });
+
+  it('keeps the committed bad font hash failure fixture rejected', () => {
+    const manifest = parseRenderFixtureFontPackManifest(
+      fontPackFailureManifestSource('bad-hash'),
+    );
+
+    expect(() => assertRenderFixtureFontPackHashes(manifest, repositoryRoot())).toThrow(
+      RenderFixtureFontPackHashMismatchError,
+    );
+  });
+
+  it('throws custom errors for unreadable or escaped font pack asset paths', () => {
+    const manifest = parseRenderFixtureFontPackManifest(fontPackManifestSource());
+    const missingRoot = join(tmpdir(), `geordi-missing-root-${process.pid}-${Date.now()}`);
+
+    expect(() =>
+      assertRenderFixtureFontPackHashes(
+        {
+          ...manifest,
+          fonts: [
+            {
+              ...manifest.fonts[0],
+              path: '../Lato-Regular.ttf',
+            },
+          ],
+        },
+        repositoryRoot(),
+      ),
+    ).toThrow(RenderFixtureFontPackAssetPathError);
+
+    expect(() =>
+      assertRenderFixtureFontPackHashes(
+        {
+          ...manifest,
+          fonts: [
+            {
+              ...manifest.fonts[0],
+              path: 'fixtures/render-everywhere/assets/fonts/lato/missing.ttf',
+            },
+          ],
+        },
+        repositoryRoot(),
+      ),
+    ).toThrow(RenderFixtureFontPackAssetReadError);
+
+    expect(() => assertRenderFixtureFontPackHashes(manifest, missingRoot)).toThrow(
+      RenderFixtureFontPackAssetReadError,
+    );
+  });
+
+  it('rejects font pack asset symlinks that resolve outside the repository root', () => {
+    const tempRoot = mkdtempSync(join(tmpdir(), 'geordi-font-pack-root-'));
+    const externalRoot = mkdtempSync(join(tmpdir(), 'geordi-font-pack-external-'));
+    try {
+      const externalFontPath = join(externalRoot, 'external.ttf');
+      writeFileSync(externalFontPath, new Uint8Array([1, 2, 3]));
+      symlinkSync(externalFontPath, join(tempRoot, 'font.ttf'));
+      writeFileSync(join(tempRoot, 'license.txt'), 'license');
+
+      expect(() =>
+        assertRenderFixtureFontPackHashes(
+          {
+            fontPackVersion: 'geordi-font-pack/1',
+            fonts: [
+              {
+                faceIndex: 0,
+                familyName: 'Lato',
+                format: 'ttf',
+                id: 'lato-regular',
+                license: {
+                  name: 'SIL Open Font License 1.1',
+                  path: 'license.txt',
+                  redistributionAllowed: true,
+                  reservedFontNames: ['Lato'],
+                  sha256: renderFixtureSha256FromBytes(readFileSync(join(tempRoot, 'license.txt'))),
+                },
+                path: 'font.ttf',
+                sha256: renderFixtureSha256FromBytes(readFileSync(externalFontPath)),
+                source: {
+                  commit: 'c5b52261e8fde2d3b2592fa9d26ac525939c5e4c',
+                  fontSha256: renderFixtureSha256FromBytes(readFileSync(externalFontPath)),
+                  licenseNormalization: 'trim-trailing-ascii-whitespace/1',
+                  licensePath: 'ofl/lato/OFL.txt',
+                  licenseSha256: renderFixtureSha256FromBytes(
+                    readFileSync(join(tempRoot, 'license.txt')),
+                  ),
+                  path: 'ofl/lato/Lato-Regular.ttf',
+                  repository: 'https://github.com/google/fonts',
+                },
+                styleName: 'Regular',
+                weight: 400,
+              },
+            ],
+          },
+          tempRoot,
+        ),
+      ).toThrow(RenderFixtureFontPackAssetPathError);
+    } finally {
+      rmSync(tempRoot, { force: true, recursive: true });
+      rmSync(externalRoot, { force: true, recursive: true });
     }
   });
 });

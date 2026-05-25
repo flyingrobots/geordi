@@ -1,0 +1,128 @@
+<svg width="1280" height="760" viewBox="0 0 1280 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Geordi Glyph Workbench import workflow mockup</title>
+  <desc id="desc">A local workbench screen for importing a font and license into a verified Geordi font pack, including hash previews, path validation, and a generated manifest diff.</desc>
+  <style>
+    .bg { fill: #eef2f6; }
+    .frame { fill: #ffffff; stroke: #cfd8e3; }
+    .nav { fill: #111827; }
+    .nav-text { fill: #cbd5e1; font: 500 14px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .nav-active { fill: #2dd4bf; }
+    .top { fill: #f8fafc; stroke: #d8e1ec; }
+    .title { fill: #111827; font: 700 20px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .small { fill: #64748b; font: 500 12px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .label { fill: #475569; font: 600 12px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .body { fill: #1f2937; font: 500 14px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .body-strong { fill: #111827; font: 700 14px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .mono { fill: #334155; font: 500 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mono-green { fill: #047857; font: 600 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .mono-red { fill: #b91c1c; font: 600 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .panel { fill: #ffffff; stroke: #d8e1ec; }
+    .field { fill: #f8fafc; stroke: #cbd5e1; }
+    .pill { fill: #e0f2fe; stroke: #7dd3fc; }
+    .pill-warn { fill: #fff7ed; stroke: #fdba74; }
+    .pill-ok { fill: #ecfdf5; stroke: #86efac; }
+    .button { fill: #0f766e; }
+    .button-text { fill: #ffffff; font: 700 13px system-ui, -apple-system, Segoe UI, sans-serif; }
+    .divider { stroke: #e2e8f0; }
+  </style>
+  <rect class="bg" x="0" y="0" width="1280" height="760"/>
+  <rect class="frame" x="20" y="20" width="1240" height="720" rx="8"/>
+  <rect class="nav" x="20" y="20" width="184" height="720" rx="8"/>
+  <rect class="nav" x="188" y="20" width="16" height="720"/>
+  <text class="nav-active" x="44" y="58">Geordi</text>
+  <text class="nav-text" x="44" y="92">Glyph Workbench</text>
+  <line x1="44" y1="116" x2="180" y2="116" stroke="#334155"/>
+  <text class="nav-text" x="44" y="154">Font Pack</text>
+  <rect x="32" y="132" width="4" height="34" fill="#2dd4bf" rx="2"/>
+  <text class="nav-text" x="44" y="196">Fixture</text>
+  <text class="nav-text" x="44" y="238">Preview</text>
+  <text class="nav-text" x="44" y="280">Failures</text>
+  <text class="nav-text" x="44" y="322">Compare</text>
+  <text class="small" x="44" y="666" fill="#94a3b8">Local only</text>
+  <text class="small" x="44" y="690" fill="#94a3b8">No host font path</text>
+
+  <rect class="top" x="204" y="20" width="1056" height="72" rx="8"/>
+  <text class="title" x="232" y="56">Import font into Geordi font pack</text>
+  <rect class="pill" x="818" y="38" width="196" height="30" rx="15"/>
+  <text class="small" x="836" y="57">profile: strict glyph run / 1</text>
+  <rect class="pill-ok" x="1028" y="38" width="178" height="30" rx="15"/>
+  <text class="small" x="1048" y="57">dry run, no writes</text>
+
+  <rect class="panel" x="232" y="116" width="388" height="560" rx="8"/>
+  <text class="body-strong" x="256" y="148">Import inputs</text>
+  <text class="small" x="256" y="172">All file references stay explicit and hash-backed.</text>
+  <line class="divider" x1="256" y1="194" x2="596" y2="194"/>
+
+  <text class="label" x="256" y="224">FONT FILE</text>
+  <rect class="field" x="256" y="238" width="340" height="44" rx="6"/>
+  <text class="mono" x="274" y="265">assets/fonts/lato/Lato-Regular.ttf</text>
+  <rect class="button" x="512" y="247" width="66" height="26" rx="5"/>
+  <text class="button-text" x="529" y="264">Browse</text>
+
+  <text class="label" x="256" y="314">LICENSE FILE</text>
+  <rect class="field" x="256" y="328" width="340" height="44" rx="6"/>
+  <text class="mono" x="274" y="355">assets/fonts/lato/OFL.txt</text>
+  <rect class="button" x="512" y="337" width="66" height="26" rx="5"/>
+  <text class="button-text" x="529" y="354">Browse</text>
+
+  <text class="label" x="256" y="404">FONT ID</text>
+  <rect class="field" x="256" y="418" width="164" height="44" rx="6"/>
+  <text class="mono" x="274" y="445">lato-regular</text>
+  <text class="label" x="444" y="404">FACE INDEX</text>
+  <rect class="field" x="444" y="418" width="152" height="44" rx="6"/>
+  <text class="mono" x="462" y="445">0</text>
+
+  <text class="label" x="256" y="494">SOURCE</text>
+  <rect class="field" x="256" y="508" width="340" height="58" rx="6"/>
+  <text class="mono" x="274" y="534">family: Lato</text>
+  <text class="mono" x="274" y="554">style: Regular, weight: 400</text>
+  <rect class="pill-warn" x="256" y="590" width="340" height="52" rx="8"/>
+  <text class="body-strong" x="276" y="612" fill="#9a3412">Redistribution warning</text>
+  <text class="small" x="276" y="634">License is recorded. Tool does not grant rights.</text>
+
+  <rect class="panel" x="644" y="116" width="280" height="250" rx="8"/>
+  <text class="body-strong" x="668" y="148">Hash preview</text>
+  <text class="small" x="668" y="172">Canonical bytes before manifest output.</text>
+  <rect class="field" x="668" y="198" width="232" height="54" rx="6"/>
+  <text class="label" x="684" y="220">FONT SHA-256</text>
+  <text class="mono" x="684" y="240">d6b4f5...8e21a9</text>
+  <rect class="field" x="668" y="270" width="232" height="54" rx="6"/>
+  <text class="label" x="684" y="292">LICENSE SHA-256</text>
+  <text class="mono" x="684" y="312">3a091b...f0c884</text>
+
+  <rect class="panel" x="644" y="390" width="280" height="286" rx="8"/>
+  <text class="body-strong" x="668" y="422">Validation gates</text>
+  <rect class="pill-ok" x="668" y="448" width="232" height="34" rx="17"/>
+  <text class="body" x="690" y="470">Format supported: TTF</text>
+  <rect class="pill-ok" x="668" y="496" width="232" height="34" rx="17"/>
+  <text class="body" x="690" y="518">Relative output path</text>
+  <rect class="pill-ok" x="668" y="544" width="232" height="34" rx="17"/>
+  <text class="body" x="690" y="566">Face index available</text>
+  <rect class="pill-warn" x="668" y="592" width="232" height="54" rx="8"/>
+  <text class="body-strong" x="690" y="615" fill="#9a3412">Manifest proposal only</text>
+  <text class="small" x="690" y="637">Writes require explicit output.</text>
+
+  <rect class="panel" x="948" y="116" width="276" height="560" rx="8"/>
+  <text class="body-strong" x="972" y="148">Generated manifest diff</text>
+  <text class="small" x="972" y="172">Canonical JSON proposal.</text>
+  <rect x="972" y="198" width="228" height="388" rx="6" fill="#0f172a"/>
+  <text class="mono-green" x="990" y="226">+ {</text>
+  <text class="mono-green" x="990" y="250">+   "id": "lato-regular",</text>
+  <text class="mono-green" x="990" y="274">+   "family": "Lato",</text>
+  <text class="mono-green" x="990" y="298">+   "style": "Regular",</text>
+  <text class="mono-green" x="990" y="322">+   "weight": 400,</text>
+  <text class="mono-green" x="990" y="346">+   "faceIndex": 0,</text>
+  <text class="mono-green" x="990" y="370">+   "fontHash": "sha256:...",</text>
+  <text class="mono-green" x="990" y="394">+   "licenseHash": "sha256:...",</text>
+  <text class="mono-green" x="990" y="418">+   "sourcePath": "assets/..."</text>
+  <text class="mono-green" x="990" y="442">+ }</text>
+  <text class="mono-red" x="990" y="492">! no platform fallback</text>
+  <text class="mono-red" x="990" y="516">! no hidden shaping</text>
+  <rect class="button" x="972" y="610" width="120" height="38" rx="6"/>
+  <text class="button-text" x="999" y="634">Copy JSON</text>
+  <rect class="field" x="1106" y="610" width="94" height="38" rx="6"/>
+  <text class="body" x="1127" y="634">Save...</text>
+
+  <rect class="field" x="232" y="696" width="992" height="30" rx="6"/>
+  <text class="mono" x="252" y="716">pnpm geordi-glyph font import --font assets/fonts/lato/Lato-Regular.ttf --license assets/fonts/lato/OFL.txt --id lato-regular --out font-pack.geordi.json</text>
+</svg>

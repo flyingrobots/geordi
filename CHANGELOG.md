@@ -49,6 +49,8 @@
   `validateGeordiIr()`, `isGeordiIr()`) and compiler target (`geordi-ir`) while preserving
   `irVersion: "geordi-ir/1"` as the serialized contract identity.
 - **Root scripts**: Add `pnpm wesley` as a thin shell-out to the installed `wesley` CLI.
+- **Strict text fixtures**: Add TypeScript and Rust font-pack boundary types, parsers, hash
+  verifiers, failure fixtures, and a receipt for the Lato font asset pack.
 - **`@flyingrobots/geordi-compiler-core`**: Add a canonical source-location model shared by AST
   `SourceRef` and diagnostics, including optional spans and offsets.
 - **`@flyingrobots/geordi-schema-graphql`**: Preserve GraphQL source spans and byte offsets for
@@ -191,6 +193,10 @@
 
 ### Documentation
 
+- Add a Wesley common-type generation drift-correction doc requiring shared TypeScript/Rust
+  serialized contract DTOs to be generated from one schema rather than hand-maintained in parallel.
+- Add a glyph tooling spike proposal covering market research, import/inspect/preview/debug
+  workflows, and a 15-slice implementation spike for user-facing strict text tooling.
 - `docs/ERROR_CODES.md`: Added `GEORDI_E_INPUT_INVALID_JSON` and `GEORDI_E_INPUT_INVALID_SDL` entries
 - `docs/ERROR_CODES.md`: Corrected `GEORDI_E_REF_TARGET_NOT_FOUND` — `refKind` detail is `"animation"` only; bindings use `GEORDI_E_BIND_TARGET_NOT_FOUND`
 - Render-everywhere docs now describe the completed bunny milestone, browser/native bunny commands,
