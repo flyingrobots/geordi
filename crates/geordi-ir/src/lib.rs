@@ -218,6 +218,30 @@ impl Error for GeordiIrParseError {
     }
 }
 
+/// Custom error returned when parsing a Geordi font-pack JSON string fails.
+#[derive(Debug)]
+pub struct GeordiFontPackParseError {
+    source: serde_json::Error,
+}
+
+impl GeordiFontPackParseError {
+    const fn new(source: serde_json::Error) -> Self {
+        Self { source }
+    }
+}
+
+impl Display for GeordiFontPackParseError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Geordi font pack parse failed")
+    }
+}
+
+impl Error for GeordiFontPackParseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.source)
+    }
+}
+
 /// Custom error returned when loading a Geordi IR artifact from disk fails.
 #[derive(Debug)]
 pub struct GeordiIrLoadError {
@@ -264,6 +288,60 @@ impl Error for GeordiIrLoadError {
         match &self.source {
             GeordiIrLoadErrorSource::File(source) => Some(source),
             GeordiIrLoadErrorSource::Parse(source) => Some(source),
+        }
+    }
+}
+
+/// Custom error returned when loading a Geordi font-pack manifest from disk fails.
+#[derive(Debug)]
+pub struct GeordiFontPackLoadError {
+    path: PathBuf,
+    source: GeordiFontPackLoadErrorSource,
+}
+
+#[derive(Debug)]
+enum GeordiFontPackLoadErrorSource {
+    File(std::io::Error),
+    Parse(GeordiFontPackParseError),
+}
+
+impl GeordiFontPackLoadError {
+    const fn file(path: PathBuf, source: std::io::Error) -> Self {
+        Self {
+            path,
+            source: GeordiFontPackLoadErrorSource::File(source),
+        }
+    }
+
+    const fn parse(path: PathBuf, source: GeordiFontPackParseError) -> Self {
+        Self {
+            path,
+            source: GeordiFontPackLoadErrorSource::Parse(source),
+        }
+    }
+
+    /// Path that failed to load.
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Display for GeordiFontPackLoadError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Geordi font pack load failed: {}",
+            self.path.display()
+        )
+    }
+}
+
+impl Error for GeordiFontPackLoadError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match &self.source {
+            GeordiFontPackLoadErrorSource::File(source) => Some(source),
+            GeordiFontPackLoadErrorSource::Parse(source) => Some(source),
         }
     }
 }
@@ -322,6 +400,18 @@ pub fn parse_geordi_ir(source: &str) -> Result<GeordiIr, GeordiIrParseError> {
     serde_json::from_str(source).map_err(GeordiIrParseError::new)
 }
 
+/// Parse a Geordi font-pack JSON string into typed Rust structs.
+///
+/// # Errors
+///
+/// Returns `GeordiFontPackParseError` when the source is not valid JSON or does not match the
+/// strict font-pack manifest shape.
+pub fn parse_geordi_font_pack_manifest(
+    source: &str,
+) -> Result<GeordiFontPackManifest, GeordiFontPackParseError> {
+    serde_json::from_str(source).map_err(GeordiFontPackParseError::new)
+}
+
 /// Load a Geordi IR artifact from a path into typed Rust structs.
 ///
 /// # Errors
@@ -334,6 +424,23 @@ pub fn load_geordi_ir(path: impl AsRef<Path>) -> Result<GeordiIr, GeordiIrLoadEr
         .map_err(|error| GeordiIrLoadError::file(path.to_path_buf(), error))?;
 
     parse_geordi_ir(&source).map_err(|error| GeordiIrLoadError::parse(path.to_path_buf(), error))
+}
+
+/// Load a Geordi font-pack manifest from a path into typed Rust structs.
+///
+/// # Errors
+///
+/// Returns `GeordiFontPackLoadError` when the file cannot be read or its contents cannot be parsed
+/// as a strict font-pack manifest.
+pub fn load_geordi_font_pack_manifest(
+    path: impl AsRef<Path>,
+) -> Result<GeordiFontPackManifest, GeordiFontPackLoadError> {
+    let path = path.as_ref();
+    let source = fs::read_to_string(path)
+        .map_err(|error| GeordiFontPackLoadError::file(path.to_path_buf(), error))?;
+
+    parse_geordi_font_pack_manifest(&source)
+        .map_err(|error| GeordiFontPackLoadError::parse(path.to_path_buf(), error))
 }
 
 /// Validate typed Geordi IR for the rectangle-only Rust MVP subset.
@@ -533,8 +640,9 @@ fn push_issue(issues: &mut Vec<GeordiIrValidationIssue>, path: &str, message: &s
 #[cfg(test)]
 mod tests {
     use super::{
-        GeordiIrLoadError, GeordiIrParseError, GeordiIrValidationError, load_geordi_ir,
-        parse_geordi_ir, validate_geordi_ir,
+        GeordiFontPackLoadError, GeordiFontPackParseError, GeordiIrLoadError, GeordiIrParseError,
+        GeordiIrValidationError, load_geordi_font_pack_manifest, load_geordi_ir,
+        parse_geordi_font_pack_manifest, parse_geordi_ir, validate_geordi_ir,
     };
     use std::error::Error;
     use std::fmt::{Display, Formatter};
@@ -542,6 +650,8 @@ mod tests {
 
     #[derive(Debug)]
     enum GeordiIrTestError {
+        FontPackLoad(GeordiFontPackLoadError),
+        FontPackParse(GeordiFontPackParseError),
         Load(GeordiIrLoadError),
         Parse(GeordiIrParseError),
         Validation(GeordiIrValidationError),
@@ -556,6 +666,8 @@ mod tests {
     impl Error for GeordiIrTestError {
         fn source(&self) -> Option<&(dyn Error + 'static)> {
             match self {
+                Self::FontPackLoad(source) => Some(source),
+                Self::FontPackParse(source) => Some(source),
                 Self::Load(source) => Some(source),
                 Self::Parse(source) => Some(source),
                 Self::Validation(source) => Some(source),
@@ -569,9 +681,21 @@ mod tests {
         }
     }
 
+    impl From<GeordiFontPackLoadError> for GeordiIrTestError {
+        fn from(error: GeordiFontPackLoadError) -> Self {
+            Self::FontPackLoad(error)
+        }
+    }
+
     impl From<GeordiIrParseError> for GeordiIrTestError {
         fn from(error: GeordiIrParseError) -> Self {
             Self::Parse(error)
+        }
+    }
+
+    impl From<GeordiFontPackParseError> for GeordiIrTestError {
+        fn from(error: GeordiFontPackParseError) -> Self {
+            Self::FontPackParse(error)
         }
     }
 
@@ -594,6 +718,73 @@ mod tests {
         assert_eq!(ir.nodes.len(), 8);
         assert_eq!(ir.nodes[0].id, "background");
         assert_eq!(ir.nodes[0].props.fill, "#101820");
+
+        Ok(())
+    }
+
+    #[test]
+    fn loads_the_shared_font_pack_manifest() -> Result<(), GeordiIrTestError> {
+        let manifest =
+            load_geordi_font_pack_manifest(fixture_path("assets/fonts/font-pack.geordi.json"))?;
+
+        assert_eq!(manifest.font_pack_version, "geordi-font-pack/1");
+        assert_eq!(manifest.fonts.len(), 1);
+        assert_eq!(manifest.fonts[0].id, "lato-regular");
+        assert_eq!(manifest.fonts[0].format, "ttf");
+        assert_eq!(manifest.fonts[0].face_index, 0);
+        assert_eq!(manifest.fonts[0].family_name, "Lato");
+        assert_eq!(manifest.fonts[0].style_name, "Regular");
+        assert_eq!(manifest.fonts[0].weight, 400);
+        assert_eq!(manifest.fonts[0].license.name, "SIL Open Font License 1.1");
+        assert!(manifest.fonts[0].license.redistribution_allowed);
+        assert_eq!(
+            manifest.fonts[0].source.repository,
+            "https://github.com/google/fonts"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn parses_font_pack_manifest_without_json_values() -> Result<(), GeordiIrTestError> {
+        let source = r#"{
+          "fontPackVersion": "geordi-font-pack/1",
+          "fonts": [
+            {
+              "faceIndex": 0,
+              "familyName": "Lato",
+              "format": "ttf",
+              "id": "lato-regular",
+              "license": {
+                "name": "SIL Open Font License 1.1",
+                "path": "fixtures/render-everywhere/assets/fonts/lato/OFL.txt",
+                "redistributionAllowed": true,
+                "reservedFontNames": ["Lato"],
+                "sha256": "sha256:19e7e97ffc31e58fa0e54919b8189b2ddcc6fd75539f387e2822b107b6a51423"
+              },
+              "path": "fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf",
+              "sha256": "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251",
+              "source": {
+                "commit": "c5b52261e8fde2d3b2592fa9d26ac525939c5e4c",
+                "fontSha256": "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251",
+                "licenseNormalization": "trim-trailing-ascii-whitespace/1",
+                "licensePath": "ofl/lato/OFL.txt",
+                "licenseSha256": "sha256:74ba064d03f1f1c4a952da936c3eb71866c34404916734de3cae73b34357e59e",
+                "path": "ofl/lato/Lato-Regular.ttf",
+                "repository": "https://github.com/google/fonts"
+              },
+              "styleName": "Regular",
+              "weight": 400
+            }
+          ]
+        }"#;
+
+        let manifest = parse_geordi_font_pack_manifest(source)?;
+
+        assert_eq!(
+            manifest.fonts[0].source.license_normalization,
+            "trim-trailing-ascii-whitespace/1"
+        );
 
         Ok(())
     }
