@@ -22,8 +22,8 @@ digraph StrictPositionedGlyphRunPlan {
     S006 [label="S006\nText coordinate and numeric law", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S007 [label="S007\nLine box and baseline law", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S008 [label="S008\nText receipt provenance law", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S009 [label="S009\nGlyph evidence ladder and evidence kinds", color="#16a34a", penwidth=4];
-    S010 [label="S010\nInitial fixture scope and nonclaims", color="#dc2626", penwidth=4];
+    S009 [label="S009\nGlyph evidence ladder and evidence kinds", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S010 [label="S010\nInitial fixture scope and nonclaims", color="#16a34a", penwidth=4];
     S011 [label="S011\nSlice DAG operating rule", color="#dc2626", penwidth=4];
     S012 [label="S012\nText compliance badge vocabulary", color="#dc2626", penwidth=4];
     S013 [label="S013\nWhy this is not CSS text section", color="#dc2626", penwidth=4];

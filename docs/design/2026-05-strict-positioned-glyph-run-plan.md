@@ -616,6 +616,32 @@ flowchart LR
 
 This milestone targets Levels 1 and 2, then starts Level 3 only after browser and native can consume strict evidence.
 
+Evidence kind law:
+
+| Evidence kind | Status | Purpose |
+| --- | --- | --- |
+| `outlinePaths` | First implementation target | Resolution-independent geometry proof. |
+| `bitmapAtlas` | Future | CI-friendly pixel evidence at fixed sizes. |
+| `sdfAtlas` | Future | GPU-friendly scalable text rendering. |
+| `sharedRasterizer` | Future | Stronger pixel parity when both runtimes share coverage generation. |
+
+The strict positioned glyph-run profile is independent of evidence kind. A glyph run identifies
+which font-local glyph goes where. The evidence pack says how this fixture proves those glyphs are
+drawable.
+
+Evidence pack invariants:
+
+- Every positioned glyph references evidence by `fontRef + glyphId`.
+- Every evidence entry declares bounds in the same `positionEncoding` profile.
+- Every evidence entry contributes to `glyphEvidencePackHash`.
+- Evidence entries may be subsetted to only glyphs used by the fixture.
+- Missing evidence is a hard failure.
+- Extra evidence is allowed only if the pack manifest says it is a reusable pack rather than a
+  fixture-local minimal pack.
+
+The first implementation should prefer fixture-local minimal packs. Reusable glyph packs come later,
+after cache identity and invalidation rules exist.
+
 ## Why This Is Not CSS Text
 
 This profile does not implement CSS text. It does not ask the browser for glyph metrics. It does not use host font fallback. It does not shape at render time. It renders positioned glyph evidence.

@@ -174,28 +174,28 @@
 <!-- S009 -->
 <g id="node12" class="node">
 <title>S009</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M462.63,-3392.5C462.63,-3392.5 291.37,-3392.5 291.37,-3392.5 285.37,-3392.5 279.37,-3386.5 279.37,-3380.5 279.37,-3380.5 279.37,-3368.5 279.37,-3368.5 279.37,-3362.5 285.37,-3356.5 291.37,-3356.5 291.37,-3356.5 462.63,-3356.5 462.63,-3356.5 468.63,-3356.5 474.63,-3362.5 474.63,-3368.5 474.63,-3368.5 474.63,-3380.5 474.63,-3380.5 474.63,-3386.5 468.63,-3392.5 462.63,-3392.5"/>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3376.25" font-family="Helvetica,sans-Serif" font-size="10.00">S009</text>
-<text xml:space="preserve" text-anchor="middle" x="377" y="-3365" font-family="Helvetica,sans-Serif" font-size="10.00">Glyph evidence ladder and evidence kinds</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M462.63,-3392.5C462.63,-3392.5 291.37,-3392.5 291.37,-3392.5 285.37,-3392.5 279.37,-3386.5 279.37,-3380.5 279.37,-3380.5 279.37,-3368.5 279.37,-3368.5 279.37,-3362.5 285.37,-3356.5 291.37,-3356.5 291.37,-3356.5 462.63,-3356.5 462.63,-3356.5 468.63,-3356.5 474.63,-3362.5 474.63,-3368.5 474.63,-3368.5 474.63,-3380.5 474.63,-3380.5 474.63,-3386.5 468.63,-3392.5 462.63,-3392.5"/>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3376.25" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S009</text>
+<text xml:space="preserve" text-anchor="middle" x="377" y="-3365" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Glyph evidence ladder and evidence kinds</text>
 </g>
 <!-- S008&#45;&gt;S009 -->
 <g id="edge8" class="edge">
 <title>S008&#45;&gt;S009</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3427.11C377,-3419.37 377,-3410.23 377,-3401.8"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3401.83 377,-3395.83 374.9,-3401.83 379.1,-3401.83"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3427.11C377,-3419.17 377,-3409.75 377,-3401.14"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3401.34 377,-3395.34 374.9,-3401.34 379.1,-3401.34"/>
 </g>
 <!-- S010 -->
 <g id="node13" class="node">
 <title>S010</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M445.01,-3320.5C445.01,-3320.5 308.99,-3320.5 308.99,-3320.5 302.99,-3320.5 296.99,-3314.5 296.99,-3308.5 296.99,-3308.5 296.99,-3296.5 296.99,-3296.5 296.99,-3290.5 302.99,-3284.5 308.99,-3284.5 308.99,-3284.5 445.01,-3284.5 445.01,-3284.5 451.01,-3284.5 457.01,-3290.5 457.01,-3296.5 457.01,-3296.5 457.01,-3308.5 457.01,-3308.5 457.01,-3314.5 451.01,-3320.5 445.01,-3320.5"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M445.01,-3320.5C445.01,-3320.5 308.99,-3320.5 308.99,-3320.5 302.99,-3320.5 296.99,-3314.5 296.99,-3308.5 296.99,-3308.5 296.99,-3296.5 296.99,-3296.5 296.99,-3290.5 302.99,-3284.5 308.99,-3284.5 308.99,-3284.5 445.01,-3284.5 445.01,-3284.5 451.01,-3284.5 457.01,-3290.5 457.01,-3296.5 457.01,-3296.5 457.01,-3308.5 457.01,-3308.5 457.01,-3314.5 451.01,-3320.5 445.01,-3320.5"/>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3304.25" font-family="Helvetica,sans-Serif" font-size="10.00">S010</text>
 <text xml:space="preserve" text-anchor="middle" x="377" y="-3293" font-family="Helvetica,sans-Serif" font-size="10.00">Initial fixture scope and nonclaims</text>
 </g>
 <!-- S009&#45;&gt;S010 -->
 <g id="edge9" class="edge">
 <title>S009&#45;&gt;S010</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3354.74C377,-3347.13 377,-3338.2 377,-3329.95"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3330.13 377,-3324.13 374.9,-3330.13 379.1,-3330.13"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M377,-3355.11C377,-3347.37 377,-3338.23 377,-3329.8"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="379.1,-3329.83 377,-3323.83 374.9,-3329.83 379.1,-3329.83"/>
 </g>
 <!-- S011 -->
 <g id="node14" class="node">

@@ -63,7 +63,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S009**.
+Current OPEN node: **S010**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -159,7 +159,7 @@ Current OPEN node: **S009**.
 
 ### S009: Glyph evidence ladder and evidence kinds
 
-- [ ] **S009: Glyph evidence ladder and evidence kinds** (OPEN)
+- [x] **S009: Glyph evidence ladder and evidence kinds** (COMPLETE)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with glyph evidence ladder and evidence kinds documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Glyph evidence ladder and evidence kinds.
@@ -170,7 +170,7 @@ Current OPEN node: **S009**.
 
 ### S010: Initial fixture scope and nonclaims
 
-- [ ] **S010: Initial fixture scope and nonclaims** (BLOCKED)
+- [ ] **S010: Initial fixture scope and nonclaims** (OPEN)
 - **User Stories**: As a renderer implementer, I need unambiguous text laws before code exists so I can reject unsupported typography instead of guessing.
 - **Acceptance Criteria**: The slice lands with initial fixture scope and nonclaims documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: No implementation surface may be added until the law names the profile, nonclaims, evidence, and failure semantics. Slice-specific requirement: Initial fixture scope and nonclaims.
