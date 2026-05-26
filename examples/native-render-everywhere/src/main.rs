@@ -3050,6 +3050,16 @@ mod tests {
     }
 
     #[test]
+    fn strict_text_smoke_mode_fails_on_bad_line_box() {
+        let result = load_strict_text_fixture(
+            Path::new("failures/bad-line-box.strict-text.geordi.json"),
+            Some(Path::new("geordi.outline-evidence.geordi.json")),
+        );
+
+        assert!(matches!(result, Err(NativeAppError::StrictTextRender(_))));
+    }
+
+    #[test]
     fn strict_text_smoke_mode_rejects_escaping_fixture_paths() {
         let result =
             resolve_strict_text_argument_path(Path::new("../geordi.strict-text.geordi.json"));

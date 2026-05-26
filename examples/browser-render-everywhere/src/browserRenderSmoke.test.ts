@@ -9,6 +9,7 @@ import {
   parseRenderFixtureStrictTextOutlineEvidencePack,
   RenderFixtureArtifactValidationError,
   RenderFixtureInvalidStrictTextEvidenceCoverageError,
+  RenderFixtureInvalidStrictTextEvidenceLineBoxError,
 } from '@flyingrobots/geordi-render-fixture';
 import { GeordiRuntimeUnsupportedProfileError } from '@flyingrobots/geordi-runtime-webgl';
 import {
@@ -552,6 +553,25 @@ describe('browser render smoke', () => {
     expect(context.calls).toHaveLength(0);
   });
 
+  it('rejects strict text evidence outside line boxes before direct canvas drawing', () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    installCanvasDocument(canvas);
+    const fixture = parseRenderFixtureStrictTextFixtureManifest(
+      strictTextFixtureSource('failures/bad-line-box.strict-text.geordi.json'),
+    );
+    const evidence = parseRenderFixtureStrictTextOutlineEvidencePack(
+      strictTextFixtureSource('geordi.outline-evidence.geordi.json'),
+    );
+
+    expect(() => renderStrictTextOutlineGlyphsToCanvas(fixture, evidence)).toThrow(
+      RenderFixtureInvalidStrictTextEvidenceLineBoxError,
+    );
+    expect(canvas.width).toBe(0);
+    expect(canvas.height).toBe(0);
+    expect(context.calls).toHaveLength(0);
+  });
+
   it('loads and renders strict text fixture mode from fixture and evidence assets', async () => {
     const context = new FakeCanvasContext2D();
     const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
@@ -693,6 +713,35 @@ describe('browser render smoke', () => {
     const sources = new Map<string, string>([
       [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
       [evidenceUrl, strictTextFixtureSource(`failures/${evidenceUrl}`)],
+      [fontPackUrl, fixtureSource('font-pack.geordi.json', 'assets/fonts')],
+    ]);
+    installCanvasDocument(canvas);
+    installHashingCrypto();
+
+    await expect(
+      renderBrowserStrictTextFixture({
+        assets: {
+          evidenceUrl,
+          fontPackUrl,
+          fixtureUrl,
+        },
+        fetchText: makeStrictTextFetchText(sources),
+      }),
+    ).rejects.toBeInstanceOf(BrowserHarnessStrictTextOutlineEvidenceRejectedError);
+    expect(canvas.width).toBe(0);
+    expect(canvas.height).toBe(0);
+    expect(context.calls).toHaveLength(0);
+  });
+
+  it('rejects strict text evidence outside line boxes before fixture mode drawing', async () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    const fixtureUrl = 'failures/bad-line-box.strict-text.geordi.json';
+    const evidenceUrl = 'geordi.outline-evidence.geordi.json';
+    const fontPackUrl = 'font-pack.geordi.json';
+    const sources = new Map<string, string>([
+      [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
+      [evidenceUrl, strictTextFixtureSource(evidenceUrl)],
       [fontPackUrl, fixtureSource('font-pack.geordi.json', 'assets/fonts')],
     ]);
     installCanvasDocument(canvas);

@@ -1733,6 +1733,106 @@ pub fn validate_geordi_strict_text_evidence_coverage(
     }
 }
 
+/// Validate that positioned outline evidence stays inside each glyph run's declared line box.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextOutlineEvidenceValidationError` when drawing evidence bounds escape the
+/// line box referenced by the glyph run.
+pub fn validate_geordi_strict_text_evidence_line_boxes(
+    fixture: &GeordiStrictTextFixtureManifest,
+    evidence: &GeordiStrictTextOutlineEvidencePack,
+) -> Result<(), GeordiStrictTextOutlineEvidenceValidationError> {
+    let mut issues = Vec::new();
+    let evidence_glyphs = evidence
+        .glyphs
+        .iter()
+        .enumerate()
+        .map(|(index, glyph)| (glyph.glyph_id, (index, glyph)))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let line_boxes = fixture
+        .line_boxes
+        .iter()
+        .map(|line_box| (line_box.id.as_str(), line_box))
+        .collect::<std::collections::BTreeMap<_, _>>();
+
+    for run in &fixture.glyph_runs {
+        let Some(line_box) = line_boxes.get(run.line_box_id.as_str()) else {
+            continue;
+        };
+
+        for glyph in &run.glyphs {
+            let Some((evidence_index, evidence_glyph)) = evidence_glyphs.get(&glyph.glyph_id)
+            else {
+                continue;
+            };
+            if !evidence_glyph.draws {
+                continue;
+            }
+
+            if !is_positioned_glyph_evidence_inside_line_box(glyph, evidence_glyph, line_box) {
+                push_outline_evidence_issue(
+                    &mut issues,
+                    &format!("$.glyphs[{evidence_index}].bounds"),
+                    &format!(
+                        "Strict text outline evidence bounds for {}:{} must stay inside line box {}",
+                        run.font_id, glyph.glyph_id, line_box.id
+                    ),
+                    "GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX",
+                );
+            }
+        }
+    }
+
+    if issues.is_empty() {
+        Ok(())
+    } else {
+        Err(GeordiStrictTextOutlineEvidenceValidationError::new(issues))
+    }
+}
+
+fn is_positioned_glyph_evidence_inside_line_box(
+    glyph: &GeordiPositionedGlyph,
+    evidence_glyph: &GeordiStrictTextOutlineEvidenceGlyph,
+    line_box: &GeordiStrictTextLineBox,
+) -> bool {
+    let Some(origin_x) = strict_text_checked_add(glyph.x, glyph.x_offset) else {
+        return false;
+    };
+    let Some(origin_y) = strict_text_checked_add(glyph.y, glyph.y_offset) else {
+        return false;
+    };
+    let Some(left) = strict_text_checked_add(origin_x, evidence_glyph.bounds.x) else {
+        return false;
+    };
+    let Some(top) = strict_text_checked_add(origin_y, evidence_glyph.bounds.y) else {
+        return false;
+    };
+    let Some(right) = strict_text_checked_add(left, evidence_glyph.bounds.width) else {
+        return false;
+    };
+    let Some(bottom) = strict_text_checked_add(top, evidence_glyph.bounds.height) else {
+        return false;
+    };
+    let Some(line_box_right) = strict_text_checked_add(line_box.x, line_box.width) else {
+        return false;
+    };
+    let Some(line_box_bottom) = strict_text_checked_add(line_box.y, line_box.height) else {
+        return false;
+    };
+
+    left >= line_box.x && top >= line_box.y && right <= line_box_right && bottom <= line_box_bottom
+}
+
+fn strict_text_checked_add(left: i64, right: i64) -> Option<i64> {
+    let value = left.checked_add(right)?;
+    if is_strict_text_safe_integer(value) {
+        Some(value)
+    } else {
+        None
+    }
+}
+
 /// Validate typed Geordi IR for the rectangle-only Rust MVP subset.
 ///
 /// # Errors
@@ -2996,6 +3096,7 @@ mod tests {
         parse_geordi_ir, parse_geordi_strict_text_fixture_manifest,
         parse_geordi_strict_text_outline_evidence_pack, validate_geordi_font_pack_hashes,
         validate_geordi_ir, validate_geordi_strict_text_evidence_coverage,
+        validate_geordi_strict_text_evidence_line_boxes,
         validate_geordi_strict_text_fixture_manifest, validate_geordi_strict_text_font_references,
         validate_geordi_strict_text_outline_evidence_pack,
     };
@@ -3690,6 +3791,42 @@ mod tests {
                 .map(|issue| issue.path.clone())
                 .collect::<Vec<_>>(),
             "$.glyphs[6].glyphId",
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_strict_text_evidence_bounds_outside_line_boxes() -> Result<(), GeordiIrTestError> {
+        let fixture = load_geordi_strict_text_fixture_manifest(fixture_path(
+            "strict-text/failures/bad-line-box.strict-text.geordi.json",
+        ))?;
+        let evidence = load_geordi_strict_text_outline_evidence_pack(fixture_path(
+            "strict-text/geordi.outline-evidence.geordi.json",
+        ))?;
+        validate_geordi_strict_text_fixture_manifest(&fixture)?;
+        validate_geordi_strict_text_outline_evidence_pack(&evidence)?;
+        validate_geordi_strict_text_evidence_coverage(&fixture, &evidence)?;
+
+        let error = match validate_geordi_strict_text_evidence_line_boxes(&fixture, &evidence) {
+            Ok(()) => return Err(GeordiIrTestError::ExpectedFailure),
+            Err(error) => error,
+        };
+
+        assert_codes_include(
+            &error
+                .issues()
+                .iter()
+                .map(|issue| issue.code.clone())
+                .collect::<Vec<_>>(),
+            "GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX",
+        );
+        assert_paths_include(
+            &error
+                .issues()
+                .iter()
+                .map(|issue| issue.path.clone())
+                .collect::<Vec<_>>(),
+            "$.glyphs[0].bounds",
         );
         Ok(())
     }

@@ -1073,28 +1073,28 @@
 <!-- S072 -->
 <g id="node75" class="node">
 <title>S072</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M439.38,-412C439.38,-412 368.62,-412 368.62,-412 362.62,-412 356.62,-406 356.62,-400 356.62,-400 356.62,-388 356.62,-388 356.62,-382 362.62,-376 368.62,-376 368.62,-376 439.38,-376 439.38,-376 445.38,-376 451.38,-382 451.38,-388 451.38,-388 451.38,-400 451.38,-400 451.38,-406 445.38,-412 439.38,-412"/>
-<text xml:space="preserve" text-anchor="middle" x="404" y="-395.75" font-family="Helvetica,sans-Serif" font-size="10.00">S072</text>
-<text xml:space="preserve" text-anchor="middle" x="404" y="-384.5" font-family="Helvetica,sans-Serif" font-size="10.00">Bad line box failure</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M439.38,-412C439.38,-412 368.62,-412 368.62,-412 362.62,-412 356.62,-406 356.62,-400 356.62,-400 356.62,-388 356.62,-388 356.62,-382 362.62,-376 368.62,-376 368.62,-376 439.38,-376 439.38,-376 445.38,-376 451.38,-382 451.38,-388 451.38,-388 451.38,-400 451.38,-400 451.38,-406 445.38,-412 439.38,-412"/>
+<text xml:space="preserve" text-anchor="middle" x="404" y="-395.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S072</text>
+<text xml:space="preserve" text-anchor="middle" x="404" y="-384.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Bad line box failure</text>
 </g>
 <!-- S071&#45;&gt;S072 -->
 <g id="edge80" class="edge">
 <title>S071&#45;&gt;S072</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M397.36,-446.61C398.37,-438.79 399.56,-429.54 400.65,-421.04"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="402.71,-421.53 401.39,-415.31 398.54,-421 402.71,-421.53"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M397.36,-446.61C398.39,-438.67 399.6,-429.25 400.7,-420.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="402.77,-421.05 401.45,-414.83 398.6,-420.51 402.77,-421.05"/>
 </g>
 <!-- S073 -->
 <g id="node76" class="node">
 <title>S073</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M481.26,-340C481.26,-340 346.74,-340 346.74,-340 340.74,-340 334.74,-334 334.74,-328 334.74,-328 334.74,-316 334.74,-316 334.74,-310 340.74,-304 346.74,-304 346.74,-304 481.26,-304 481.26,-304 487.26,-304 493.26,-310 493.26,-316 493.26,-316 493.26,-328 493.26,-328 493.26,-334 487.26,-340 481.26,-340"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M481.26,-340C481.26,-340 346.74,-340 346.74,-340 340.74,-340 334.74,-334 334.74,-328 334.74,-328 334.74,-316 334.74,-316 334.74,-310 340.74,-304 346.74,-304 346.74,-304 481.26,-304 481.26,-304 487.26,-304 493.26,-310 493.26,-316 493.26,-316 493.26,-328 493.26,-328 493.26,-334 487.26,-340 481.26,-340"/>
 <text xml:space="preserve" text-anchor="middle" x="414" y="-323.75" font-family="Helvetica,sans-Serif" font-size="10.00">S073</text>
 <text xml:space="preserve" text-anchor="middle" x="414" y="-312.5" font-family="Helvetica,sans-Serif" font-size="10.00">Unsupported text fill/stroke failure</text>
 </g>
 <!-- S072&#45;&gt;S073 -->
 <g id="edge81" class="edge">
 <title>S072&#45;&gt;S073</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M406.68,-374.24C407.77,-366.63 409.04,-357.7 410.22,-349.45"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="412.29,-349.85 411.06,-343.61 408.13,-349.25 412.29,-349.85"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M406.63,-374.61C407.74,-366.79 409.07,-357.54 410.28,-349.04"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="412.33,-349.55 411.1,-343.31 408.17,-348.95 412.33,-349.55"/>
 </g>
 <!-- S076 -->
 <g id="node77" class="node">

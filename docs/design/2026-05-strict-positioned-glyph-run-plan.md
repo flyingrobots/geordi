@@ -670,6 +670,14 @@ text fixture, using stable diagnostic code `GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH`.
 present but adds glyph id `9999`, proving that renderers fail before silently ignoring extra glyph
 evidence.
 
+S072 adds line-box containment rejection. TypeScript and Rust now validate drawing outline evidence
+after translating glyph-local bounds through positioned glyph origins: each translated bounds box
+must stay inside the glyph run's declared line box unless a future overflow profile explicitly
+relaxes that rule. The `failures/bad-line-box.strict-text.geordi.json` fixture keeps the strict text
+fixture shape valid but narrows `line-0`, and browser direct rendering, browser fixture mode, native
+CLI smoke mode, and the Rust renderer all reject it before drawing with
+`GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX`.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

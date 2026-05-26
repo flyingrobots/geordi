@@ -145,6 +145,7 @@ export type RenderFixtureStrictTextOutlineEvidenceDiagnosticCode =
   | 'GEORDI_TEXT_EVIDENCE_BAD_GLYPH'
   | 'GEORDI_TEXT_EVIDENCE_MISSING_GLYPH'
   | 'GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH'
+  | 'GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX'
   | 'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS'
   | 'GEORDI_TEXT_EVIDENCE_BAD_COMMAND'
   | 'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT'
@@ -167,6 +168,16 @@ export interface RenderFixtureStrictTextEvidenceCoverageValidationInput {
 }
 
 export interface RenderFixtureStrictTextEvidenceCoverageValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[];
+}
+
+export interface RenderFixtureStrictTextEvidenceLineBoxValidationInput {
+  readonly evidence: RenderFixtureStrictTextOutlineEvidencePack;
+  readonly fixture: RenderFixtureStrictTextFixtureManifest;
+}
+
+export interface RenderFixtureStrictTextEvidenceLineBoxValidationResult {
   readonly ok: boolean;
   readonly issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[];
 }
@@ -673,6 +684,16 @@ export class RenderFixtureInvalidStrictTextEvidenceCoverageError extends Error {
   }
 }
 
+export class RenderFixtureInvalidStrictTextEvidenceLineBoxError extends Error {
+  public readonly issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[];
+
+  constructor(issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[]) {
+    super('Invalid render fixture strict text evidence line boxes');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
+
 export class RenderFixtureInvalidStrictTextProbePolicyError extends Error {
   public readonly issues: readonly RenderFixtureStrictTextProbePolicyIssue[];
 
@@ -931,6 +952,17 @@ export function assertRenderFixtureStrictTextEvidenceCoverage(
   }
 
   throw new RenderFixtureInvalidStrictTextEvidenceCoverageError(result.issues);
+}
+
+export function assertRenderFixtureStrictTextEvidenceLineBoxes(
+  input: RenderFixtureStrictTextEvidenceLineBoxValidationInput,
+): RenderFixtureStrictTextEvidenceLineBoxValidationInput {
+  const result = validateRenderFixtureStrictTextEvidenceLineBoxes(input);
+  if (result.ok) {
+    return input;
+  }
+
+  throw new RenderFixtureInvalidStrictTextEvidenceLineBoxError(result.issues);
 }
 
 export function assertRenderFixtureStrictTextProbePolicy(
@@ -1368,6 +1400,74 @@ export function validateRenderFixtureStrictTextEvidenceCoverage(
   }
 
   return { ok: issues.length === 0, issues };
+}
+
+export function validateRenderFixtureStrictTextEvidenceLineBoxes(
+  input: RenderFixtureStrictTextEvidenceLineBoxValidationInput,
+): RenderFixtureStrictTextEvidenceLineBoxValidationResult {
+  const issues: RenderFixtureStrictTextOutlineEvidencePackIssue[] = [];
+  const evidenceGlyphs = new Map(
+    input.evidence.glyphs.map((glyph, index) => [glyph.glyphId, { glyph, index }]),
+  );
+  const lineBoxes = new Map(input.fixture.lineBoxes.map((lineBox) => [lineBox.id, lineBox]));
+
+  for (const run of input.fixture.glyphRuns) {
+    const lineBox = lineBoxes.get(run.lineBoxId);
+    if (lineBox === undefined) {
+      continue;
+    }
+
+    for (const glyph of run.glyphs) {
+      const evidenceGlyph = evidenceGlyphs.get(glyph.glyphId);
+      if (!evidenceGlyph?.glyph.draws) {
+        continue;
+      }
+
+      if (!isPositionedGlyphEvidenceInsideLineBox(glyph, evidenceGlyph.glyph, lineBox)) {
+        pushOutlineEvidenceIssue(
+          issues,
+          `$.glyphs[${evidenceGlyph.index}].bounds`,
+          `Strict text outline evidence bounds for ${run.fontId}:${glyph.glyphId} must stay inside line box ${lineBox.id}`,
+          'GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX',
+        );
+      }
+    }
+  }
+
+  return { ok: issues.length === 0, issues };
+}
+
+function isPositionedGlyphEvidenceInsideLineBox(
+  glyph: RenderFixturePositionedGlyph,
+  evidenceGlyph: RenderFixtureStrictTextOutlineEvidenceGlyph,
+  lineBox: RenderFixtureStrictTextLineBox,
+): boolean {
+  const originX = safeFixedSum(glyph.x, glyph.xOffset);
+  const originY = safeFixedSum(glyph.y, glyph.yOffset);
+  const left = originX === undefined ? undefined : safeFixedSum(originX, evidenceGlyph.bounds.x);
+  const top = originY === undefined ? undefined : safeFixedSum(originY, evidenceGlyph.bounds.y);
+  const right = left === undefined ? undefined : safeFixedSum(left, evidenceGlyph.bounds.width);
+  const bottom = top === undefined ? undefined : safeFixedSum(top, evidenceGlyph.bounds.height);
+  const lineBoxRight = safeFixedSum(lineBox.x, lineBox.width);
+  const lineBoxBottom = safeFixedSum(lineBox.y, lineBox.height);
+
+  if (
+    left === undefined ||
+    top === undefined ||
+    right === undefined ||
+    bottom === undefined ||
+    lineBoxRight === undefined ||
+    lineBoxBottom === undefined
+  ) {
+    return false;
+  }
+
+  return left >= lineBox.x && top >= lineBox.y && right <= lineBoxRight && bottom <= lineBoxBottom;
+}
+
+function safeFixedSum(left: number, right: number): number | undefined {
+  const value = left + right;
+  return Number.isSafeInteger(value) ? value : undefined;
 }
 
 export function validateRenderFixtureStrictTextProbePolicy(

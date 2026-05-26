@@ -1,5 +1,6 @@
 import {
   assertRenderFixtureStrictTextEvidenceCoverage,
+  assertRenderFixtureStrictTextEvidenceLineBoxes,
   type RenderFixtureGlyphRun,
   type RenderFixturePositionedGlyph,
   type RenderFixtureStrictTextFixtureManifest,
@@ -43,6 +44,7 @@ export function renderStrictTextOutlineGlyphsToCanvas(
   evidence: RenderFixtureStrictTextOutlineEvidencePack,
 ): BrowserStrictTextOutlineRenderResult {
   assertRenderFixtureStrictTextEvidenceCoverage({ evidence, fixture });
+  assertRenderFixtureStrictTextEvidenceLineBoxes({ evidence, fixture });
 
   const canvas = document.createElement('canvas');
   canvas.width = fixedToCanvasPixels(maxLineBoxRight(fixture));
@@ -69,6 +71,7 @@ export function renderStrictTextOutlineGlyphs(
   evidence: RenderFixtureStrictTextOutlineEvidencePack,
 ): BrowserStrictTextOutlineRenderReport {
   assertRenderFixtureStrictTextEvidenceCoverage({ evidence, fixture });
+  assertRenderFixtureStrictTextEvidenceLineBoxes({ evidence, fixture });
 
   const glyphEvidence = new Map<number, RenderFixtureStrictTextOutlineEvidenceGlyph>();
   for (const glyph of evidence.glyphs) {

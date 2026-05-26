@@ -19,6 +19,7 @@ import {
   assertRenderFixturePixelProbes,
   assertRenderFixtureStrictTextFontReferences,
   assertRenderFixtureStrictTextEvidenceCoverage,
+  assertRenderFixtureStrictTextEvidenceLineBoxes,
   assertRenderFixtureStrictTextFixtureManifest,
   assertRenderFixtureStrictTextOutlineEvidencePack,
   assertRenderFixtureStrictTextProbePolicy,
@@ -83,6 +84,7 @@ import {
   RenderFixtureInvalidPlaybackFrameError,
   RenderFixtureInvalidStrictTextFontReferenceError,
   RenderFixtureInvalidStrictTextEvidenceCoverageError,
+  RenderFixtureInvalidStrictTextEvidenceLineBoxError,
   RenderFixtureInvalidStrictTextFixtureManifestError,
   RenderFixtureInvalidStrictTextOutlineEvidencePackError,
   RenderFixtureInvalidStrictTextProbePolicyError,
@@ -99,6 +101,7 @@ import {
   validateRenderFixtureManifest,
   validateRenderFixtureStrictTextFontReferences,
   validateRenderFixtureStrictTextEvidenceCoverage,
+  validateRenderFixtureStrictTextEvidenceLineBoxes,
   validateRenderFixtureStrictTextFixtureManifest,
   validateRenderFixtureStrictTextOutlineEvidencePack,
   validateRenderFixtureStrictTextProbePolicy,
@@ -1353,6 +1356,27 @@ describe('render fixture strict text fixture manifest validation', () => {
       message: 'Strict text outline evidence glyph is not referenced by fixture for lato-regular:9999',
       path: '$.glyphs[6].glyphId',
     });
+  });
+
+  it('rejects strict text evidence bounds outside declared line boxes', () => {
+    const fixture = parseRenderFixtureStrictTextFixtureManifest(
+      strictTextFailureFixtureSource('bad-line-box'),
+    );
+    const evidence = parseRenderFixtureStrictTextOutlineEvidencePack(
+      strictTextOutlineEvidenceSource('geordi'),
+    );
+
+    const result = validateRenderFixtureStrictTextEvidenceLineBoxes({ evidence, fixture });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContainEqual({
+      code: 'GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX',
+      message: 'Strict text outline evidence bounds for lato-regular:14 must stay inside line box line-0',
+      path: '$.glyphs[0].bounds',
+    });
+    expect(() => assertRenderFixtureStrictTextEvidenceLineBoxes({ evidence, fixture })).toThrow(
+      RenderFixtureInvalidStrictTextEvidenceLineBoxError,
+    );
   });
 
   it('accepts a typed valid strict text probe policy object', () => {

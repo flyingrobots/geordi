@@ -388,6 +388,23 @@ fixtures/render-everywhere/strict-text/failures/unknown-glyph-evidence.outline-e
 This preserves the current fixture-local minimal-pack contract. A future reusable evidence-pack
 profile may allow extra glyph evidence only after it states that behavior explicitly.
 
+## S072 Bad Line Box Failure
+
+Strict text evidence now rejects drawing outline bounds that escape the glyph run's declared line
+box after applying positioned glyph origins. The shared diagnostic code is
+`GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX`, and the failure is covered in TypeScript contract tests,
+browser direct rendering, browser fixture mode, Rust IR validation, the Rust renderer, and native
+`--strict-text-smoke`.
+
+The failure fixture is:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/bad-line-box.strict-text.geordi.json
+~~~
+
+This keeps line boxes as explicit render contract data. Overflow remains unsupported unless a future
+strict text profile names it directly.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -405,7 +422,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S072**.
+Current OPEN node: **S073**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1194,7 +1211,7 @@ Current OPEN node: **S072**.
 
 ### S072: Bad line box failure
 
-- [ ] **S072: Bad line box failure** (OPEN)
+- [x] **S072: Bad line box failure** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with bad line box failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Bad line box failure.
@@ -1205,7 +1222,7 @@ Current OPEN node: **S072**.
 
 ### S073: Unsupported text fill/stroke failure
 
-- [ ] **S073: Unsupported text fill/stroke failure** (BLOCKED)
+- [ ] **S073: Unsupported text fill/stroke failure** (OPEN)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with unsupported text fill/stroke failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Unsupported text fill/stroke failure.

@@ -189,6 +189,9 @@ receipts:
   positioned glyph referenced by the strict text fixture must have a matching evidence glyph entry,
   and fixture-local packs must not include unreferenced glyph evidence before any browser or native
   renderer draws.
+- S072 adds a line-box validator: drawing evidence bounds translated through positioned glyph
+  origins must stay inside the glyph run's declared line box unless a future overflow profile
+  explicitly changes that rule.
 
 ## Diagnostic Vocabulary
 
@@ -209,6 +212,7 @@ message prose may differ between TypeScript and Rust, but diagnostic codes must 
 | `GEORDI_TEXT_EVIDENCE_BAD_GLYPH` | A glyph entry is malformed before command or bounds validation. |
 | `GEORDI_TEXT_EVIDENCE_MISSING_GLYPH` | A positioned glyph has no matching `fontId + glyphId` evidence entry. |
 | `GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH` | A fixture-local evidence entry has no matching positioned `fontId + glyphId`. |
+| `GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX` | Positioned drawing evidence bounds escape the glyph run's declared line box. |
 | `GEORDI_TEXT_EVIDENCE_BAD_BOUNDS` | Bounds are malformed, unsafe, non-integer, or have negative dimensions. |
 | `GEORDI_TEXT_EVIDENCE_BAD_COMMAND` | A command is malformed, unknown, unsafe, or invalid for the current contour state. |
 | `GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT` | Paint is not first-profile `solidFill` RGBA. |

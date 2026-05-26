@@ -6,7 +6,7 @@ use geordi_ir::{
     GeordiStrictTextOutlineCommand, GeordiStrictTextOutlineEvidenceGlyph,
     GeordiStrictTextOutlineEvidencePack, GeordiStrictTextOutlineEvidenceValidationError,
     validate_geordi_ir, validate_geordi_strict_text_evidence_coverage,
-    validate_geordi_strict_text_fixture_manifest,
+    validate_geordi_strict_text_evidence_line_boxes, validate_geordi_strict_text_fixture_manifest,
     validate_geordi_strict_text_outline_evidence_pack,
 };
 use std::collections::HashMap;
@@ -437,6 +437,8 @@ pub fn render_strict_text_outline_glyphs_to_image(
     validate_geordi_strict_text_outline_evidence_pack(evidence)
         .map_err(GeordiStrictTextRenderError::evidence_validation)?;
     validate_geordi_strict_text_evidence_coverage(fixture, evidence)
+        .map_err(GeordiStrictTextRenderError::evidence_validation)?;
+    validate_geordi_strict_text_evidence_line_boxes(fixture, evidence)
         .map_err(GeordiStrictTextRenderError::evidence_validation)?;
 
     let width = fixed_to_canvas_dimension(max_line_box_right(fixture)?)?;
@@ -1263,6 +1265,27 @@ mod tests {
         ))?;
         let evidence = load_geordi_strict_text_outline_evidence_pack(fixture_path(
             "strict-text/failures/unknown-glyph-evidence.outline-evidence.geordi.json",
+        ))?;
+
+        let result = render_strict_text_outline_glyphs_to_image(&fixture, &evidence);
+
+        assert!(matches!(
+            result,
+            Err(GeordiStrictTextRenderError {
+                source: GeordiStrictTextRenderErrorSource::EvidenceValidation(_)
+            })
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_strict_text_evidence_outside_line_boxes_before_rendering()
+    -> Result<(), GeordiRendererTestError> {
+        let fixture = load_geordi_strict_text_fixture_manifest(fixture_path(
+            "strict-text/failures/bad-line-box.strict-text.geordi.json",
+        ))?;
+        let evidence = load_geordi_strict_text_outline_evidence_pack(fixture_path(
+            "strict-text/geordi.outline-evidence.geordi.json",
         ))?;
 
         let result = render_strict_text_outline_glyphs_to_image(&fixture, &evidence);
