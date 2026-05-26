@@ -197,6 +197,18 @@ This still does not render text. Current nonclaims remain: no browser or native 
 no platform text API compliance path, no glyph evidence coverage/linkage enforcement, and no general
 text support.
 
+## S057 Browser Outline Glyph Renderer
+
+The browser harness now has a strict text outline renderer in
+`examples/browser-render-everywhere/src/strictTextRender.ts`. It consumes parsed strict text fixture
+DTOs plus parsed outline evidence DTOs, converts fixed 26.6 glyph-origin commands into Canvas path
+calls, fills the path with the evidence `solidFill` paint, and reports renderer metadata. Tests prove
+the renderer uses path APIs and does not call Canvas text APIs.
+
+This is not a browser fixture loading mode yet. Current nonclaims remain: no browser strict text
+fixture mode, no native strict text renderer, no glyph evidence coverage/linkage enforcement, no
+platform text API compliance path, and no general text support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -214,7 +226,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S057**.
+Current OPEN node: **S058**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -838,7 +850,7 @@ Current OPEN node: **S057**.
 
 ### S057: Browser outline glyph renderer
 
-- [ ] **S057: Browser outline glyph renderer** (OPEN)
+- [x] **S057: Browser outline glyph renderer** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser outline glyph renderer documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser outline glyph renderer.
@@ -849,7 +861,7 @@ Current OPEN node: **S057**.
 
 ### S058: Browser text fixture mode
 
-- [ ] **S058: Browser text fixture mode** (BLOCKED)
+- [ ] **S058: Browser text fixture mode** (OPEN)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser text fixture mode documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser text fixture mode.

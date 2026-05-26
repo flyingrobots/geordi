@@ -84,8 +84,8 @@ digraph StrictPositionedGlyphRunPlan {
     S053 [label="S053\nOutline evidence fixture data", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S054 [label="S054\nTypeScript outline evidence parser", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S056 [label="S056\nOutline command validation", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S057 [label="S057\nBrowser outline glyph renderer", color="#16a34a", penwidth=4];
-    S058 [label="S058\nBrowser text fixture mode", color="#dc2626", penwidth=4];
+    S057 [label="S057\nBrowser outline glyph renderer", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S058 [label="S058\nBrowser text fixture mode", color="#16a34a", penwidth=4];
     S059 [label="S059\nBrowser text metadata disclosure", color="#dc2626", penwidth=4];
     S060 [label="S060\nBrowser visible text smoke", color="#dc2626", penwidth=4];
   }

@@ -580,6 +580,10 @@ S056 hardens outline command validation in both runtimes and adds
 `fixtures/render-everywhere/strict-text/failures/bad-outline-command.outline-evidence.geordi.json`
 as the shared failure fixture for invalid contour state and command-specific fields.
 
+S057 adds the browser Canvas path renderer for already-parsed strict text fixtures and outline
+evidence. It converts fixed 26.6 outline commands into path geometry and explicitly avoids Canvas
+text APIs. Browser fixture loading and UI mode integration remain in S058 and later slices.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

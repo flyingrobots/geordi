@@ -2,7 +2,11 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, afterEach } from 'vitest';
 import { canonicalJsonPort, type JsonObject, type JsonValue } from '@flyingrobots/geordi-core';
-import { RenderFixtureArtifactValidationError } from '@flyingrobots/geordi-render-fixture';
+import {
+  parseRenderFixtureStrictTextFixtureManifest,
+  parseRenderFixtureStrictTextOutlineEvidencePack,
+  RenderFixtureArtifactValidationError,
+} from '@flyingrobots/geordi-render-fixture';
 import { GeordiRuntimeUnsupportedProfileError } from '@flyingrobots/geordi-runtime-webgl';
 import {
   BrowserHarnessStrictTextFixtureAcceptedError,
@@ -13,6 +17,7 @@ import {
   renderBrowserFixture,
   type BrowserHarnessFetchText,
 } from './browserRenderSmoke.js';
+import { renderStrictTextOutlineGlyphsToCanvas } from './strictTextRender.js';
 
 interface CanvasCall {
   readonly args: readonly (number | string)[];
@@ -58,8 +63,13 @@ class FakeCanvasContext2D {
     this.push('rect', x, y, width, height);
   }
 
-  fill(): void {
-    this.push('fill');
+  fill(fillRule?: CanvasFillRule): void {
+    if (fillRule === undefined) {
+      this.push('fill');
+      return;
+    }
+
+    this.push('fill', fillRule);
   }
 
   stroke(): void {
@@ -72,6 +82,21 @@ class FakeCanvasContext2D {
 
   lineTo(x: number, y: number): void {
     this.push('lineTo', x, y);
+  }
+
+  quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
+    this.push('quadraticCurveTo', cpx, cpy, x, y);
+  }
+
+  bezierCurveTo(
+    cp1x: number,
+    cp1y: number,
+    cp2x: number,
+    cp2y: number,
+    x: number,
+    y: number,
+  ): void {
+    this.push('bezierCurveTo', cp1x, cp1y, cp2x, cp2y, x, y);
   }
 
   arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
@@ -341,6 +366,48 @@ describe('browser render smoke', () => {
     expect(canvas.width).toBe(0);
     expect(canvas.height).toBe(0);
     expect(context.calls).toHaveLength(0);
+  });
+
+  it('renders strict text outline glyphs from evidence without canvas text APIs', () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    installCanvasDocument(canvas);
+    const fixture = parseRenderFixtureStrictTextFixtureManifest(
+      strictTextFixtureSource('geordi.strict-text.geordi.json'),
+    );
+    const evidence = parseRenderFixtureStrictTextOutlineEvidencePack(
+      strictTextFixtureSource('geordi.outline-evidence.geordi.json'),
+    );
+
+    const result = renderStrictTextOutlineGlyphsToCanvas(fixture, evidence);
+
+    expect(result.canvas).toBe(canvas);
+    expect(canvas.width).toBe(192);
+    expect(canvas.height).toBe(64);
+    expect(result.report).toMatchObject({
+      drawGlyphCount: 6,
+      evidenceKind: 'outlinePaths',
+      fixtureId: 'render-everywhere:strict-text:geordi',
+      glyphCount: 6,
+      rendererName: 'browser-canvas-outline-glyphs',
+    });
+    expect(result.report.commandCount).toBeGreaterThan(0);
+    expect(context.fillStyle).toBe('rgba(17, 24, 39, 1)');
+    expect(context.calls.map((call) => call.name)).toEqual(
+      expect.arrayContaining([
+        'save',
+        'beginPath',
+        'moveTo',
+        'lineTo',
+        'quadraticCurveTo',
+        'closePath',
+        'fill',
+        'restore',
+      ]),
+    );
+    expect(context.calls.some((call) => call.name === 'fillText')).toBe(false);
+    expect(context.calls.some((call) => call.name === 'strokeText')).toBe(false);
+    expect(context.calls.some((call) => call.name === 'measureText')).toBe(false);
   });
 
   it('fails the strict text rejection guard when the artifact is accepted', async () => {
