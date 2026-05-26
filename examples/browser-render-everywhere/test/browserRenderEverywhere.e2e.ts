@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
+import { canonicalJsonPort, type JsonValue } from '@flyingrobots/geordi-core';
 import {
   parseRenderFixtureManifest,
+  parseRenderFixtureStrictTextFixtureManifest,
   assertRenderFixturePixelProbes,
   renderFixtureRgbaFromBytes,
   type RenderFixtureManifest,
@@ -118,8 +120,33 @@ function loadCompiledSceneSource(): string {
   }).artifacts.ir.content;
 }
 
+function loadStrictTextFixtureSource(): string {
+  return readFileSync(
+    new URL('../../../fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json', import.meta.url),
+    'utf8',
+  );
+}
+
+function loadStrictTextEvidenceSource(): string {
+  return readFileSync(
+    new URL('../../../fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json', import.meta.url),
+    'utf8',
+  );
+}
+
+function loadStrictTextFontPackSource(): string {
+  return readFileSync(
+    new URL('../../../fixtures/render-everywhere/assets/fonts/font-pack.geordi.json', import.meta.url),
+    'utf8',
+  );
+}
+
 function artifactHash(source: string): string {
   return `sha256:${createHash('sha256').update(source).digest('hex')}`;
+}
+
+function canonicalJsonHash(value: JsonValue): string {
+  return artifactHash(`${canonicalJsonPort.stringify(value, { space: 2 })}\n`);
 }
 
 function probeInputs(probes: readonly RenderFixturePixelProbe[]): readonly ProbeInput[] {
@@ -154,6 +181,10 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   const manifest = loadManifest();
   const compiledSceneSource = loadCompiledSceneSource();
   const manifestSource = loadManifestSource();
+  const strictTextFixtureSource = loadStrictTextFixtureSource();
+  const strictTextFixture = parseRenderFixtureStrictTextFixtureManifest(strictTextFixtureSource);
+  const strictTextEvidenceSource = loadStrictTextEvidenceSource();
+  const strictTextFontPackSource = loadStrictTextFontPackSource();
   let servedCompiledManifest = false;
   let servedCompiledScene = false;
 
@@ -194,15 +225,19 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
 
   const rectanglesButton = page.getByRole('button', { name: 'Rectangles' });
   const bunnyButton = page.getByRole('button', { name: 'Bunny' });
+  const textButton = page.getByRole('button', { name: 'Text' });
   const rendererMarker = page.locator('.harness-marker');
   const rectanglePanel = page.locator('[data-geordi-demo-panel="rectangles"]');
   const bunnyPanel = page.locator('[data-geordi-demo-panel="bunny"]');
+  const textPanel = page.locator('[data-geordi-demo-panel="text"]');
 
   await expect(rendererMarker).toHaveText('browser-canvas-wireframe-mesh');
   await expect(bunnyButton).toHaveAttribute('aria-pressed', 'true');
   await expect(rectanglesButton).toHaveAttribute('aria-pressed', 'false');
+  await expect(textButton).toHaveAttribute('aria-pressed', 'false');
   await expect(bunnyPanel).toBeVisible();
   await expect(rectanglePanel).toBeHidden();
+  await expect(textPanel).toBeHidden();
 
   const bunnyReport = bunnyPanel.locator('[data-geordi-bunny-report="true"]');
   await expect(bunnyReport).toBeHidden();
@@ -269,9 +304,11 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   await rectanglesButton.click();
   await expect(rectanglesButton).toHaveAttribute('aria-pressed', 'true');
   await expect(bunnyButton).toHaveAttribute('aria-pressed', 'false');
+  await expect(textButton).toHaveAttribute('aria-pressed', 'false');
   await expect(rendererMarker).toHaveText('browser-canvas');
   await expect(rectanglePanel).toBeVisible();
   await expect(bunnyPanel).toBeHidden();
+  await expect(textPanel).toBeHidden();
 
   await rectanglePanel.getByText('Rectangle metadata').click();
   await expect(rectanglePanel.getByText(manifest.id)).toBeVisible();
@@ -343,5 +380,40 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   );
   assertRenderFixturePixelProbes(manifest.id, manifest.pixelProbes, (probe) =>
     sampleForProbe(samples, probe),
+  );
+
+  await textButton.click();
+  await expect(textButton).toHaveAttribute('aria-pressed', 'true');
+  await expect(rectanglesButton).toHaveAttribute('aria-pressed', 'false');
+  await expect(bunnyButton).toHaveAttribute('aria-pressed', 'false');
+  await expect(rendererMarker).toHaveText('browser-canvas-outline-glyphs');
+  await expect(textPanel).toBeVisible();
+  await expect(rectanglePanel).toBeHidden();
+  await expect(bunnyPanel).toBeHidden();
+
+  await expect(
+    textPanel.locator('canvas[data-geordi-strict-text-canvas="true"]'),
+  ).toHaveCount(1);
+  const textReport = textPanel.locator('[data-geordi-strict-text-report="true"]');
+  await expect(textReport).toBeHidden();
+  await textPanel.getByText('Text metadata').click();
+  await expect(textReport).toBeVisible();
+  await expect(textReport).toContainText('browser-canvas-outline-glyphs');
+  await expect(textReport).toContainText(`fixtureId=${strictTextFixture.id}`);
+  await expect(textReport).toContainText(`fixtureHash=${artifactHash(strictTextFixtureSource)}`);
+  await expect(textReport).toContainText(`fontPackPath=${strictTextFixture.fontPackPath}`);
+  await expect(textReport).toContainText(`fontPackHash=${artifactHash(strictTextFontPackSource)}`);
+  await expect(textReport).toContainText(`glyphRunHash=${canonicalJsonHash(strictTextFixture.glyphRuns)}`);
+  await expect(textReport).toContainText(`lineBoxHash=${canonicalJsonHash(strictTextFixture.lineBoxes)}`);
+  await expect(textReport).toContainText(
+    'evidencePackId=render-everywhere:strict-text:geordi:outline-evidence',
+  );
+  await expect(textReport).toContainText('evidenceKind=outlinePaths');
+  await expect(textReport).toContainText(`evidenceHash=${artifactHash(strictTextEvidenceSource)}`);
+  await expect(textReport).toContainText(`textProfile=${strictTextFixture.textProfile}`);
+  await expect(textReport).toContainText(`positionEncoding=${strictTextFixture.positionEncoding}`);
+  await expect(textReport).toContainText('semanticTextAffectsPixels=false');
+  await expect(textReport).toContainText(
+    'semanticTextRole=non-rendering metadata; pixels follow glyph evidence',
   );
 });

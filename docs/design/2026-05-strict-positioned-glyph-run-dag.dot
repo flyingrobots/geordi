@@ -86,8 +86,8 @@ digraph StrictPositionedGlyphRunPlan {
     S056 [label="S056\nOutline command validation", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S057 [label="S057\nBrowser outline glyph renderer", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S058 [label="S058\nBrowser text fixture mode", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S059 [label="S059\nBrowser text metadata disclosure", color="#16a34a", penwidth=4];
-    S060 [label="S060\nBrowser visible text smoke", color="#dc2626", penwidth=4];
+    S059 [label="S059\nBrowser text metadata disclosure", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S060 [label="S060\nBrowser visible text smoke", color="#16a34a", penwidth=4];
   }
 
   subgraph cluster_native {

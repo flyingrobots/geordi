@@ -7,12 +7,18 @@ import {
   type JsonValue,
 } from '@flyingrobots/geordi-core';
 import {
+  assertRenderFixtureStrictTextFontReferences,
   assertRenderFixtureArtifact,
+  parseRenderFixtureFontPackManifest,
   parseRenderFixtureStrictTextOutlineEvidencePack,
   parseRenderFixtureStrictTextFixtureManifest,
   parseRenderFixtureManifest,
+  RenderFixtureInvalidFontPackManifestError,
+  RenderFixtureInvalidStrictTextFontReferenceError,
   RenderFixtureInvalidStrictTextOutlineEvidencePackError,
   RenderFixtureInvalidStrictTextFixtureManifestError,
+  type RenderFixtureFontPackManifestIssue,
+  type RenderFixtureStrictTextFontReferenceIssue,
   type RenderFixtureManifest,
   type RenderFixtureStrictTextOutlineEvidencePackIssue,
   type RenderFixtureStrictTextFixtureManifest,
@@ -35,6 +41,7 @@ export interface BrowserStrictTextFixtureAssets {
 
 export interface BrowserStrictTextRenderFixtureAssets {
   readonly evidenceUrl: string;
+  readonly fontPackUrl: string;
   readonly fixtureUrl: string;
 }
 
@@ -48,6 +55,32 @@ export interface BrowserStrictTextFixtureRejection {
   readonly fixtureUrl: string;
   readonly issues: readonly RenderFixtureStrictTextFixtureManifestIssue[];
   readonly rejected: true;
+}
+
+export interface BrowserStrictTextMetadataReport {
+  readonly commandCount: number;
+  readonly drawGlyphCount: number;
+  readonly evidenceHash: string;
+  readonly evidenceKind: string;
+  readonly evidencePackId: string;
+  readonly fixtureHash: string;
+  readonly fixtureId: string;
+  readonly fontPackHash: string;
+  readonly fontPackPath: string;
+  readonly glyphCount: number;
+  readonly glyphRunHash: string;
+  readonly lineBoxHash: string;
+  readonly positionEncoding: string;
+  readonly rendererName: string;
+  readonly semanticTextAffectsPixels: false;
+  readonly semanticTextLanguage: string;
+  readonly semanticTextRole: 'non-rendering metadata; pixels follow glyph evidence';
+  readonly semanticTextSource: string;
+  readonly textProfile: string;
+}
+
+export interface BrowserStrictTextRenderFixtureResult extends BrowserStrictTextOutlineRenderResult {
+  readonly metadata: BrowserStrictTextMetadataReport;
 }
 
 export interface BrowserStrictTextRenderFixtureOptions {
@@ -159,6 +192,32 @@ export class BrowserHarnessStrictTextOutlineEvidenceRejectedError extends Error 
   }
 }
 
+export class BrowserHarnessStrictTextFontPackRejectedError extends Error {
+  public readonly fontPackUrl: string;
+  public readonly issues: readonly RenderFixtureFontPackManifestIssue[];
+  public readonly source: RenderFixtureInvalidFontPackManifestError;
+
+  constructor(fontPackUrl: string, source: RenderFixtureInvalidFontPackManifestError) {
+    super('Browser harness strict text font pack was rejected');
+    this.name = new.target.name;
+    this.fontPackUrl = fontPackUrl;
+    this.issues = source.issues;
+    this.source = source;
+  }
+}
+
+export class BrowserHarnessStrictTextFontReferenceRejectedError extends Error {
+  public readonly issues: readonly RenderFixtureStrictTextFontReferenceIssue[];
+  public readonly source: RenderFixtureInvalidStrictTextFontReferenceError;
+
+  constructor(source: RenderFixtureInvalidStrictTextFontReferenceError) {
+    super('Browser harness strict text font references were rejected');
+    this.name = new.target.name;
+    this.issues = source.issues;
+    this.source = source;
+  }
+}
+
 export function createBrowserFetchText(
   fetcher: BrowserHarnessFetch,
 ): BrowserHarnessFetchText {
@@ -253,20 +312,53 @@ export async function rejectBrowserStrictTextFixture(
 
 export async function renderBrowserStrictTextFixture(
   options: BrowserStrictTextRenderFixtureOptions,
-): Promise<BrowserStrictTextOutlineRenderResult> {
+): Promise<BrowserStrictTextRenderFixtureResult> {
   const jsonPort = options.jsonPort ?? canonicalJsonPort;
-  const fixture = await loadBrowserStrictTextFixture({
-    assets: {
-      fixtureUrl: options.assets.fixtureUrl,
-    },
-    fetchText: options.fetchText,
-    jsonPort,
-  });
+  const fixtureSource = await options.fetchText(options.assets.fixtureUrl);
+  let fixture: RenderFixtureStrictTextFixtureManifest;
+  try {
+    fixture = parseRenderFixtureStrictTextFixtureManifest(fixtureSource, jsonPort);
+  } catch (error) {
+    if (error instanceof RenderFixtureInvalidStrictTextFixtureManifestError) {
+      throw new BrowserHarnessStrictTextFixtureRejectedError(options.assets.fixtureUrl, error);
+    }
+
+    throw error;
+  }
+
+  const fontPackSource = await options.fetchText(options.assets.fontPackUrl);
+  try {
+    const fontPack = parseRenderFixtureFontPackManifest(fontPackSource, jsonPort);
+    assertRenderFixtureStrictTextFontReferences({ fontPack, manifest: fixture });
+  } catch (error) {
+    if (error instanceof RenderFixtureInvalidFontPackManifestError) {
+      throw new BrowserHarnessStrictTextFontPackRejectedError(options.assets.fontPackUrl, error);
+    }
+
+    if (error instanceof RenderFixtureInvalidStrictTextFontReferenceError) {
+      throw new BrowserHarnessStrictTextFontReferenceRejectedError(error);
+    }
+
+    throw error;
+  }
+
   const evidenceSource = await options.fetchText(options.assets.evidenceUrl);
 
   try {
     const evidence = parseRenderFixtureStrictTextOutlineEvidencePack(evidenceSource, jsonPort);
-    return renderStrictTextOutlineGlyphsToCanvas(fixture, evidence);
+    const result = renderStrictTextOutlineGlyphsToCanvas(fixture, evidence);
+    const metadata = await createStrictTextMetadataReport({
+      evidenceSource,
+      fixtureSource,
+      fontPackSource,
+      jsonPort,
+      renderReport: result.report,
+    });
+
+    return {
+      ...result,
+      metadata,
+    };
   } catch (error) {
     if (error instanceof RenderFixtureInvalidStrictTextOutlineEvidencePackError) {
       throw new BrowserHarnessStrictTextOutlineEvidenceRejectedError(
@@ -277,6 +369,45 @@ export async function renderBrowserStrictTextFixture(
 
     throw error;
   }
+}
+
+export async function createStrictTextMetadataReport(input: {
+  readonly evidenceSource: string;
+  readonly fixtureSource: string;
+  readonly fontPackSource: string;
+  readonly jsonPort?: JsonPort;
+  readonly renderReport: BrowserStrictTextOutlineRenderResult['report'];
+}): Promise<BrowserStrictTextMetadataReport> {
+  const jsonPort = input.jsonPort ?? canonicalJsonPort;
+  const fixture = parseRenderFixtureStrictTextFixtureManifest(input.fixtureSource, jsonPort);
+  return {
+    commandCount: input.renderReport.commandCount,
+    drawGlyphCount: input.renderReport.drawGlyphCount,
+    evidenceHash: await sha256ArtifactHash(input.evidenceSource),
+    evidenceKind: input.renderReport.evidenceKind,
+    evidencePackId: input.renderReport.evidencePackId,
+    fixtureHash: await sha256ArtifactHash(input.fixtureSource),
+    fixtureId: input.renderReport.fixtureId,
+    fontPackHash: await sha256ArtifactHash(input.fontPackSource),
+    fontPackPath: fixture.fontPackPath,
+    glyphCount: input.renderReport.glyphCount,
+    glyphRunHash: await sha256CanonicalJsonHash(fixture.glyphRuns, jsonPort),
+    lineBoxHash: await sha256CanonicalJsonHash(fixture.lineBoxes, jsonPort),
+    positionEncoding: fixture.positionEncoding,
+    rendererName: input.renderReport.rendererName,
+    semanticTextAffectsPixels: fixture.semanticText.affectsPixels,
+    semanticTextLanguage: fixture.semanticText.language,
+    semanticTextRole: 'non-rendering metadata; pixels follow glyph evidence',
+    semanticTextSource: fixture.semanticText.source,
+    textProfile: input.renderReport.textProfile,
+  };
+}
+
+async function sha256CanonicalJsonHash(
+  value: JsonValue,
+  jsonPort: JsonPort,
+): Promise<string> {
+  return sha256ArtifactHash(`${jsonPort.stringify(value, { space: 2 })}\n`);
 }
 
 function assertBrowserHarnessGeordiIr(value: JsonValue): GeordiIr {

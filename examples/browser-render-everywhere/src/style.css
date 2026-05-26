@@ -64,7 +64,7 @@ select {
 
 .mode-switch {
   display: inline-grid;
-  grid-template-columns: repeat(2, minmax(112px, max-content));
+  grid-template-columns: repeat(3, minmax(112px, max-content));
   justify-content: start;
   width: max-content;
   border: 1px solid #8aa3b8;
@@ -177,7 +177,8 @@ select {
   border: 1px solid #101820;
 }
 
-.bunny-report {
+.bunny-report,
+.text-report {
   border-top: 1px solid #d9dde5;
   overflow-wrap: anywhere;
   margin: 0;
@@ -191,6 +192,11 @@ select {
 .viewport-slot canvas[data-geordi-bunny-canvas='true'] {
   width: min(100%, 512px);
   background: #111827;
+}
+
+.viewport-slot canvas[data-geordi-strict-text-canvas='true'] {
+  width: min(100%, 384px);
+  background: #ffffff;
 }
 
 .harness-failure {

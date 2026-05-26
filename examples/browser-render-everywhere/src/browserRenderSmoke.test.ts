@@ -9,6 +9,8 @@ import {
 } from '@flyingrobots/geordi-render-fixture';
 import { GeordiRuntimeUnsupportedProfileError } from '@flyingrobots/geordi-runtime-webgl';
 import {
+  BrowserHarnessStrictTextFontPackRejectedError,
+  BrowserHarnessStrictTextFontReferenceRejectedError,
   BrowserHarnessStrictTextFixtureAcceptedError,
   BrowserHarnessStrictTextOutlineEvidenceRejectedError,
   BrowserHarnessFetchError,
@@ -130,6 +132,7 @@ class BrowserRenderSmokeJsonShapeError extends Error {
 
 const hadDocument = Object.prototype.hasOwnProperty.call(globalThis, 'document');
 const originalDocument = hadDocument ? globalThis.document : undefined;
+const originalCrypto = globalThis.crypto;
 const HELLO_PANEL_FIXTURE = 'hello-panel';
 const UNSUPPORTED_STRICT_TEXT_FIXTURE = 'unsupported-strict-text';
 const UNSUPPORTED_RUNTIME_SHAPING_STRICT_TEXT_FIXTURE =
@@ -141,10 +144,14 @@ afterEach(() => {
       configurable: true,
       value: originalDocument,
     });
-    return;
+  } else {
+    Reflect.deleteProperty(globalThis, 'document');
   }
 
-  Reflect.deleteProperty(globalThis, 'document');
+  Object.defineProperty(globalThis, 'crypto', {
+    configurable: true,
+    value: originalCrypto,
+  });
 });
 
 function fixtureSource(path: string, fixtureName = HELLO_PANEL_FIXTURE): string {
@@ -210,6 +217,18 @@ function installCanvasDocument(canvas: HTMLCanvasElement): void {
   });
 }
 
+function installHashingCrypto(): void {
+  Object.defineProperty(globalThis, 'crypto', {
+    configurable: true,
+    value: {
+      subtle: {
+        digest: (_algorithm: string, data: BufferSource) =>
+          Promise.resolve(createHash('sha256').update(bufferSourceBytes(data)).digest()),
+      },
+    },
+  });
+}
+
 function makeFixtureFetchText(options: FixtureFetchTextOptions = {}): BrowserHarnessFetchText {
   const fixtureName = options.fixtureName ?? HELLO_PANEL_FIXTURE;
   const sceneSource = options.sceneSource ?? fixtureSource('scene.geordi.json', fixtureName);
@@ -240,7 +259,25 @@ function makeStrictTextFetchText(sources: ReadonlyMap<string, string>): BrowserH
 }
 
 function sha256ArtifactHash(source: string): Promise<string> {
-  return Promise.resolve(`sha256:${createHash('sha256').update(source).digest('hex')}`);
+  return Promise.resolve(sha256ArtifactHashSync(source));
+}
+
+function sha256ArtifactHashSync(source: string): string {
+  return `sha256:${createHash('sha256').update(source).digest('hex')}`;
+}
+
+function sha256CanonicalJson(value: JsonValue): string {
+  return `sha256:${createHash('sha256')
+    .update(`${canonicalJsonPort.stringify(value, { space: 2 })}\n`)
+    .digest('hex')}`;
+}
+
+function bufferSourceBytes(data: BufferSource): Uint8Array {
+  if (data instanceof ArrayBuffer) {
+    return new Uint8Array(data);
+  }
+
+  return new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
 }
 
 describe('browser render smoke', () => {
@@ -417,15 +454,23 @@ describe('browser render smoke', () => {
     const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
     const fixtureUrl = 'geordi.strict-text.geordi.json';
     const evidenceUrl = 'geordi.outline-evidence.geordi.json';
+    const fontPackUrl = 'font-pack.geordi.json';
+    const strictTextSource = strictTextFixtureSource(fixtureUrl);
+    const evidenceSource = strictTextFixtureSource(evidenceUrl);
+    const fontPackSource = fixtureSource('font-pack.geordi.json', 'assets/fonts');
     const sources = new Map<string, string>([
-      [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
-      [evidenceUrl, strictTextFixtureSource(evidenceUrl)],
+      [fixtureUrl, strictTextSource],
+      [evidenceUrl, evidenceSource],
+      [fontPackUrl, fontPackSource],
     ]);
+    const fixture = parseRenderFixtureStrictTextFixtureManifest(strictTextSource);
     installCanvasDocument(canvas);
+    installHashingCrypto();
 
     const result = await renderBrowserStrictTextFixture({
       assets: {
         evidenceUrl,
+        fontPackUrl,
         fixtureUrl,
       },
       fetchText: makeStrictTextFetchText(sources),
@@ -434,26 +479,97 @@ describe('browser render smoke', () => {
     expect(result.canvas).toBe(canvas);
     expect(result.report.rendererName).toBe('browser-canvas-outline-glyphs');
     expect(result.report.evidencePackId).toBe('render-everywhere:strict-text:geordi:outline-evidence');
+    expect(result.metadata).toMatchObject({
+      evidenceHash: sha256ArtifactHashSync(evidenceSource),
+      evidenceKind: 'outlinePaths',
+      evidencePackId: 'render-everywhere:strict-text:geordi:outline-evidence',
+      fixtureHash: sha256ArtifactHashSync(strictTextSource),
+      fixtureId: 'render-everywhere:strict-text:geordi',
+      fontPackHash: sha256ArtifactHashSync(fontPackSource),
+      fontPackPath: 'fixtures/render-everywhere/assets/fonts/font-pack.geordi.json',
+      glyphRunHash: sha256CanonicalJson(fixture.glyphRuns),
+      lineBoxHash: sha256CanonicalJson(fixture.lineBoxes),
+      positionEncoding: 'geordi-fixed-26.6/1',
+      rendererName: 'browser-canvas-outline-glyphs',
+      semanticTextAffectsPixels: false,
+      semanticTextRole: 'non-rendering metadata; pixels follow glyph evidence',
+      semanticTextSource: 'GEORDI',
+      textProfile: 'geordi-strict-positioned-glyph-run/1',
+    });
     expect(context.calls.some((call) => call.name === 'fillText')).toBe(false);
   });
 
   it('rejects invalid strict text evidence before fixture mode drawing', async () => {
     const fixtureUrl = 'geordi.strict-text.geordi.json';
     const evidenceUrl = 'bad-outline-command.outline-evidence.geordi.json';
+    const fontPackUrl = 'font-pack.geordi.json';
     const sources = new Map<string, string>([
       [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
       [evidenceUrl, strictTextFixtureSource(`failures/${evidenceUrl}`)],
+      [fontPackUrl, fixtureSource('font-pack.geordi.json', 'assets/fonts')],
     ]);
+    installHashingCrypto();
 
     await expect(
       renderBrowserStrictTextFixture({
         assets: {
           evidenceUrl,
+          fontPackUrl,
           fixtureUrl,
         },
         fetchText: makeStrictTextFetchText(sources),
       }),
     ).rejects.toBeInstanceOf(BrowserHarnessStrictTextOutlineEvidenceRejectedError);
+  });
+
+  it('rejects invalid strict text font packs before fixture mode drawing', async () => {
+    const fixtureUrl = 'geordi.strict-text.geordi.json';
+    const evidenceUrl = 'geordi.outline-evidence.geordi.json';
+    const fontPackUrl = 'font-pack.geordi.json';
+    const sources = new Map<string, string>([
+      [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
+      [evidenceUrl, strictTextFixtureSource(evidenceUrl)],
+      [fontPackUrl, '{}'],
+    ]);
+    installHashingCrypto();
+
+    await expect(
+      renderBrowserStrictTextFixture({
+        assets: {
+          evidenceUrl,
+          fontPackUrl,
+          fixtureUrl,
+        },
+        fetchText: makeStrictTextFetchText(sources),
+      }),
+    ).rejects.toBeInstanceOf(BrowserHarnessStrictTextFontPackRejectedError);
+  });
+
+  it('rejects unresolved strict text font references before fixture mode drawing', async () => {
+    const fixtureUrl = 'geordi.strict-text.geordi.json';
+    const evidenceUrl = 'geordi.outline-evidence.geordi.json';
+    const fontPackUrl = 'font-pack.geordi.json';
+    const fontPackSource = fixtureSource('font-pack.geordi.json', 'assets/fonts').replace(
+      '"id": "lato-regular"',
+      '"id": "lato-missing"',
+    );
+    const sources = new Map<string, string>([
+      [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
+      [evidenceUrl, strictTextFixtureSource(evidenceUrl)],
+      [fontPackUrl, fontPackSource],
+    ]);
+    installHashingCrypto();
+
+    await expect(
+      renderBrowserStrictTextFixture({
+        assets: {
+          evidenceUrl,
+          fontPackUrl,
+          fixtureUrl,
+        },
+        fetchText: makeStrictTextFetchText(sources),
+      }),
+    ).rejects.toBeInstanceOf(BrowserHarnessStrictTextFontReferenceRejectedError);
   });
 
   it('fails the strict text rejection guard when the artifact is accepted', async () => {

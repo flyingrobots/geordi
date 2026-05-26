@@ -588,6 +588,13 @@ S058 adds browser strict text fixture mode loading: the harness fetches a strict
 outline evidence pack, parses both with shared validators, rejects invalid evidence before drawing,
 and routes valid inputs through the S057 renderer.
 
+S059 exposes the browser strict text proof through the demo shell. The browser harness now imports
+the canonical font-pack manifest URL, validates strict text font references before drawing, computes
+fixture, font-pack, glyph-run, line-box, and evidence SHA-256 values from the loaded bytes or
+canonical fragments, and renders them in a collapsed `Text metadata` disclosure. The disclosure also
+states `semanticTextAffectsPixels=false` and labels semantic text as non-rendering metadata so the UI
+does not imply that strings, host fonts, or platform text APIs determine pixels.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

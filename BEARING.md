@@ -219,6 +219,23 @@ This is still not mounted in the browser UI. Current nonclaims remain: no browse
 disclosure UI, no native strict text renderer, no glyph evidence coverage/linkage enforcement, no
 platform text API compliance path, and no general text support.
 
+## S059 Browser Text Metadata Disclosure
+
+The browser harness now mounts a dedicated `Text` panel beside `Rectangles` and `Bunny`. Startup
+loads the canonical strict text fixture, the canonical outline evidence pack, and the referenced
+font-pack manifest; validates font references before drawing; renders the strict text canvas through
+outline path geometry; and fills a collapsed `Text metadata` disclosure.
+
+The metadata report exposes renderer name, fixture id/hash, font-pack path/hash, glyph-run hash,
+line-box hash, evidence pack id/kind/hash, text profile, position encoding, glyph counts, command
+count, and semantic-text fields. The semantic text report explicitly states
+`semanticTextAffectsPixels=false` and labels semantic text as non-rendering metadata whose strings
+do not determine pixels.
+
+S060 adds visible text smoke assertions. Current nonclaims remain: no native strict text renderer,
+no cross-runtime metadata equality gate, no platform text API compliance path, and no general text
+support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -236,7 +253,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S059**.
+Current OPEN node: **S060**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -882,7 +899,7 @@ Current OPEN node: **S059**.
 
 ### S059: Browser text metadata disclosure
 
-- [ ] **S059: Browser text metadata disclosure** (OPEN)
+- [x] **S059: Browser text metadata disclosure** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser text metadata disclosure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser text metadata disclosure.
@@ -893,7 +910,7 @@ Current OPEN node: **S059**.
 
 ### S060: Browser visible text smoke
 
-- [ ] **S060: Browser visible text smoke** (BLOCKED)
+- [ ] **S060: Browser visible text smoke** (OPEN)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser visible text smoke documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser visible text smoke.
