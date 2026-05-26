@@ -185,9 +185,10 @@ receipts:
 - Receipts must include `glyphEvidenceKind`, `glyphEvidencePackPath`, and
   `glyphEvidencePackHash` together after the evidence pack exists.
 - `glyphEvidencePackHash` hashes the exact committed evidence pack bytes.
-- S070 adds a coverage validator: after structural evidence validation succeeds, every positioned
-  glyph referenced by the strict text fixture must have a matching evidence glyph entry before any
-  browser or native renderer draws.
+- S070-S071 add a coverage validator: after structural evidence validation succeeds, every
+  positioned glyph referenced by the strict text fixture must have a matching evidence glyph entry,
+  and fixture-local packs must not include unreferenced glyph evidence before any browser or native
+  renderer draws.
 
 ## Diagnostic Vocabulary
 
@@ -207,6 +208,7 @@ message prose may differ between TypeScript and Rust, but diagnostic codes must 
 | `GEORDI_TEXT_EVIDENCE_DUPLICATE_GLYPH` | A glyph id appears more than once in the pack. |
 | `GEORDI_TEXT_EVIDENCE_BAD_GLYPH` | A glyph entry is malformed before command or bounds validation. |
 | `GEORDI_TEXT_EVIDENCE_MISSING_GLYPH` | A positioned glyph has no matching `fontId + glyphId` evidence entry. |
+| `GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH` | A fixture-local evidence entry has no matching positioned `fontId + glyphId`. |
 | `GEORDI_TEXT_EVIDENCE_BAD_BOUNDS` | Bounds are malformed, unsafe, non-integer, or have negative dimensions. |
 | `GEORDI_TEXT_EVIDENCE_BAD_COMMAND` | A command is malformed, unknown, unsafe, or invalid for the current contour state. |
 | `GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT` | Paint is not first-profile `solidFill` RGBA. |

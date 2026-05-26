@@ -1339,6 +1339,22 @@ describe('render fixture strict text fixture manifest validation', () => {
     });
   });
 
+  it('rejects unreferenced strict text glyph evidence coverage', () => {
+    const fixture = parseRenderFixtureStrictTextFixtureManifest(strictTextFixtureASource());
+    const evidence = parseRenderFixtureStrictTextOutlineEvidencePack(
+      strictTextOutlineEvidenceFailureSource('unknown-glyph-evidence'),
+    );
+
+    const result = validateRenderFixtureStrictTextEvidenceCoverage({ evidence, fixture });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContainEqual({
+      code: 'GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH',
+      message: 'Strict text outline evidence glyph is not referenced by fixture for lato-regular:9999',
+      path: '$.glyphs[6].glyphId',
+    });
+  });
+
   it('accepts a typed valid strict text probe policy object', () => {
     const policy = makeStrictTextProbePolicy();
 

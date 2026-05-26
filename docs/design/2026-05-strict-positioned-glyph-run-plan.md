@@ -663,6 +663,13 @@ smoke mode, and the Rust renderer all reject the validly-shaped
 `failures/missing-glyph-evidence.outline-evidence.geordi.json` pack before drawing when it omits a
 glyph referenced by `geordi.strict-text.geordi.json`.
 
+S071 adds unknown glyph evidence rejection for fixture-local minimal packs. The same coverage
+validators now reject evidence entries whose `fontId + glyphId` key is not referenced by the strict
+text fixture, using stable diagnostic code `GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH`. The
+`failures/unknown-glyph-evidence.outline-evidence.geordi.json` pack keeps all required glyph ids
+present but adds glyph id `9999`, proving that renderers fail before silently ignoring extra glyph
+evidence.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

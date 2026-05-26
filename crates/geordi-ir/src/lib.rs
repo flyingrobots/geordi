@@ -1686,15 +1686,18 @@ pub fn validate_geordi_strict_text_evidence_coverage(
     evidence: &GeordiStrictTextOutlineEvidencePack,
 ) -> Result<(), GeordiStrictTextOutlineEvidenceValidationError> {
     let mut issues = Vec::new();
-    let evidence_glyph_ids = evidence
+    let evidence_glyph_keys = evidence
         .glyphs
         .iter()
-        .map(|glyph| glyph.glyph_id)
+        .map(|glyph| (evidence.font_id.as_str(), glyph.glyph_id))
         .collect::<std::collections::BTreeSet<_>>();
+    let mut fixture_glyph_keys = std::collections::BTreeSet::new();
 
     for (run_index, run) in fixture.glyph_runs.iter().enumerate() {
         for (glyph_index, glyph) in run.glyphs.iter().enumerate() {
-            if run.font_id != evidence.font_id || !evidence_glyph_ids.contains(&glyph.glyph_id) {
+            let glyph_key = (run.font_id.as_str(), glyph.glyph_id);
+            fixture_glyph_keys.insert(glyph_key);
+            if !evidence_glyph_keys.contains(&glyph_key) {
                 push_outline_evidence_issue(
                     &mut issues,
                     &format!("$.glyphRuns[{run_index}].glyphs[{glyph_index}].glyphId"),
@@ -1705,6 +1708,21 @@ pub fn validate_geordi_strict_text_evidence_coverage(
                     "GEORDI_TEXT_EVIDENCE_MISSING_GLYPH",
                 );
             }
+        }
+    }
+
+    for (glyph_index, glyph) in evidence.glyphs.iter().enumerate() {
+        let glyph_key = (evidence.font_id.as_str(), glyph.glyph_id);
+        if !fixture_glyph_keys.contains(&glyph_key) {
+            push_outline_evidence_issue(
+                &mut issues,
+                &format!("$.glyphs[{glyph_index}].glyphId"),
+                &format!(
+                    "Strict text outline evidence glyph is not referenced by fixture for {}:{}",
+                    evidence.font_id, glyph.glyph_id
+                ),
+                "GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH",
+            );
         }
     }
 
@@ -3638,6 +3656,40 @@ mod tests {
                 .map(|issue| issue.path.clone())
                 .collect::<Vec<_>>(),
             "$.glyphRuns[0].glyphs[0].glyphId",
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_unreferenced_strict_text_glyph_evidence_coverage() -> Result<(), GeordiIrTestError> {
+        let fixture = load_geordi_strict_text_fixture_manifest(fixture_path(
+            "strict-text/geordi.strict-text.geordi.json",
+        ))?;
+        let evidence = load_geordi_strict_text_outline_evidence_pack(fixture_path(
+            "strict-text/failures/unknown-glyph-evidence.outline-evidence.geordi.json",
+        ))?;
+        validate_geordi_strict_text_outline_evidence_pack(&evidence)?;
+
+        let error = match validate_geordi_strict_text_evidence_coverage(&fixture, &evidence) {
+            Ok(()) => return Err(GeordiIrTestError::ExpectedFailure),
+            Err(error) => error,
+        };
+
+        assert_codes_include(
+            &error
+                .issues()
+                .iter()
+                .map(|issue| issue.code.clone())
+                .collect::<Vec<_>>(),
+            "GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH",
+        );
+        assert_paths_include(
+            &error
+                .issues()
+                .iter()
+                .map(|issue| issue.path.clone())
+                .collect::<Vec<_>>(),
+            "$.glyphs[6].glyphId",
         );
         Ok(())
     }

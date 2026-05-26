@@ -37,6 +37,7 @@ Failure fixtures:
 ~~~text
 fixtures/render-everywhere/strict-text/failures/bad-outline-command.outline-evidence.geordi.json
 fixtures/render-everywhere/strict-text/failures/missing-glyph-evidence.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/failures/unknown-glyph-evidence.outline-evidence.geordi.json
 fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
 ~~~
 
@@ -47,6 +48,9 @@ rules.
 It keeps the evidence-pack shape valid while omitting glyph evidence required by
 `geordi.strict-text.geordi.json`, so TypeScript, browser, native, and Rust renderer paths must
 reject it before drawing.
+`unknown-glyph-evidence.outline-evidence.geordi.json` is an S071 evidence-coverage failure fixture.
+It keeps every required glyph id present but adds unreferenced fixture-local glyph evidence, so
+coverage validation must reject it before renderers silently ignore the extra entry.
 
 Canonical fixture A:
 

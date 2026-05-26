@@ -371,6 +371,23 @@ This closes the silent-skip risk for omitted glyph evidence. Current nonclaims r
 antialiasing parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no
 host font lookup, and no general text support.
 
+## S071 Glyph Id Not Found Failure
+
+Fixture-local strict text evidence now rejects extra glyph entries that are not referenced by the
+fixture's positioned glyph runs. The shared diagnostic code is
+`GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH`, and the failure is covered in TypeScript contract tests,
+browser direct rendering, browser fixture mode, Rust IR validation, the Rust renderer, and native
+`--strict-text-smoke`.
+
+The failure fixture is:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/unknown-glyph-evidence.outline-evidence.geordi.json
+~~~
+
+This preserves the current fixture-local minimal-pack contract. A future reusable evidence-pack
+profile may allow extra glyph evidence only after it states that behavior explicitly.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -388,7 +405,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S071**.
+Current OPEN node: **S072**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1166,7 +1183,7 @@ Current OPEN node: **S071**.
 
 ### S071: Glyph id not found failure
 
-- [ ] **S071: Glyph id not found failure** (OPEN)
+- [x] **S071: Glyph id not found failure** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with glyph id not found failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Glyph id not found failure.
@@ -1177,7 +1194,7 @@ Current OPEN node: **S071**.
 
 ### S072: Bad line box failure
 
-- [ ] **S072: Bad line box failure** (BLOCKED)
+- [ ] **S072: Bad line box failure** (OPEN)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with bad line box failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Bad line box failure.

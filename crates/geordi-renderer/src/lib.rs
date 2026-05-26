@@ -1255,6 +1255,27 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn rejects_unreferenced_strict_text_glyph_evidence_before_rendering()
+    -> Result<(), GeordiRendererTestError> {
+        let fixture = load_geordi_strict_text_fixture_manifest(fixture_path(
+            "strict-text/geordi.strict-text.geordi.json",
+        ))?;
+        let evidence = load_geordi_strict_text_outline_evidence_pack(fixture_path(
+            "strict-text/failures/unknown-glyph-evidence.outline-evidence.geordi.json",
+        ))?;
+
+        let result = render_strict_text_outline_glyphs_to_image(&fixture, &evidence);
+
+        assert!(matches!(
+            result,
+            Err(GeordiStrictTextRenderError {
+                source: GeordiStrictTextRenderErrorSource::EvidenceValidation(_)
+            })
+        ));
+        Ok(())
+    }
+
     fn runtime_error_requirement(
         result: Result<(), GeordiRuntimeUnsupportedProfileError>,
     ) -> Option<String> {

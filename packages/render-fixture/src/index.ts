@@ -144,6 +144,7 @@ export type RenderFixtureStrictTextOutlineEvidenceDiagnosticCode =
   | 'GEORDI_TEXT_EVIDENCE_DUPLICATE_GLYPH'
   | 'GEORDI_TEXT_EVIDENCE_BAD_GLYPH'
   | 'GEORDI_TEXT_EVIDENCE_MISSING_GLYPH'
+  | 'GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH'
   | 'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS'
   | 'GEORDI_TEXT_EVIDENCE_BAD_COMMAND'
   | 'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT'
@@ -1334,11 +1335,16 @@ export function validateRenderFixtureStrictTextEvidenceCoverage(
   input: RenderFixtureStrictTextEvidenceCoverageValidationInput,
 ): RenderFixtureStrictTextEvidenceCoverageValidationResult {
   const issues: RenderFixtureStrictTextOutlineEvidencePackIssue[] = [];
-  const glyphIds = new Set(input.evidence.glyphs.map((glyph) => glyph.glyphId));
+  const evidenceGlyphKeys = new Set(
+    input.evidence.glyphs.map((glyph) => `${input.evidence.fontId}:${glyph.glyphId}`),
+  );
+  const fixtureGlyphKeys = new Set<string>();
 
   for (const [runIndex, run] of input.fixture.glyphRuns.entries()) {
     for (const [glyphIndex, glyph] of run.glyphs.entries()) {
-      if (run.fontId !== input.evidence.fontId || !glyphIds.has(glyph.glyphId)) {
+      const glyphKey = `${run.fontId}:${glyph.glyphId}`;
+      fixtureGlyphKeys.add(glyphKey);
+      if (!evidenceGlyphKeys.has(glyphKey)) {
         pushOutlineEvidenceIssue(
           issues,
           `$.glyphRuns[${runIndex}].glyphs[${glyphIndex}].glyphId`,
@@ -1346,6 +1352,18 @@ export function validateRenderFixtureStrictTextEvidenceCoverage(
           'GEORDI_TEXT_EVIDENCE_MISSING_GLYPH',
         );
       }
+    }
+  }
+
+  for (const [glyphIndex, glyph] of input.evidence.glyphs.entries()) {
+    const glyphKey = `${input.evidence.fontId}:${glyph.glyphId}`;
+    if (!fixtureGlyphKeys.has(glyphKey)) {
+      pushOutlineEvidenceIssue(
+        issues,
+        `$.glyphs[${glyphIndex}].glyphId`,
+        `Strict text outline evidence glyph is not referenced by fixture for ${glyphKey}`,
+        'GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH',
+      );
     }
   }
 
