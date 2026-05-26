@@ -249,6 +249,20 @@ cross-runtime nonblank bounds policy, and S065 owns browser/native metadata equa
 nonclaims remain: no native strict text renderer, no browser/native parity claim, no platform text
 API compliance path, and no general text support.
 
+## S061 Native Outline Glyph Renderer
+
+The Rust renderer crate now exposes `render_strict_text_outline_glyphs_to_image`, a native software
+path that validates a strict text fixture and an outline evidence pack before drawing into the
+existing `RenderedImage` RGBA8 buffer. The renderer converts fixed 26.6 glyph-origin outline
+commands into flattened line segments, fills them with the evidence `solidFill` paint using nonzero
+winding, and returns deterministic metadata for renderer name, fixture id, evidence id/kind, text
+profile, glyph count, drawn glyph count, and consumed command count.
+
+This is an API-level native proof, not the CLI mode or parity report. S062 owns native fixture CLI
+mode, S063 owns native text metadata report expansion, S067 owns native coarse pixel probes, and S065
+owns browser/native metadata equality. Current nonclaims remain: no full text antialiasing parity,
+no platform text API compliance path, no host font lookup, and no general text support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -266,7 +280,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S061**.
+Current OPEN node: **S062**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -934,7 +948,7 @@ Current OPEN node: **S061**.
 
 ### S061: Native outline glyph renderer
 
-- [ ] **S061: Native outline glyph renderer** (OPEN)
+- [x] **S061: Native outline glyph renderer** (COMPLETE)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native outline glyph renderer documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native outline glyph renderer.
@@ -945,7 +959,7 @@ Current OPEN node: **S061**.
 
 ### S062: Native text fixture CLI mode
 
-- [ ] **S062: Native text fixture CLI mode** (BLOCKED)
+- [ ] **S062: Native text fixture CLI mode** (OPEN)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native text fixture cli mode documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native text fixture CLI mode.

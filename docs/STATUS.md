@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the lowest active open node is `S061`, native outline glyph renderer, after `S060` added browser
-visible text smoke coverage for the Text-mode canvas and browser text-API spies.
+the lowest active open node is `S062`, native text fixture CLI mode, after `S061` added the native
+Rust strict text outline renderer API.
 
 ## Completed Capabilities
 
@@ -41,6 +41,7 @@ visible text smoke coverage for the Text-mode canvas and browser text-API spies.
 | Strict text receipts | The receipt schema defines fixture, font-pack, glyph-run, line-box, semantic-text, and future glyph-evidence hash inputs; TypeScript and Rust can build canonical receipts for both strict text fixtures. |
 | Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, covered by glyph-id smoke tests, parsed by TypeScript/Rust DTO APIs, and guarded by command-shape failure fixtures. |
 | Browser strict text renderer | Browser harness code can load a strict text fixture/evidence/font-pack asset set, validate font references, render parsed outline evidence into Canvas path geometry without calling Canvas text APIs, disclose the strict text metadata contract in the browser UI, and pass a Playwright nonblank/text-API smoke. |
+| Native strict text renderer | Rust renderer code can validate a strict text fixture/evidence pair, lower fixed 26.6 outline evidence into software path segments, fill nonzero outline geometry into the shared RGBA8 buffer, and report native strict text renderer metadata. |
 
 ## Active Work
 
@@ -64,7 +65,7 @@ Current rules:
 | Shared DTO drift | Serialized TypeScript/Rust contract DTOs must be generated from one Wesley common schema. |
 | Runtime boundary | TypeScript remains native at browser, Node, tooling, and fixture-authoring edges. Rust remains native at the renderer and CLI core. WASM is reserved for hard deterministic kernels. |
 | Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
-| Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054/S055 add independent parsers; S056 hardens command validation. |
+| Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054/S055 add independent parsers; S056 hardens command validation; S057-S061 add browser and native outline render paths. |
 
 Primary docs:
 

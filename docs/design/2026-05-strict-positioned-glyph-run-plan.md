@@ -601,6 +601,13 @@ blank or unavailable, checks nonblank bounds are inside the canvas, and installs
 for Canvas text APIs and `FontFace` before app startup. This remains a smoke, not the later stable
 probe policy or browser/native raster parity claim.
 
+S061 adds the first native strict text outline renderer. The Rust renderer validates the strict text
+fixture and outline evidence pack, lowers fixed 26.6 outline commands into deterministic software
+path segments, fills them into the existing RGBA8 image buffer using the evidence `solidFill` paint
+and nonzero winding, and returns renderer metadata for fixture id, evidence id/kind, text profile,
+glyph counts, and consumed command count. This is a native API proof; CLI mode, expanded metadata
+reporting, stable native probes, and browser/native equality gates remain later slices.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts
