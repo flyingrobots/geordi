@@ -157,11 +157,23 @@ Expected strict text smoke output includes:
 Geordi native strict text fixture loaded
 rendererName=rust-software-outline-glyphs
 fixtureId=render-everywhere:strict-text:geordi
+fixtureHash=sha256:e3686b463296e0e7b019d7b014537a300f8fe6949a9053cf7d62067a978bf8c0
+fontPackPath=fixtures/render-everywhere/assets/fonts/font-pack.geordi.json
+fontPackHash=sha256:1b7ad58b48a3ad0d1aff0736ef014783945dc0a472de1f14b48c4211eb53533d
+glyphRunHash=sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472
+lineBoxHash=sha256:6d0b4e63bd04bd33e7213240a173f86fb478f23fa4cd505514c0b8af425f1e10
 evidencePackId=render-everywhere:strict-text:geordi:outline-evidence
 evidenceKind=outlinePaths
+evidenceHash=sha256:218890095219e9ce6753f2fef177d629a43b571ec37f01635dc31ba3601b4af3
 textProfile=geordi-strict-positioned-glyph-run/1
+positionEncoding=geordi-fixed-26.6/1
 glyphCount=6
 drawGlyphCount=6
+commandCount=155
+semanticTextSource=GEORDI
+semanticTextLanguage=en
+semanticTextAffectsPixels=false
+semanticTextRole=non-rendering metadata; pixels follow glyph evidence
 canvas=192x64
 rendered=true
 ```

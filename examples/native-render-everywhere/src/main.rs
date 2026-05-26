@@ -5,11 +5,13 @@ pub mod bunny;
 use geordi_ir::{
     GEORDI_CORE_PROFILE, GEORDI_IR_VERSION, GEORDI_NUMERIC_PROFILE, GeordiFontPackHashError,
     GeordiFontPackLoadError, GeordiIr, GeordiIrLoadError, GeordiIrValidationError,
-    GeordiStrictTextFixtureLoadError, GeordiStrictTextFixtureValidationIssue,
-    load_geordi_font_pack_manifest, load_geordi_ir, load_geordi_strict_text_fixture_manifest,
-    load_geordi_strict_text_outline_evidence_pack, validate_geordi_font_pack_hashes,
-    validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
-    validate_geordi_strict_text_font_references,
+    GeordiStrictTextFixtureLoadError, GeordiStrictTextFixtureManifest,
+    GeordiStrictTextFixtureReceipt, GeordiStrictTextFixtureReceiptError,
+    GeordiStrictTextFixtureValidationIssue, create_geordi_strict_text_fixture_receipt,
+    geordi_sha256_from_bytes, load_geordi_font_pack_manifest, load_geordi_ir,
+    load_geordi_strict_text_fixture_manifest, load_geordi_strict_text_outline_evidence_pack,
+    validate_geordi_font_pack_hashes, validate_geordi_ir,
+    validate_geordi_strict_text_fixture_manifest, validate_geordi_strict_text_font_references,
 };
 use geordi_renderer::{
     GeordiRenderError, GeordiRuntimeUnsupportedProfileError, GeordiStrictTextOutlineRenderReport,
@@ -35,6 +37,7 @@ const NATIVE_RENDERER_NAME: &str = "rust-software-rectangles";
 const STRICT_TEXT_FIXTURE_ROOT_FROM_REPO: &str = "fixtures/render-everywhere/strict-text";
 const STRICT_TEXT_FIXTURE_SUFFIX: &str = ".strict-text.geordi.json";
 const STRICT_TEXT_OUTLINE_EVIDENCE_SUFFIX: &str = ".outline-evidence.geordi.json";
+const STRICT_TEXT_SEMANTIC_TEXT_ROLE: &str = "non-rendering metadata; pixels follow glyph evidence";
 fn main() -> Result<(), NativeAppError> {
     run_from_env(env::args_os())
 }
@@ -217,7 +220,30 @@ struct LoadedStrictTextFixture {
     evidence_path: PathBuf,
     fixture_path: PathBuf,
     image: RenderedImage,
-    report: GeordiStrictTextOutlineRenderReport,
+    metadata: NativeStrictTextMetadataReport,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct NativeStrictTextMetadataReport {
+    command_count: usize,
+    draw_glyph_count: usize,
+    evidence_hash: String,
+    evidence_kind: String,
+    evidence_pack_id: String,
+    fixture_hash: String,
+    fixture_id: String,
+    font_pack_hash: String,
+    font_pack_path: String,
+    glyph_count: usize,
+    glyph_run_hash: String,
+    line_box_hash: String,
+    position_encoding: String,
+    renderer_name: &'static str,
+    semantic_text_affects_pixels: bool,
+    semantic_text_language: String,
+    semantic_text_role: &'static str,
+    semantic_text_source: String,
+    text_profile: String,
 }
 
 #[derive(Debug)]
@@ -313,6 +339,7 @@ enum NativeAppError {
     StrictTextAccepted(NativeStrictTextFixtureAcceptedError),
     StrictTextLoad(GeordiStrictTextFixtureLoadError),
     StrictTextPath(NativeStrictTextPathError),
+    StrictTextReceipt(GeordiStrictTextFixtureReceiptError),
     StrictTextRender(GeordiStrictTextRenderError),
     StrictTextValidation(geordi_ir::GeordiStrictTextFixtureValidationError),
     StrictTextOutlineEvidenceLoad(geordi_ir::GeordiStrictTextOutlineEvidenceLoadError),
@@ -347,6 +374,7 @@ impl Error for NativeAppError {
             Self::StrictTextAccepted(source) => Some(source),
             Self::StrictTextLoad(source) => Some(source),
             Self::StrictTextPath(source) => Some(source),
+            Self::StrictTextReceipt(source) => Some(source),
             Self::StrictTextRender(source) => Some(source),
             Self::StrictTextValidation(source) => Some(source),
             Self::StrictTextOutlineEvidenceLoad(source) => Some(source),
@@ -472,6 +500,12 @@ impl From<NativeStrictTextPathError> for NativeAppError {
 impl From<GeordiStrictTextRenderError> for NativeAppError {
     fn from(error: GeordiStrictTextRenderError) -> Self {
         Self::StrictTextRender(error)
+    }
+}
+
+impl From<GeordiStrictTextFixtureReceiptError> for NativeAppError {
+    fn from(error: GeordiStrictTextFixtureReceiptError) -> Self {
+        Self::StrictTextReceipt(error)
     }
 }
 
@@ -895,6 +929,8 @@ fn load_strict_text_fixture(
     let fixture_path = resolve_strict_text_argument_path(fixture_argument)?;
     let fixture = load_geordi_strict_text_fixture_manifest(&fixture_path)?;
     validate_geordi_strict_text_fixture_manifest(&fixture)?;
+    let fixture_repo_path = repository_relative_path(&fixture_path)?;
+    let receipt = create_geordi_strict_text_fixture_receipt(repository_root(), &fixture_repo_path)?;
 
     let font_pack_path = resolve_repo_relative_path(&fixture.font_pack_path)?;
     let font_pack = load_geordi_font_pack_manifest(&font_pack_path)?;
@@ -907,12 +943,45 @@ fn load_strict_text_fixture(
     };
     let evidence = load_geordi_strict_text_outline_evidence_pack(&evidence_path)?;
     let result = render_strict_text_outline_glyphs_to_image(&fixture, &evidence)?;
+    let metadata =
+        create_strict_text_metadata_report(&fixture, &evidence_path, receipt, result.report)?;
 
     Ok(LoadedStrictTextFixture {
         evidence_path,
         fixture_path,
         image: result.image,
-        report: result.report,
+        metadata,
+    })
+}
+
+fn create_strict_text_metadata_report(
+    fixture: &GeordiStrictTextFixtureManifest,
+    evidence_path: &Path,
+    receipt: GeordiStrictTextFixtureReceipt,
+    render_report: GeordiStrictTextOutlineRenderReport,
+) -> Result<NativeStrictTextMetadataReport, NativeAppError> {
+    let evidence_bytes = load_artifact_bytes(evidence_path)?;
+
+    Ok(NativeStrictTextMetadataReport {
+        command_count: render_report.command_count,
+        draw_glyph_count: render_report.draw_glyph_count,
+        evidence_hash: geordi_sha256_from_bytes(&evidence_bytes),
+        evidence_kind: render_report.evidence_kind,
+        evidence_pack_id: render_report.evidence_pack_id,
+        fixture_hash: receipt.fixture_hash,
+        fixture_id: render_report.fixture_id,
+        font_pack_hash: receipt.font_pack_hash,
+        font_pack_path: receipt.font_pack_path,
+        glyph_count: render_report.glyph_count,
+        glyph_run_hash: receipt.glyph_run_hash,
+        line_box_hash: receipt.line_box_hash,
+        position_encoding: receipt.position_encoding_profile,
+        renderer_name: render_report.renderer_name,
+        semantic_text_affects_pixels: receipt.semantic_text_affects_pixels,
+        semantic_text_language: fixture.semantic_text.language.clone(),
+        semantic_text_role: STRICT_TEXT_SEMANTIC_TEXT_ROLE,
+        semantic_text_source: fixture.semantic_text.source.clone(),
+        text_profile: render_report.text_profile,
     })
 }
 
@@ -947,6 +1016,24 @@ fn resolve_repo_relative_path(value: &str) -> Result<PathBuf, NativeStrictTextPa
     }
 
     Ok(repository_root().join(value))
+}
+
+fn repository_relative_path(path: &Path) -> Result<String, NativeStrictTextPathError> {
+    let root = repository_root();
+    let relative = path.strip_prefix(&root).map_err(|_error| {
+        NativeStrictTextPathError::new(path, "path must stay inside the repository root")
+    })?;
+    let value = relative.to_str().ok_or_else(|| {
+        NativeStrictTextPathError::new(path, "path must be valid UTF-8 for fixture mode")
+    })?;
+    if value.is_empty() || !is_fixture_local_relative_path(value) {
+        return Err(NativeStrictTextPathError::new(
+            path,
+            "repository path must be relative and fixture-local",
+        ));
+    }
+
+    Ok(value.to_owned())
 }
 
 fn derive_strict_text_outline_evidence_path(
@@ -1475,9 +1562,10 @@ fn write_strict_text_fixture_summary(
     writer: &mut impl Write,
     loaded: &LoadedStrictTextFixture,
 ) -> Result<(), NativeOutputError> {
+    let report = &loaded.metadata;
+
     writeln!(writer, "Geordi native strict text fixture loaded").map_err(NativeOutputError::new)?;
-    writeln!(writer, "rendererName={}", loaded.report.renderer_name)
-        .map_err(NativeOutputError::new)?;
+    writeln!(writer, "rendererName={}", report.renderer_name).map_err(NativeOutputError::new)?;
     writeln!(
         writer,
         "strictTextFixture={}",
@@ -1486,17 +1574,38 @@ fn write_strict_text_fixture_summary(
     .map_err(NativeOutputError::new)?;
     writeln!(writer, "outlineEvidence={}", loaded.evidence_path.display())
         .map_err(NativeOutputError::new)?;
-    writeln!(writer, "fixtureId={}", loaded.report.fixture_id).map_err(NativeOutputError::new)?;
-    writeln!(writer, "evidencePackId={}", loaded.report.evidence_pack_id)
+    writeln!(writer, "fixtureId={}", report.fixture_id).map_err(NativeOutputError::new)?;
+    writeln!(writer, "fixtureHash={}", report.fixture_hash).map_err(NativeOutputError::new)?;
+    writeln!(writer, "fontPackPath={}", report.font_pack_path).map_err(NativeOutputError::new)?;
+    writeln!(writer, "fontPackHash={}", report.font_pack_hash).map_err(NativeOutputError::new)?;
+    writeln!(writer, "glyphRunHash={}", report.glyph_run_hash).map_err(NativeOutputError::new)?;
+    writeln!(writer, "lineBoxHash={}", report.line_box_hash).map_err(NativeOutputError::new)?;
+    writeln!(writer, "evidencePackId={}", report.evidence_pack_id)
         .map_err(NativeOutputError::new)?;
-    writeln!(writer, "evidenceKind={}", loaded.report.evidence_kind)
+    writeln!(writer, "evidenceKind={}", report.evidence_kind).map_err(NativeOutputError::new)?;
+    writeln!(writer, "evidenceHash={}", report.evidence_hash).map_err(NativeOutputError::new)?;
+    writeln!(writer, "textProfile={}", report.text_profile).map_err(NativeOutputError::new)?;
+    writeln!(writer, "positionEncoding={}", report.position_encoding)
         .map_err(NativeOutputError::new)?;
-    writeln!(writer, "textProfile={}", loaded.report.text_profile)
+    writeln!(writer, "glyphCount={}", report.glyph_count).map_err(NativeOutputError::new)?;
+    writeln!(writer, "drawGlyphCount={}", report.draw_glyph_count)
         .map_err(NativeOutputError::new)?;
-    writeln!(writer, "glyphCount={}", loaded.report.glyph_count).map_err(NativeOutputError::new)?;
-    writeln!(writer, "drawGlyphCount={}", loaded.report.draw_glyph_count)
+    writeln!(writer, "commandCount={}", report.command_count).map_err(NativeOutputError::new)?;
+    writeln!(writer, "semanticTextSource={}", report.semantic_text_source)
         .map_err(NativeOutputError::new)?;
-    writeln!(writer, "commandCount={}", loaded.report.command_count)
+    writeln!(
+        writer,
+        "semanticTextLanguage={}",
+        report.semantic_text_language
+    )
+    .map_err(NativeOutputError::new)?;
+    writeln!(
+        writer,
+        "semanticTextAffectsPixels={}",
+        report.semantic_text_affects_pixels
+    )
+    .map_err(NativeOutputError::new)?;
+    writeln!(writer, "semanticTextRole={}", report.semantic_text_role)
         .map_err(NativeOutputError::new)?;
     writeln!(
         writer,
@@ -1695,13 +1804,38 @@ mod tests {
         assert!(text.contains("Geordi native strict text fixture loaded"));
         assert!(text.contains("rendererName=rust-software-outline-glyphs"));
         assert!(text.contains("fixtureId=render-everywhere:strict-text:geordi"));
+        assert!(text.contains(
+            "fixtureHash=sha256:e3686b463296e0e7b019d7b014537a300f8fe6949a9053cf7d62067a978bf8c0"
+        ));
+        assert!(text.contains(
+            "fontPackPath=fixtures/render-everywhere/assets/fonts/font-pack.geordi.json"
+        ));
+        assert!(text.contains(
+            "fontPackHash=sha256:1b7ad58b48a3ad0d1aff0736ef014783945dc0a472de1f14b48c4211eb53533d"
+        ));
+        assert!(text.contains(
+            "glyphRunHash=sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472"
+        ));
+        assert!(text.contains(
+            "lineBoxHash=sha256:6d0b4e63bd04bd33e7213240a173f86fb478f23fa4cd505514c0b8af425f1e10"
+        ));
         assert!(
             text.contains("evidencePackId=render-everywhere:strict-text:geordi:outline-evidence")
         );
         assert!(text.contains("evidenceKind=outlinePaths"));
+        assert!(text.contains(
+            "evidenceHash=sha256:218890095219e9ce6753f2fef177d629a43b571ec37f01635dc31ba3601b4af3"
+        ));
         assert!(text.contains("textProfile=geordi-strict-positioned-glyph-run/1"));
+        assert!(text.contains("positionEncoding=geordi-fixed-26.6/1"));
         assert!(text.contains("glyphCount=6"));
         assert!(text.contains("drawGlyphCount=6"));
+        assert!(text.contains("semanticTextSource=GEORDI"));
+        assert!(text.contains("semanticTextLanguage=en"));
+        assert!(text.contains("semanticTextAffectsPixels=false"));
+        assert!(
+            text.contains("semanticTextRole=non-rendering metadata; pixels follow glyph evidence")
+        );
         assert!(text.contains("canvas=192x64"));
         assert!(text.contains("rendered=true"));
         Ok(())

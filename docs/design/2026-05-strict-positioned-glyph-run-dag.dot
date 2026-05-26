@@ -96,8 +96,8 @@ digraph StrictPositionedGlyphRunPlan {
     S055 [label="S055\nRust outline evidence parser", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S061 [label="S061\nNative outline glyph renderer", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S062 [label="S062\nNative text fixture CLI mode", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S063 [label="S063\nNative text metadata report", color="#16a34a", penwidth=4];
-    S064 [label="S064\nNative visible text smoke", color="#dc2626", penwidth=4];
+    S063 [label="S063\nNative text metadata report", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S064 [label="S064\nNative visible text smoke", color="#16a34a", penwidth=4];
   }
 
   subgraph cluster_parity {

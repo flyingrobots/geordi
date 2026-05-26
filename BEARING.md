@@ -283,6 +283,21 @@ text smoke assertions. Current nonclaims remain: no full text antialiasing parit
 text-node graduation, no platform text API compliance path, no host font lookup, and no general text
 support.
 
+## S063 Native Text Metadata Report
+
+The native strict text smoke summary now emits the browser-aligned metadata fields: fixture hash,
+font-pack path/hash, glyph-run hash, line-box hash, evidence pack id/kind/hash, text profile,
+position encoding, renderer name, glyph counts, command count, and semantic text fields with
+`semanticTextAffectsPixels=false` and the non-rendering semantic text role.
+
+The native report reuses the Rust strict text receipt builder for fixture, font-pack, glyph-run, and
+line-box hashes, and hashes the exact outline evidence bytes separately. This creates the metadata
+surface S065 will compare against the browser report; it still does not claim visual parity.
+
+S064 owns native visible text smoke assertions. Current nonclaims remain: no full text antialiasing
+parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no host font
+lookup, and no general text support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -300,7 +315,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S063**.
+Current OPEN node: **S064**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -990,7 +1005,7 @@ Current OPEN node: **S063**.
 
 ### S063: Native text metadata report
 
-- [ ] **S063: Native text metadata report** (OPEN)
+- [x] **S063: Native text metadata report** (COMPLETE)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native text metadata report documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native text metadata report.
@@ -1001,7 +1016,7 @@ Current OPEN node: **S063**.
 
 ### S064: Native visible text smoke
 
-- [ ] **S064: Native visible text smoke** (BLOCKED)
+- [ ] **S064: Native visible text smoke** (OPEN)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native visible text smoke documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native visible text smoke.

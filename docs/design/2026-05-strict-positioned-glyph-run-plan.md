@@ -615,6 +615,12 @@ pack, font hashes, font references, and outline evidence before rendering, then 
 through the Rust outline renderer and prints a minimal text summary. This is still not the expanded
 native metadata equality report or native visible-text probe gate.
 
+S063 expands the native strict text summary into the browser-aligned metadata report. Native output
+now includes fixture hash, font-pack path/hash, glyph-run hash, line-box hash, evidence pack
+id/kind/hash, text profile, position encoding, renderer name, glyph counts, command count, and
+semantic-text nonauthority fields. The fixture/font/glyph-run/line-box values come from the Rust
+strict text receipt builder, while the evidence hash covers the exact outline evidence bytes.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts
