@@ -103,9 +103,9 @@ digraph StrictPositionedGlyphRunPlan {
   subgraph cluster_parity {
     label="Arc 4c: Parity";
     color="#e2e8f0";
-    S065 [label="S065\nBrowser/native metadata equality", color="#16a34a", penwidth=4];
-    S066 [label="S066\nBrowser coarse pixel probes", color="#dc2626", penwidth=4];
-    S067 [label="S067\nNative coarse pixel probes", color="#dc2626", penwidth=4];
+    S065 [label="S065\nBrowser/native metadata equality", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S066 [label="S066\nBrowser coarse pixel probes", color="#16a34a", penwidth=4];
+    S067 [label="S067\nNative coarse pixel probes", color="#16a34a", penwidth=4];
     S068 [label="S068\nStable text probe policy", color="#dc2626", penwidth=4];
     S069 [label="S069\nNonblank text bounds check", color="#dc2626", penwidth=4];
     S070 [label="S070\nMissing glyph evidence failure", color="#16a34a", penwidth=4];

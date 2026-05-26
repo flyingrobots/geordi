@@ -319,6 +319,25 @@ later cross-runtime nonblank bounds policy. Current nonclaims remain: no full te
 parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no host font
 lookup, and no general text support.
 
+## S065 Browser/Native Metadata Equality
+
+The browser Vitest harness now compares the browser strict text metadata report against the native
+`--strict-text-smoke` CLI output for the canonical `GEORDI` fixture. The equality check covers
+fixture id/hash, font-pack path/hash, glyph-run hash, line-box hash, evidence pack id/kind/hash,
+text profile, position encoding, glyph counts, command count, and semantic text nonauthority fields.
+
+Renderer names remain intentionally runtime-specific (`browser-canvas-outline-glyphs` versus
+`rust-software-outline-glyphs`), and native nonblank smoke fields remain native smoke metadata. The
+new root gate is:
+
+~~~bash
+pnpm test:render-everywhere:strict-text
+~~~
+
+S066 and S067 own browser/native coarse pixel probes. Current nonclaims remain: no full text
+antialiasing parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no
+host font lookup, and no general text support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -336,7 +355,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S065**.
+Current OPEN node: **S066**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1048,7 +1067,7 @@ Current OPEN node: **S065**.
 
 ### S065: Browser/native metadata equality
 
-- [ ] **S065: Browser/native metadata equality** (OPEN)
+- [x] **S065: Browser/native metadata equality** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with browser/native metadata equality documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Browser/native metadata equality.
@@ -1059,7 +1078,7 @@ Current OPEN node: **S065**.
 
 ### S066: Browser coarse pixel probes
 
-- [ ] **S066: Browser coarse pixel probes** (BLOCKED)
+- [ ] **S066: Browser coarse pixel probes** (OPEN)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with browser coarse pixel probes documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Browser coarse pixel probes.
@@ -1070,7 +1089,7 @@ Current OPEN node: **S065**.
 
 ### S067: Native coarse pixel probes
 
-- [ ] **S067: Native coarse pixel probes** (BLOCKED)
+- [ ] **S067: Native coarse pixel probes** (OPEN)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with native coarse pixel probes documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Native coarse pixel probes.

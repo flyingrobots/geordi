@@ -626,6 +626,13 @@ count and coarse nonblank bounds from the offscreen RGBA8 output, fails blank te
 `NativeStrictTextSmokeError`, and prints `smoke=passed` only after visible evidence is present. This
 is still a coarse smoke, not the later stable probe policy or cross-runtime bounds gate.
 
+S065 adds browser/native metadata equality. The browser Vitest harness renders the canonical strict
+text fixture through the fake Canvas path renderer, asks the native CLI for its `--strict-text-smoke`
+metadata, and compares the shared contract fields exactly: fixture and font hashes, glyph-run and
+line-box hashes, evidence id/kind/hash, profile, position encoding, glyph counts, command count, and
+semantic text nonauthority fields. Runtime-specific renderer names and native smoke bounds are not
+treated as equality fields.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

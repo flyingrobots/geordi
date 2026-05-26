@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it, afterEach } from 'vitest';
 import { canonicalJsonPort, type JsonObject, type JsonValue } from '@flyingrobots/geordi-core';
 import {
@@ -31,6 +33,11 @@ interface CanvasCall {
 interface FixtureFetchTextOptions {
   readonly fixtureName?: string;
   readonly sceneSource?: string;
+}
+
+interface NativeStrictTextMetadataCliOutput extends Record<string, string> {
+  readonly rendererName: string;
+  readonly smoke: string;
 }
 
 class FakeCanvasContext2D {
@@ -272,6 +279,59 @@ function sha256CanonicalJson(value: JsonValue): string {
     .digest('hex')}`;
 }
 
+function nativeStrictTextMetadata(): NativeStrictTextMetadataCliOutput {
+  const output = execFileSync(
+    'cargo',
+    [
+      'run',
+      '-p',
+      'native-render-everywhere',
+      '--',
+      '--strict-text-smoke',
+      'fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json',
+    ],
+    {
+      cwd: fileURLToPath(new URL('../../..', import.meta.url)),
+      encoding: 'utf8',
+    },
+  );
+
+  return Object.fromEntries(
+    output
+      .split('\n')
+      .filter((line) => line.includes('='))
+      .map((line) => {
+        const separator = line.indexOf('=');
+        return [line.slice(0, separator), line.slice(separator + 1)];
+      }),
+  ) as NativeStrictTextMetadataCliOutput;
+}
+
+function browserStrictTextParityFields(
+  metadata: Awaited<ReturnType<typeof renderBrowserStrictTextFixture>>['metadata'],
+): Record<string, string> {
+  return {
+    commandCount: String(metadata.commandCount),
+    drawGlyphCount: String(metadata.drawGlyphCount),
+    evidenceHash: metadata.evidenceHash,
+    evidenceKind: metadata.evidenceKind,
+    evidencePackId: metadata.evidencePackId,
+    fixtureHash: metadata.fixtureHash,
+    fixtureId: metadata.fixtureId,
+    fontPackHash: metadata.fontPackHash,
+    fontPackPath: metadata.fontPackPath,
+    glyphCount: String(metadata.glyphCount),
+    glyphRunHash: metadata.glyphRunHash,
+    lineBoxHash: metadata.lineBoxHash,
+    positionEncoding: metadata.positionEncoding,
+    semanticTextAffectsPixels: String(metadata.semanticTextAffectsPixels),
+    semanticTextLanguage: metadata.semanticTextLanguage,
+    semanticTextRole: metadata.semanticTextRole,
+    semanticTextSource: metadata.semanticTextSource,
+    textProfile: metadata.textProfile,
+  };
+}
+
 function bufferSourceBytes(data: BufferSource): Uint8Array {
   if (data instanceof ArrayBuffer) {
     return new Uint8Array(data);
@@ -497,6 +557,36 @@ describe('browser render smoke', () => {
       textProfile: 'geordi-strict-positioned-glyph-run/1',
     });
     expect(context.calls.some((call) => call.name === 'fillText')).toBe(false);
+  });
+
+  it('matches native strict text metadata for the canonical fixture', async () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    const fixtureUrl = 'geordi.strict-text.geordi.json';
+    const evidenceUrl = 'geordi.outline-evidence.geordi.json';
+    const fontPackUrl = 'font-pack.geordi.json';
+    const sources = new Map<string, string>([
+      [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
+      [evidenceUrl, strictTextFixtureSource(evidenceUrl)],
+      [fontPackUrl, fixtureSource('font-pack.geordi.json', 'assets/fonts')],
+    ]);
+    installCanvasDocument(canvas);
+    installHashingCrypto();
+
+    const browser = await renderBrowserStrictTextFixture({
+      assets: {
+        evidenceUrl,
+        fontPackUrl,
+        fixtureUrl,
+      },
+      fetchText: makeStrictTextFetchText(sources),
+    });
+    const native = nativeStrictTextMetadata();
+
+    expect(native.rendererName).toBe('rust-software-outline-glyphs');
+    expect(browser.metadata.rendererName).toBe('browser-canvas-outline-glyphs');
+    expect(native).toMatchObject(browserStrictTextParityFields(browser.metadata));
+    expect(native.smoke).toBe('passed');
   });
 
   it('rejects invalid strict text evidence before fixture mode drawing', async () => {
