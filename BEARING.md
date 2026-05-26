@@ -135,7 +135,19 @@ The first visible proof is fill-only monochrome outline geometry with exact meta
 scoped visual probes. It does not claim full text antialiasing pixel identity, reusable glyph-cache
 semantics, bitmap/SDF atlases, shared rasterization, or broad text paint support.
 
-Next OPEN node after this decision: `S052`, outline evidence pack schema.
+Next OPEN node after this decision: `S053`, outline evidence fixture data.
+
+## S052 Outline Evidence Pack Schema
+
+The first strict text outline evidence pack schema is
+`fixtures/render-everywhere/strict-text/outline-evidence-pack.schema.md`. It defines
+`geordi-glyph-evidence-pack/1`, `outlinePaths`, fixture-local path/hash linkage, glyph-origin fixed
+26.6 command coordinates, nonzero solid-fill geometry, font identity binding, command vocabulary,
+and stable diagnostic codes for the TypeScript and Rust parser slices.
+
+The schema does not make strict text renderable by itself. Current nonclaims remain: no committed
+outline evidence data, no outline parser, no browser or native strict text renderer, no platform
+text API compliance path, and no general text support.
 
 ## DAG Operating Rule
 
@@ -154,7 +166,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S052**.
+Current OPEN node: **S053**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -723,7 +735,7 @@ Current OPEN node: **S052**.
 
 ### S052: Outline evidence pack schema
 
-- [ ] **S052: Outline evidence pack schema** (OPEN)
+- [x] **S052: Outline evidence pack schema** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with outline evidence pack schema documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Outline evidence pack schema.
@@ -734,7 +746,7 @@ Current OPEN node: **S052**.
 
 ### S053: Outline evidence fixture data
 
-- [ ] **S053: Outline evidence fixture data** (BLOCKED)
+- [ ] **S053: Outline evidence fixture data** (OPEN)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with outline evidence fixture data documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Outline evidence fixture data.

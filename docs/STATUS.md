@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the active open node is `S052`, outline evidence pack schema, after `S051` selected fixture-local
-outline path glyph evidence as the first strict text rendering strategy.
+the active open node is `S053`, outline evidence fixture data, after `S052` defined
+`geordi-glyph-evidence-pack/1` as the fixture-local `outlinePaths` evidence schema.
 
 ## Completed Capabilities
 
@@ -62,13 +62,14 @@ Current rules:
 | Shared DTO drift | Serialized TypeScript/Rust contract DTOs must be generated from one Wesley common schema. |
 | Runtime boundary | TypeScript remains native at browser, Node, tooling, and fixture-authoring edges. Rust remains native at the renderer and CLI core. WASM is reserved for hard deterministic kernels. |
 | Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
-| Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. |
+| Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 starts committed evidence data. |
 
 Primary docs:
 
 - [`design/2026-05-wesley-common-type-generation.md`](design/2026-05-wesley-common-type-generation.md)
 - [`design/2026-05-typescript-rust-wasm-boundary.md`](design/2026-05-typescript-rust-wasm-boundary.md)
 - [`design/2026-05-strict-text-remaining-slices-prd-test-plan.md`](design/2026-05-strict-text-remaining-slices-prd-test-plan.md)
+- [`../fixtures/render-everywhere/strict-text/outline-evidence-pack.schema.md`](../fixtures/render-everywhere/strict-text/outline-evidence-pack.schema.md)
 
 ## Current Nonclaims
 

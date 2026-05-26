@@ -551,6 +551,13 @@ fixture declares the profile and schema versions that make the glyph id meaningf
 
 A positioned glyph run says which glyph goes where. It does not by itself say how to draw the glyph. The first strict profile uses an explicit glyph evidence pack. The first evidence kind should be outline paths because it keeps text close to Geordi's explicit geometry model.
 
+S052 formalizes the first outline evidence pack schema in
+`fixtures/render-everywhere/strict-text/outline-evidence-pack.schema.md`. The schema fixes
+`geordi-glyph-evidence-pack/1`, `outlinePaths`, glyph-origin fixed 26.6 coordinates, nonzero fill,
+fixture-local path/hash expectations, and stable diagnostic codes for TypeScript and Rust parser
+slices. It is a contract for prepared evidence only; it is not a font parser, shaper, platform text
+adapter, or general text feature.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

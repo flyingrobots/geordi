@@ -7,7 +7,8 @@
 
 Strict text fixture receipts record the provenance hashes needed before browser or native renderers
 draw text evidence. They do not make a fixture renderable by themselves. Rendering still requires
-glyph evidence packs in later slices.
+glyph evidence packs in later slices. S052 defines the first evidence pack shape in
+`outline-evidence-pack.schema.md`.
 
 ## Relationship Model
 
@@ -113,6 +114,12 @@ All receipt hashes use SHA-256 over UTF-8 bytes and return `sha256:<64 lowercase
   browser/native parity-equality field.
 - `glyphEvidenceKind`, `glyphEvidencePackPath`, and `glyphEvidencePackHash` must be absent before
   glyph evidence exists. If any one is present, all three must be present and real.
+- `glyphEvidenceKind`, once present, must equal `outlinePaths` for the first strict text rendering
+  profile.
+- `glyphEvidencePackPath`, once present, must target a committed
+  `*.outline-evidence.geordi.json` file under `fixtures/render-everywhere/strict-text/`.
+- `glyphEvidencePackHash`, once present, must hash the exact committed evidence pack bytes after
+  canonical JSON normalization has been verified for that pack.
 - No timestamp, absolute path, host font lookup, local machine path, renderer name, or platform text
   API claim may appear in the receipt.
 

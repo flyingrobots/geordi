@@ -22,9 +22,14 @@ Renderer contract:
 Schema:
 
 ~~~text
+fixtures/render-everywhere/strict-text/outline-evidence-pack.schema.md
 fixtures/render-everywhere/strict-text/strict-text-fixture.schema.md
 fixtures/render-everywhere/strict-text/strict-text-fixture-receipt.schema.md
 ~~~
+
+`outline-evidence-pack.schema.md` defines `geordi-glyph-evidence-pack/1`, the fixture-local
+`outlinePaths` evidence shape selected for the first visible strict text proof. Parser and renderer
+support lands in later slices; this directory must not imply general text or platform text support.
 
 Failure fixtures:
 

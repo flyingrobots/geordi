@@ -9,6 +9,11 @@ The strict text fixture is the first renderable text artifact shape. It stays ou
 until browser and native runtimes prove the contract. The fixture references a font pack and carries
 pre-positioned glyph runs plus explicit line boxes.
 
+When a later rendering slice makes a strict text fixture drawable, it also links a fixture-local
+outline evidence pack through `glyphEvidencePackPath`. S052 defines that pack shape in
+`outline-evidence-pack.schema.md`; the current fixture schema remains strict about source strings
+not being pixel authority.
+
 Fixture shape excerpt:
 
 ~~~json
@@ -64,6 +69,9 @@ Field laws:
 - `textProfile` must equal `geordi-strict-positioned-glyph-run/1`.
 - `positionEncoding` must equal `geordi-fixed-26.6/1`.
 - `fontPackPath` must be a repository-relative path to a valid font pack.
+- `glyphEvidencePackPath`, once present, must be a repository-relative path under
+  `fixtures/render-everywhere/strict-text/` targeting a committed `*.outline-evidence.geordi.json`
+  file that conforms to `geordi-glyph-evidence-pack/1`.
 - `features` must include `text.positionedGlyphRuns`, `text.fontPack`, and `text.lineBoxes`.
 - `semanticText.affectsPixels` must be `false`; strings never determine pixels in strict mode.
 - `lineBoxes[].id` values must be unique.
@@ -85,6 +93,9 @@ Field laws:
   a final newline.
 - Renderers must not infer kerning, ligatures, fallback, line metrics, wrapping, or shaping from the
   host platform.
+- Renderers that claim strict text rendering must reject the fixture before drawing if
+  `glyphEvidencePackPath` is absent, unreadable, malformed, or not linked to the fixture's declared
+  font pack.
 
 Known failures for later slices:
 
