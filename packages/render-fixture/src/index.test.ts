@@ -18,6 +18,7 @@ import {
   assertRenderFixturePixelProbe,
   assertRenderFixturePixelProbes,
   assertRenderFixtureStrictTextFontReferences,
+  assertRenderFixtureStrictTextEvidenceCoverage,
   assertRenderFixtureStrictTextFixtureManifest,
   assertRenderFixtureStrictTextOutlineEvidencePack,
   assertRenderFixtureStrictTextProbePolicy,
@@ -81,6 +82,7 @@ import {
   RenderFixtureInvalidPixelSampleError,
   RenderFixtureInvalidPlaybackFrameError,
   RenderFixtureInvalidStrictTextFontReferenceError,
+  RenderFixtureInvalidStrictTextEvidenceCoverageError,
   RenderFixtureInvalidStrictTextFixtureManifestError,
   RenderFixtureInvalidStrictTextOutlineEvidencePackError,
   RenderFixtureInvalidStrictTextProbePolicyError,
@@ -96,6 +98,7 @@ import {
   validateRenderFixtureMeshFixtureManifest,
   validateRenderFixtureManifest,
   validateRenderFixtureStrictTextFontReferences,
+  validateRenderFixtureStrictTextEvidenceCoverage,
   validateRenderFixtureStrictTextFixtureManifest,
   validateRenderFixtureStrictTextOutlineEvidencePack,
   validateRenderFixtureStrictTextProbePolicy,
@@ -1296,6 +1299,44 @@ describe('render fixture strict text fixture manifest validation', () => {
     expect(() => parseRenderFixtureStrictTextOutlineEvidencePack(
       strictTextOutlineEvidenceFailureSource('bad-outline-command'),
     )).toThrow(RenderFixtureInvalidStrictTextOutlineEvidencePackError);
+  });
+
+  it('rejects missing strict text glyph evidence coverage', () => {
+    const fixture = parseRenderFixtureStrictTextFixtureManifest(strictTextFixtureASource());
+    const evidence = parseRenderFixtureStrictTextOutlineEvidencePack(
+      strictTextOutlineEvidenceFailureSource('missing-glyph-evidence'),
+    );
+
+    const result = validateRenderFixtureStrictTextEvidenceCoverage({ evidence, fixture });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContainEqual({
+      code: 'GEORDI_TEXT_EVIDENCE_MISSING_GLYPH',
+      message: 'Strict text outline evidence is missing glyph evidence for lato-regular:11',
+      path: '$.glyphRuns[0].glyphs[1].glyphId',
+    });
+    expect(() => assertRenderFixtureStrictTextEvidenceCoverage({ evidence, fixture })).toThrow(
+      RenderFixtureInvalidStrictTextEvidenceCoverageError,
+    );
+  });
+
+  it('rejects strict text evidence coverage when the evidence font id differs', () => {
+    const fixture = parseRenderFixtureStrictTextFixtureManifest(strictTextFixtureASource());
+    const evidence = parseRenderFixtureStrictTextOutlineEvidencePack(
+      strictTextOutlineEvidenceSource('geordi'),
+    );
+
+    const result = validateRenderFixtureStrictTextEvidenceCoverage({
+      evidence: { ...evidence, fontId: 'lato-bold' },
+      fixture,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContainEqual({
+      code: 'GEORDI_TEXT_EVIDENCE_MISSING_GLYPH',
+      message: 'Strict text outline evidence is missing glyph evidence for lato-regular:14',
+      path: '$.glyphRuns[0].glyphs[0].glyphId',
+    });
   });
 
   it('accepts a typed valid strict text probe policy object', () => {

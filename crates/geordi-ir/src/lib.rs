@@ -1675,6 +1675,46 @@ pub fn validate_geordi_strict_text_outline_evidence_pack(
     }
 }
 
+/// Validate that outline evidence covers every positioned glyph referenced by a strict text fixture.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextOutlineEvidenceValidationError` when a positioned glyph has no matching
+/// `fontId + glyphId` evidence entry.
+pub fn validate_geordi_strict_text_evidence_coverage(
+    fixture: &GeordiStrictTextFixtureManifest,
+    evidence: &GeordiStrictTextOutlineEvidencePack,
+) -> Result<(), GeordiStrictTextOutlineEvidenceValidationError> {
+    let mut issues = Vec::new();
+    let evidence_glyph_ids = evidence
+        .glyphs
+        .iter()
+        .map(|glyph| glyph.glyph_id)
+        .collect::<std::collections::BTreeSet<_>>();
+
+    for (run_index, run) in fixture.glyph_runs.iter().enumerate() {
+        for (glyph_index, glyph) in run.glyphs.iter().enumerate() {
+            if run.font_id != evidence.font_id || !evidence_glyph_ids.contains(&glyph.glyph_id) {
+                push_outline_evidence_issue(
+                    &mut issues,
+                    &format!("$.glyphRuns[{run_index}].glyphs[{glyph_index}].glyphId"),
+                    &format!(
+                        "Strict text outline evidence is missing glyph evidence for {}:{}",
+                        run.font_id, glyph.glyph_id
+                    ),
+                    "GEORDI_TEXT_EVIDENCE_MISSING_GLYPH",
+                );
+            }
+        }
+    }
+
+    if issues.is_empty() {
+        Ok(())
+    } else {
+        Err(GeordiStrictTextOutlineEvidenceValidationError::new(issues))
+    }
+}
+
 /// Validate typed Geordi IR for the rectangle-only Rust MVP subset.
 ///
 /// # Errors
@@ -2937,8 +2977,8 @@ mod tests {
         load_geordi_strict_text_outline_evidence_pack, parse_geordi_font_pack_manifest,
         parse_geordi_ir, parse_geordi_strict_text_fixture_manifest,
         parse_geordi_strict_text_outline_evidence_pack, validate_geordi_font_pack_hashes,
-        validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
-        validate_geordi_strict_text_font_references,
+        validate_geordi_ir, validate_geordi_strict_text_evidence_coverage,
+        validate_geordi_strict_text_fixture_manifest, validate_geordi_strict_text_font_references,
         validate_geordi_strict_text_outline_evidence_pack,
     };
     use std::error::Error;
@@ -3530,6 +3570,75 @@ mod tests {
         );
         assert!(!text_0123.glyphs[3].draws);
         assert!(text_0123.glyphs[3].commands.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_missing_strict_text_glyph_evidence_coverage() -> Result<(), GeordiIrTestError> {
+        let fixture = load_geordi_strict_text_fixture_manifest(fixture_path(
+            "strict-text/geordi.strict-text.geordi.json",
+        ))?;
+        let evidence = load_geordi_strict_text_outline_evidence_pack(fixture_path(
+            "strict-text/failures/missing-glyph-evidence.outline-evidence.geordi.json",
+        ))?;
+        validate_geordi_strict_text_outline_evidence_pack(&evidence)?;
+
+        let error = match validate_geordi_strict_text_evidence_coverage(&fixture, &evidence) {
+            Ok(()) => return Err(GeordiIrTestError::ExpectedFailure),
+            Err(error) => error,
+        };
+
+        assert_codes_include(
+            &error
+                .issues()
+                .iter()
+                .map(|issue| issue.code.clone())
+                .collect::<Vec<_>>(),
+            "GEORDI_TEXT_EVIDENCE_MISSING_GLYPH",
+        );
+        assert_paths_include(
+            &error
+                .issues()
+                .iter()
+                .map(|issue| issue.path.clone())
+                .collect::<Vec<_>>(),
+            "$.glyphRuns[0].glyphs[1].glyphId",
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_strict_text_evidence_coverage_with_mismatched_font_id()
+    -> Result<(), GeordiIrTestError> {
+        let fixture = load_geordi_strict_text_fixture_manifest(fixture_path(
+            "strict-text/geordi.strict-text.geordi.json",
+        ))?;
+        let mut evidence = load_geordi_strict_text_outline_evidence_pack(fixture_path(
+            "strict-text/geordi.outline-evidence.geordi.json",
+        ))?;
+        evidence.font_id = "lato-bold".to_owned();
+
+        let error = match validate_geordi_strict_text_evidence_coverage(&fixture, &evidence) {
+            Ok(()) => return Err(GeordiIrTestError::ExpectedFailure),
+            Err(error) => error,
+        };
+
+        assert_codes_include(
+            &error
+                .issues()
+                .iter()
+                .map(|issue| issue.code.clone())
+                .collect::<Vec<_>>(),
+            "GEORDI_TEXT_EVIDENCE_MISSING_GLYPH",
+        );
+        assert_paths_include(
+            &error
+                .issues()
+                .iter()
+                .map(|issue| issue.path.clone())
+                .collect::<Vec<_>>(),
+            "$.glyphRuns[0].glyphs[0].glyphId",
+        );
         Ok(())
     }
 

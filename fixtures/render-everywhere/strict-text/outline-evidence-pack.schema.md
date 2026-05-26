@@ -185,6 +185,9 @@ receipts:
 - Receipts must include `glyphEvidenceKind`, `glyphEvidencePackPath`, and
   `glyphEvidencePackHash` together after the evidence pack exists.
 - `glyphEvidencePackHash` hashes the exact committed evidence pack bytes.
+- S070 adds a coverage validator: after structural evidence validation succeeds, every positioned
+  glyph referenced by the strict text fixture must have a matching evidence glyph entry before any
+  browser or native renderer draws.
 
 ## Diagnostic Vocabulary
 

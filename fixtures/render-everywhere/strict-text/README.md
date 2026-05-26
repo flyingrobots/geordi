@@ -36,12 +36,17 @@ Failure fixtures:
 
 ~~~text
 fixtures/render-everywhere/strict-text/failures/bad-outline-command.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/failures/missing-glyph-evidence.outline-evidence.geordi.json
 fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
 ~~~
 
 `bad-outline-command.outline-evidence.geordi.json` is an S056 evidence-pack failure fixture. It
 keeps top-level evidence metadata valid while violating command contour state and per-command field
 rules.
+`missing-glyph-evidence.outline-evidence.geordi.json` is an S070 evidence-coverage failure fixture.
+It keeps the evidence-pack shape valid while omitting glyph evidence required by
+`geordi.strict-text.geordi.json`, so TypeScript, browser, native, and Rust renderer paths must
+reject it before drawing.
 
 Canonical fixture A:
 

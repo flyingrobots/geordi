@@ -108,8 +108,8 @@ digraph StrictPositionedGlyphRunPlan {
     S067 [label="S067\nNative coarse pixel probes", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S068 [label="S068\nStable text probe policy", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S069 [label="S069\nNonblank text bounds check", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S070 [label="S070\nMissing glyph evidence failure", color="#16a34a", penwidth=4];
-    S071 [label="S071\nGlyph id not found failure", color="#dc2626", penwidth=4];
+    S070 [label="S070\nMissing glyph evidence failure", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S071 [label="S071\nGlyph id not found failure", color="#16a34a", penwidth=4];
     S072 [label="S072\nBad line box failure", color="#dc2626", penwidth=4];
     S073 [label="S073\nUnsupported text fill/stroke failure", color="#dc2626", penwidth=4];
   }

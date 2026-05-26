@@ -656,6 +656,13 @@ outline evidence bounds, verify the policy's `allowedNonblankBounds`, compute re
 bounds, and fail through custom bounds errors if painted pixels escape the allowed evidence box. This
 remains a containment proof, not a requirement that every allowed pixel be painted.
 
+S070 adds missing glyph evidence rejection. The TypeScript and Rust contracts now expose explicit
+fixture-to-evidence coverage validators with stable diagnostic code
+`GEORDI_TEXT_EVIDENCE_MISSING_GLYPH`. Browser direct rendering, browser fixture mode, native CLI
+smoke mode, and the Rust renderer all reject the validly-shaped
+`failures/missing-glyph-evidence.outline-evidence.geordi.json` pack before drawing when it omits a
+glyph referenced by `geordi.strict-text.geordi.json`.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

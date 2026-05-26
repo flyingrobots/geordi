@@ -143,6 +143,7 @@ export type RenderFixtureStrictTextOutlineEvidenceDiagnosticCode =
   | 'GEORDI_TEXT_EVIDENCE_BAD_FACE_INDEX'
   | 'GEORDI_TEXT_EVIDENCE_DUPLICATE_GLYPH'
   | 'GEORDI_TEXT_EVIDENCE_BAD_GLYPH'
+  | 'GEORDI_TEXT_EVIDENCE_MISSING_GLYPH'
   | 'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS'
   | 'GEORDI_TEXT_EVIDENCE_BAD_COMMAND'
   | 'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT'
@@ -155,6 +156,16 @@ export interface RenderFixtureStrictTextOutlineEvidencePackIssue extends JsonObj
 }
 
 export interface RenderFixtureStrictTextOutlineEvidencePackValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[];
+}
+
+export interface RenderFixtureStrictTextEvidenceCoverageValidationInput {
+  readonly evidence: RenderFixtureStrictTextOutlineEvidencePack;
+  readonly fixture: RenderFixtureStrictTextFixtureManifest;
+}
+
+export interface RenderFixtureStrictTextEvidenceCoverageValidationResult {
   readonly ok: boolean;
   readonly issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[];
 }
@@ -651,6 +662,16 @@ export class RenderFixtureInvalidStrictTextOutlineEvidencePackError extends Erro
   }
 }
 
+export class RenderFixtureInvalidStrictTextEvidenceCoverageError extends Error {
+  public readonly issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[];
+
+  constructor(issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[]) {
+    super('Invalid render fixture strict text evidence coverage');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
+
 export class RenderFixtureInvalidStrictTextProbePolicyError extends Error {
   public readonly issues: readonly RenderFixtureStrictTextProbePolicyIssue[];
 
@@ -898,6 +919,17 @@ export function assertRenderFixtureStrictTextOutlineEvidencePack(
   }
 
   throw new RenderFixtureInvalidStrictTextOutlineEvidencePackError(result.issues);
+}
+
+export function assertRenderFixtureStrictTextEvidenceCoverage(
+  input: RenderFixtureStrictTextEvidenceCoverageValidationInput,
+): RenderFixtureStrictTextEvidenceCoverageValidationInput {
+  const result = validateRenderFixtureStrictTextEvidenceCoverage(input);
+  if (result.ok) {
+    return input;
+  }
+
+  throw new RenderFixtureInvalidStrictTextEvidenceCoverageError(result.issues);
 }
 
 export function assertRenderFixtureStrictTextProbePolicy(
@@ -1294,6 +1326,28 @@ export function validateRenderFixtureStrictTextOutlineEvidencePack(
   );
   validateOutlineEvidencePaint(property(value, 'paint'), '$.paint', issues);
   validateOutlineEvidenceGlyphs(property(value, 'glyphs'), '$.glyphs', issues);
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function validateRenderFixtureStrictTextEvidenceCoverage(
+  input: RenderFixtureStrictTextEvidenceCoverageValidationInput,
+): RenderFixtureStrictTextEvidenceCoverageValidationResult {
+  const issues: RenderFixtureStrictTextOutlineEvidencePackIssue[] = [];
+  const glyphIds = new Set(input.evidence.glyphs.map((glyph) => glyph.glyphId));
+
+  for (const [runIndex, run] of input.fixture.glyphRuns.entries()) {
+    for (const [glyphIndex, glyph] of run.glyphs.entries()) {
+      if (run.fontId !== input.evidence.fontId || !glyphIds.has(glyph.glyphId)) {
+        pushOutlineEvidenceIssue(
+          issues,
+          `$.glyphRuns[${runIndex}].glyphs[${glyphIndex}].glyphId`,
+          `Strict text outline evidence is missing glyph evidence for ${run.fontId}:${glyph.glyphId}`,
+          'GEORDI_TEXT_EVIDENCE_MISSING_GLYPH',
+        );
+      }
+    }
+  }
 
   return { ok: issues.length === 0, issues };
 }

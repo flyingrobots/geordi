@@ -14,6 +14,7 @@ import {
   parseRenderFixtureStrictTextFixtureManifest,
   parseRenderFixtureManifest,
   RenderFixtureInvalidFontPackManifestError,
+  RenderFixtureInvalidStrictTextEvidenceCoverageError,
   RenderFixtureInvalidStrictTextFontReferenceError,
   RenderFixtureInvalidStrictTextOutlineEvidencePackError,
   RenderFixtureInvalidStrictTextFixtureManifestError,
@@ -178,11 +179,15 @@ export class BrowserHarnessStrictTextFixtureRejectedError extends Error {
 export class BrowserHarnessStrictTextOutlineEvidenceRejectedError extends Error {
   public readonly evidenceUrl: string;
   public readonly issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[];
-  public readonly source: RenderFixtureInvalidStrictTextOutlineEvidencePackError;
+  public readonly source:
+    | RenderFixtureInvalidStrictTextEvidenceCoverageError
+    | RenderFixtureInvalidStrictTextOutlineEvidencePackError;
 
   constructor(
     evidenceUrl: string,
-    source: RenderFixtureInvalidStrictTextOutlineEvidencePackError,
+    source:
+      | RenderFixtureInvalidStrictTextEvidenceCoverageError
+      | RenderFixtureInvalidStrictTextOutlineEvidencePackError,
   ) {
     super('Browser harness strict text outline evidence was rejected');
     this.name = new.target.name;
@@ -360,7 +365,10 @@ export async function renderBrowserStrictTextFixture(
       metadata,
     };
   } catch (error) {
-    if (error instanceof RenderFixtureInvalidStrictTextOutlineEvidencePackError) {
+    if (
+      error instanceof RenderFixtureInvalidStrictTextEvidenceCoverageError ||
+      error instanceof RenderFixtureInvalidStrictTextOutlineEvidencePackError
+    ) {
       throw new BrowserHarnessStrictTextOutlineEvidenceRejectedError(
         options.assets.evidenceUrl,
         error,

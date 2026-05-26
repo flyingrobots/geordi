@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the lowest active open node is `S070`, missing glyph evidence failure, after browser and native
-strict text bounds checks landed.
+the lowest active open node is `S071`, glyph id not found failure, after missing glyph evidence
+coverage checks landed.
 
 ## Completed Capabilities
 
@@ -39,7 +39,7 @@ strict text bounds checks landed.
 | Strict font assets | Lato font pack and failure fixtures prove content-addressed font/license boundaries. |
 | Strict text manifests | TypeScript and Rust can validate strict text manifest structure, font references, line-box geometry, both canonical checked-in fixtures, and canonical fixture JSON normalization. |
 | Strict text receipts | The receipt schema defines fixture, font-pack, glyph-run, line-box, semantic-text, and future glyph-evidence hash inputs; TypeScript and Rust can build canonical receipts for both strict text fixtures. |
-| Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, covered by glyph-id smoke tests, parsed by TypeScript/Rust DTO APIs, and guarded by command-shape failure fixtures. |
+| Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, covered by glyph-id smoke tests, parsed by TypeScript/Rust DTO APIs, and guarded by command-shape plus missing-glyph coverage failure fixtures. |
 | Browser strict text renderer | Browser harness code can load a strict text fixture/evidence/font-pack asset set, validate font references, render parsed outline evidence into Canvas path geometry without calling Canvas text APIs, disclose the strict text metadata contract in the browser UI, and pass Playwright nonblank/text-API/coarse-probe smoke. |
 | Native strict text renderer | Rust renderer code can validate a strict text fixture/evidence pair, lower fixed 26.6 outline evidence into software path segments, fill nonzero outline geometry into the shared RGBA8 buffer, and report native strict text renderer metadata. The native harness has `--strict-text-smoke` for offscreen fixture/evidence/font validation, rendering, browser-aligned metadata reporting, nonblank visible-text smoke, and named coarse pixel probes without opening a window. |
 | Strict text parity | Browser and native strict text reports now compare exact fixture/font/glyph-run/line-box/evidence/profile/count/semantic metadata before any pixel parity claim, and both runtimes guard the canonical text proof with the same fixture-local fill/transparent probe policy and evidence-derived allowed nonblank bounds. |
@@ -66,7 +66,7 @@ Current rules:
 | Shared DTO drift | Serialized TypeScript/Rust contract DTOs must be generated from one Wesley common schema. |
 | Runtime boundary | TypeScript remains native at browser, Node, tooling, and fixture-authoring edges. Rust remains native at the renderer and CLI core. WASM is reserved for hard deterministic kernels. |
 | Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
-| Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054/S055 add independent parsers; S056 hardens command validation; S057-S061 add browser and native outline render paths. |
+| Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054/S055 add independent parsers; S056 hardens command validation; S057-S069 add browser/native render, probe, metadata, and bounds gates; S070 adds missing-glyph coverage rejection. |
 
 Primary docs:
 

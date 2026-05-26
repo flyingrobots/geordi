@@ -353,6 +353,24 @@ S067 owns native coarse probes for the same proof family. Current nonclaims rema
 antialiasing parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no
 host font lookup, and no general text support.
 
+## S070 Missing Glyph Evidence Failure
+
+Strict text rendering now rejects validly-shaped outline evidence that does not cover every
+positioned glyph in the strict text fixture. The shared diagnostic code is
+`GEORDI_TEXT_EVIDENCE_MISSING_GLYPH`, and the failure is exercised across TypeScript contract tests,
+browser direct rendering, browser fixture mode, Rust IR validation, the Rust renderer, and native
+`--strict-text-smoke`.
+
+The failure fixture is:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/missing-glyph-evidence.outline-evidence.geordi.json
+~~~
+
+This closes the silent-skip risk for omitted glyph evidence. Current nonclaims remain: no full text
+antialiasing parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no
+host font lookup, and no general text support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -370,7 +388,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S070**.
+Current OPEN node: **S071**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1137,7 +1155,7 @@ Current OPEN node: **S070**.
 
 ### S070: Missing glyph evidence failure
 
-- [ ] **S070: Missing glyph evidence failure** (OPEN)
+- [x] **S070: Missing glyph evidence failure** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with missing glyph evidence failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Missing glyph evidence failure.
@@ -1148,7 +1166,7 @@ Current OPEN node: **S070**.
 
 ### S071: Glyph id not found failure
 
-- [ ] **S071: Glyph id not found failure** (BLOCKED)
+- [ ] **S071: Glyph id not found failure** (OPEN)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with glyph id not found failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Glyph id not found failure.

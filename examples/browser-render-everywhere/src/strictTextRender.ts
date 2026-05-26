@@ -1,10 +1,11 @@
-import type {
-  RenderFixtureGlyphRun,
-  RenderFixturePositionedGlyph,
-  RenderFixtureStrictTextFixtureManifest,
-  RenderFixtureStrictTextOutlineCommand,
-  RenderFixtureStrictTextOutlineEvidenceGlyph,
-  RenderFixtureStrictTextOutlineEvidencePack,
+import {
+  assertRenderFixtureStrictTextEvidenceCoverage,
+  type RenderFixtureGlyphRun,
+  type RenderFixturePositionedGlyph,
+  type RenderFixtureStrictTextFixtureManifest,
+  type RenderFixtureStrictTextOutlineCommand,
+  type RenderFixtureStrictTextOutlineEvidenceGlyph,
+  type RenderFixtureStrictTextOutlineEvidencePack,
 } from '@flyingrobots/geordi-render-fixture';
 
 export const BROWSER_STRICT_TEXT_OUTLINE_RENDERER_NAME =
@@ -41,6 +42,8 @@ export function renderStrictTextOutlineGlyphsToCanvas(
   fixture: RenderFixtureStrictTextFixtureManifest,
   evidence: RenderFixtureStrictTextOutlineEvidencePack,
 ): BrowserStrictTextOutlineRenderResult {
+  assertRenderFixtureStrictTextEvidenceCoverage({ evidence, fixture });
+
   const canvas = document.createElement('canvas');
   canvas.width = fixedToCanvasPixels(maxLineBoxRight(fixture));
   canvas.height = fixedToCanvasPixels(maxLineBoxBottom(fixture));
@@ -65,6 +68,8 @@ export function renderStrictTextOutlineGlyphs(
   fixture: RenderFixtureStrictTextFixtureManifest,
   evidence: RenderFixtureStrictTextOutlineEvidencePack,
 ): BrowserStrictTextOutlineRenderReport {
+  assertRenderFixtureStrictTextEvidenceCoverage({ evidence, fixture });
+
   const glyphEvidence = new Map<number, RenderFixtureStrictTextOutlineEvidenceGlyph>();
   for (const glyph of evidence.glyphs) {
     glyphEvidence.set(glyph.glyphId, glyph);
