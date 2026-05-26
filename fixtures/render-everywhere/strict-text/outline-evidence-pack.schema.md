@@ -179,11 +179,13 @@ receipts:
 
 ## Diagnostic Vocabulary
 
-Implementation slices must use stable diagnostic identities for outline evidence validation. Error
-message prose may differ between TypeScript and Rust, but diagnostic codes must stay stable.
+Implementation slices must use stable diagnostic identities for outline evidence validation. S054
+implements the TypeScript parser with these codes. Error message prose may differ between
+TypeScript and Rust, but diagnostic codes must stay stable.
 
 | Code | Trigger |
 | --- | --- |
+| `GEORDI_TEXT_EVIDENCE_BAD_PACK` | The pack root or required non-profile metadata is malformed. |
 | `GEORDI_TEXT_EVIDENCE_UNSUPPORTED_VERSION` | `evidencePackVersion` is missing or unsupported. |
 | `GEORDI_TEXT_EVIDENCE_UNSUPPORTED_KIND` | `evidenceKind` is missing or not `outlinePaths`. |
 | `GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE` | Text profile, position encoding, coordinate space, or shaping profile is unsupported. |
@@ -191,6 +193,7 @@ message prose may differ between TypeScript and Rust, but diagnostic codes must 
 | `GEORDI_TEXT_EVIDENCE_BAD_FONT_HASH` | Pack font hash does not match the resolved font face asset. |
 | `GEORDI_TEXT_EVIDENCE_BAD_FACE_INDEX` | Pack face index does not match the resolved font face asset. |
 | `GEORDI_TEXT_EVIDENCE_DUPLICATE_GLYPH` | A glyph id appears more than once in the pack. |
+| `GEORDI_TEXT_EVIDENCE_BAD_GLYPH` | A glyph entry is malformed before command or bounds validation. |
 | `GEORDI_TEXT_EVIDENCE_MISSING_GLYPH` | A positioned glyph has no matching `fontId + glyphId` evidence entry. |
 | `GEORDI_TEXT_EVIDENCE_BAD_BOUNDS` | Bounds are malformed, unsafe, non-integer, or have negative dimensions. |
 | `GEORDI_TEXT_EVIDENCE_BAD_COMMAND` | A command is malformed, unknown, unsafe, or invalid for the current contour state. |

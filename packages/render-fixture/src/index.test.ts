@@ -19,6 +19,7 @@ import {
   assertRenderFixturePixelProbes,
   assertRenderFixtureStrictTextFontReferences,
   assertRenderFixtureStrictTextFixtureManifest,
+  assertRenderFixtureStrictTextOutlineEvidencePack,
   assertRenderFixtureStrictTextFixtureReceipt,
   createRenderFixtureMeshPlaybackFrame,
   isRenderFixtureFontPackManifest,
@@ -26,6 +27,7 @@ import {
   isRenderFixtureMeshFixtureManifest,
   isRenderFixtureManifest,
   isRenderFixtureStrictTextFixtureManifest,
+  isRenderFixtureStrictTextOutlineEvidencePack,
   isRenderFixtureStrictTextFixtureReceipt,
   parseRenderFixtureAsciiPlyTriangleMesh,
   parseRenderFixtureFontPackManifest,
@@ -33,6 +35,7 @@ import {
   parseRenderFixtureMeshFixtureManifest,
   parseRenderFixtureManifest,
   parseRenderFixtureStrictTextFixtureManifest,
+  parseRenderFixtureStrictTextOutlineEvidencePack,
   parseRenderFixtureStrictTextFixtureReceipt,
   RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE,
   RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING,
@@ -40,7 +43,11 @@ import {
   RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE,
   RENDER_FIXTURE_FONT_PACK_VERSION,
   RENDER_FIXTURE_HASH_ALGORITHM_SHA256,
+  RENDER_FIXTURE_GLYPH_EVIDENCE_COORDINATE_SPACE_GLYPH_ORIGIN_FIXED_26_6,
   RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS,
+  RENDER_FIXTURE_GLYPH_EVIDENCE_PACK_VERSION,
+  RENDER_FIXTURE_GLYPH_EVIDENCE_PAINT_KIND_SOLID_FILL,
+  RENDER_FIXTURE_GLYPH_EVIDENCE_WINDING_RULE_NONZERO,
   RENDER_FIXTURE_MESH_FIXTURE_VERSION,
   RENDER_FIXTURE_MESH_ASSET_VERSION,
   RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
@@ -63,6 +70,7 @@ import {
   RenderFixtureInvalidPlaybackFrameError,
   RenderFixtureInvalidStrictTextFontReferenceError,
   RenderFixtureInvalidStrictTextFixtureManifestError,
+  RenderFixtureInvalidStrictTextOutlineEvidencePackError,
   RenderFixtureInvalidStrictTextFixtureReceiptError,
   RenderFixturePlyFaceError,
   RenderFixturePlyHeaderError,
@@ -76,6 +84,7 @@ import {
   validateRenderFixtureManifest,
   validateRenderFixtureStrictTextFontReferences,
   validateRenderFixtureStrictTextFixtureManifest,
+  validateRenderFixtureStrictTextOutlineEvidencePack,
   validateRenderFixtureStrictTextFixtureReceipt,
   type RenderFixtureFontPackManifest,
   type RenderFixtureManifest,
@@ -83,6 +92,7 @@ import {
   type RenderFixtureMeshFixtureManifest,
   type RenderFixturePixelProbe,
   type RenderFixtureStrictTextFixtureManifest,
+  type RenderFixtureStrictTextOutlineEvidencePack,
   type RenderFixtureStrictTextFixtureReceipt,
 } from './index.js';
 
@@ -274,6 +284,60 @@ function makeStrictTextFixtureReceipt(): RenderFixtureStrictTextFixtureReceipt {
     semanticTextHash: 'sha256:c1c66afeda52b1b7ef23ad22a11e631fb02d21db27ea92ad5823d2a28bca3ab3',
     shapingProfile: RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
     textProfile: RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
+  };
+}
+
+function makeStrictTextOutlineEvidencePack(): RenderFixtureStrictTextOutlineEvidencePack {
+  return {
+    coordinateSpace: RENDER_FIXTURE_GLYPH_EVIDENCE_COORDINATE_SPACE_GLYPH_ORIGIN_FIXED_26_6,
+    evidenceKind: RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS,
+    evidencePackVersion: RENDER_FIXTURE_GLYPH_EVIDENCE_PACK_VERSION,
+    faceIndex: 0,
+    fontId: 'lato-regular',
+    fontSha256: 'sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251',
+    glyphs: [
+      {
+        bounds: {
+          height: 2304,
+          width: 1536,
+          x: 0,
+          y: -2304,
+        },
+        commands: [
+          {
+            op: 'moveTo',
+            x: 0,
+            y: -2304,
+          },
+          {
+            op: 'quadTo',
+            cx: 768,
+            cy: -2560,
+            x: 1536,
+            y: -2304,
+          },
+          {
+            op: 'lineTo',
+            x: 1536,
+            y: 0,
+          },
+          {
+            op: 'closePath',
+          },
+        ],
+        draws: true,
+        glyphId: 43,
+      },
+    ],
+    id: 'render-everywhere:strict-text:unit:outline-evidence',
+    paint: {
+      kind: RENDER_FIXTURE_GLYPH_EVIDENCE_PAINT_KIND_SOLID_FILL,
+      rgba: [17, 24, 39, 255],
+    },
+    positionEncoding: RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING,
+    shapingProfile: RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
+    textProfile: RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
+    windingRule: RENDER_FIXTURE_GLYPH_EVIDENCE_WINDING_RULE_NONZERO,
   };
 }
 
@@ -1005,6 +1069,125 @@ describe('render fixture strict text fixture manifest validation', () => {
         }
       }
     }
+  });
+
+  it('accepts a typed valid strict text outline evidence pack object', () => {
+    const pack = makeStrictTextOutlineEvidencePack();
+
+    expect(validateRenderFixtureStrictTextOutlineEvidencePack(pack)).toEqual({
+      ok: true,
+      issues: [],
+    });
+    expect(isRenderFixtureStrictTextOutlineEvidencePack(pack)).toBe(true);
+    expect(assertRenderFixtureStrictTextOutlineEvidencePack(pack)).toBe(pack);
+  });
+
+  it('parses committed strict text outline evidence packs through the canonical JSON port', () => {
+    const geordi = parseRenderFixtureStrictTextOutlineEvidencePack(
+      strictTextOutlineEvidenceSource('geordi'),
+    );
+    const text0123 = parseRenderFixtureStrictTextOutlineEvidencePack(
+      strictTextOutlineEvidenceSource('text-0123'),
+    );
+
+    expect(geordi.evidencePackVersion).toBe(RENDER_FIXTURE_GLYPH_EVIDENCE_PACK_VERSION);
+    expect(geordi.glyphs.map((glyph) => glyph.glyphId)).toEqual([14, 11, 27, 33, 9, 17]);
+    expect(geordi.glyphs[0]?.commands[0]?.op).toBe('moveTo');
+    expect(text0123.glyphs.map((glyph) => glyph.glyphId)).toEqual([
+      124, 59, 138, 2, 399, 400, 401, 402,
+    ]);
+    expect(text0123.glyphs[3]).toMatchObject({
+      commands: [],
+      draws: false,
+      glyphId: 2,
+    });
+  });
+
+  it('rejects invalid strict text outline evidence packs with stable diagnostic codes', () => {
+    const invalid: JsonValue = {
+      ...makeStrictTextOutlineEvidencePack(),
+      coordinateSpace: 'font-units/1',
+      evidenceKind: 'bitmapAtlas',
+      evidencePackVersion: 'geordi-glyph-evidence-pack/2',
+      faceIndex: -1,
+      fontId: 'Lato Regular',
+      fontSha256: 'sha256:not-a-hash',
+      glyphs: [
+        {
+          bounds: {
+            height: -1,
+            width: -1,
+            x: Number.MAX_SAFE_INTEGER,
+            y: 0,
+          },
+          commands: [
+            {
+              op: 'arcTo',
+              x: 0,
+              y: 0,
+            },
+          ],
+          draws: true,
+          glyphId: 43,
+        },
+        {
+          bounds: {
+            height: 0,
+            width: 0,
+            x: 0,
+            y: 0,
+          },
+          commands: [],
+          draws: false,
+          glyphId: 43,
+        },
+      ],
+      paint: {
+        kind: 'stroke',
+        rgba: [0, 0, 0, 512],
+      },
+      positionEncoding: 'float-px/1',
+      shapingProfile: 'runtime-shaping/1',
+      textProfile: 'css-text/1',
+      windingRule: 'evenodd',
+    };
+
+    const result = validateRenderFixtureStrictTextOutlineEvidencePack(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.code)).toEqual(
+      expect.arrayContaining([
+        'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_VERSION',
+        'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_KIND',
+        'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE',
+        'GEORDI_TEXT_EVIDENCE_BAD_FONT_ID',
+        'GEORDI_TEXT_EVIDENCE_BAD_FONT_HASH',
+        'GEORDI_TEXT_EVIDENCE_BAD_FACE_INDEX',
+        'GEORDI_TEXT_EVIDENCE_DUPLICATE_GLYPH',
+        'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS',
+        'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+        'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT',
+        'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_WINDING_RULE',
+      ]),
+    );
+    expect(result.issues.map((issue) => issue.path)).toEqual(
+      expect.arrayContaining([
+        '$.evidencePackVersion',
+        '$.evidenceKind',
+        '$.coordinateSpace',
+        '$.fontId',
+        '$.fontSha256',
+        '$.faceIndex',
+        '$.glyphs[1].glyphId',
+        '$.glyphs[0].bounds.width',
+        '$.glyphs[0].commands[0].op',
+        '$.paint.kind',
+        '$.windingRule',
+      ]),
+    );
+    expect(() => assertRenderFixtureStrictTextOutlineEvidencePack(invalid)).toThrow(
+      RenderFixtureInvalidStrictTextOutlineEvidencePackError,
+    );
   });
 
   it('accepts a typed valid strict text fixture receipt object', () => {

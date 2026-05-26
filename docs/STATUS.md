@@ -20,9 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the active open node is `S054`, TypeScript outline evidence parser, after `S053` committed
-fixture-local `outlinePaths` evidence data for both canonical strict text fixtures. `S055`, the Rust
-outline evidence parser, is also open.
+the active open node is `S055`, Rust outline evidence parser, after `S054` added the TypeScript DTOs
+and validator for `geordi-glyph-evidence-pack/1`.
 
 ## Completed Capabilities
 
@@ -40,7 +39,7 @@ outline evidence parser, is also open.
 | Strict font assets | Lato font pack and failure fixtures prove content-addressed font/license boundaries. |
 | Strict text manifests | TypeScript and Rust can validate strict text manifest structure, font references, line-box geometry, both canonical checked-in fixtures, and canonical fixture JSON normalization. |
 | Strict text receipts | The receipt schema defines fixture, font-pack, glyph-run, line-box, semantic-text, and future glyph-evidence hash inputs; TypeScript and Rust can build canonical receipts for both strict text fixtures. |
-| Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, and covered by glyph-id smoke tests. |
+| Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, covered by glyph-id smoke tests, and parsed by TypeScript DTO/validator APIs. |
 
 ## Active Work
 
@@ -64,7 +63,7 @@ Current rules:
 | Shared DTO drift | Serialized TypeScript/Rust contract DTOs must be generated from one Wesley common schema. |
 | Runtime boundary | TypeScript remains native at browser, Node, tooling, and fixture-authoring edges. Rust remains native at the renderer and CLI core. WASM is reserved for hard deterministic kernels. |
 | Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
-| Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054/S055 add independent parsers. |
+| Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054 adds the TypeScript parser; S055 adds the Rust parser. |
 
 Primary docs:
 

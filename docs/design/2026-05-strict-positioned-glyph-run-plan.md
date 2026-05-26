@@ -567,6 +567,11 @@ These packs cover every glyph id referenced by the canonical strict text fixture
 glyph as explicit non-drawing evidence. They are data inputs for S054/S055 parsers; they do not make
 browser or native rendering compliant by themselves.
 
+S054 implements the TypeScript DTO/parser surface in `@flyingrobots/geordi-render-fixture`. It parses
+the committed packs, preserves canonical JSON expectations, and reports stable
+`GEORDI_TEXT_EVIDENCE_*` diagnostic codes for malformed pack metadata, glyph entries, bounds, paint,
+and command field shape. It does not render text or resolve runtime glyph coverage.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

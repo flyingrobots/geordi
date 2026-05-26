@@ -159,10 +159,20 @@ The packs contain simple TrueType outline paths from the committed Lato Regular 
 the fixture's 48px fixed 26.6 coordinate system. Each referenced `fontId + glyphId` pair has one
 evidence entry; the space glyph uses `draws: false` with empty commands and zero-area bounds.
 
-The data still does not make strict text renderable by itself. Current nonclaims remain: no
-TypeScript or Rust outline evidence parser, no command validation beyond fixture-data smoke tests,
-no browser or native strict text renderer, no platform text API compliance path, and no general text
-support.
+The data did not make strict text renderable by itself; S054 adds the TypeScript parser, while Rust
+parser and renderer support remain separate slices.
+
+## S054 TypeScript Outline Evidence Parser
+
+`@flyingrobots/geordi-render-fixture` now exports TypeScript DTOs, constants, parse/assert/is
+helpers, and `validateRenderFixtureStrictTextOutlineEvidencePack` for
+`geordi-glyph-evidence-pack/1`. The parser validates the outline evidence pack shape, first-profile
+metadata, font identity shape, glyph entries, bounds, paint, and command field shape with stable
+`GEORDI_TEXT_EVIDENCE_*` diagnostic codes.
+
+The parser is not a renderer and does not resolve fixture glyph coverage against a font pack yet.
+Current nonclaims remain: no Rust outline evidence parser, no browser or native strict text
+renderer, no platform text API compliance path, and no general text support.
 
 ## DAG Operating Rule
 
@@ -181,7 +191,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S054**.
+Current OPEN node: **S055**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -772,7 +782,7 @@ Current OPEN node: **S054**.
 
 ### S054: TypeScript outline evidence parser
 
-- [ ] **S054: TypeScript outline evidence parser** (OPEN)
+- [x] **S054: TypeScript outline evidence parser** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with typescript outline evidence parser documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: TypeScript outline evidence parser.

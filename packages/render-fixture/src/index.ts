@@ -42,7 +42,13 @@ export const RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED =
   'precomputed-fixture/1' as const;
 export const RENDER_FIXTURE_TYPESCRIPT_STRICT_TEXT_RECEIPT_GENERATOR =
   'typescript-render-fixture/1' as const;
+export const RENDER_FIXTURE_GLYPH_EVIDENCE_PACK_VERSION =
+  'geordi-glyph-evidence-pack/1' as const;
 export const RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS = 'outlinePaths' as const;
+export const RENDER_FIXTURE_GLYPH_EVIDENCE_COORDINATE_SPACE_GLYPH_ORIGIN_FIXED_26_6 =
+  'glyph-origin-fixed-26.6/1' as const;
+export const RENDER_FIXTURE_GLYPH_EVIDENCE_WINDING_RULE_NONZERO = 'nonzero' as const;
+export const RENDER_FIXTURE_GLYPH_EVIDENCE_PAINT_KIND_SOLID_FILL = 'solidFill' as const;
 const WINDOWS_DRIVE_PREFIX_PATTERN = /^[A-Za-z]:/u;
 const URL_SCHEME_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
@@ -108,6 +114,32 @@ export type RenderFixtureStrictTextFixtureReceiptIssue = RenderFixtureManifestIs
 export interface RenderFixtureStrictTextFixtureReceiptValidationResult {
   readonly ok: boolean;
   readonly issues: readonly RenderFixtureStrictTextFixtureReceiptIssue[];
+}
+
+export type RenderFixtureStrictTextOutlineEvidenceDiagnosticCode =
+  | 'GEORDI_TEXT_EVIDENCE_BAD_PACK'
+  | 'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_VERSION'
+  | 'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_KIND'
+  | 'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE'
+  | 'GEORDI_TEXT_EVIDENCE_BAD_FONT_ID'
+  | 'GEORDI_TEXT_EVIDENCE_BAD_FONT_HASH'
+  | 'GEORDI_TEXT_EVIDENCE_BAD_FACE_INDEX'
+  | 'GEORDI_TEXT_EVIDENCE_DUPLICATE_GLYPH'
+  | 'GEORDI_TEXT_EVIDENCE_BAD_GLYPH'
+  | 'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS'
+  | 'GEORDI_TEXT_EVIDENCE_BAD_COMMAND'
+  | 'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT'
+  | 'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_WINDING_RULE';
+
+export interface RenderFixtureStrictTextOutlineEvidencePackIssue extends JsonObject {
+  readonly code: RenderFixtureStrictTextOutlineEvidenceDiagnosticCode;
+  readonly path: string;
+  readonly message: string;
+}
+
+export interface RenderFixtureStrictTextOutlineEvidencePackValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[];
 }
 
 export interface RenderFixtureArtifactIssue extends JsonObject {
@@ -326,6 +358,82 @@ export interface RenderFixtureStrictTextFixtureReceipt extends JsonObject {
   readonly textProfile: typeof RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE;
 }
 
+export interface RenderFixtureStrictTextOutlineEvidenceBounds extends JsonObject {
+  readonly height: number;
+  readonly width: number;
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface RenderFixtureStrictTextOutlineMoveToCommand extends JsonObject {
+  readonly op: 'moveTo';
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface RenderFixtureStrictTextOutlineLineToCommand extends JsonObject {
+  readonly op: 'lineTo';
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface RenderFixtureStrictTextOutlineQuadToCommand extends JsonObject {
+  readonly cx: number;
+  readonly cy: number;
+  readonly op: 'quadTo';
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface RenderFixtureStrictTextOutlineCubicToCommand extends JsonObject {
+  readonly cx1: number;
+  readonly cx2: number;
+  readonly cy1: number;
+  readonly cy2: number;
+  readonly op: 'cubicTo';
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface RenderFixtureStrictTextOutlineClosePathCommand extends JsonObject {
+  readonly op: 'closePath';
+}
+
+export type RenderFixtureStrictTextOutlineCommand =
+  | RenderFixtureStrictTextOutlineMoveToCommand
+  | RenderFixtureStrictTextOutlineLineToCommand
+  | RenderFixtureStrictTextOutlineQuadToCommand
+  | RenderFixtureStrictTextOutlineCubicToCommand
+  | RenderFixtureStrictTextOutlineClosePathCommand;
+
+export interface RenderFixtureStrictTextOutlineEvidenceGlyph extends JsonObject {
+  readonly bounds: RenderFixtureStrictTextOutlineEvidenceBounds;
+  readonly commands: readonly RenderFixtureStrictTextOutlineCommand[];
+  readonly draws: boolean;
+  readonly glyphId: number;
+}
+
+export interface RenderFixtureStrictTextOutlineEvidencePaint extends JsonObject {
+  readonly kind: typeof RENDER_FIXTURE_GLYPH_EVIDENCE_PAINT_KIND_SOLID_FILL;
+  readonly rgba: RenderFixtureRgba;
+}
+
+export interface RenderFixtureStrictTextOutlineEvidencePack extends JsonObject {
+  readonly coordinateSpace: typeof RENDER_FIXTURE_GLYPH_EVIDENCE_COORDINATE_SPACE_GLYPH_ORIGIN_FIXED_26_6;
+  readonly evidenceKind: typeof RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS;
+  readonly evidencePackVersion: typeof RENDER_FIXTURE_GLYPH_EVIDENCE_PACK_VERSION;
+  readonly faceIndex: number;
+  readonly fontId: string;
+  readonly fontSha256: string;
+  readonly glyphs: readonly RenderFixtureStrictTextOutlineEvidenceGlyph[];
+  readonly id: string;
+  readonly paint: RenderFixtureStrictTextOutlineEvidencePaint;
+  readonly positionEncoding: typeof RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING;
+  readonly shapingProfile: typeof RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED;
+  readonly textProfile: typeof RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE;
+  readonly windingRule: typeof RENDER_FIXTURE_GLYPH_EVIDENCE_WINDING_RULE_NONZERO;
+}
+
 export interface RenderFixturePlyVertex extends JsonObject {
   readonly position: RenderFixtureVector3;
 }
@@ -458,6 +566,16 @@ export class RenderFixtureInvalidStrictTextFixtureReceiptError extends Error {
 
   constructor(issues: readonly RenderFixtureStrictTextFixtureReceiptIssue[]) {
     super('Invalid render fixture strict text fixture receipt');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
+
+export class RenderFixtureInvalidStrictTextOutlineEvidencePackError extends Error {
+  public readonly issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[];
+
+  constructor(issues: readonly RenderFixtureStrictTextOutlineEvidencePackIssue[]) {
+    super('Invalid render fixture strict text outline evidence pack');
     this.name = new.target.name;
     this.issues = issues;
   }
@@ -600,6 +718,13 @@ export function parseRenderFixtureStrictTextFixtureReceipt(
   return assertRenderFixtureStrictTextFixtureReceipt(jsonPort.parse(source));
 }
 
+export function parseRenderFixtureStrictTextOutlineEvidencePack(
+  source: string,
+  jsonPort: JsonPort = canonicalJsonPort,
+): RenderFixtureStrictTextOutlineEvidencePack {
+  return assertRenderFixtureStrictTextOutlineEvidencePack(jsonPort.parse(source));
+}
+
 export function assertRenderFixtureManifest(
   value: JsonValue | undefined,
 ): RenderFixtureManifest {
@@ -677,6 +802,17 @@ export function assertRenderFixtureStrictTextFixtureReceipt(
   throw new RenderFixtureInvalidStrictTextFixtureReceiptError(result.issues);
 }
 
+export function assertRenderFixtureStrictTextOutlineEvidencePack(
+  value: JsonValue | undefined,
+): RenderFixtureStrictTextOutlineEvidencePack {
+  const result = validateRenderFixtureStrictTextOutlineEvidencePack(value);
+  if (result.ok && isJsonObject(value)) {
+    return value as RenderFixtureStrictTextOutlineEvidencePack;
+  }
+
+  throw new RenderFixtureInvalidStrictTextOutlineEvidencePackError(result.issues);
+}
+
 export function isRenderFixtureManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureManifest {
@@ -711,6 +847,12 @@ export function isRenderFixtureStrictTextFixtureReceipt(
   value: JsonValue | undefined,
 ): value is RenderFixtureStrictTextFixtureReceipt {
   return validateRenderFixtureStrictTextFixtureReceipt(value).ok;
+}
+
+export function isRenderFixtureStrictTextOutlineEvidencePack(
+  value: JsonValue | undefined,
+): value is RenderFixtureStrictTextOutlineEvidencePack {
+  return validateRenderFixtureStrictTextOutlineEvidencePack(value).ok;
 }
 
 export function validateRenderFixtureManifest(
@@ -955,6 +1097,99 @@ export function validateRenderFixtureStrictTextFixtureReceipt(
     );
   }
   validateOptionalGlyphEvidenceReceiptFields(value, issues);
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function validateRenderFixtureStrictTextOutlineEvidencePack(
+  value: JsonValue | undefined,
+): RenderFixtureStrictTextOutlineEvidencePackValidationResult {
+  const issues: RenderFixtureStrictTextOutlineEvidencePackIssue[] = [];
+
+  if (!isJsonObject(value)) {
+    pushOutlineEvidenceIssue(
+      issues,
+      '$',
+      'Strict text outline evidence pack must be an object',
+      'GEORDI_TEXT_EVIDENCE_BAD_PACK',
+    );
+    return { ok: false, issues };
+  }
+
+  validateOutlineEvidenceLiteral(
+    property(value, 'evidencePackVersion'),
+    RENDER_FIXTURE_GLYPH_EVIDENCE_PACK_VERSION,
+    '$.evidencePackVersion',
+    'Strict text outline evidence pack version',
+    'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_VERSION',
+    issues,
+  );
+  validateOutlineEvidenceLiteral(
+    property(value, 'evidenceKind'),
+    RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS,
+    '$.evidenceKind',
+    'Strict text outline evidence kind',
+    'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_KIND',
+    issues,
+  );
+  validateOutlineEvidenceLiteral(
+    property(value, 'textProfile'),
+    RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
+    '$.textProfile',
+    'Strict text outline evidence text profile',
+    'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE',
+    issues,
+  );
+  validateOutlineEvidenceLiteral(
+    property(value, 'positionEncoding'),
+    RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING,
+    '$.positionEncoding',
+    'Strict text outline evidence position encoding',
+    'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE',
+    issues,
+  );
+  validateOutlineEvidenceLiteral(
+    property(value, 'coordinateSpace'),
+    RENDER_FIXTURE_GLYPH_EVIDENCE_COORDINATE_SPACE_GLYPH_ORIGIN_FIXED_26_6,
+    '$.coordinateSpace',
+    'Strict text outline evidence coordinate space',
+    'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE',
+    issues,
+  );
+  validateOutlineEvidenceLiteral(
+    property(value, 'shapingProfile'),
+    RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
+    '$.shapingProfile',
+    'Strict text outline evidence shaping profile',
+    'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE',
+    issues,
+  );
+  validateOutlineEvidenceNonEmptyString(
+    property(value, 'id'),
+    '$.id',
+    'Strict text outline evidence pack id',
+    'GEORDI_TEXT_EVIDENCE_BAD_PACK',
+    issues,
+  );
+  validateOutlineEvidenceFontId(property(value, 'fontId'), '$.fontId', issues);
+  validateOutlineEvidenceArtifactHash(property(value, 'fontSha256'), '$.fontSha256', issues);
+  validateOutlineEvidenceSafeNonNegativeInteger(
+    property(value, 'faceIndex'),
+    '$.faceIndex',
+    'Strict text outline evidence face index',
+    'GEORDI_TEXT_EVIDENCE_BAD_FACE_INDEX',
+    issues,
+  );
+  validateOutlineEvidenceLiteral(
+    property(value, 'windingRule'),
+    RENDER_FIXTURE_GLYPH_EVIDENCE_WINDING_RULE_NONZERO,
+    '$.windingRule',
+    'Strict text outline evidence winding rule',
+    'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_WINDING_RULE',
+    issues,
+  );
+  validateOutlineEvidencePaint(property(value, 'paint'), '$.paint', issues);
+  validateOutlineEvidenceGlyphs(property(value, 'glyphs'), '$.glyphs', issues);
 
   return { ok: issues.length === 0, issues };
 }
@@ -1856,6 +2091,454 @@ function validateOptionalGlyphEvidenceReceiptFields(
   validateStrictTextFixturePath(glyphEvidencePackPath, '$.glyphEvidencePackPath', issues);
 }
 
+function validateOutlineEvidencePaint(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence paint must be an object',
+      'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT',
+    );
+    return;
+  }
+
+  validateOutlineEvidenceLiteral(
+    property(value, 'kind'),
+    RENDER_FIXTURE_GLYPH_EVIDENCE_PAINT_KIND_SOLID_FILL,
+    `${path}.kind`,
+    'Strict text outline evidence paint kind',
+    'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT',
+    issues,
+  );
+  validateOutlineEvidenceRgba(property(value, 'rgba'), `${path}.rgba`, issues);
+}
+
+function validateOutlineEvidenceRgba(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (!isJsonArray(value) || value.length !== 4) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence paint rgba must contain exactly four byte channels',
+      'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT',
+    );
+    return;
+  }
+
+  for (let index = 0; index < value.length; index++) {
+    if (byte(value[index]) === undefined) {
+      pushOutlineEvidenceIssue(
+        issues,
+        `${path}[${index}]`,
+        'Strict text outline evidence paint rgba channel must be an integer byte',
+        'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT',
+      );
+    }
+  }
+}
+
+function validateOutlineEvidenceGlyphs(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (!isJsonArray(value)) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence glyphs must be an array',
+      'GEORDI_TEXT_EVIDENCE_BAD_GLYPH',
+    );
+    return;
+  }
+
+  if (value.length === 0) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence glyphs must not be empty',
+      'GEORDI_TEXT_EVIDENCE_BAD_GLYPH',
+    );
+    return;
+  }
+
+  const seenGlyphIds = new Set<number>();
+  for (let index = 0; index < value.length; index++) {
+    const item = value[index];
+    const itemPath = `${path}[${index}]`;
+    validateOutlineEvidenceGlyph(item, itemPath, issues);
+    if (!isJsonObject(item)) {
+      continue;
+    }
+
+    const glyphId = safeNonNegativeInteger(property(item, 'glyphId'));
+    if (glyphId === undefined) {
+      continue;
+    }
+
+    if (seenGlyphIds.has(glyphId)) {
+      pushOutlineEvidenceIssue(
+        issues,
+        `${itemPath}.glyphId`,
+        'Strict text outline evidence glyph id must not be duplicated',
+        'GEORDI_TEXT_EVIDENCE_DUPLICATE_GLYPH',
+      );
+    }
+    seenGlyphIds.add(glyphId);
+  }
+}
+
+function validateOutlineEvidenceGlyph(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence glyph must be an object',
+      'GEORDI_TEXT_EVIDENCE_BAD_GLYPH',
+    );
+    return;
+  }
+
+  validateOutlineEvidenceSafeNonNegativeInteger(
+    property(value, 'glyphId'),
+    `${path}.glyphId`,
+    'Strict text outline evidence glyph id',
+    'GEORDI_TEXT_EVIDENCE_BAD_GLYPH',
+    issues,
+  );
+  validateOutlineEvidenceBoolean(
+    property(value, 'draws'),
+    `${path}.draws`,
+    'Strict text outline evidence glyph draws',
+    'GEORDI_TEXT_EVIDENCE_BAD_GLYPH',
+    issues,
+  );
+  validateOutlineEvidenceBounds(property(value, 'bounds'), `${path}.bounds`, issues);
+  const commands = property(value, 'commands');
+  validateOutlineEvidenceCommands(commands, `${path}.commands`, issues);
+
+  if (property(value, 'draws') === true && isJsonArray(commands) && commands.length === 0) {
+    pushOutlineEvidenceIssue(
+      issues,
+      `${path}.commands`,
+      'Drawing strict text outline evidence glyph must include commands',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+    );
+  }
+
+  if (property(value, 'draws') === false && isJsonArray(commands) && commands.length > 0) {
+    pushOutlineEvidenceIssue(
+      issues,
+      `${path}.commands`,
+      'Non-drawing strict text outline evidence glyph must not include commands',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+    );
+  }
+}
+
+function validateOutlineEvidenceBounds(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence bounds must be an object',
+      'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS',
+    );
+    return;
+  }
+
+  const x = property(value, 'x');
+  const y = property(value, 'y');
+  const width = property(value, 'width');
+  const height = property(value, 'height');
+  validateOutlineEvidenceSafeInteger(
+    x,
+    `${path}.x`,
+    'Strict text outline evidence bounds x',
+    'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS',
+    issues,
+  );
+  validateOutlineEvidenceSafeInteger(
+    y,
+    `${path}.y`,
+    'Strict text outline evidence bounds y',
+    'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS',
+    issues,
+  );
+  validateOutlineEvidenceSafeNonNegativeInteger(
+    width,
+    `${path}.width`,
+    'Strict text outline evidence bounds width',
+    'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS',
+    issues,
+  );
+  validateOutlineEvidenceSafeNonNegativeInteger(
+    height,
+    `${path}.height`,
+    'Strict text outline evidence bounds height',
+    'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS',
+    issues,
+  );
+
+  const safeX = safeInteger(x);
+  const safeY = safeInteger(y);
+  const safeWidth = safeNonNegativeInteger(width);
+  const safeHeight = safeNonNegativeInteger(height);
+  if (safeX !== undefined && safeWidth !== undefined && !Number.isSafeInteger(safeX + safeWidth)) {
+    pushOutlineEvidenceIssue(
+      issues,
+      `${path}.width`,
+      'Strict text outline evidence bounds right edge must be a safe integer',
+      'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS',
+    );
+  }
+  if (safeY !== undefined && safeHeight !== undefined && !Number.isSafeInteger(safeY + safeHeight)) {
+    pushOutlineEvidenceIssue(
+      issues,
+      `${path}.height`,
+      'Strict text outline evidence bounds bottom edge must be a safe integer',
+      'GEORDI_TEXT_EVIDENCE_BAD_BOUNDS',
+    );
+  }
+}
+
+function validateOutlineEvidenceCommands(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (!isJsonArray(value)) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence commands must be an array',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+    );
+    return;
+  }
+
+  for (let index = 0; index < value.length; index++) {
+    validateOutlineEvidenceCommand(value[index], `${path}[${index}]`, issues);
+  }
+}
+
+function validateOutlineEvidenceCommand(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence command must be an object',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+    );
+    return;
+  }
+
+  const op = property(value, 'op');
+  if (op === 'moveTo' || op === 'lineTo') {
+    validateOutlineEvidenceCommandCoordinatePair(value, path, issues);
+    return;
+  }
+
+  if (op === 'quadTo') {
+    validateOutlineEvidenceSafeInteger(
+      property(value, 'cx'),
+      `${path}.cx`,
+      'Strict text outline evidence command cx',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+      issues,
+    );
+    validateOutlineEvidenceSafeInteger(
+      property(value, 'cy'),
+      `${path}.cy`,
+      'Strict text outline evidence command cy',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+      issues,
+    );
+    validateOutlineEvidenceCommandCoordinatePair(value, path, issues);
+    return;
+  }
+
+  if (op === 'cubicTo') {
+    validateOutlineEvidenceSafeInteger(
+      property(value, 'cx1'),
+      `${path}.cx1`,
+      'Strict text outline evidence command cx1',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+      issues,
+    );
+    validateOutlineEvidenceSafeInteger(
+      property(value, 'cy1'),
+      `${path}.cy1`,
+      'Strict text outline evidence command cy1',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+      issues,
+    );
+    validateOutlineEvidenceSafeInteger(
+      property(value, 'cx2'),
+      `${path}.cx2`,
+      'Strict text outline evidence command cx2',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+      issues,
+    );
+    validateOutlineEvidenceSafeInteger(
+      property(value, 'cy2'),
+      `${path}.cy2`,
+      'Strict text outline evidence command cy2',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+      issues,
+    );
+    validateOutlineEvidenceCommandCoordinatePair(value, path, issues);
+    return;
+  }
+
+  if (op === 'closePath') {
+    return;
+  }
+
+  pushOutlineEvidenceIssue(
+    issues,
+    `${path}.op`,
+    'Strict text outline evidence command op must be moveTo, lineTo, quadTo, cubicTo, or closePath',
+    'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+  );
+}
+
+function validateOutlineEvidenceCommandCoordinatePair(
+  value: JsonObject,
+  path: string,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  validateOutlineEvidenceSafeInteger(
+    property(value, 'x'),
+    `${path}.x`,
+    'Strict text outline evidence command x',
+    'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+    issues,
+  );
+  validateOutlineEvidenceSafeInteger(
+    property(value, 'y'),
+    `${path}.y`,
+    'Strict text outline evidence command y',
+    'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+    issues,
+  );
+}
+
+function validateOutlineEvidenceLiteral(
+  value: JsonValue | undefined,
+  expected: string,
+  path: string,
+  label: string,
+  code: RenderFixtureStrictTextOutlineEvidenceDiagnosticCode,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (value !== expected) {
+    pushOutlineEvidenceIssue(issues, path, `${label} must be ${expected}`, code);
+  }
+}
+
+function validateOutlineEvidenceNonEmptyString(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  code: RenderFixtureStrictTextOutlineEvidenceDiagnosticCode,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (typeof value !== 'string' || value.length === 0) {
+    pushOutlineEvidenceIssue(issues, path, `${label} must be a non-empty string`, code);
+  }
+}
+
+function validateOutlineEvidenceFontId(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (typeof value !== 'string' || !FONT_ID_PATTERN.test(value)) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence font id must be lowercase kebab-case ASCII',
+      'GEORDI_TEXT_EVIDENCE_BAD_FONT_ID',
+    );
+  }
+}
+
+function validateOutlineEvidenceArtifactHash(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (
+    typeof value !== 'string' ||
+    !value.startsWith(RENDER_FIXTURE_HASH_PREFIX) ||
+    value.length !== RENDER_FIXTURE_HASH_PREFIX.length + RENDER_FIXTURE_HASH_HEX_LENGTH ||
+    !isLowercaseHex(value.slice(RENDER_FIXTURE_HASH_PREFIX.length))
+  ) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence font hash must be sha256:<64 lowercase hex chars>',
+      'GEORDI_TEXT_EVIDENCE_BAD_FONT_HASH',
+    );
+  }
+}
+
+function validateOutlineEvidenceSafeInteger(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  code: RenderFixtureStrictTextOutlineEvidenceDiagnosticCode,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (safeInteger(value) === undefined) {
+    pushOutlineEvidenceIssue(issues, path, `${label} must be a safe integer`, code);
+  }
+}
+
+function validateOutlineEvidenceSafeNonNegativeInteger(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  code: RenderFixtureStrictTextOutlineEvidenceDiagnosticCode,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (safeNonNegativeInteger(value) === undefined) {
+    pushOutlineEvidenceIssue(issues, path, `${label} must be a safe non-negative integer`, code);
+  }
+}
+
+function validateOutlineEvidenceBoolean(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  code: RenderFixtureStrictTextOutlineEvidenceDiagnosticCode,
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  if (typeof value !== 'boolean') {
+    pushOutlineEvidenceIssue(issues, path, `${label} must be a boolean`, code);
+  }
+}
+
 function validatePositionedGlyphs(
   value: JsonValue | undefined,
   path: string,
@@ -2640,6 +3323,15 @@ function pushIssue(
   message: string,
 ): void {
   issues.push({ path, message });
+}
+
+function pushOutlineEvidenceIssue(
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+  path: string,
+  message: string,
+  code: RenderFixtureStrictTextOutlineEvidenceDiagnosticCode,
+): void {
+  issues.push({ code, path, message });
 }
 
 function pushArtifactIssue(

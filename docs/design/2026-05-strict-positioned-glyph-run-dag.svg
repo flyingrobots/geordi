@@ -795,15 +795,15 @@
 <!-- S054 -->
 <g id="node57" class="node">
 <title>S054</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M656.76,-1021.5C656.76,-1021.5 519.24,-1021.5 519.24,-1021.5 513.24,-1021.5 507.24,-1015.5 507.24,-1009.5 507.24,-1009.5 507.24,-997.5 507.24,-997.5 507.24,-991.5 513.24,-985.5 519.24,-985.5 519.24,-985.5 656.76,-985.5 656.76,-985.5 662.76,-985.5 668.76,-991.5 668.76,-997.5 668.76,-997.5 668.76,-1009.5 668.76,-1009.5 668.76,-1015.5 662.76,-1021.5 656.76,-1021.5"/>
-<text xml:space="preserve" text-anchor="middle" x="588" y="-1005.25" font-family="Helvetica,sans-Serif" font-size="10.00">S054</text>
-<text xml:space="preserve" text-anchor="middle" x="588" y="-994" font-family="Helvetica,sans-Serif" font-size="10.00">TypeScript outline evidence parser</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M656.76,-1021.5C656.76,-1021.5 519.24,-1021.5 519.24,-1021.5 513.24,-1021.5 507.24,-1015.5 507.24,-1009.5 507.24,-1009.5 507.24,-997.5 507.24,-997.5 507.24,-991.5 513.24,-985.5 519.24,-985.5 519.24,-985.5 656.76,-985.5 656.76,-985.5 662.76,-985.5 668.76,-991.5 668.76,-997.5 668.76,-997.5 668.76,-1009.5 668.76,-1009.5 668.76,-1015.5 662.76,-1021.5 656.76,-1021.5"/>
+<text xml:space="preserve" text-anchor="middle" x="588" y="-1005.25" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S054</text>
+<text xml:space="preserve" text-anchor="middle" x="588" y="-994" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">TypeScript outline evidence parser</text>
 </g>
 <!-- S053&#45;&gt;S054 -->
 <g id="edge59" class="edge">
 <title>S053&#45;&gt;S054</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M589.47,-1056.11C589.25,-1048.37 588.99,-1039.23 588.75,-1030.8"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="590.85,-1030.76 588.58,-1024.83 586.65,-1030.88 590.85,-1030.76"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M589.47,-1056.11C589.25,-1048.17 588.98,-1038.75 588.73,-1030.14"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="590.84,-1030.28 588.57,-1024.34 586.64,-1030.4 590.84,-1030.28"/>
 </g>
 <!-- S055 -->
 <g id="node63" class="node">
@@ -828,8 +828,8 @@
 <!-- S054&#45;&gt;S056 -->
 <g id="edge61" class="edge">
 <title>S054&#45;&gt;S056</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M588.54,-983.74C588.75,-976.13 589.01,-967.2 589.24,-958.95"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="591.34,-959.18 589.41,-953.13 587.14,-959.06 591.34,-959.18"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M588.53,-984.11C588.75,-976.37 589.01,-967.23 589.25,-958.8"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="591.35,-958.88 589.42,-952.83 587.15,-958.76 591.35,-958.88"/>
 </g>
 <!-- S057 -->
 <g id="node59" class="node">
