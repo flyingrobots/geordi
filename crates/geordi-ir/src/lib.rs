@@ -1,6 +1,7 @@
 //! Rust types and JSON-boundary loaders for Geordi IR artifacts.
 
 use serde::Deserialize;
+use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -29,6 +30,9 @@ pub const GEORDI_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE: &str
 /// Current supported strict text fixture version.
 pub const GEORDI_STRICT_TEXT_FIXTURE_VERSION: &str = "geordi-strict-text-fixture/1";
 
+/// Current supported strict text fixture receipt version.
+pub const GEORDI_STRICT_TEXT_FIXTURE_RECEIPT_VERSION: &str = "geordi-strict-text-fixture-receipt/1";
+
 /// Current supported strict positioned glyph-run profile.
 pub const GEORDI_STRICT_POSITIONED_GLYPH_RUN_PROFILE: &str = "geordi-strict-positioned-glyph-run/1";
 
@@ -46,6 +50,15 @@ pub const GEORDI_TEXT_FEATURE_LINE_BOXES: &str = "text.lineBoxes";
 
 /// Prefix used by Geordi SHA-256 content identity strings.
 pub const GEORDI_SHA256_PREFIX: &str = "sha256:";
+
+/// Hash algorithm recorded by current Geordi receipts.
+pub const GEORDI_HASH_ALGORITHM_SHA256: &str = "sha256";
+
+/// Shaping profile recorded when glyph runs were precomputed outside Geordi tooling.
+pub const GEORDI_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED: &str = "precomputed-fixture/1";
+
+/// Generator identity recorded by the Rust strict text fixture receipt builder.
+pub const GEORDI_RUST_STRICT_TEXT_RECEIPT_GENERATOR: &str = "rust-geordi-ir/1";
 
 const GEORDI_JSON_SAFE_INTEGER_MAX: i64 = 9_007_199_254_740_991;
 
@@ -172,6 +185,39 @@ pub struct GeordiStrictTextFixtureManifest {
     pub line_boxes: Vec<GeordiStrictTextLineBox>,
     /// Positioned glyph runs.
     pub glyph_runs: Vec<GeordiGlyphRun>,
+}
+
+/// Provenance receipt for one strict text fixture.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GeordiStrictTextFixtureReceipt {
+    /// Strict text fixture receipt schema version.
+    pub receipt_version: String,
+    /// Hash algorithm used by all receipt hashes.
+    pub hash_algorithm: String,
+    /// Repository-relative strict text fixture path.
+    pub fixture_path: String,
+    /// Hash of exact strict text fixture bytes.
+    pub fixture_hash: String,
+    /// Repository-relative font-pack manifest path.
+    pub font_pack_path: String,
+    /// Hash of exact font-pack manifest bytes.
+    pub font_pack_hash: String,
+    /// Boundary that generated this receipt.
+    pub generated_by: String,
+    /// Hash of canonical `glyphRuns` fragment bytes.
+    pub glyph_run_hash: String,
+    /// Hash of canonical `lineBoxes` fragment bytes.
+    pub line_box_hash: String,
+    /// Hash of canonical `semanticText` fragment bytes.
+    pub semantic_text_hash: String,
+    /// Strict text profile recorded by the fixture.
+    pub text_profile: String,
+    /// Position encoding profile recorded by the fixture.
+    pub position_encoding_profile: String,
+    /// Whether semantic text affects pixels. Current strict fixtures require `false`.
+    pub semantic_text_affects_pixels: bool,
+    /// Shaping profile used to produce positioned glyph runs.
+    pub shaping_profile: String,
 }
 
 /// Non-rendering semantic/source text metadata.
@@ -695,6 +741,139 @@ impl Error for GeordiFontPackHashError {
     }
 }
 
+/// Custom error returned when building a strict text fixture receipt fails.
+#[derive(Debug)]
+pub struct GeordiStrictTextFixtureReceiptError {
+    path: String,
+    source: GeordiStrictTextFixtureReceiptErrorSource,
+}
+
+#[derive(Debug)]
+enum GeordiStrictTextFixtureReceiptErrorSource {
+    EscapedPath,
+    Read(std::io::Error),
+    Utf8(std::str::Utf8Error),
+    FixtureParse(GeordiStrictTextFixtureParseError),
+    FontPackParse(GeordiFontPackParseError),
+    ValueParse(serde_json::Error),
+    Validation(GeordiStrictTextFixtureValidationError),
+    MissingFragment { fragment: String },
+    CanonicalJson(serde_json::Error),
+}
+
+impl GeordiStrictTextFixtureReceiptError {
+    fn escaped_path(path: &str) -> Self {
+        Self {
+            path: path.to_owned(),
+            source: GeordiStrictTextFixtureReceiptErrorSource::EscapedPath,
+        }
+    }
+
+    fn read(path: &str, source: std::io::Error) -> Self {
+        Self {
+            path: path.to_owned(),
+            source: GeordiStrictTextFixtureReceiptErrorSource::Read(source),
+        }
+    }
+
+    fn utf8(path: &str, source: std::str::Utf8Error) -> Self {
+        Self {
+            path: path.to_owned(),
+            source: GeordiStrictTextFixtureReceiptErrorSource::Utf8(source),
+        }
+    }
+
+    fn fixture_parse(path: &str, source: GeordiStrictTextFixtureParseError) -> Self {
+        Self {
+            path: path.to_owned(),
+            source: GeordiStrictTextFixtureReceiptErrorSource::FixtureParse(source),
+        }
+    }
+
+    fn font_pack_parse(path: &str, source: GeordiFontPackParseError) -> Self {
+        Self {
+            path: path.to_owned(),
+            source: GeordiStrictTextFixtureReceiptErrorSource::FontPackParse(source),
+        }
+    }
+
+    fn value_parse(path: &str, source: serde_json::Error) -> Self {
+        Self {
+            path: path.to_owned(),
+            source: GeordiStrictTextFixtureReceiptErrorSource::ValueParse(source),
+        }
+    }
+
+    fn validation(path: &str, source: GeordiStrictTextFixtureValidationError) -> Self {
+        Self {
+            path: path.to_owned(),
+            source: GeordiStrictTextFixtureReceiptErrorSource::Validation(source),
+        }
+    }
+
+    fn missing_fragment_error(path: &str, fragment: &str) -> Self {
+        Self {
+            path: path.to_owned(),
+            source: GeordiStrictTextFixtureReceiptErrorSource::MissingFragment {
+                fragment: fragment.to_owned(),
+            },
+        }
+    }
+
+    fn canonical_json(path: &str, source: serde_json::Error) -> Self {
+        Self {
+            path: path.to_owned(),
+            source: GeordiStrictTextFixtureReceiptErrorSource::CanonicalJson(source),
+        }
+    }
+
+    /// Repository-relative path that failed while building the receipt.
+    #[must_use]
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+
+    /// Missing fixture JSON fragment when the failure was a fragment lookup.
+    #[must_use]
+    pub fn missing_fragment(&self) -> Option<&str> {
+        match &self.source {
+            GeordiStrictTextFixtureReceiptErrorSource::MissingFragment { fragment } => {
+                Some(fragment)
+            }
+            GeordiStrictTextFixtureReceiptErrorSource::EscapedPath
+            | GeordiStrictTextFixtureReceiptErrorSource::Read(_)
+            | GeordiStrictTextFixtureReceiptErrorSource::Utf8(_)
+            | GeordiStrictTextFixtureReceiptErrorSource::FixtureParse(_)
+            | GeordiStrictTextFixtureReceiptErrorSource::FontPackParse(_)
+            | GeordiStrictTextFixtureReceiptErrorSource::ValueParse(_)
+            | GeordiStrictTextFixtureReceiptErrorSource::Validation(_)
+            | GeordiStrictTextFixtureReceiptErrorSource::CanonicalJson(_) => None,
+        }
+    }
+}
+
+impl Display for GeordiStrictTextFixtureReceiptError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Geordi strict text fixture receipt build failed")
+    }
+}
+
+impl Error for GeordiStrictTextFixtureReceiptError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match &self.source {
+            GeordiStrictTextFixtureReceiptErrorSource::Read(source) => Some(source),
+            GeordiStrictTextFixtureReceiptErrorSource::Utf8(source) => Some(source),
+            GeordiStrictTextFixtureReceiptErrorSource::FixtureParse(source) => Some(source),
+            GeordiStrictTextFixtureReceiptErrorSource::FontPackParse(source) => Some(source),
+            GeordiStrictTextFixtureReceiptErrorSource::ValueParse(source)
+            | GeordiStrictTextFixtureReceiptErrorSource::CanonicalJson(source) => Some(source),
+            GeordiStrictTextFixtureReceiptErrorSource::Validation(source) => Some(source),
+            GeordiStrictTextFixtureReceiptErrorSource::EscapedPath
+            | GeordiStrictTextFixtureReceiptErrorSource::MissingFragment { .. } => None,
+        }
+    }
+}
+
 /// One structural validation failure for a Geordi IR artifact.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct GeordiIrValidationIssue {
@@ -870,6 +1049,63 @@ pub fn load_geordi_strict_text_fixture_manifest(
 pub fn geordi_sha256_from_bytes(bytes: &[u8]) -> String {
     let digest = Sha256::digest(bytes);
     format!("{GEORDI_SHA256_PREFIX}{digest:x}")
+}
+
+/// Compute a `sha256:` hash string from canonical pretty JSON fragment bytes.
+///
+/// # Errors
+///
+/// Returns `serde_json::Error` when the JSON fragment cannot be serialized.
+pub fn geordi_sha256_from_canonical_json_value(value: &Value) -> Result<String, serde_json::Error> {
+    let mut source = serde_json::to_string_pretty(value)?;
+    source.push('\n');
+    Ok(geordi_sha256_from_bytes(source.as_bytes()))
+}
+
+/// Build a strict text fixture receipt from repository-local fixture files.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextFixtureReceiptError` when fixture paths escape the repository, source
+/// files cannot be read, JSON parsing or validation fails, or canonical fragment hashing fails.
+pub fn create_geordi_strict_text_fixture_receipt(
+    repository_root: impl AsRef<Path>,
+    fixture_path: &str,
+) -> Result<GeordiStrictTextFixtureReceipt, GeordiStrictTextFixtureReceiptError> {
+    let repository_root = repository_root.as_ref();
+    let fixture_bytes = read_receipt_fixture_local_bytes(repository_root, fixture_path)?;
+    let fixture_source = receipt_utf8(fixture_path, &fixture_bytes)?;
+    let manifest = parse_geordi_strict_text_fixture_manifest(fixture_source)
+        .map_err(|error| GeordiStrictTextFixtureReceiptError::fixture_parse(fixture_path, error))?;
+    validate_geordi_strict_text_fixture_manifest(&manifest)
+        .map_err(|error| GeordiStrictTextFixtureReceiptError::validation(fixture_path, error))?;
+    let fixture_value = parse_receipt_json_value(fixture_path, fixture_source)?;
+
+    let font_pack_path = manifest.font_pack_path.clone();
+    let font_pack_bytes = read_receipt_fixture_local_bytes(repository_root, &font_pack_path)?;
+    let font_pack_source = receipt_utf8(&font_pack_path, &font_pack_bytes)?;
+    let font_pack = parse_geordi_font_pack_manifest(font_pack_source).map_err(|error| {
+        GeordiStrictTextFixtureReceiptError::font_pack_parse(&font_pack_path, error)
+    })?;
+    validate_geordi_strict_text_font_references(&manifest, &font_pack)
+        .map_err(|error| GeordiStrictTextFixtureReceiptError::validation(fixture_path, error))?;
+
+    Ok(GeordiStrictTextFixtureReceipt {
+        receipt_version: GEORDI_STRICT_TEXT_FIXTURE_RECEIPT_VERSION.to_owned(),
+        hash_algorithm: GEORDI_HASH_ALGORITHM_SHA256.to_owned(),
+        fixture_path: fixture_path.to_owned(),
+        fixture_hash: geordi_sha256_from_bytes(&fixture_bytes),
+        font_pack_path,
+        font_pack_hash: geordi_sha256_from_bytes(&font_pack_bytes),
+        generated_by: GEORDI_RUST_STRICT_TEXT_RECEIPT_GENERATOR.to_owned(),
+        glyph_run_hash: receipt_fragment_hash(&fixture_value, "glyphRuns", fixture_path)?,
+        line_box_hash: receipt_fragment_hash(&fixture_value, "lineBoxes", fixture_path)?,
+        semantic_text_hash: receipt_fragment_hash(&fixture_value, "semanticText", fixture_path)?,
+        text_profile: manifest.text_profile,
+        position_encoding_profile: manifest.position_encoding,
+        semantic_text_affects_pixels: manifest.semantic_text.affects_pixels,
+        shaping_profile: GEORDI_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED.to_owned(),
+    })
 }
 
 /// Verify all font and license hashes declared by a font-pack manifest.
@@ -1210,6 +1446,65 @@ fn validate_geordi_font_pack_asset_hash(
         path: fixture_path.to_owned(),
         sha256: actual,
     })
+}
+
+fn parse_receipt_json_value(
+    path: &str,
+    source: &str,
+) -> Result<Value, GeordiStrictTextFixtureReceiptError> {
+    serde_json::from_str(source)
+        .map_err(|error| GeordiStrictTextFixtureReceiptError::value_parse(path, error))
+}
+
+fn receipt_fragment_hash(
+    fixture_value: &Value,
+    fragment: &str,
+    fixture_path: &str,
+) -> Result<String, GeordiStrictTextFixtureReceiptError> {
+    let value = fixture_value.get(fragment).ok_or_else(|| {
+        GeordiStrictTextFixtureReceiptError::missing_fragment_error(fixture_path, fragment)
+    })?;
+    geordi_sha256_from_canonical_json_value(value)
+        .map_err(|error| GeordiStrictTextFixtureReceiptError::canonical_json(fixture_path, error))
+}
+
+fn read_receipt_fixture_local_bytes(
+    repository_root: &Path,
+    fixture_path: &str,
+) -> Result<Vec<u8>, GeordiStrictTextFixtureReceiptError> {
+    if !is_fixture_local_path(fixture_path) {
+        return Err(GeordiStrictTextFixtureReceiptError::escaped_path(
+            fixture_path,
+        ));
+    }
+
+    let lexical_path = repository_root.join(fixture_path);
+    if !path_stays_inside_root(repository_root, &lexical_path) {
+        return Err(GeordiStrictTextFixtureReceiptError::escaped_path(
+            fixture_path,
+        ));
+    }
+
+    let canonical_root = fs::canonicalize(repository_root)
+        .map_err(|error| GeordiStrictTextFixtureReceiptError::read(fixture_path, error))?;
+    let canonical_path = fs::canonicalize(&lexical_path)
+        .map_err(|error| GeordiStrictTextFixtureReceiptError::read(fixture_path, error))?;
+    if !path_stays_inside_root(&canonical_root, &canonical_path) {
+        return Err(GeordiStrictTextFixtureReceiptError::escaped_path(
+            fixture_path,
+        ));
+    }
+
+    fs::read(canonical_path)
+        .map_err(|error| GeordiStrictTextFixtureReceiptError::read(fixture_path, error))
+}
+
+fn receipt_utf8<'a>(
+    path: &str,
+    bytes: &'a [u8],
+) -> Result<&'a str, GeordiStrictTextFixtureReceiptError> {
+    std::str::from_utf8(bytes)
+        .map_err(|error| GeordiStrictTextFixtureReceiptError::utf8(path, error))
 }
 
 fn validate_strict_text_fixture_contract(
@@ -1790,13 +2085,14 @@ fn push_issue(issues: &mut Vec<GeordiIrValidationIssue>, path: &str, message: &s
 mod tests {
     use super::{
         GEORDI_FONT_FORMAT_TTF, GEORDI_FONT_PACK_VERSION, GEORDI_JSON_SAFE_INTEGER_MAX,
-        GEORDI_TEXT_FEATURE_POSITIONED_GLYPH_RUNS, GeordiFontPackHashArtifactKind,
-        GeordiFontPackHashError, GeordiFontPackLoadError, GeordiFontPackParseError,
-        GeordiIrLoadError, GeordiIrParseError, GeordiIrValidationError,
+        GEORDI_RUST_STRICT_TEXT_RECEIPT_GENERATOR, GEORDI_TEXT_FEATURE_POSITIONED_GLYPH_RUNS,
+        GeordiFontPackHashArtifactKind, GeordiFontPackHashError, GeordiFontPackLoadError,
+        GeordiFontPackParseError, GeordiIrLoadError, GeordiIrParseError, GeordiIrValidationError,
         GeordiStrictTextFixtureLoadError, GeordiStrictTextFixtureParseError,
-        GeordiStrictTextFixtureValidationError, geordi_sha256_from_bytes,
-        load_geordi_font_pack_manifest, load_geordi_ir, load_geordi_strict_text_fixture_manifest,
-        parse_geordi_font_pack_manifest, parse_geordi_ir,
+        GeordiStrictTextFixtureReceiptError, GeordiStrictTextFixtureValidationError,
+        create_geordi_strict_text_fixture_receipt, geordi_sha256_from_bytes,
+        geordi_sha256_from_canonical_json_value, load_geordi_font_pack_manifest, load_geordi_ir,
+        load_geordi_strict_text_fixture_manifest, parse_geordi_font_pack_manifest, parse_geordi_ir,
         parse_geordi_strict_text_fixture_manifest, validate_geordi_font_pack_hashes,
         validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
         validate_geordi_strict_text_font_references,
@@ -1811,11 +2107,13 @@ mod tests {
         FontPackHash(GeordiFontPackHashError),
         FontPackParse(GeordiFontPackParseError),
         Io(std::io::Error),
+        Json(serde_json::Error),
         Load(GeordiIrLoadError),
         Parse(GeordiIrParseError),
         ExpectedFailure,
         StrictTextLoad(GeordiStrictTextFixtureLoadError),
         StrictTextParse(GeordiStrictTextFixtureParseError),
+        StrictTextReceipt(GeordiStrictTextFixtureReceiptError),
         StrictTextValidation(GeordiStrictTextFixtureValidationError),
         Validation(GeordiIrValidationError),
     }
@@ -1833,11 +2131,13 @@ mod tests {
                 Self::FontPackHash(source) => Some(source),
                 Self::FontPackParse(source) => Some(source),
                 Self::Io(source) => Some(source),
+                Self::Json(source) => Some(source),
                 Self::Load(source) => Some(source),
                 Self::Parse(source) => Some(source),
                 Self::ExpectedFailure => None,
                 Self::StrictTextLoad(source) => Some(source),
                 Self::StrictTextParse(source) => Some(source),
+                Self::StrictTextReceipt(source) => Some(source),
                 Self::StrictTextValidation(source) => Some(source),
                 Self::Validation(source) => Some(source),
             }
@@ -1853,6 +2153,12 @@ mod tests {
     impl From<std::io::Error> for GeordiIrTestError {
         fn from(error: std::io::Error) -> Self {
             Self::Io(error)
+        }
+    }
+
+    impl From<serde_json::Error> for GeordiIrTestError {
+        fn from(error: serde_json::Error) -> Self {
+            Self::Json(error)
         }
     }
 
@@ -1889,6 +2195,12 @@ mod tests {
     impl From<GeordiStrictTextFixtureParseError> for GeordiIrTestError {
         fn from(error: GeordiStrictTextFixtureParseError) -> Self {
             Self::StrictTextParse(error)
+        }
+    }
+
+    impl From<GeordiStrictTextFixtureReceiptError> for GeordiIrTestError {
+        fn from(error: GeordiStrictTextFixtureReceiptError) -> Self {
+            Self::StrictTextReceipt(error)
         }
     }
 
@@ -2312,6 +2624,95 @@ mod tests {
                 .map(|glyph| glyph.advance)
                 .collect::<Vec<_>>(),
             vec![1094, 1602, 1530, 1101, 786, 1782, 1782, 1782, 1782]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn builds_canonical_strict_text_fixture_a_receipt() -> Result<(), GeordiIrTestError> {
+        let receipt = create_geordi_strict_text_fixture_receipt(
+            repository_root(),
+            "fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json",
+        )?;
+
+        assert_eq!(
+            receipt.receipt_version,
+            "geordi-strict-text-fixture-receipt/1"
+        );
+        assert_eq!(receipt.hash_algorithm, "sha256");
+        assert_eq!(
+            receipt.fixture_hash,
+            "sha256:e3686b463296e0e7b019d7b014537a300f8fe6949a9053cf7d62067a978bf8c0"
+        );
+        assert_eq!(
+            receipt.font_pack_hash,
+            "sha256:1b7ad58b48a3ad0d1aff0736ef014783945dc0a472de1f14b48c4211eb53533d"
+        );
+        assert_eq!(
+            receipt.glyph_run_hash,
+            "sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472"
+        );
+        assert_eq!(
+            receipt.line_box_hash,
+            "sha256:6d0b4e63bd04bd33e7213240a173f86fb478f23fa4cd505514c0b8af425f1e10"
+        );
+        assert_eq!(
+            receipt.semantic_text_hash,
+            "sha256:c1c66afeda52b1b7ef23ad22a11e631fb02d21db27ea92ad5823d2a28bca3ab3"
+        );
+        assert_eq!(
+            receipt.generated_by,
+            GEORDI_RUST_STRICT_TEXT_RECEIPT_GENERATOR
+        );
+        assert!(!receipt.semantic_text_affects_pixels);
+        Ok(())
+    }
+
+    #[test]
+    fn builds_canonical_strict_text_fixture_b_receipt() -> Result<(), GeordiIrTestError> {
+        let receipt = create_geordi_strict_text_fixture_receipt(
+            repository_root(),
+            "fixtures/render-everywhere/strict-text/text-0123.strict-text.geordi.json",
+        )?;
+
+        assert_eq!(
+            receipt.fixture_hash,
+            "sha256:309eb48cbc2d2c1e0d39c87e7de86144450207734341f8cd062e170b21f4ad87"
+        );
+        assert_eq!(
+            receipt.font_pack_hash,
+            "sha256:1b7ad58b48a3ad0d1aff0736ef014783945dc0a472de1f14b48c4211eb53533d"
+        );
+        assert_eq!(
+            receipt.glyph_run_hash,
+            "sha256:e3ef02904931ffe7e5126820d8a04e35a366997993d970d625974ff361fc0e04"
+        );
+        assert_eq!(
+            receipt.line_box_hash,
+            "sha256:e3b8e52a7ca8f1ab0a6ad707f94649bb4ac63465d4fdf04dde4a87d1ef0ff8a6"
+        );
+        assert_eq!(
+            receipt.semantic_text_hash,
+            "sha256:7cdec9c596a1c82fe5c08a9c1d6fa4901bf680d14f7a86d4c64288861dc39082"
+        );
+        assert_eq!(receipt.text_profile, "geordi-strict-positioned-glyph-run/1");
+        assert_eq!(receipt.position_encoding_profile, "geordi-fixed-26.6/1");
+        assert_eq!(receipt.shaping_profile, "precomputed-fixture/1");
+        Ok(())
+    }
+
+    #[test]
+    fn hashes_canonical_strict_text_receipt_fragments() -> Result<(), GeordiIrTestError> {
+        let source =
+            std::fs::read_to_string(fixture_path("strict-text/geordi.strict-text.geordi.json"))?;
+        let value: serde_json::Value = serde_json::from_str(&source)?;
+        let glyph_runs = value
+            .get("glyphRuns")
+            .ok_or(GeordiIrTestError::ExpectedFailure)?;
+
+        assert_eq!(
+            geordi_sha256_from_canonical_json_value(glyph_runs)?,
+            "sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472"
         );
         Ok(())
     }
