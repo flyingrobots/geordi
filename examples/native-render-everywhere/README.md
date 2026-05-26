@@ -174,17 +174,21 @@ semanticTextSource=GEORDI
 semanticTextLanguage=en
 semanticTextAffectsPixels=false
 semanticTextRole=non-rendering metadata; pixels follow glyph evidence
+probePolicy=<repo>/fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json
+probePolicyId=render-everywhere:strict-text:geordi:probe-policy
+probePolicyVersion=geordi-strict-text-probe-policy/1
+probePolicyHash=sha256:2ff0c24b406d0fb7b40f9eebe925713491025b6864a59fbfa06b11319306838e
 canvas=192x64
 nonblankPixels=2092
 nonblankBounds=2,13..175,47
-probe=text-background-top expected=transparent x=100 y=5 rgba=0,0,0,0
-probe=text-g-fill-top expected=fill x=12 y=15 rgba=17,24,39,255
-probe=text-e-fill-mid expected=fill x=40 y=30 rgba=17,24,39,255
-probe=text-o-fill-mid expected=fill x=68 y=30 rgba=17,24,39,255
-probe=text-r-fill-mid expected=fill x=108 y=30 rgba=17,24,39,255
-probe=text-d-fill-mid expected=fill x=136 y=30 rgba=17,24,39,255
-probe=text-i-fill-mid expected=fill x=172 y=30 rgba=17,24,39,255
-probe=text-background-bottom expected=transparent x=180 y=55 rgba=0,0,0,0
+probe=text-background-top expected=transparent tolerance=alpha-zero x=100 y=5 rgba=0,0,0,0
+probe=text-g-fill-top expected=fill tolerance=exact-fill-rgba x=12 y=15 rgba=17,24,39,255
+probe=text-e-fill-mid expected=fill tolerance=exact-fill-rgba x=40 y=30 rgba=17,24,39,255
+probe=text-o-fill-mid expected=fill tolerance=exact-fill-rgba x=68 y=30 rgba=17,24,39,255
+probe=text-r-fill-mid expected=fill tolerance=exact-fill-rgba x=108 y=30 rgba=17,24,39,255
+probe=text-d-fill-mid expected=fill tolerance=exact-fill-rgba x=136 y=30 rgba=17,24,39,255
+probe=text-i-fill-mid expected=fill tolerance=exact-fill-rgba x=172 y=30 rgba=17,24,39,255
+probe=text-background-bottom expected=transparent tolerance=alpha-zero x=180 y=55 rgba=0,0,0,0
 rendered=true
 smoke=passed
 ```

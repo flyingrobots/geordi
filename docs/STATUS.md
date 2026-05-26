@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the lowest active open node is `S068`, stable text probe policy, after browser and native strict
-text coarse pixel probes landed.
+the lowest active open node is `S069`, nonblank text bounds check, after the shared strict text probe
+policy artifact landed.
 
 ## Completed Capabilities
 
@@ -31,7 +31,7 @@ text coarse pixel probes landed.
 | GraphQL SDL adapter | Source-located SDL extraction and typed diagnostic transport into compiler-core. |
 | Core IR | `geordi-ir/1` constants, validation, numeric profile, JSON port, and feature vocabulary. |
 | Runtime profile | Runtime feature support checks reject missing, malformed, unknown, or unsupported requirements. |
-| Render fixture package | Shared fixture contracts, hash helpers, mesh/font/strict-text manifest validators, and Node helpers. |
+| Render fixture package | Shared fixture contracts, hash helpers, mesh/font/strict-text/probe-policy validators, and Node helpers. |
 | GPVue fixture compiler | Constrained GPVue source can reproduce the checked-in hello-panel render fixture. |
 | Browser proof harness | Browser canvas harness renders rectangle and bunny proof paths. |
 | Native Rust proof harness | Rust workspace loads, validates, and renders rectangle and bunny proof paths. |
@@ -42,7 +42,7 @@ text coarse pixel probes landed.
 | Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, covered by glyph-id smoke tests, parsed by TypeScript/Rust DTO APIs, and guarded by command-shape failure fixtures. |
 | Browser strict text renderer | Browser harness code can load a strict text fixture/evidence/font-pack asset set, validate font references, render parsed outline evidence into Canvas path geometry without calling Canvas text APIs, disclose the strict text metadata contract in the browser UI, and pass Playwright nonblank/text-API/coarse-probe smoke. |
 | Native strict text renderer | Rust renderer code can validate a strict text fixture/evidence pair, lower fixed 26.6 outline evidence into software path segments, fill nonzero outline geometry into the shared RGBA8 buffer, and report native strict text renderer metadata. The native harness has `--strict-text-smoke` for offscreen fixture/evidence/font validation, rendering, browser-aligned metadata reporting, nonblank visible-text smoke, and named coarse pixel probes without opening a window. |
-| Strict text parity | Browser and native strict text reports now compare exact fixture/font/glyph-run/line-box/evidence/profile/count/semantic metadata before any pixel parity claim, and both runtimes guard the canonical text proof with named fill/transparent coarse probes. |
+| Strict text parity | Browser and native strict text reports now compare exact fixture/font/glyph-run/line-box/evidence/profile/count/semantic metadata before any pixel parity claim, and both runtimes guard the canonical text proof with the same fixture-local fill/transparent probe policy. |
 
 ## Active Work
 

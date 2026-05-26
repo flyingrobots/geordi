@@ -25,6 +25,7 @@ Schema:
 fixtures/render-everywhere/strict-text/outline-evidence-pack.schema.md
 fixtures/render-everywhere/strict-text/strict-text-fixture.schema.md
 fixtures/render-everywhere/strict-text/strict-text-fixture-receipt.schema.md
+fixtures/render-everywhere/strict-text/strict-text-probe-policy.schema.md
 ~~~
 
 `outline-evidence-pack.schema.md` defines `geordi-glyph-evidence-pack/1`, the fixture-local
@@ -47,6 +48,7 @@ Canonical fixture A:
 ~~~text
 fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
 fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json
 ~~~
 
 The S041 fixture records the semantic text `GEORDI` using the committed Lato Regular font pack. Glyph
@@ -55,6 +57,9 @@ fixed `geordi-fixed-26.6/1` integers. Runtime shaping remains outside the compli
 The S053 outline evidence pack covers glyph ids `14`, `11`, `27`, `33`, `9`, and `17` with
 fixture-local `outlinePaths` geometry from the same font bytes. Its current committed byte hash is
 `sha256:218890095219e9ce6753f2fef177d629a43b571ec37f01635dc31ba3601b4af3`.
+The S068 probe policy defines the named coarse browser/native sample points for this fixture. It is
+blocking smoke only: fill probes must match the evidence paint exactly, transparent probes must have
+alpha zero, and contour-edge samples are explicitly non-stable.
 
 Canonical fixture B:
 

@@ -20,6 +20,7 @@ import {
   assertRenderFixtureStrictTextFontReferences,
   assertRenderFixtureStrictTextFixtureManifest,
   assertRenderFixtureStrictTextOutlineEvidencePack,
+  assertRenderFixtureStrictTextProbePolicy,
   assertRenderFixtureStrictTextFixtureReceipt,
   createRenderFixtureMeshPlaybackFrame,
   isRenderFixtureFontPackManifest,
@@ -28,6 +29,7 @@ import {
   isRenderFixtureManifest,
   isRenderFixtureStrictTextFixtureManifest,
   isRenderFixtureStrictTextOutlineEvidencePack,
+  isRenderFixtureStrictTextProbePolicy,
   isRenderFixtureStrictTextFixtureReceipt,
   parseRenderFixtureAsciiPlyTriangleMesh,
   parseRenderFixtureFontPackManifest,
@@ -36,6 +38,7 @@ import {
   parseRenderFixtureManifest,
   parseRenderFixtureStrictTextFixtureManifest,
   parseRenderFixtureStrictTextOutlineEvidencePack,
+  parseRenderFixtureStrictTextProbePolicy,
   parseRenderFixtureStrictTextFixtureReceipt,
   RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE,
   RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING,
@@ -54,6 +57,14 @@ import {
   RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
   RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION,
   RENDER_FIXTURE_STRICT_TEXT_FIXTURE_VERSION,
+  RENDER_FIXTURE_STRICT_TEXT_PROBE_ANTI_ALIAS_EDGE_POLICY,
+  RENDER_FIXTURE_STRICT_TEXT_PROBE_EXPECTATION_FILL,
+  RENDER_FIXTURE_STRICT_TEXT_PROBE_EXPECTATION_TRANSPARENT,
+  RENDER_FIXTURE_STRICT_TEXT_PROBE_POLICY_VERSION,
+  RENDER_FIXTURE_STRICT_TEXT_PROBE_STABILITY_BACKGROUND_OUTSIDE_GLYPH_BOUNDS,
+  RENDER_FIXTURE_STRICT_TEXT_PROBE_STABILITY_INTERIOR_FILL_AWAY_FROM_EDGE,
+  RENDER_FIXTURE_STRICT_TEXT_PROBE_TOLERANCE_ALPHA_ZERO,
+  RENDER_FIXTURE_STRICT_TEXT_PROBE_TOLERANCE_EXACT_FILL_RGBA,
   RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
   RENDER_FIXTURE_TEXT_FEATURE_FONT_PACK,
   RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES,
@@ -71,6 +82,7 @@ import {
   RenderFixtureInvalidStrictTextFontReferenceError,
   RenderFixtureInvalidStrictTextFixtureManifestError,
   RenderFixtureInvalidStrictTextOutlineEvidencePackError,
+  RenderFixtureInvalidStrictTextProbePolicyError,
   RenderFixtureInvalidStrictTextFixtureReceiptError,
   RenderFixturePlyFaceError,
   RenderFixturePlyHeaderError,
@@ -85,6 +97,7 @@ import {
   validateRenderFixtureStrictTextFontReferences,
   validateRenderFixtureStrictTextFixtureManifest,
   validateRenderFixtureStrictTextOutlineEvidencePack,
+  validateRenderFixtureStrictTextProbePolicy,
   validateRenderFixtureStrictTextFixtureReceipt,
   type RenderFixtureFontPackManifest,
   type RenderFixtureManifest,
@@ -93,6 +106,7 @@ import {
   type RenderFixturePixelProbe,
   type RenderFixtureStrictTextFixtureManifest,
   type RenderFixtureStrictTextOutlineEvidencePack,
+  type RenderFixtureStrictTextProbePolicy,
   type RenderFixtureStrictTextFixtureReceipt,
 } from './index.js';
 
@@ -341,6 +355,49 @@ function makeStrictTextOutlineEvidencePack(): RenderFixtureStrictTextOutlineEvid
   };
 }
 
+function makeStrictTextProbePolicy(): RenderFixtureStrictTextProbePolicy {
+  return {
+    antiAliasEdgePolicy: RENDER_FIXTURE_STRICT_TEXT_PROBE_ANTI_ALIAS_EDGE_POLICY,
+    canvas: {
+      height: 64,
+      width: 192,
+    },
+    evidencePackId: 'render-everywhere:strict-text:geordi:outline-evidence',
+    evidencePackPath: 'fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json',
+    fillRgba: [17, 24, 39, 255],
+    fixtureId: 'render-everywhere:strict-text:geordi',
+    fixturePath: 'fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json',
+    id: 'render-everywhere:strict-text:geordi:probe-policy',
+    nonclaim:
+      'Coarse visibility smoke only. This policy does not claim full antialiasing identity, pixel-identical rasterization, shaping support, or general text rendering.',
+    probePolicyVersion: RENDER_FIXTURE_STRICT_TEXT_PROBE_POLICY_VERSION,
+    probes: [
+      {
+        coordinateSource:
+          'Manual sample from the canonical GEORDI outline evidence interior, away from the observed contour edge.',
+        expectation: RENDER_FIXTURE_STRICT_TEXT_PROBE_EXPECTATION_FILL,
+        id: 'text-g-fill-top',
+        purpose: 'Prove an interior G fill pixel is present near the top of the glyph run.',
+        stability: RENDER_FIXTURE_STRICT_TEXT_PROBE_STABILITY_INTERIOR_FILL_AWAY_FROM_EDGE,
+        tolerance: RENDER_FIXTURE_STRICT_TEXT_PROBE_TOLERANCE_EXACT_FILL_RGBA,
+        x: 12,
+        y: 15,
+      },
+      {
+        coordinateSource:
+          'Manual sample above the canonical GEORDI outline evidence and outside the observed nonblank text bounds.',
+        expectation: RENDER_FIXTURE_STRICT_TEXT_PROBE_EXPECTATION_TRANSPARENT,
+        id: 'text-background-top',
+        purpose: 'Prove the text canvas keeps transparent background above the glyph evidence.',
+        stability: RENDER_FIXTURE_STRICT_TEXT_PROBE_STABILITY_BACKGROUND_OUTSIDE_GLYPH_BOUNDS,
+        tolerance: RENDER_FIXTURE_STRICT_TEXT_PROBE_TOLERANCE_ALPHA_ZERO,
+        x: 100,
+        y: 5,
+      },
+    ],
+  };
+}
+
 function makeMeshFixtureManifest(): RenderFixtureMeshFixtureManifest {
   return {
     assetManifestPath: 'bunny.mesh.json',
@@ -441,6 +498,16 @@ function strictTextFixtureBSource(): string {
   return readFileSync(
     new URL(
       '../../../fixtures/render-everywhere/strict-text/text-0123.strict-text.geordi.json',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
+function strictTextProbePolicySource(): string {
+  return readFileSync(
+    new URL(
+      '../../../fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json',
       import.meta.url,
     ),
     'utf8',
@@ -1221,6 +1288,93 @@ describe('render fixture strict text fixture manifest validation', () => {
     expect(() => parseRenderFixtureStrictTextOutlineEvidencePack(
       strictTextOutlineEvidenceFailureSource('bad-outline-command'),
     )).toThrow(RenderFixtureInvalidStrictTextOutlineEvidencePackError);
+  });
+
+  it('accepts a typed valid strict text probe policy object', () => {
+    const policy = makeStrictTextProbePolicy();
+
+    expect(validateRenderFixtureStrictTextProbePolicy(policy)).toEqual({
+      ok: true,
+      issues: [],
+    });
+    expect(isRenderFixtureStrictTextProbePolicy(policy)).toBe(true);
+    expect(assertRenderFixtureStrictTextProbePolicy(policy)).toBe(policy);
+  });
+
+  it('loads the canonical strict text probe policy', () => {
+    const source = strictTextProbePolicySource();
+    const policy = parseRenderFixtureStrictTextProbePolicy(source);
+
+    expect(`${canonicalJsonPort.stringify(policy, { space: 2 })}\n`).toBe(source);
+    expect(policy.probePolicyVersion).toBe(RENDER_FIXTURE_STRICT_TEXT_PROBE_POLICY_VERSION);
+    expect(policy.fixtureId).toBe('render-everywhere:strict-text:geordi');
+    expect(policy.evidencePackId).toBe(
+      'render-everywhere:strict-text:geordi:outline-evidence',
+    );
+    expect(policy.fillRgba).toEqual([17, 24, 39, 255]);
+    expect(policy.probes.map((probe) => probe.id)).toEqual([
+      'text-background-top',
+      'text-g-fill-top',
+      'text-e-fill-mid',
+      'text-o-fill-mid',
+      'text-r-fill-mid',
+      'text-d-fill-mid',
+      'text-i-fill-mid',
+      'text-background-bottom',
+    ]);
+  });
+
+  it('rejects unstable strict text probe policies', () => {
+    const invalid: JsonValue = {
+      ...makeStrictTextProbePolicy(),
+      antiAliasEdgePolicy: 'edge-probes-are-blocking',
+      fixturePath: 'fixtures/render-everywhere/assets/fonts/font-pack.geordi.json',
+      probePolicyVersion: 'geordi-strict-text-probe-policy/2',
+      probes: [
+        {
+          coordinateSource: '',
+          expectation: RENDER_FIXTURE_STRICT_TEXT_PROBE_EXPECTATION_FILL,
+          id: 'edge-probe',
+          purpose: '',
+          stability: RENDER_FIXTURE_STRICT_TEXT_PROBE_STABILITY_BACKGROUND_OUTSIDE_GLYPH_BOUNDS,
+          tolerance: RENDER_FIXTURE_STRICT_TEXT_PROBE_TOLERANCE_ALPHA_ZERO,
+          x: 192,
+          y: -1,
+        },
+        {
+          coordinateSource: 'duplicate edge sample',
+          expectation: RENDER_FIXTURE_STRICT_TEXT_PROBE_EXPECTATION_FILL,
+          id: 'edge-probe',
+          purpose: 'duplicate id',
+          stability: RENDER_FIXTURE_STRICT_TEXT_PROBE_STABILITY_BACKGROUND_OUTSIDE_GLYPH_BOUNDS,
+          tolerance: RENDER_FIXTURE_STRICT_TEXT_PROBE_TOLERANCE_ALPHA_ZERO,
+          x: 12,
+          y: 15,
+        },
+      ],
+    };
+
+    const result = validateRenderFixtureStrictTextProbePolicy(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual(
+      expect.arrayContaining([
+        '$.probePolicyVersion',
+        '$.fixturePath',
+        '$.antiAliasEdgePolicy',
+        '$.probes',
+        '$.probes[0].x',
+        '$.probes[0].y',
+        '$.probes[0].purpose',
+        '$.probes[0].coordinateSource',
+        '$.probes[0].tolerance',
+        '$.probes[0].stability',
+        '$.probes[1].id',
+      ]),
+    );
+    expect(() => assertRenderFixtureStrictTextProbePolicy(invalid)).toThrow(
+      RenderFixtureInvalidStrictTextProbePolicyError,
+    );
   });
 
   it('accepts a typed valid strict text fixture receipt object', () => {

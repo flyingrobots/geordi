@@ -37,17 +37,11 @@ const NATIVE_RENDERER_NAME: &str = "rust-software-rectangles";
 const STRICT_TEXT_FIXTURE_ROOT_FROM_REPO: &str = "fixtures/render-everywhere/strict-text";
 const STRICT_TEXT_FIXTURE_SUFFIX: &str = ".strict-text.geordi.json";
 const STRICT_TEXT_OUTLINE_EVIDENCE_SUFFIX: &str = ".outline-evidence.geordi.json";
+const STRICT_TEXT_PROBE_POLICY_SUFFIX: &str = ".probe-policy.geordi.json";
+const STRICT_TEXT_PROBE_POLICY_VERSION: &str = "geordi-strict-text-probe-policy/1";
+const STRICT_TEXT_PROBE_ANTI_ALIAS_EDGE_POLICY: &str =
+    "edge-probes-are-non-stable-and-must-not-block";
 const STRICT_TEXT_SEMANTIC_TEXT_ROLE: &str = "non-rendering metadata; pixels follow glyph evidence";
-const NATIVE_STRICT_TEXT_PIXEL_PROBES: &[NativeStrictTextProbe] = &[
-    NativeStrictTextProbe::transparent("text-background-top", 100, 5),
-    NativeStrictTextProbe::fill("text-g-fill-top", 12, 15),
-    NativeStrictTextProbe::fill("text-e-fill-mid", 40, 30),
-    NativeStrictTextProbe::fill("text-o-fill-mid", 68, 30),
-    NativeStrictTextProbe::fill("text-r-fill-mid", 108, 30),
-    NativeStrictTextProbe::fill("text-d-fill-mid", 136, 30),
-    NativeStrictTextProbe::fill("text-i-fill-mid", 172, 30),
-    NativeStrictTextProbe::transparent("text-background-bottom", 180, 55),
-];
 fn main() -> Result<(), NativeAppError> {
     run_from_env(env::args_os())
 }
@@ -231,6 +225,7 @@ struct LoadedStrictTextFixture {
     fixture_path: PathBuf,
     image: RenderedImage,
     metadata: NativeStrictTextMetadataReport,
+    probe_policy: NativeStrictTextProbePolicyReport,
     probes: Vec<NativeStrictTextProbeReport>,
     smoke: NativeStrictTextSmokeReport,
 }
@@ -267,9 +262,11 @@ struct NativeStrictTextSmokeReport {
     nonblank_pixel_count: usize,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
 enum NativeStrictTextProbeExpectation {
+    #[serde(rename = "fill")]
     Fill,
+    #[serde(rename = "transparent")]
     Transparent,
 }
 
@@ -282,41 +279,99 @@ impl NativeStrictTextProbeExpectation {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+enum NativeStrictTextProbeTolerance {
+    #[serde(rename = "alpha-zero")]
+    AlphaZero,
+    #[serde(rename = "exact-fill-rgba")]
+    ExactFillRgba,
+}
+
+impl NativeStrictTextProbeTolerance {
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::AlphaZero => "alpha-zero",
+            Self::ExactFillRgba => "exact-fill-rgba",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+enum NativeStrictTextProbeStability {
+    #[serde(rename = "background-outside-glyph-bounds")]
+    BackgroundOutsideGlyphBounds,
+    #[serde(rename = "interior-fill-away-from-edge")]
+    InteriorFillAwayFromEdge,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct NativeStrictTextProbe {
+    coordinate_source: String,
     expectation: NativeStrictTextProbeExpectation,
-    id: &'static str,
+    id: String,
+    purpose: String,
+    stability: NativeStrictTextProbeStability,
+    tolerance: NativeStrictTextProbeTolerance,
     x: usize,
     y: usize,
 }
 
 impl NativeStrictTextProbe {
-    const fn fill(id: &'static str, x: usize, y: usize) -> Self {
+    #[cfg(test)]
+    fn fill(id: &str, x: usize, y: usize) -> Self {
         Self {
+            coordinate_source: "test".to_owned(),
             expectation: NativeStrictTextProbeExpectation::Fill,
-            id,
-            x,
-            y,
-        }
-    }
-
-    const fn transparent(id: &'static str, x: usize, y: usize) -> Self {
-        Self {
-            expectation: NativeStrictTextProbeExpectation::Transparent,
-            id,
+            id: id.to_owned(),
+            purpose: "test".to_owned(),
+            stability: NativeStrictTextProbeStability::InteriorFillAwayFromEdge,
+            tolerance: NativeStrictTextProbeTolerance::ExactFillRgba,
             x,
             y,
         }
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct NativeStrictTextProbeReport {
     actual: [u8; 4],
     expectation: NativeStrictTextProbeExpectation,
-    id: &'static str,
+    id: String,
+    tolerance: NativeStrictTextProbeTolerance,
     x: usize,
     y: usize,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct NativeStrictTextProbePolicy {
+    anti_alias_edge_policy: String,
+    canvas: NativeStrictTextProbePolicyCanvas,
+    evidence_pack_id: String,
+    evidence_pack_path: String,
+    fill_rgba: [u8; 4],
+    fixture_id: String,
+    fixture_path: String,
+    id: String,
+    nonclaim: String,
+    probe_policy_version: String,
+    probes: Vec<NativeStrictTextProbe>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct NativeStrictTextProbePolicyCanvas {
+    height: usize,
+    width: usize,
+}
+
+#[derive(Clone, Debug)]
+struct NativeStrictTextProbePolicyReport {
+    hash: String,
+    id: String,
+    path: PathBuf,
+    version: String,
 }
 
 #[derive(Debug)]
@@ -413,6 +468,9 @@ enum NativeAppError {
     StrictTextLoad(GeordiStrictTextFixtureLoadError),
     StrictTextPath(NativeStrictTextPathError),
     StrictTextProbe(NativeStrictTextProbeError),
+    StrictTextProbePolicyLoad(NativeStrictTextProbePolicyLoadError),
+    StrictTextProbePolicyParse(NativeStrictTextProbePolicyParseError),
+    StrictTextProbePolicyValidation(NativeStrictTextProbePolicyValidationError),
     StrictTextReceipt(GeordiStrictTextFixtureReceiptError),
     StrictTextRender(GeordiStrictTextRenderError),
     StrictTextSmoke(NativeStrictTextSmokeError),
@@ -450,6 +508,9 @@ impl Error for NativeAppError {
             Self::StrictTextLoad(source) => Some(source),
             Self::StrictTextPath(source) => Some(source),
             Self::StrictTextProbe(source) => Some(source),
+            Self::StrictTextProbePolicyLoad(source) => Some(source),
+            Self::StrictTextProbePolicyParse(source) => Some(source),
+            Self::StrictTextProbePolicyValidation(source) => Some(source),
             Self::StrictTextReceipt(source) => Some(source),
             Self::StrictTextRender(source) => Some(source),
             Self::StrictTextSmoke(source) => Some(source),
@@ -583,6 +644,24 @@ impl From<GeordiStrictTextRenderError> for NativeAppError {
 impl From<NativeStrictTextProbeError> for NativeAppError {
     fn from(error: NativeStrictTextProbeError) -> Self {
         Self::StrictTextProbe(error)
+    }
+}
+
+impl From<NativeStrictTextProbePolicyLoadError> for NativeAppError {
+    fn from(error: NativeStrictTextProbePolicyLoadError) -> Self {
+        Self::StrictTextProbePolicyLoad(error)
+    }
+}
+
+impl From<NativeStrictTextProbePolicyParseError> for NativeAppError {
+    fn from(error: NativeStrictTextProbePolicyParseError) -> Self {
+        Self::StrictTextProbePolicyParse(error)
+    }
+}
+
+impl From<NativeStrictTextProbePolicyValidationError> for NativeAppError {
+    fn from(error: NativeStrictTextProbePolicyValidationError) -> Self {
+        Self::StrictTextProbePolicyValidation(error)
     }
 }
 
@@ -981,18 +1060,18 @@ struct NativeStrictTextProbeError {
     actual: Option<[u8; 4]>,
     expectation: NativeStrictTextProbeExpectation,
     fixture_id: String,
-    probe_id: &'static str,
+    probe_id: String,
     x: usize,
     y: usize,
 }
 
 impl NativeStrictTextProbeError {
-    fn new(fixture_id: &str, probe: NativeStrictTextProbe, actual: Option<[u8; 4]>) -> Self {
+    fn new(fixture_id: &str, probe: &NativeStrictTextProbe, actual: Option<[u8; 4]>) -> Self {
         Self {
             actual,
             expectation: probe.expectation,
             fixture_id: fixture_id.to_owned(),
-            probe_id: probe.id,
+            probe_id: probe.id.clone(),
             x: probe.x,
             y: probe.y,
         }
@@ -1015,6 +1094,104 @@ impl Display for NativeStrictTextProbeError {
 }
 
 impl Error for NativeStrictTextProbeError {}
+
+#[derive(Debug)]
+struct NativeStrictTextProbePolicyLoadError {
+    path: PathBuf,
+    source: io::Error,
+}
+
+impl NativeStrictTextProbePolicyLoadError {
+    const fn new(path: PathBuf, source: io::Error) -> Self {
+        Self { path, source }
+    }
+}
+
+impl Display for NativeStrictTextProbePolicyLoadError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Native strict text probe policy load failed: {}",
+            self.path.display()
+        )
+    }
+}
+
+impl Error for NativeStrictTextProbePolicyLoadError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.source)
+    }
+}
+
+#[derive(Debug)]
+struct NativeStrictTextProbePolicyParseError {
+    path: PathBuf,
+    source: serde_json::Error,
+}
+
+impl NativeStrictTextProbePolicyParseError {
+    const fn new(path: PathBuf, source: serde_json::Error) -> Self {
+        Self { path, source }
+    }
+}
+
+impl Display for NativeStrictTextProbePolicyParseError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Native strict text probe policy parse failed: {}",
+            self.path.display()
+        )
+    }
+}
+
+impl Error for NativeStrictTextProbePolicyParseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.source)
+    }
+}
+
+#[derive(Debug)]
+struct NativeStrictTextProbePolicyValidationError {
+    issues: Vec<NativeStrictTextProbePolicyValidationIssue>,
+}
+
+impl NativeStrictTextProbePolicyValidationError {
+    const fn new(issues: Vec<NativeStrictTextProbePolicyValidationIssue>) -> Self {
+        Self { issues }
+    }
+}
+
+impl Display for NativeStrictTextProbePolicyValidationError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        if let Some(issue) = self.issues.first() {
+            write!(
+                formatter,
+                "Native strict text probe policy validation failed at {}: {}",
+                issue.path, issue.message
+            )
+        } else {
+            formatter.write_str("Native strict text probe policy validation failed")
+        }
+    }
+}
+
+impl Error for NativeStrictTextProbePolicyValidationError {}
+
+#[derive(Debug)]
+struct NativeStrictTextProbePolicyValidationIssue {
+    message: String,
+    path: String,
+}
+
+impl NativeStrictTextProbePolicyValidationIssue {
+    fn new(path: &str, message: &str) -> Self {
+        Self {
+            message: message.to_owned(),
+            path: path.to_owned(),
+        }
+    }
+}
 
 #[derive(Debug)]
 struct NativeWindowError {
@@ -1117,10 +1294,20 @@ fn load_strict_text_fixture(
     let metadata =
         create_strict_text_metadata_report(&fixture, &evidence_path, receipt, result.report)?;
     let smoke = assert_strict_text_visible(&result.image)?;
+    let probe_policy_path = derive_strict_text_probe_policy_path(&fixture_path)?;
+    let (probe_policy, probe_policy_report) = load_strict_text_probe_policy(&probe_policy_path)?;
+    validate_strict_text_probe_policy(
+        &probe_policy,
+        &metadata,
+        &fixture_repo_path,
+        &repository_relative_path(&evidence_path)?,
+        &result.image,
+    )?;
     let probes = assert_strict_text_pixel_probes(
         &metadata.fixture_id,
         &result.image,
-        NATIVE_STRICT_TEXT_PIXEL_PROBES,
+        probe_policy.fill_rgba,
+        &probe_policy.probes,
     )?;
 
     Ok(LoadedStrictTextFixture {
@@ -1128,6 +1315,7 @@ fn load_strict_text_fixture(
         fixture_path,
         image: result.image,
         metadata,
+        probe_policy: probe_policy_report,
         probes,
         smoke,
     })
@@ -1162,6 +1350,294 @@ fn create_strict_text_metadata_report(
         semantic_text_source: fixture.semantic_text.source.clone(),
         text_profile: render_report.text_profile,
     })
+}
+
+fn load_strict_text_probe_policy(
+    path: &Path,
+) -> Result<
+    (
+        NativeStrictTextProbePolicy,
+        NativeStrictTextProbePolicyReport,
+    ),
+    NativeAppError,
+> {
+    let bytes = fs::read(path)
+        .map_err(|error| NativeStrictTextProbePolicyLoadError::new(path.to_path_buf(), error))?;
+    let policy = serde_json::from_slice::<NativeStrictTextProbePolicy>(&bytes)
+        .map_err(|error| NativeStrictTextProbePolicyParseError::new(path.to_path_buf(), error))?;
+    let report = NativeStrictTextProbePolicyReport {
+        hash: geordi_sha256_from_bytes(&bytes),
+        id: policy.id.clone(),
+        path: path.to_path_buf(),
+        version: policy.probe_policy_version.clone(),
+    };
+
+    Ok((policy, report))
+}
+
+fn validate_strict_text_probe_policy(
+    policy: &NativeStrictTextProbePolicy,
+    metadata: &NativeStrictTextMetadataReport,
+    fixture_repo_path: &str,
+    evidence_repo_path: &str,
+    image: &RenderedImage,
+) -> Result<(), NativeStrictTextProbePolicyValidationError> {
+    let mut issues = Vec::new();
+
+    push_strict_text_probe_policy_literal_issue(
+        &policy.probe_policy_version,
+        STRICT_TEXT_PROBE_POLICY_VERSION,
+        "$.probePolicyVersion",
+        "Strict text probe policy version",
+        &mut issues,
+    );
+    push_strict_text_probe_policy_literal_issue(
+        &policy.anti_alias_edge_policy,
+        STRICT_TEXT_PROBE_ANTI_ALIAS_EDGE_POLICY,
+        "$.antiAliasEdgePolicy",
+        "Strict text probe policy anti-alias edge policy",
+        &mut issues,
+    );
+    push_strict_text_probe_policy_literal_issue(
+        &policy.fixture_id,
+        &metadata.fixture_id,
+        "$.fixtureId",
+        "Strict text probe policy fixture id",
+        &mut issues,
+    );
+    push_strict_text_probe_policy_literal_issue(
+        &policy.fixture_path,
+        fixture_repo_path,
+        "$.fixturePath",
+        "Strict text probe policy fixture path",
+        &mut issues,
+    );
+    push_strict_text_probe_policy_literal_issue(
+        &policy.evidence_pack_id,
+        &metadata.evidence_pack_id,
+        "$.evidencePackId",
+        "Strict text probe policy evidence pack id",
+        &mut issues,
+    );
+    push_strict_text_probe_policy_literal_issue(
+        &policy.evidence_pack_path,
+        evidence_repo_path,
+        "$.evidencePackPath",
+        "Strict text probe policy evidence pack path",
+        &mut issues,
+    );
+
+    if policy.id.is_empty() {
+        push_strict_text_probe_policy_issue(
+            &mut issues,
+            "$.id",
+            "Strict text probe policy id must be non-empty",
+        );
+    }
+    if policy.nonclaim.is_empty() {
+        push_strict_text_probe_policy_issue(
+            &mut issues,
+            "$.nonclaim",
+            "Strict text probe policy nonclaim must be non-empty",
+        );
+    }
+    if policy.canvas.width != image.width() {
+        push_strict_text_probe_policy_issue(
+            &mut issues,
+            "$.canvas.width",
+            "Strict text probe policy canvas width must match rendered image",
+        );
+    }
+    if policy.canvas.height != image.height() {
+        push_strict_text_probe_policy_issue(
+            &mut issues,
+            "$.canvas.height",
+            "Strict text probe policy canvas height must match rendered image",
+        );
+    }
+
+    validate_strict_text_probe_policy_probes(policy, image, &mut issues);
+
+    if issues.is_empty() {
+        Ok(())
+    } else {
+        Err(NativeStrictTextProbePolicyValidationError::new(issues))
+    }
+}
+
+fn validate_strict_text_probe_policy_probes(
+    policy: &NativeStrictTextProbePolicy,
+    image: &RenderedImage,
+    issues: &mut Vec<NativeStrictTextProbePolicyValidationIssue>,
+) {
+    if policy.probes.is_empty() {
+        push_strict_text_probe_policy_issue(
+            issues,
+            "$.probes",
+            "Strict text probe policy probes must not be empty",
+        );
+        return;
+    }
+
+    let mut seen_ids = std::collections::BTreeSet::new();
+    let mut fill_count = 0_usize;
+    let mut transparent_count = 0_usize;
+    for (index, probe) in policy.probes.iter().enumerate() {
+        let path = format!("$.probes[{index}]");
+        let (is_fill, is_transparent) =
+            validate_strict_text_probe_policy_probe(probe, &path, image, &mut seen_ids, issues);
+        fill_count += usize::from(is_fill);
+        transparent_count += usize::from(is_transparent);
+    }
+
+    if fill_count == 0 {
+        push_strict_text_probe_policy_issue(
+            issues,
+            "$.probes",
+            "Strict text probe policy must include at least one fill probe",
+        );
+    }
+    if transparent_count == 0 {
+        push_strict_text_probe_policy_issue(
+            issues,
+            "$.probes",
+            "Strict text probe policy must include at least one transparent probe",
+        );
+    }
+}
+
+fn validate_strict_text_probe_policy_probe<'a>(
+    probe: &'a NativeStrictTextProbe,
+    path: &str,
+    image: &RenderedImage,
+    seen_ids: &mut std::collections::BTreeSet<&'a str>,
+    issues: &mut Vec<NativeStrictTextProbePolicyValidationIssue>,
+) -> (bool, bool) {
+    validate_strict_text_probe_policy_probe_metadata(probe, path, image, seen_ids, issues);
+    match probe.expectation {
+        NativeStrictTextProbeExpectation::Fill => {
+            validate_strict_text_probe_policy_fill_probe(probe, path, issues);
+            (true, false)
+        }
+        NativeStrictTextProbeExpectation::Transparent => {
+            validate_strict_text_probe_policy_transparent_probe(probe, path, issues);
+            (false, true)
+        }
+    }
+}
+
+fn validate_strict_text_probe_policy_probe_metadata<'a>(
+    probe: &'a NativeStrictTextProbe,
+    path: &str,
+    image: &RenderedImage,
+    seen_ids: &mut std::collections::BTreeSet<&'a str>,
+    issues: &mut Vec<NativeStrictTextProbePolicyValidationIssue>,
+) {
+    if probe.id.is_empty() {
+        push_strict_text_probe_policy_issue(
+            issues,
+            &format!("{path}.id"),
+            "Strict text probe policy probe id must be non-empty",
+        );
+    } else if !seen_ids.insert(probe.id.as_str()) {
+        push_strict_text_probe_policy_issue(
+            issues,
+            &format!("{path}.id"),
+            "Strict text probe policy probe id must not be duplicated",
+        );
+    }
+    if probe.purpose.is_empty() {
+        push_strict_text_probe_policy_issue(
+            issues,
+            &format!("{path}.purpose"),
+            "Strict text probe policy probe purpose must be non-empty",
+        );
+    }
+    if probe.coordinate_source.is_empty() {
+        push_strict_text_probe_policy_issue(
+            issues,
+            &format!("{path}.coordinateSource"),
+            "Strict text probe policy probe coordinate source must be non-empty",
+        );
+    }
+    if probe.x >= image.width() {
+        push_strict_text_probe_policy_issue(
+            issues,
+            &format!("{path}.x"),
+            "Strict text probe policy probe x must be inside the canvas",
+        );
+    }
+    if probe.y >= image.height() {
+        push_strict_text_probe_policy_issue(
+            issues,
+            &format!("{path}.y"),
+            "Strict text probe policy probe y must be inside the canvas",
+        );
+    }
+}
+
+fn validate_strict_text_probe_policy_fill_probe(
+    probe: &NativeStrictTextProbe,
+    path: &str,
+    issues: &mut Vec<NativeStrictTextProbePolicyValidationIssue>,
+) {
+    if probe.tolerance != NativeStrictTextProbeTolerance::ExactFillRgba {
+        push_strict_text_probe_policy_issue(
+            issues,
+            &format!("{path}.tolerance"),
+            "Strict text fill probes must use exact-fill-rgba tolerance",
+        );
+    }
+    if probe.stability != NativeStrictTextProbeStability::InteriorFillAwayFromEdge {
+        push_strict_text_probe_policy_issue(
+            issues,
+            &format!("{path}.stability"),
+            "Strict text fill probes must be interior-fill-away-from-edge",
+        );
+    }
+}
+
+fn validate_strict_text_probe_policy_transparent_probe(
+    probe: &NativeStrictTextProbe,
+    path: &str,
+    issues: &mut Vec<NativeStrictTextProbePolicyValidationIssue>,
+) {
+    if probe.tolerance != NativeStrictTextProbeTolerance::AlphaZero {
+        push_strict_text_probe_policy_issue(
+            issues,
+            &format!("{path}.tolerance"),
+            "Strict text transparent probes must use alpha-zero tolerance",
+        );
+    }
+    if probe.stability != NativeStrictTextProbeStability::BackgroundOutsideGlyphBounds {
+        push_strict_text_probe_policy_issue(
+            issues,
+            &format!("{path}.stability"),
+            "Strict text transparent probes must be background-outside-glyph-bounds",
+        );
+    }
+}
+
+fn push_strict_text_probe_policy_literal_issue(
+    actual: &str,
+    expected: &str,
+    path: &str,
+    label: &str,
+    issues: &mut Vec<NativeStrictTextProbePolicyValidationIssue>,
+) {
+    if actual != expected {
+        push_strict_text_probe_policy_issue(issues, path, &format!("{label} must be {expected}"));
+    }
+}
+
+fn push_strict_text_probe_policy_issue(
+    issues: &mut Vec<NativeStrictTextProbePolicyValidationIssue>,
+    path: &str,
+    message: &str,
+) {
+    issues.push(NativeStrictTextProbePolicyValidationIssue::new(
+        path, message,
+    ));
 }
 
 fn assert_strict_text_visible(
@@ -1207,29 +1683,37 @@ fn assert_strict_text_visible(
 fn assert_strict_text_pixel_probes(
     fixture_id: &str,
     image: &RenderedImage,
+    fill_rgba: [u8; 4],
     probes: &[NativeStrictTextProbe],
 ) -> Result<Vec<NativeStrictTextProbeReport>, NativeStrictTextProbeError> {
     let mut reports = Vec::with_capacity(probes.len());
     for probe in probes {
         let actual = image
             .pixel_at(probe.x, probe.y)
-            .ok_or_else(|| NativeStrictTextProbeError::new(fixture_id, *probe, None))?;
-        let passes = matches!(
-            (probe.expectation, actual),
-            (NativeStrictTextProbeExpectation::Fill, [17, 24, 39, 255])
-                | (NativeStrictTextProbeExpectation::Transparent, [_, _, _, 0])
-        );
+            .ok_or_else(|| NativeStrictTextProbeError::new(fixture_id, probe, None))?;
+        let passes = match (probe.expectation, probe.tolerance) {
+            (
+                NativeStrictTextProbeExpectation::Fill,
+                NativeStrictTextProbeTolerance::ExactFillRgba,
+            ) => actual == fill_rgba,
+            (
+                NativeStrictTextProbeExpectation::Transparent,
+                NativeStrictTextProbeTolerance::AlphaZero,
+            ) => actual[3] == 0,
+            _ => false,
+        };
         if !passes {
             return Err(NativeStrictTextProbeError::new(
                 fixture_id,
-                *probe,
+                probe,
                 Some(actual),
             ));
         }
         reports.push(NativeStrictTextProbeReport {
             actual,
             expectation: probe.expectation,
-            id: probe.id,
+            id: probe.id.clone(),
+            tolerance: probe.tolerance,
             x: probe.x,
             y: probe.y,
         });
@@ -1312,6 +1796,31 @@ fn derive_strict_text_outline_evidence_path(
     let evidence_file_name = format!("{fixture_prefix}{STRICT_TEXT_OUTLINE_EVIDENCE_SUFFIX}");
 
     Ok(fixture_path.with_file_name(evidence_file_name))
+}
+
+fn derive_strict_text_probe_policy_path(
+    fixture_path: &Path,
+) -> Result<PathBuf, NativeStrictTextPathError> {
+    let file_name = fixture_path
+        .file_name()
+        .and_then(OsStr::to_str)
+        .ok_or_else(|| {
+            NativeStrictTextPathError::new(
+                fixture_path,
+                "strict text fixture file name must be valid UTF-8",
+            )
+        })?;
+    let fixture_prefix = file_name
+        .strip_suffix(STRICT_TEXT_FIXTURE_SUFFIX)
+        .ok_or_else(|| {
+            NativeStrictTextPathError::new(
+                fixture_path,
+                "strict text fixture file name must end with .strict-text.geordi.json",
+            )
+        })?;
+    let probe_policy_file_name = format!("{fixture_prefix}{STRICT_TEXT_PROBE_POLICY_SUFFIX}");
+
+    Ok(fixture_path.with_file_name(probe_policy_file_name))
 }
 
 fn repository_root() -> PathBuf {
@@ -1860,6 +2369,13 @@ fn write_strict_text_fixture_summary(
     .map_err(NativeOutputError::new)?;
     writeln!(writer, "semanticTextRole={}", report.semantic_text_role)
         .map_err(NativeOutputError::new)?;
+    writeln!(writer, "probePolicy={}", loaded.probe_policy.path.display())
+        .map_err(NativeOutputError::new)?;
+    writeln!(writer, "probePolicyId={}", loaded.probe_policy.id).map_err(NativeOutputError::new)?;
+    writeln!(writer, "probePolicyVersion={}", loaded.probe_policy.version)
+        .map_err(NativeOutputError::new)?;
+    writeln!(writer, "probePolicyHash={}", loaded.probe_policy.hash)
+        .map_err(NativeOutputError::new)?;
     writeln!(
         writer,
         "canvas={}x{}",
@@ -1882,9 +2398,10 @@ fn write_strict_text_fixture_summary(
     for probe in &loaded.probes {
         writeln!(
             writer,
-            "probe={} expected={} x={} y={} rgba={},{},{},{}",
+            "probe={} expected={} tolerance={} x={} y={} rgba={},{},{},{}",
             probe.id,
             probe.expectation.as_str(),
+            probe.tolerance.as_str(),
             probe.x,
             probe.y,
             probe.actual[0],
@@ -1980,12 +2497,13 @@ fn short_hash(hash: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        NATIVE_STRICT_TEXT_PIXEL_PROBES, NativeAppError, NativeArgs, NativeMode,
-        NativeStrictTextProbe, RenderFixtureSource, assert_pixel_probes,
-        assert_strict_text_pixel_probes, assert_strict_text_visible, load_fixture, load_manifest,
-        load_receipt, load_strict_text_fixture, reject_strict_text_fixture,
+        NativeAppError, NativeArgs, NativeMode, NativeStrictTextProbe, RenderFixtureSource,
+        assert_pixel_probes, assert_strict_text_pixel_probes, assert_strict_text_visible,
+        load_fixture, load_manifest, load_receipt, load_strict_text_fixture,
+        load_strict_text_probe_policy, reject_strict_text_fixture,
         resolve_strict_text_argument_path, run_smoke, validate_manifest_path,
-        validate_receipt_matches_manifest, validate_scene_artifact_hash, write_fixture_summary,
+        validate_receipt_matches_manifest, validate_scene_artifact_hash,
+        validate_strict_text_probe_policy, write_fixture_summary,
         write_strict_text_fixture_summary, write_strict_text_rejection_summary,
     };
     use geordi_ir::{
@@ -2091,7 +2609,7 @@ mod tests {
         assert_eq!(loaded.smoke.min_y, 13);
         assert_eq!(loaded.smoke.max_x, 175);
         assert_eq!(loaded.smoke.max_y, 47);
-        assert_eq!(loaded.probes.len(), NATIVE_STRICT_TEXT_PIXEL_PROBES.len());
+        assert_eq!(loaded.probes.len(), 8);
         let text = output_text(&output);
         assert!(text.contains("Geordi native strict text fixture loaded"));
         assert!(text.contains("rendererName=rust-software-outline-glyphs"));
@@ -2128,17 +2646,22 @@ mod tests {
         assert!(
             text.contains("semanticTextRole=non-rendering metadata; pixels follow glyph evidence")
         );
+        assert!(text.contains("probePolicyId=render-everywhere:strict-text:geordi:probe-policy"));
+        assert!(text.contains("probePolicyVersion=geordi-strict-text-probe-policy/1"));
+        assert!(text.contains(
+            "probePolicyHash=sha256:2ff0c24b406d0fb7b40f9eebe925713491025b6864a59fbfa06b11319306838e"
+        ));
         assert!(text.contains("canvas=192x64"));
         assert!(text.contains("nonblankPixels=2092"));
         assert!(text.contains("nonblankBounds=2,13..175,47"));
         assert!(
-            text.contains("probe=text-background-top expected=transparent x=100 y=5 rgba=0,0,0,0")
+            text.contains("probe=text-background-top expected=transparent tolerance=alpha-zero x=100 y=5 rgba=0,0,0,0")
         );
-        assert!(text.contains("probe=text-g-fill-top expected=fill x=12 y=15 rgba=17,24,39,255"));
-        assert!(text.contains("probe=text-i-fill-mid expected=fill x=172 y=30 rgba=17,24,39,255"));
+        assert!(text.contains("probe=text-g-fill-top expected=fill tolerance=exact-fill-rgba x=12 y=15 rgba=17,24,39,255"));
+        assert!(text.contains("probe=text-i-fill-mid expected=fill tolerance=exact-fill-rgba x=172 y=30 rgba=17,24,39,255"));
         assert!(
             text.contains(
-                "probe=text-background-bottom expected=transparent x=180 y=55 rgba=0,0,0,0"
+                "probe=text-background-bottom expected=transparent tolerance=alpha-zero x=180 y=55 rgba=0,0,0,0"
             )
         );
         assert!(text.contains("rendered=true"));
@@ -2177,12 +2700,44 @@ mod tests {
         )?;
         let bad_probe = [NativeStrictTextProbe::fill("bad-fill", 100, 5)];
 
-        let result =
-            assert_strict_text_pixel_probes(&loaded.metadata.fixture_id, &loaded.image, &bad_probe);
+        let result = assert_strict_text_pixel_probes(
+            &loaded.metadata.fixture_id,
+            &loaded.image,
+            [17, 24, 39, 255],
+            &bad_probe,
+        );
 
         assert!(matches!(
             result,
             Err(super::NativeStrictTextProbeError { .. })
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn strict_text_probe_policy_validation_failures_are_custom_errors() -> Result<(), NativeAppError>
+    {
+        let loaded = load_strict_text_fixture(
+            Path::new("geordi.strict-text.geordi.json"),
+            Option::<&Path>::None,
+        )?;
+        let (mut policy, _) = load_strict_text_probe_policy(&strict_text_fixture_path(
+            "geordi.probe-policy.geordi.json",
+        ))?;
+        policy.probes[0].stability =
+            super::NativeStrictTextProbeStability::InteriorFillAwayFromEdge;
+
+        let result = validate_strict_text_probe_policy(
+            &policy,
+            &loaded.metadata,
+            "fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json",
+            "fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json",
+            &loaded.image,
+        );
+
+        assert!(matches!(
+            result,
+            Err(super::NativeStrictTextProbePolicyValidationError { .. })
         ));
         Ok(())
     }

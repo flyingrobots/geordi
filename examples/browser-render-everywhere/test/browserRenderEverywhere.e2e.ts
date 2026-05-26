@@ -5,6 +5,7 @@ import { canonicalJsonPort, type JsonValue } from '@flyingrobots/geordi-core';
 import {
   parseRenderFixtureManifest,
   parseRenderFixtureStrictTextFixtureManifest,
+  parseRenderFixtureStrictTextProbePolicy,
   assertRenderFixturePixelProbes,
   renderFixtureRgbaFromBytes,
   type RenderFixtureManifest,
@@ -33,10 +34,12 @@ interface PixelSample {
 }
 
 type StrictTextProbeExpectation = 'fill' | 'transparent';
+type StrictTextProbeTolerance = 'alpha-zero' | 'exact-fill-rgba';
 
 interface StrictTextProbeInput {
   readonly expectation: StrictTextProbeExpectation;
   readonly id: string;
+  readonly tolerance: StrictTextProbeTolerance;
   readonly x: number;
   readonly y: number;
 }
@@ -124,6 +127,7 @@ class BrowserGateStrictTextProbeError extends Error {
   public readonly expected: StrictTextProbeExpectation;
   public readonly fixtureId: string;
   public readonly probeId: string;
+  public readonly tolerance: string;
   public readonly x: number;
   public readonly y: number;
 
@@ -134,6 +138,7 @@ class BrowserGateStrictTextProbeError extends Error {
     this.expected = probe.expectation;
     this.fixtureId = fixtureId;
     this.probeId = probe.id;
+    this.tolerance = probe.tolerance;
     this.x = probe.x;
     this.y = probe.y;
   }
@@ -158,17 +163,6 @@ class BrowserGateCompiledManifestPathError extends Error {
     this.path = path;
   }
 }
-
-const STRICT_TEXT_BROWSER_PIXEL_PROBES: readonly StrictTextProbeInput[] = [
-  { expectation: 'transparent', id: 'text-background-top', x: 100, y: 5 },
-  { expectation: 'fill', id: 'text-g-fill-top', x: 12, y: 15 },
-  { expectation: 'fill', id: 'text-e-fill-mid', x: 40, y: 30 },
-  { expectation: 'fill', id: 'text-o-fill-mid', x: 68, y: 30 },
-  { expectation: 'fill', id: 'text-r-fill-mid', x: 108, y: 30 },
-  { expectation: 'fill', id: 'text-d-fill-mid', x: 136, y: 30 },
-  { expectation: 'fill', id: 'text-i-fill-mid', x: 172, y: 30 },
-  { expectation: 'transparent', id: 'text-background-bottom', x: 180, y: 55 },
-];
 
 function loadManifest(): RenderFixtureManifest {
   return parseRenderFixtureManifest(loadManifestSource());
@@ -223,6 +217,13 @@ function loadStrictTextEvidenceSource(): string {
   );
 }
 
+function loadStrictTextProbePolicySource(): string {
+  return readFileSync(
+    new URL('../../../fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json', import.meta.url),
+    'utf8',
+  );
+}
+
 function loadStrictTextFontPackSource(): string {
   return readFileSync(
     new URL('../../../fixtures/render-everywhere/assets/fonts/font-pack.geordi.json', import.meta.url),
@@ -241,6 +242,24 @@ function canonicalJsonHash(value: JsonValue): string {
 function probeInputs(probes: readonly RenderFixturePixelProbe[]): readonly ProbeInput[] {
   return probes.map((probe) => ({
     id: probe.id,
+    x: probe.x,
+    y: probe.y,
+  }));
+}
+
+function strictTextProbeInputs(
+  probes: readonly {
+    readonly expectation: StrictTextProbeExpectation;
+    readonly id: string;
+    readonly tolerance: StrictTextProbeTolerance;
+    readonly x: number;
+    readonly y: number;
+  }[],
+): readonly StrictTextProbeInput[] {
+  return probes.map((probe) => ({
+    expectation: probe.expectation,
+    id: probe.id,
+    tolerance: probe.tolerance,
     x: probe.x,
     y: probe.y,
   }));
@@ -280,12 +299,21 @@ function sampleForProbe(
   return sample;
 }
 
-function assertStrictTextProbe(fixtureId: string, probe: StrictTextProbeSample): void {
+function assertStrictTextProbe(
+  fixtureId: string,
+  fillRgba: RenderFixtureRgba,
+  probe: StrictTextProbeSample,
+): void {
   const [red = 0, green = 0, blue = 0, alpha = 0] = probe.rgba;
+  const [fillRed, fillGreen, fillBlue, fillAlpha] = fillRgba;
   const passes =
     probe.expectation === 'fill'
-      ? red === 17 && green === 24 && blue === 39 && alpha === 255
-      : alpha === 0;
+      ? probe.tolerance === 'exact-fill-rgba' &&
+        red === fillRed &&
+        green === fillGreen &&
+        blue === fillBlue &&
+        alpha === fillAlpha
+      : probe.tolerance === 'alpha-zero' && alpha === 0;
 
   if (!passes) {
     throw new BrowserGateStrictTextProbeError(fixtureId, probe);
@@ -299,6 +327,9 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   const strictTextFixtureSource = loadStrictTextFixtureSource();
   const strictTextFixture = parseRenderFixtureStrictTextFixtureManifest(strictTextFixtureSource);
   const strictTextEvidenceSource = loadStrictTextEvidenceSource();
+  const strictTextProbePolicy = parseRenderFixtureStrictTextProbePolicy(
+    loadStrictTextProbePolicySource(),
+  );
   const strictTextFontPackSource = loadStrictTextFontPackSource();
   let servedCompiledManifest = false;
   let servedCompiledScene = false;
@@ -643,8 +674,13 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
       textApiCalls,
       width: canvas.width,
     };
-  }, STRICT_TEXT_BROWSER_PIXEL_PROBES);
+  }, strictTextProbeInputs(strictTextProbePolicy.probes));
   const strictTextSnapshot = strictTextSnapshotFromEvaluation(strictTextEvaluation);
+  expect(strictTextProbePolicy.fixtureId).toBe(strictTextFixture.id);
+  expect(strictTextProbePolicy.evidencePackId).toBe(
+    'render-everywhere:strict-text:geordi:outline-evidence',
+  );
+  expect(strictTextProbePolicy.canvas).toEqual({ height: 64, width: 192 });
   expect(strictTextSnapshot.canvasCount).toBe(1);
   expect(strictTextSnapshot.width).toBe(192);
   expect(strictTextSnapshot.height).toBe(64);
@@ -657,9 +693,9 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   expect(strictTextSnapshot.bounds.minY).toBeGreaterThanOrEqual(0);
   expect(strictTextSnapshot.bounds.maxX).toBeLessThan(strictTextSnapshot.width);
   expect(strictTextSnapshot.bounds.maxY).toBeLessThan(strictTextSnapshot.height);
-  expect(strictTextSnapshot.probes).toHaveLength(STRICT_TEXT_BROWSER_PIXEL_PROBES.length);
+  expect(strictTextSnapshot.probes).toHaveLength(strictTextProbePolicy.probes.length);
   for (const probe of strictTextSnapshot.probes) {
-    assertStrictTextProbe(strictTextFixture.id, probe);
+    assertStrictTextProbe(strictTextFixture.id, strictTextProbePolicy.fillRgba, probe);
   }
   const textReport = textPanel.locator('[data-geordi-strict-text-report="true"]');
   await expect(textReport).toBeHidden();

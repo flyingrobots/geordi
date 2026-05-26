@@ -643,6 +643,13 @@ same named coordinates as the browser gate, requires exact fill `[17, 24, 39, 25
 glyph probes, requires transparent alpha for background probes, emits every probe result in the CLI
 summary, and fails through `NativeStrictTextProbeError` before reporting `smoke=passed`.
 
+S068 makes those probes a fixture-local policy artifact instead of duplicated constants. The
+`geordi-strict-text-probe-policy/1` schema requires each probe to state its purpose, coordinate
+source, expectation, tolerance, and stability class. Browser Playwright and native
+`--strict-text-smoke` both consume `geordi.probe-policy.geordi.json`; fill probes require exact
+policy `fillRgba`, transparent probes require alpha zero, and antialiasing-edge probes are explicitly
+non-stable and nonblocking.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

@@ -370,7 +370,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S068**.
+Current OPEN node: **S069**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1115,7 +1115,7 @@ Current OPEN node: **S068**.
 
 ### S068: Stable text probe policy
 
-- [ ] **S068: Stable text probe policy** (OPEN)
+- [x] **S068: Stable text probe policy** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with stable text probe policy documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Stable text probe policy.
@@ -1126,7 +1126,7 @@ Current OPEN node: **S068**.
 
 ### S069: Nonblank text bounds check
 
-- [ ] **S069: Nonblank text bounds check** (BLOCKED)
+- [ ] **S069: Nonblank text bounds check** (OPEN)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with nonblank text bounds check documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Nonblank text bounds check.
