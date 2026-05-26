@@ -263,6 +263,26 @@ mode, S063 owns native text metadata report expansion, S067 owns native coarse p
 owns browser/native metadata equality. Current nonclaims remain: no full text antialiasing parity,
 no platform text API compliance path, no host font lookup, and no general text support.
 
+## S062 Native Text Fixture CLI Mode
+
+The native render-everywhere harness now has a strict text offscreen mode:
+
+~~~bash
+cargo run -p native-render-everywhere -- --strict-text-smoke \
+  fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+~~~
+
+The mode resolves strict text fixture paths inside `fixtures/render-everywhere/strict-text`, derives
+the matching `.outline-evidence.geordi.json` pack by convention unless `--evidence` is supplied,
+loads and validates the strict text fixture, font pack, font hashes, font references, and outline
+evidence, renders through the Rust outline renderer, and prints a minimal summary without opening a
+window. Escaping fixture paths and invalid outline evidence fail through custom native errors.
+
+S063 owns the expanded metadata report needed for browser/native equality. S064 owns native visible
+text smoke assertions. Current nonclaims remain: no full text antialiasing parity, no `geordi-ir/1`
+text-node graduation, no platform text API compliance path, no host font lookup, and no general text
+support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -280,7 +300,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S062**.
+Current OPEN node: **S063**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -959,7 +979,7 @@ Current OPEN node: **S062**.
 
 ### S062: Native text fixture CLI mode
 
-- [ ] **S062: Native text fixture CLI mode** (OPEN)
+- [x] **S062: Native text fixture CLI mode** (COMPLETE)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native text fixture cli mode documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native text fixture CLI mode.
@@ -970,7 +990,7 @@ Current OPEN node: **S062**.
 
 ### S063: Native text metadata report
 
-- [ ] **S063: Native text metadata report** (BLOCKED)
+- [ ] **S063: Native text metadata report** (OPEN)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native text metadata report documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native text metadata report.

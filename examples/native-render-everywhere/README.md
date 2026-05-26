@@ -42,6 +42,17 @@ fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.stri
 That preflight uses the Rust strict text validator and must reject unsupported strict text fixture
 requirements before any native drawing path treats them as compliant.
 
+The native harness can also load and render the canonical strict text fixture offscreen through the
+Rust outline renderer:
+
+```text
+fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json
+```
+
+The strict text smoke mode validates the fixture, font pack, font references, outline evidence, and
+native render path. It does not open a window and does not claim browser/native pixel identity.
+
 ## Commands
 
 Run the smoke gate without opening a window:
@@ -88,6 +99,18 @@ Run the strict text rejection preflight:
 cargo run -p native-render-everywhere -- --strict-text-reject fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
 ```
 
+Run the strict text offscreen render mode:
+
+```bash
+cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+```
+
+Run strict text mode with an explicit outline evidence override:
+
+```bash
+cargo run -p native-render-everywhere -- --strict-text-smoke --evidence geordi.outline-evidence.geordi.json geordi.strict-text.geordi.json
+```
+
 Run tests and lints:
 
 ```bash
@@ -128,6 +151,21 @@ transformProfile=geordi-fixed-rate-rotation/1
 smoke=passed
 ```
 
+Expected strict text smoke output includes:
+
+```text
+Geordi native strict text fixture loaded
+rendererName=rust-software-outline-glyphs
+fixtureId=render-everywhere:strict-text:geordi
+evidencePackId=render-everywhere:strict-text:geordi:outline-evidence
+evidenceKind=outlinePaths
+textProfile=geordi-strict-positioned-glyph-run/1
+glyphCount=6
+drawGlyphCount=6
+canvas=192x64
+rendered=true
+```
+
 ## Boundaries
 
 This harness does not call the browser renderer or translate a browser snapshot. It loads the same
@@ -143,7 +181,7 @@ harness at that emitted artifact:
 pnpm test:render-everywhere:gpvue
 ```
 
-The native renderer currently supports the rectangle-only MVP profile:
+The native renderer currently supports the rectangle-only MVP profile for `geordi-ir/1` fixtures:
 
 ```text
 geordi/core/1
@@ -152,9 +190,10 @@ shape.rect
 paint.solid
 ```
 
-Unsupported feature requirements must fail before drawing. Text is intentionally excluded from this
-first deterministic browser/native proof. The native harness currently proves strict text rejection
-only: unsupported strict text fixture requirements fail before drawing.
+Unsupported feature requirements must fail before drawing. Strict text remains outside `geordi-ir/1`
+for this milestone: the native harness can render explicit strict text outline evidence through a
+separate fixture mode, but that mode is not a broad native text stack, does not use host fonts or OS
+text APIs, and does not claim full browser/native antialiasing parity.
 
 The bunny mesh path is a demo harness path, not a general mesh node inside core Geordi IR. It proves
 shared asset identity, parsed mesh metadata, deterministic sampled-frame metadata, and coarse

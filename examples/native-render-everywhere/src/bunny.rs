@@ -1010,14 +1010,7 @@ fn draw_projected_edge(
     draw_line(image, color, x0, y0, x1, y1);
 }
 
-fn draw_line(
-    image: &mut BunnyImage,
-    color: [u8; 4],
-    mut x0: i32,
-    mut y0: i32,
-    x1: i32,
-    y1: i32,
-) {
+fn draw_line(image: &mut BunnyImage, color: [u8; 4], mut x0: i32, mut y0: i32, x1: i32, y1: i32) {
     let delta_x = (x1 - x0).abs();
     let step_x = if x0 < x1 { 1 } else { -1 };
     let delta_y = -(y1 - y0).abs();
@@ -1125,11 +1118,7 @@ fn normalize_vector3(vector: [f64; 3]) -> [f64; 3] {
 }
 
 fn subtract_vector3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
-    [
-        left[0] - right[0],
-        left[1] - right[1],
-        left[2] - right[2],
-    ]
+    [left[0] - right[0], left[1] - right[1], left[2] - right[2]]
 }
 
 fn dot_vector3(left: [f64; 3], right: [f64; 3]) -> f64 {
@@ -1168,15 +1157,15 @@ fn bunny_render_style(
     fixture: &BunnyMeshFixtureManifest,
 ) -> Result<BunnyRenderStyle, NativeBunnyManifestValidationError> {
     Ok(BunnyRenderStyle {
-        background: hex_color_rgba(&fixture.material.background_color, "$.material.backgroundColor")?,
+        background: hex_color_rgba(
+            &fixture.material.background_color,
+            "$.material.backgroundColor",
+        )?,
         material: hex_color_rgba(&fixture.material.color, "$.material.color")?,
     })
 }
 
-fn hex_color_rgba(
-    value: &str,
-    path: &str,
-) -> Result<[u8; 4], NativeBunnyManifestValidationError> {
+fn hex_color_rgba(value: &str, path: &str) -> Result<[u8; 4], NativeBunnyManifestValidationError> {
     if !is_hex_color(value) {
         return Err(NativeBunnyManifestValidationError::new(vec![
             NativeBunnyManifestValidationIssue::new(path, "Color must be lowercase #rrggbb"),
@@ -1287,7 +1276,12 @@ fn validate_mesh_projection(
         "Projection vertical FOV",
         issues,
     );
-    validate_positive_finite(projection.near, "$.projection.near", "Projection near", issues);
+    validate_positive_finite(
+        projection.near,
+        "$.projection.near",
+        "Projection near",
+        issues,
+    );
     validate_positive_finite(projection.far, "$.projection.far", "Projection far", issues);
     if projection.near.is_finite()
         && projection.far.is_finite()
@@ -1328,7 +1322,12 @@ fn validate_mesh_material(
         "Material kind",
         issues,
     );
-    validate_hex_color(&material.color, "$.material.color", "Material color", issues);
+    validate_hex_color(
+        &material.color,
+        "$.material.color",
+        "Material color",
+        issues,
+    );
     validate_hex_color(
         &material.background_color,
         "$.material.backgroundColor",
@@ -1527,9 +1526,7 @@ fn has_url_scheme(value: &str) -> bool {
         return false;
     };
     first.is_ascii_alphabetic()
-        && bytes.all(|byte| {
-            byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'.' | b'-')
-        })
+        && bytes.all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'.' | b'-'))
 }
 
 fn has_windows_drive_prefix(value: &str) -> bool {
@@ -1545,7 +1542,11 @@ fn validate_vector3(
 ) {
     for value in vector {
         if !value.is_finite() {
-            push_issue(issues, path, &format!("{label} must contain finite numbers"));
+            push_issue(
+                issues,
+                path,
+                &format!("{label} must contain finite numbers"),
+            );
             return;
         }
     }
@@ -1558,7 +1559,11 @@ fn validate_positive_finite(
     issues: &mut Vec<NativeBunnyManifestValidationIssue>,
 ) {
     if !value.is_finite() || value <= 0.0 {
-        push_issue(issues, path, &format!("{label} must be positive and finite"));
+        push_issue(
+            issues,
+            path,
+            &format!("{label} must be positive and finite"),
+        );
     }
 }
 
@@ -1710,7 +1715,9 @@ mod tests {
 
     #[test]
     fn fixture_local_paths_reject_url_schemes() {
-        assert!(!is_fixture_local_relative_path("https://example.invalid/bunny.mesh.json"));
+        assert!(!is_fixture_local_relative_path(
+            "https://example.invalid/bunny.mesh.json"
+        ));
         assert!(!is_fixture_local_relative_path("file://bunny.mesh.json"));
         assert!(is_fixture_local_relative_path("bunny.mesh.json"));
     }

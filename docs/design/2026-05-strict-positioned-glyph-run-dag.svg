@@ -944,28 +944,28 @@
 <!-- S062 -->
 <g id="node65" class="node">
 <title>S062</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M816.63,-792.75C816.63,-792.75 705.37,-792.75 705.37,-792.75 699.37,-792.75 693.37,-786.75 693.37,-780.75 693.37,-780.75 693.37,-768.75 693.37,-768.75 693.37,-762.75 699.37,-756.75 705.37,-756.75 705.37,-756.75 816.63,-756.75 816.63,-756.75 822.63,-756.75 828.63,-762.75 828.63,-768.75 828.63,-768.75 828.63,-780.75 828.63,-780.75 828.63,-786.75 822.63,-792.75 816.63,-792.75"/>
-<text xml:space="preserve" text-anchor="middle" x="761" y="-776.5" font-family="Helvetica,sans-Serif" font-size="10.00">S062</text>
-<text xml:space="preserve" text-anchor="middle" x="761" y="-765.25" font-family="Helvetica,sans-Serif" font-size="10.00">Native text fixture CLI mode</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M816.63,-792.75C816.63,-792.75 705.37,-792.75 705.37,-792.75 699.37,-792.75 693.37,-786.75 693.37,-780.75 693.37,-780.75 693.37,-768.75 693.37,-768.75 693.37,-762.75 699.37,-756.75 705.37,-756.75 705.37,-756.75 816.63,-756.75 816.63,-756.75 822.63,-756.75 828.63,-762.75 828.63,-768.75 828.63,-768.75 828.63,-780.75 828.63,-780.75 828.63,-786.75 822.63,-792.75 816.63,-792.75"/>
+<text xml:space="preserve" text-anchor="middle" x="761" y="-776.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S062</text>
+<text xml:space="preserve" text-anchor="middle" x="761" y="-765.25" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Native text fixture CLI mode</text>
 </g>
 <!-- S061&#45;&gt;S062 -->
 <g id="edge68" class="edge">
 <title>S061&#45;&gt;S062</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M761,-827.36C761,-819.62 761,-810.48 761,-802.05"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="763.1,-802.08 761,-796.08 758.9,-802.08 763.1,-802.08"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M761,-827.36C761,-819.42 761,-810 761,-801.39"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="763.1,-801.59 761,-795.59 758.9,-801.59 763.1,-801.59"/>
 </g>
 <!-- S063 -->
 <g id="node66" class="node">
 <title>S063</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M814.38,-720.75C814.38,-720.75 707.62,-720.75 707.62,-720.75 701.62,-720.75 695.62,-714.75 695.62,-708.75 695.62,-708.75 695.62,-696.75 695.62,-696.75 695.62,-690.75 701.62,-684.75 707.62,-684.75 707.62,-684.75 814.38,-684.75 814.38,-684.75 820.38,-684.75 826.38,-690.75 826.38,-696.75 826.38,-696.75 826.38,-708.75 826.38,-708.75 826.38,-714.75 820.38,-720.75 814.38,-720.75"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M814.38,-720.75C814.38,-720.75 707.62,-720.75 707.62,-720.75 701.62,-720.75 695.62,-714.75 695.62,-708.75 695.62,-708.75 695.62,-696.75 695.62,-696.75 695.62,-690.75 701.62,-684.75 707.62,-684.75 707.62,-684.75 814.38,-684.75 814.38,-684.75 820.38,-684.75 826.38,-690.75 826.38,-696.75 826.38,-696.75 826.38,-708.75 826.38,-708.75 826.38,-714.75 820.38,-720.75 814.38,-720.75"/>
 <text xml:space="preserve" text-anchor="middle" x="761" y="-704.5" font-family="Helvetica,sans-Serif" font-size="10.00">S063</text>
 <text xml:space="preserve" text-anchor="middle" x="761" y="-693.25" font-family="Helvetica,sans-Serif" font-size="10.00">Native text metadata report</text>
 </g>
 <!-- S062&#45;&gt;S063 -->
 <g id="edge69" class="edge">
 <title>S062&#45;&gt;S063</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M761,-754.99C761,-747.38 761,-738.45 761,-730.2"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="763.1,-730.38 761,-724.38 758.9,-730.38 763.1,-730.38"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M761,-755.36C761,-747.62 761,-738.48 761,-730.05"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="763.1,-730.08 761,-724.08 758.9,-730.08 763.1,-730.08"/>
 </g>
 <!-- S064 -->
 <g id="node67" class="node">

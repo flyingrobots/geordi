@@ -608,6 +608,13 @@ and nonzero winding, and returns renderer metadata for fixture id, evidence id/k
 glyph counts, and consumed command count. This is a native API proof; CLI mode, expanded metadata
 reporting, stable native probes, and browser/native equality gates remain later slices.
 
+S062 adds native strict text fixture CLI mode. `native-render-everywhere --strict-text-smoke` accepts
+a strict text fixture path under `fixtures/render-everywhere/strict-text`, derives the matching
+outline evidence pack by suffix convention unless `--evidence` is supplied, validates fixture, font
+pack, font hashes, font references, and outline evidence before rendering, then draws offscreen
+through the Rust outline renderer and prints a minimal text summary. This is still not the expanded
+native metadata equality report or native visible-text probe gate.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

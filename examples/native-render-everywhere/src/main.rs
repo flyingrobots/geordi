@@ -3,15 +3,18 @@
 pub mod bunny;
 
 use geordi_ir::{
-    load_geordi_ir, load_geordi_strict_text_fixture_manifest, validate_geordi_ir,
-    validate_geordi_strict_text_fixture_manifest, GeordiIr, GeordiIrLoadError,
-    GeordiIrValidationError, GeordiStrictTextFixtureLoadError,
-    GeordiStrictTextFixtureValidationIssue, GEORDI_CORE_PROFILE, GEORDI_IR_VERSION,
-    GEORDI_NUMERIC_PROFILE,
+    GEORDI_CORE_PROFILE, GEORDI_IR_VERSION, GEORDI_NUMERIC_PROFILE, GeordiFontPackHashError,
+    GeordiFontPackLoadError, GeordiIr, GeordiIrLoadError, GeordiIrValidationError,
+    GeordiStrictTextFixtureLoadError, GeordiStrictTextFixtureValidationIssue,
+    load_geordi_font_pack_manifest, load_geordi_ir, load_geordi_strict_text_fixture_manifest,
+    load_geordi_strict_text_outline_evidence_pack, validate_geordi_font_pack_hashes,
+    validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
+    validate_geordi_strict_text_font_references,
 };
 use geordi_renderer::{
-    assert_native_runtime_profile, render_geordi_to_image, GeordiRenderError,
-    GeordiRuntimeUnsupportedProfileError, RenderedImage,
+    GeordiRenderError, GeordiRuntimeUnsupportedProfileError, GeordiStrictTextOutlineRenderReport,
+    GeordiStrictTextRenderError, RenderedImage, assert_native_runtime_profile,
+    render_geordi_to_image, render_strict_text_outline_glyphs_to_image,
 };
 use minifb::{Key, Window, WindowOptions};
 use serde::Deserialize;
@@ -29,6 +32,9 @@ const RENDER_FIXTURE_VERSION: &str = "geordi-render-fixture/1";
 const HASH_PREFIX: &str = "sha256:";
 const HASH_HEX_LENGTH: usize = 64;
 const NATIVE_RENDERER_NAME: &str = "rust-software-rectangles";
+const STRICT_TEXT_FIXTURE_ROOT_FROM_REPO: &str = "fixtures/render-everywhere/strict-text";
+const STRICT_TEXT_FIXTURE_SUFFIX: &str = ".strict-text.geordi.json";
+const STRICT_TEXT_OUTLINE_EVIDENCE_SUFFIX: &str = ".outline-evidence.geordi.json";
 fn main() -> Result<(), NativeAppError> {
     run_from_env(env::args_os())
 }
@@ -59,6 +65,14 @@ fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAp
             write_strict_text_rejection_summary(&mut io::stdout().lock(), &rejection)?;
             Ok(())
         }
+        NativeMode::StrictTextSmoke => {
+            let loaded = load_strict_text_fixture(
+                &args.fixture_dir,
+                args.strict_text_evidence_path.as_deref(),
+            )?;
+            write_strict_text_fixture_summary(&mut io::stdout().lock(), &loaded)?;
+            Ok(())
+        }
         NativeMode::Check => {
             let loaded = load_fixture(&args.fixture_dir)?;
             write_fixture_summary(&mut io::stdout().lock(), &loaded)?;
@@ -86,6 +100,7 @@ enum NativeMode {
     Check,
     Smoke,
     StrictTextReject,
+    StrictTextSmoke,
     Window,
 }
 
@@ -94,6 +109,7 @@ struct NativeArgs {
     fixture_dir: PathBuf,
     frame_index: u64,
     mode: NativeMode,
+    strict_text_evidence_path: Option<PathBuf>,
 }
 
 impl NativeArgs {
@@ -104,22 +120,43 @@ impl NativeArgs {
                 fixture_dir: PathBuf::from(fixture_dir),
                 frame_index: 0,
                 mode: NativeMode::BunnyCheck,
+                strict_text_evidence_path: None,
             }),
             [flag, fixture_dir] if flag == OsStr::new("--bunny-smoke") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
                 frame_index: 0,
                 mode: NativeMode::BunnySmoke,
+                strict_text_evidence_path: None,
             }),
             [flag, fixture_dir] if flag == OsStr::new("--bunny-window") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
                 frame_index: 0,
                 mode: NativeMode::BunnyWindow,
+                strict_text_evidence_path: None,
             }),
             [flag, fixture_path] if flag == OsStr::new("--strict-text-reject") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_path),
                 frame_index: 0,
                 mode: NativeMode::StrictTextReject,
+                strict_text_evidence_path: None,
             }),
+            [flag, fixture_path] if flag == OsStr::new("--strict-text-smoke") => Ok(Self {
+                fixture_dir: PathBuf::from(fixture_path),
+                frame_index: 0,
+                mode: NativeMode::StrictTextSmoke,
+                strict_text_evidence_path: None,
+            }),
+            [flag, evidence_flag, evidence_path, fixture_path]
+                if flag == OsStr::new("--strict-text-smoke")
+                    && evidence_flag == OsStr::new("--evidence") =>
+            {
+                Ok(Self {
+                    fixture_dir: PathBuf::from(fixture_path),
+                    frame_index: 0,
+                    mode: NativeMode::StrictTextSmoke,
+                    strict_text_evidence_path: Some(PathBuf::from(evidence_path)),
+                })
+            }
             [flag, frame_flag, frame_index, fixture_dir]
                 if flag == OsStr::new("--bunny-check") && frame_flag == OsStr::new("--frame") =>
             {
@@ -127,6 +164,7 @@ impl NativeArgs {
                     fixture_dir: PathBuf::from(fixture_dir),
                     frame_index: parse_frame_index(frame_index)?,
                     mode: NativeMode::BunnyCheck,
+                    strict_text_evidence_path: None,
                 })
             }
             [flag, frame_flag, frame_index, fixture_dir]
@@ -136,22 +174,26 @@ impl NativeArgs {
                     fixture_dir: PathBuf::from(fixture_dir),
                     frame_index: parse_frame_index(frame_index)?,
                     mode: NativeMode::BunnySmoke,
+                    strict_text_evidence_path: None,
                 })
             }
             [flag, fixture_dir] if flag == OsStr::new("--check") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
                 frame_index: 0,
                 mode: NativeMode::Check,
+                strict_text_evidence_path: None,
             }),
             [flag, fixture_dir] if flag == OsStr::new("--smoke") => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
                 frame_index: 0,
                 mode: NativeMode::Smoke,
+                strict_text_evidence_path: None,
             }),
             [fixture_dir] => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
                 frame_index: 0,
                 mode: NativeMode::Window,
+                strict_text_evidence_path: None,
             }),
             _ => Err(NativeArgsError),
         }
@@ -168,6 +210,14 @@ struct LoadedFixture {
     image: RenderedImage,
     ir: GeordiIr,
     manifest: RenderFixtureManifest,
+}
+
+#[derive(Debug)]
+struct LoadedStrictTextFixture {
+    evidence_path: PathBuf,
+    fixture_path: PathBuf,
+    image: RenderedImage,
+    report: GeordiStrictTextOutlineRenderReport,
 }
 
 #[derive(Debug)]
@@ -248,6 +298,8 @@ enum NativeAppError {
     ArtifactLoad(NativeArtifactLoadError),
     ArtifactValidation(NativeArtifactValidationError),
     Bunny(bunny::NativeBunnyError),
+    FontPackHash(GeordiFontPackHashError),
+    FontPackLoad(GeordiFontPackLoadError),
     IrLoad(GeordiIrLoadError),
     IrValidation(GeordiIrValidationError),
     ManifestLoad(NativeManifestLoadError),
@@ -260,6 +312,10 @@ enum NativeAppError {
     RuntimeProfile(GeordiRuntimeUnsupportedProfileError),
     StrictTextAccepted(NativeStrictTextFixtureAcceptedError),
     StrictTextLoad(GeordiStrictTextFixtureLoadError),
+    StrictTextPath(NativeStrictTextPathError),
+    StrictTextRender(GeordiStrictTextRenderError),
+    StrictTextValidation(geordi_ir::GeordiStrictTextFixtureValidationError),
+    StrictTextOutlineEvidenceLoad(geordi_ir::GeordiStrictTextOutlineEvidenceLoadError),
     Window(NativeWindowError),
 }
 
@@ -276,6 +332,8 @@ impl Error for NativeAppError {
             Self::ArtifactLoad(source) => Some(source),
             Self::ArtifactValidation(source) => Some(source),
             Self::Bunny(source) => Some(source),
+            Self::FontPackHash(source) => Some(source),
+            Self::FontPackLoad(source) => Some(source),
             Self::IrLoad(source) => Some(source),
             Self::IrValidation(source) => Some(source),
             Self::ManifestLoad(source) => Some(source),
@@ -288,6 +346,10 @@ impl Error for NativeAppError {
             Self::RuntimeProfile(source) => Some(source),
             Self::StrictTextAccepted(source) => Some(source),
             Self::StrictTextLoad(source) => Some(source),
+            Self::StrictTextPath(source) => Some(source),
+            Self::StrictTextRender(source) => Some(source),
+            Self::StrictTextValidation(source) => Some(source),
+            Self::StrictTextOutlineEvidenceLoad(source) => Some(source),
             Self::Window(source) => Some(source),
         }
     }
@@ -314,6 +376,18 @@ impl From<NativeArtifactValidationError> for NativeAppError {
 impl From<bunny::NativeBunnyError> for NativeAppError {
     fn from(error: bunny::NativeBunnyError) -> Self {
         Self::Bunny(error)
+    }
+}
+
+impl From<GeordiFontPackHashError> for NativeAppError {
+    fn from(error: GeordiFontPackHashError) -> Self {
+        Self::FontPackHash(error)
+    }
+}
+
+impl From<GeordiFontPackLoadError> for NativeAppError {
+    fn from(error: GeordiFontPackLoadError) -> Self {
+        Self::FontPackLoad(error)
     }
 }
 
@@ -389,6 +463,30 @@ impl From<GeordiStrictTextFixtureLoadError> for NativeAppError {
     }
 }
 
+impl From<NativeStrictTextPathError> for NativeAppError {
+    fn from(error: NativeStrictTextPathError) -> Self {
+        Self::StrictTextPath(error)
+    }
+}
+
+impl From<GeordiStrictTextRenderError> for NativeAppError {
+    fn from(error: GeordiStrictTextRenderError) -> Self {
+        Self::StrictTextRender(error)
+    }
+}
+
+impl From<geordi_ir::GeordiStrictTextFixtureValidationError> for NativeAppError {
+    fn from(error: geordi_ir::GeordiStrictTextFixtureValidationError) -> Self {
+        Self::StrictTextValidation(error)
+    }
+}
+
+impl From<geordi_ir::GeordiStrictTextOutlineEvidenceLoadError> for NativeAppError {
+    fn from(error: geordi_ir::GeordiStrictTextOutlineEvidenceLoadError) -> Self {
+        Self::StrictTextOutlineEvidenceLoad(error)
+    }
+}
+
 impl From<NativeWindowError> for NativeAppError {
     fn from(error: NativeWindowError) -> Self {
         Self::Window(error)
@@ -401,7 +499,7 @@ struct NativeArgsError;
 impl Display for NativeArgsError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         formatter.write_str(
-            "Usage: native-render-everywhere [--check|--smoke|--bunny-check|--bunny-smoke|--bunny-window|--strict-text-reject] [--frame <index>] <fixture-dir-or-strict-text-fixture>",
+            "Usage: native-render-everywhere [--check|--smoke|--bunny-check|--bunny-smoke|--bunny-window|--strict-text-reject|--strict-text-smoke [--evidence <outline-evidence>]] [--frame <index>] <fixture-dir-or-strict-text-fixture>",
         )
     }
 }
@@ -686,6 +784,34 @@ impl Display for NativeStrictTextFixtureAcceptedError {
 impl Error for NativeStrictTextFixtureAcceptedError {}
 
 #[derive(Debug)]
+struct NativeStrictTextPathError {
+    message: &'static str,
+    path: PathBuf,
+}
+
+impl NativeStrictTextPathError {
+    fn new(path: impl Into<PathBuf>, message: &'static str) -> Self {
+        Self {
+            message,
+            path: path.into(),
+        }
+    }
+}
+
+impl Display for NativeStrictTextPathError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Native strict text fixture path failed for {}: {}",
+            self.path.display(),
+            self.message
+        )
+    }
+}
+
+impl Error for NativeStrictTextPathError {}
+
+#[derive(Debug)]
 struct NativeWindowError {
     source: NativeWindowErrorSource,
 }
@@ -760,6 +886,97 @@ fn reject_strict_text_fixture(
             issues: error.issues().to_vec(),
         }),
     }
+}
+
+fn load_strict_text_fixture(
+    fixture_argument: &Path,
+    evidence_argument: Option<&Path>,
+) -> Result<LoadedStrictTextFixture, NativeAppError> {
+    let fixture_path = resolve_strict_text_argument_path(fixture_argument)?;
+    let fixture = load_geordi_strict_text_fixture_manifest(&fixture_path)?;
+    validate_geordi_strict_text_fixture_manifest(&fixture)?;
+
+    let font_pack_path = resolve_repo_relative_path(&fixture.font_pack_path)?;
+    let font_pack = load_geordi_font_pack_manifest(&font_pack_path)?;
+    validate_geordi_font_pack_hashes(&font_pack, repository_root())?;
+    validate_geordi_strict_text_font_references(&fixture, &font_pack)?;
+
+    let evidence_path = match evidence_argument {
+        Some(path) => resolve_strict_text_argument_path(path)?,
+        None => derive_strict_text_outline_evidence_path(&fixture_path)?,
+    };
+    let evidence = load_geordi_strict_text_outline_evidence_pack(&evidence_path)?;
+    let result = render_strict_text_outline_glyphs_to_image(&fixture, &evidence)?;
+
+    Ok(LoadedStrictTextFixture {
+        evidence_path,
+        fixture_path,
+        image: result.image,
+        report: result.report,
+    })
+}
+
+fn resolve_strict_text_argument_path(
+    argument: &Path,
+) -> Result<PathBuf, NativeStrictTextPathError> {
+    let value = argument.to_str().ok_or_else(|| {
+        NativeStrictTextPathError::new(argument, "path must be valid UTF-8 for fixture mode")
+    })?;
+    if value.is_empty() || !is_fixture_local_relative_path(value) {
+        return Err(NativeStrictTextPathError::new(
+            argument,
+            "path must be relative and stay inside the strict text fixture root",
+        ));
+    }
+
+    let relative_path = Path::new(value);
+    let strict_text_root = Path::new(STRICT_TEXT_FIXTURE_ROOT_FROM_REPO);
+    if relative_path.starts_with(strict_text_root) {
+        Ok(repository_root().join(relative_path))
+    } else {
+        Ok(repository_root().join(strict_text_root).join(relative_path))
+    }
+}
+
+fn resolve_repo_relative_path(value: &str) -> Result<PathBuf, NativeStrictTextPathError> {
+    if value.is_empty() || !is_fixture_local_relative_path(value) {
+        return Err(NativeStrictTextPathError::new(
+            PathBuf::from(value),
+            "repository path must be relative and fixture-local",
+        ));
+    }
+
+    Ok(repository_root().join(value))
+}
+
+fn derive_strict_text_outline_evidence_path(
+    fixture_path: &Path,
+) -> Result<PathBuf, NativeStrictTextPathError> {
+    let file_name = fixture_path
+        .file_name()
+        .and_then(OsStr::to_str)
+        .ok_or_else(|| {
+            NativeStrictTextPathError::new(
+                fixture_path,
+                "strict text fixture file name must be valid UTF-8",
+            )
+        })?;
+    let fixture_prefix = file_name
+        .strip_suffix(STRICT_TEXT_FIXTURE_SUFFIX)
+        .ok_or_else(|| {
+            NativeStrictTextPathError::new(
+                fixture_path,
+                "strict text fixture file name must end with .strict-text.geordi.json",
+            )
+        })?;
+    let evidence_file_name = format!("{fixture_prefix}{STRICT_TEXT_OUTLINE_EVIDENCE_SUFFIX}");
+
+    Ok(fixture_path.with_file_name(evidence_file_name))
+}
+
+fn repository_root() -> PathBuf {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    fs::canonicalize(&root).unwrap_or(root)
 }
 
 fn load_artifact_bytes(path: &Path) -> Result<Vec<u8>, NativeArtifactLoadError> {
@@ -1254,6 +1471,43 @@ fn write_strict_text_rejection_summary(
     Ok(())
 }
 
+fn write_strict_text_fixture_summary(
+    writer: &mut impl Write,
+    loaded: &LoadedStrictTextFixture,
+) -> Result<(), NativeOutputError> {
+    writeln!(writer, "Geordi native strict text fixture loaded").map_err(NativeOutputError::new)?;
+    writeln!(writer, "rendererName={}", loaded.report.renderer_name)
+        .map_err(NativeOutputError::new)?;
+    writeln!(
+        writer,
+        "strictTextFixture={}",
+        loaded.fixture_path.display()
+    )
+    .map_err(NativeOutputError::new)?;
+    writeln!(writer, "outlineEvidence={}", loaded.evidence_path.display())
+        .map_err(NativeOutputError::new)?;
+    writeln!(writer, "fixtureId={}", loaded.report.fixture_id).map_err(NativeOutputError::new)?;
+    writeln!(writer, "evidencePackId={}", loaded.report.evidence_pack_id)
+        .map_err(NativeOutputError::new)?;
+    writeln!(writer, "evidenceKind={}", loaded.report.evidence_kind)
+        .map_err(NativeOutputError::new)?;
+    writeln!(writer, "textProfile={}", loaded.report.text_profile)
+        .map_err(NativeOutputError::new)?;
+    writeln!(writer, "glyphCount={}", loaded.report.glyph_count).map_err(NativeOutputError::new)?;
+    writeln!(writer, "drawGlyphCount={}", loaded.report.draw_glyph_count)
+        .map_err(NativeOutputError::new)?;
+    writeln!(writer, "commandCount={}", loaded.report.command_count)
+        .map_err(NativeOutputError::new)?;
+    writeln!(
+        writer,
+        "canvas={}x{}",
+        loaded.image.width(),
+        loaded.image.height()
+    )
+    .map_err(NativeOutputError::new)?;
+    writeln!(writer, "rendered=true").map_err(NativeOutputError::new)
+}
+
 fn run_smoke(writer: &mut impl Write, loaded: &LoadedFixture) -> Result<(), NativeAppError> {
     assert_pixel_probes(loaded)?;
     writeln!(writer, "smoke=passed").map_err(NativeOutputError::new)?;
@@ -1336,10 +1590,12 @@ fn short_hash(hash: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        assert_pixel_probes, load_fixture, load_manifest, load_receipt, reject_strict_text_fixture,
-        run_smoke, validate_manifest_path, validate_receipt_matches_manifest,
-        validate_scene_artifact_hash, write_fixture_summary, write_strict_text_rejection_summary,
-        NativeAppError, NativeArgs, NativeMode, RenderFixtureSource,
+        NativeAppError, NativeArgs, NativeMode, RenderFixtureSource, assert_pixel_probes,
+        load_fixture, load_manifest, load_receipt, load_strict_text_fixture,
+        reject_strict_text_fixture, resolve_strict_text_argument_path, run_smoke,
+        validate_manifest_path, validate_receipt_matches_manifest, validate_scene_artifact_hash,
+        write_fixture_summary, write_strict_text_fixture_summary,
+        write_strict_text_rejection_summary,
     };
     use std::ffi::OsString;
     use std::path::{Path, PathBuf};
@@ -1421,6 +1677,57 @@ mod tests {
             reject_strict_text_fixture(&strict_text_fixture_path("geordi.strict-text.geordi.json"));
 
         assert!(matches!(result, Err(NativeAppError::StrictTextAccepted(_))));
+    }
+
+    #[test]
+    fn strict_text_smoke_mode_loads_renders_and_reports_fixture() -> Result<(), NativeAppError> {
+        let loaded = load_strict_text_fixture(
+            Path::new("geordi.strict-text.geordi.json"),
+            Option::<&Path>::None,
+        )?;
+        let mut output = Vec::new();
+
+        write_strict_text_fixture_summary(&mut output, &loaded)?;
+
+        assert_eq!(loaded.image.width(), 192);
+        assert_eq!(loaded.image.height(), 64);
+        let text = output_text(&output);
+        assert!(text.contains("Geordi native strict text fixture loaded"));
+        assert!(text.contains("rendererName=rust-software-outline-glyphs"));
+        assert!(text.contains("fixtureId=render-everywhere:strict-text:geordi"));
+        assert!(
+            text.contains("evidencePackId=render-everywhere:strict-text:geordi:outline-evidence")
+        );
+        assert!(text.contains("evidenceKind=outlinePaths"));
+        assert!(text.contains("textProfile=geordi-strict-positioned-glyph-run/1"));
+        assert!(text.contains("glyphCount=6"));
+        assert!(text.contains("drawGlyphCount=6"));
+        assert!(text.contains("canvas=192x64"));
+        assert!(text.contains("rendered=true"));
+        Ok(())
+    }
+
+    #[test]
+    fn strict_text_smoke_mode_fails_on_invalid_outline_evidence() {
+        let result = load_strict_text_fixture(
+            Path::new("geordi.strict-text.geordi.json"),
+            Some(Path::new(
+                "failures/bad-outline-command.outline-evidence.geordi.json",
+            )),
+        );
+
+        assert!(matches!(result, Err(NativeAppError::StrictTextRender(_))));
+    }
+
+    #[test]
+    fn strict_text_smoke_mode_rejects_escaping_fixture_paths() {
+        let result =
+            resolve_strict_text_argument_path(Path::new("../geordi.strict-text.geordi.json"));
+
+        assert!(matches!(
+            result,
+            Err(super::NativeStrictTextPathError { .. })
+        ));
     }
 
     #[test]
@@ -1581,6 +1888,46 @@ mod tests {
             PathBuf::from(
                 "fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json"
             )
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn parses_strict_text_smoke_mode_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--strict-text-smoke"),
+            OsString::from("fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::StrictTextSmoke);
+        assert_eq!(args.frame_index, 0);
+        assert_eq!(args.strict_text_evidence_path, None);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn parses_strict_text_smoke_evidence_override_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--strict-text-smoke"),
+            OsString::from("--evidence"),
+            OsString::from("geordi.outline-evidence.geordi.json"),
+            OsString::from("geordi.strict-text.geordi.json"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::StrictTextSmoke);
+        assert_eq!(
+            args.strict_text_evidence_path,
+            Some(PathBuf::from("geordi.outline-evidence.geordi.json"))
+        );
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from("geordi.strict-text.geordi.json")
         );
         Ok(())
     }
