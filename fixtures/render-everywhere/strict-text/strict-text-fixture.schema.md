@@ -91,6 +91,8 @@ Known failures for later slices:
 - unsupported fixture version;
 - unsupported text profile;
 - unsupported position encoding;
+- `failures/unsupported-runtime-shaping.strict-text.geordi.json`: unsupported runtime shaping
+  requirement;
 - missing required feature;
 - `semanticText.affectsPixels: true`;
 - negative glyph id;

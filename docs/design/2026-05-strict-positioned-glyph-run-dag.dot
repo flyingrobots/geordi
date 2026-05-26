@@ -70,9 +70,9 @@ digraph StrictPositionedGlyphRunPlan {
     S044 [label="S044\nText fixture receipt design", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S045 [label="S045\nTypeScript text fixture receipt", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S046 [label="S046\nRust text fixture receipt/report", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S047 [label="S047\nUnsupported strict text fixture", color="#16a34a", penwidth=4];
-    S048 [label="S048\nBrowser strict text rejection", color="#dc2626", penwidth=4];
-    S049 [label="S049\nNative strict text rejection", color="#dc2626", penwidth=4];
+    S047 [label="S047\nUnsupported strict text fixture", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S048 [label="S048\nBrowser strict text rejection", color="#16a34a", penwidth=4];
+    S049 [label="S049\nNative strict text rejection", color="#16a34a", penwidth=4];
     S050 [label="S050\nGlyph-run checkpoint gate", color="#dc2626", penwidth=4];
   }
 

@@ -20,8 +20,9 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the active open node is `S047`, unsupported strict text fixture, after `S046` added Rust strict text
-fixture receipt reports that match the TypeScript canonical hash contract.
+the active open node is `S048`, browser strict text rejection, after `S047` added a committed
+unsupported strict text fixture that both TypeScript and Rust validators reject before rendering.
+`S049`, native strict text rejection, is also open.
 
 ## Completed Capabilities
 

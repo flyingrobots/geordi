@@ -381,6 +381,16 @@ function strictTextFixtureBSource(): string {
   );
 }
 
+function strictTextFailureFixtureSource(name: string): string {
+  return readFileSync(
+    new URL(
+      `../../../fixtures/render-everywhere/strict-text/failures/${name}.strict-text.geordi.json`,
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
 function fontPackFailureManifestSource(name: string): string {
   return readFileSync(
     new URL(
@@ -1123,6 +1133,20 @@ describe('render fixture strict text fixture manifest validation', () => {
       '$.glyphRuns[0].glyphs[0].glyphId',
       '$.glyphRuns[0].glyphs[0].advance',
     ]);
+  });
+
+  it('keeps committed unsupported strict text fixture rejected', () => {
+    const source = strictTextFailureFixtureSource('unsupported-runtime-shaping');
+    const result = validateRenderFixtureStrictTextFixtureManifest(canonicalJsonPort.parse(source));
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContainEqual({
+      message: 'Strict text feature is not supported',
+      path: '$.features[3]',
+    });
+    expect(() => parseRenderFixtureStrictTextFixtureManifest(source)).toThrow(
+      RenderFixtureInvalidStrictTextFixtureManifestError,
+    );
   });
 
   it('rejects fractional, unsafe, or negative line box fields', () => {

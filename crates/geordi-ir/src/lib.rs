@@ -2813,6 +2813,19 @@ mod tests {
     }
 
     #[test]
+    fn rejects_committed_unsupported_strict_text_fixture() -> Result<(), GeordiIrTestError> {
+        let manifest = load_geordi_strict_text_fixture_manifest(fixture_path(
+            "strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json",
+        ))?;
+
+        let paths =
+            strict_text_validation_paths(validate_geordi_strict_text_fixture_manifest(&manifest));
+
+        assert_paths_include(&paths, "$.features[3]");
+        Ok(())
+    }
+
+    #[test]
     fn rejects_unsafe_strict_text_glyph_integer_values() -> Result<(), GeordiIrTestError> {
         let mut manifest = parse_geordi_strict_text_fixture_manifest(strict_text_fixture_source())?;
         let unsafe_value = GEORDI_JSON_SAFE_INTEGER_MAX + 1;

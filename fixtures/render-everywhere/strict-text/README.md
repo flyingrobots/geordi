@@ -26,6 +26,12 @@ fixtures/render-everywhere/strict-text/strict-text-fixture.schema.md
 fixtures/render-everywhere/strict-text/strict-text-fixture-receipt.schema.md
 ~~~
 
+Failure fixtures:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
+~~~
+
 Canonical fixture A:
 
 ~~~text
