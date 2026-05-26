@@ -3,6 +3,8 @@
 **Status**: Draft execution plan
 **Date**: 2026-05-25
 **Parent Bearing**: [../../BEARING.md](../../BEARING.md)
+**Remaining Slice PRD/Test Plan**:
+[2026-05-strict-text-remaining-slices-prd-test-plan.md](./2026-05-strict-text-remaining-slices-prd-test-plan.md)
 **Profile under design**: <code>geordi-strict-positioned-glyph-run/1</code>
 
 This document locks the next Geordi credibility milestone: strict positioned glyph-run text. It is not a general text feature. It is a deterministic text evidence profile that proves browser and native renderers can consume explicit glyph evidence backed by content-addressed font assets.

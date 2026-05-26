@@ -68,6 +68,7 @@ Primary docs:
 
 - [`design/2026-05-wesley-common-type-generation.md`](design/2026-05-wesley-common-type-generation.md)
 - [`design/2026-05-typescript-rust-wasm-boundary.md`](design/2026-05-typescript-rust-wasm-boundary.md)
+- [`design/2026-05-strict-text-remaining-slices-prd-test-plan.md`](design/2026-05-strict-text-remaining-slices-prd-test-plan.md)
 
 ## Current Nonclaims
 

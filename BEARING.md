@@ -5,6 +5,8 @@
 **Active milestone**: Strict Positioned Glyph-Run Text
 **Active profile under design**: <code>geordi-strict-positioned-glyph-run/1</code>
 **Active design doc**: [docs/design/2026-05-strict-positioned-glyph-run-plan.md](./docs/design/2026-05-strict-positioned-glyph-run-plan.md)
+**Remaining slice PRD/test plan**:
+[docs/design/2026-05-strict-text-remaining-slices-prd-test-plan.md](./docs/design/2026-05-strict-text-remaining-slices-prd-test-plan.md)
 **Active DAG SVG**: [docs/design/2026-05-strict-positioned-glyph-run-dag.svg](./docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 **Drift correction**: shared TypeScript/Rust contract DTOs must be generated from a Wesley common
 schema; see

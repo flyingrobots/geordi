@@ -15,6 +15,8 @@ semantics, while these documents define implementation slices. The product north
 The executable checklist for this sequence lives in
 [`../../BEARING.md`](../../BEARING.md). The detailed design document is
 [`2026-05-strict-positioned-glyph-run-plan.md`](./2026-05-strict-positioned-glyph-run-plan.md).
+The remaining-slice PRD and test plan is
+[`2026-05-strict-text-remaining-slices-prd-test-plan.md`](./2026-05-strict-text-remaining-slices-prd-test-plan.md).
 The dependency graph source is
 [`2026-05-strict-positioned-glyph-run-dag.dot`](./2026-05-strict-positioned-glyph-run-dag.dot) and
 the rendered graph is
