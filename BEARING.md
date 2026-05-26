@@ -236,6 +236,19 @@ S060 adds visible text smoke assertions. Current nonclaims remain: no native str
 no cross-runtime metadata equality gate, no platform text API compliance path, and no general text
 support.
 
+## S060 Browser Visible Text Smoke
+
+The Playwright browser gate now switches to the `Text` panel, verifies exactly one strict text canvas
+is visible, samples the full canvas, proves it has non-background pixels, records the nonblank pixel
+bounds, and asserts those bounds stay within the declared canvas. The page installs browser-side
+spies before app startup for `CanvasRenderingContext2D.fillText`, `strokeText`, `measureText`, and
+`FontFace`; any call fails through `BrowserGateStrictTextSmokeError` with the recorded call list.
+
+This is a coarse smoke only. S066 owns stable text probe policy and sample points, S069 owns
+cross-runtime nonblank bounds policy, and S065 owns browser/native metadata equality. Current
+nonclaims remain: no native strict text renderer, no browser/native parity claim, no platform text
+API compliance path, and no general text support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -253,7 +266,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S060**.
+Current OPEN node: **S061**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -910,7 +923,7 @@ Current OPEN node: **S060**.
 
 ### S060: Browser visible text smoke
 
-- [ ] **S060: Browser visible text smoke** (OPEN)
+- [x] **S060: Browser visible text smoke** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser visible text smoke documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser visible text smoke.
@@ -1064,7 +1077,7 @@ Current OPEN node: **S060**.
 
 ### S074: Browser text demo docs
 
-- [ ] **S074: Browser text demo docs** (BLOCKED)
+- [ ] **S074: Browser text demo docs** (OPEN)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with browser text demo docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Browser text demo docs.

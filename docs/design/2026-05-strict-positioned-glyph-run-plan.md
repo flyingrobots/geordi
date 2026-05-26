@@ -595,6 +595,12 @@ canonical fragments, and renders them in a collapsed `Text metadata` disclosure.
 states `semanticTextAffectsPixels=false` and labels semantic text as non-rendering metadata so the UI
 does not imply that strings, host fonts, or platform text APIs determine pixels.
 
+S060 adds the first browser visible text smoke. The Playwright gate switches to the browser `Text`
+panel, samples the strict text canvas, fails through a custom strict text smoke error if the canvas is
+blank or unavailable, checks nonblank bounds are inside the canvas, and installs browser-side spies
+for Canvas text APIs and `FontFace` before app startup. This remains a smoke, not the later stable
+probe policy or browser/native raster parity claim.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

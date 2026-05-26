@@ -77,7 +77,9 @@ pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browse
 ```
 
 The Playwright gate compiles `source.gpvue` and routes the page's `fixture.json` and
-`scene.geordi.json` requests to the emitted manifest and scene artifact. When
+`scene.geordi.json` requests to the emitted manifest and scene artifact. It also switches to the
+strict `Text` panel, samples the strict text canvas for nonblank in-bounds pixels, and fails if the
+browser calls Canvas text APIs or `FontFace` while producing the strict text proof. When
 `GEORDI_RENDER_EVERYWHERE_COMPILED_MANIFEST` and `GEORDI_RENDER_EVERYWHERE_COMPILED_SCENE` are set,
 the gate uses those files instead; this is how the root render-everywhere smoke shares one temporary
 fixture directory with the native Rust harness.

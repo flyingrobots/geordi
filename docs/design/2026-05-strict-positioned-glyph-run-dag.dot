@@ -87,7 +87,7 @@ digraph StrictPositionedGlyphRunPlan {
     S057 [label="S057\nBrowser outline glyph renderer", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S058 [label="S058\nBrowser text fixture mode", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S059 [label="S059\nBrowser text metadata disclosure", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S060 [label="S060\nBrowser visible text smoke", color="#16a34a", penwidth=4];
+    S060 [label="S060\nBrowser visible text smoke", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
   }
 
   subgraph cluster_native {
@@ -139,7 +139,7 @@ digraph StrictPositionedGlyphRunPlan {
   subgraph cluster_docs {
     label="Docs and Gates";
     color="#e2e8f0";
-    S074 [label="S074\nBrowser text demo docs", color="#dc2626", penwidth=4];
+    S074 [label="S074\nBrowser text demo docs", color="#16a34a", penwidth=4];
     S075 [label="S075\nNative text demo docs", color="#dc2626", penwidth=4];
     S093 [label="S093\nRaw runtime text noncompliance docs", color="#dc2626", penwidth=4];
     S094 [label="S094\nEnd-to-end text pipeline docs", color="#dc2626", penwidth=4];

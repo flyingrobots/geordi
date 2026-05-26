@@ -20,9 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the active open node is `S060`, browser visible text smoke, after `S059` mounted the browser Text
-mode and metadata disclosure for strict text fixture, font-pack, glyph-run, line-box, evidence,
-profile, position-encoding, renderer, and semantic non-rendering fields.
+the lowest active open node is `S061`, native outline glyph renderer, after `S060` added browser
+visible text smoke coverage for the Text-mode canvas and browser text-API spies.
 
 ## Completed Capabilities
 
@@ -41,7 +40,7 @@ profile, position-encoding, renderer, and semantic non-rendering fields.
 | Strict text manifests | TypeScript and Rust can validate strict text manifest structure, font references, line-box geometry, both canonical checked-in fixtures, and canonical fixture JSON normalization. |
 | Strict text receipts | The receipt schema defines fixture, font-pack, glyph-run, line-box, semantic-text, and future glyph-evidence hash inputs; TypeScript and Rust can build canonical receipts for both strict text fixtures. |
 | Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, covered by glyph-id smoke tests, parsed by TypeScript/Rust DTO APIs, and guarded by command-shape failure fixtures. |
-| Browser strict text renderer | Browser harness code can load a strict text fixture/evidence/font-pack asset set, validate font references, render parsed outline evidence into Canvas path geometry without calling Canvas text APIs, and disclose the strict text metadata contract in the browser UI. |
+| Browser strict text renderer | Browser harness code can load a strict text fixture/evidence/font-pack asset set, validate font references, render parsed outline evidence into Canvas path geometry without calling Canvas text APIs, disclose the strict text metadata contract in the browser UI, and pass a Playwright nonblank/text-API smoke. |
 
 ## Active Work
 

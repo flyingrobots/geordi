@@ -13,6 +13,12 @@ import {
 } from '@flyingrobots/geordi-render-fixture';
 import { compileGpvueSource } from '@flyingrobots/geordi-gpvue';
 
+declare global {
+  interface Window {
+    __geordiTextApiCalls?: string[];
+  }
+}
+
 interface ProbeInput {
   readonly id: string;
   readonly x: number;
@@ -41,6 +47,32 @@ interface CanvasFailure {
 
 type CanvasEvaluation = CanvasFailure | CanvasSnapshot;
 
+interface StrictTextBounds {
+  readonly maxX: number;
+  readonly maxY: number;
+  readonly minX: number;
+  readonly minY: number;
+}
+
+interface StrictTextCanvasSnapshot {
+  readonly bounds: StrictTextBounds;
+  readonly canvasCount: number;
+  readonly height: number;
+  readonly nonblank: true;
+  readonly nonblankPixelCount: number;
+  readonly sampledPixelCount: number;
+  readonly textApiCalls: readonly string[];
+  readonly width: number;
+}
+
+interface StrictTextCanvasFailure {
+  readonly canvasCount: number;
+  readonly reason: 'blank' | 'canvas-count' | 'context-unavailable' | 'text-api-call';
+  readonly textApiCalls: readonly string[];
+}
+
+type StrictTextCanvasEvaluation = StrictTextCanvasFailure | StrictTextCanvasSnapshot;
+
 class BrowserGateCanvasEvaluationError extends Error {
   public readonly reason: string;
 
@@ -48,6 +80,18 @@ class BrowserGateCanvasEvaluationError extends Error {
     super('Browser gate canvas evaluation failed');
     this.name = new.target.name;
     this.reason = reason;
+  }
+}
+
+class BrowserGateStrictTextSmokeError extends Error {
+  public readonly reason: string;
+  public readonly textApiCalls: readonly string[];
+
+  constructor(reason: string, textApiCalls: readonly string[] = []) {
+    super('Browser strict text smoke failed');
+    this.name = new.target.name;
+    this.reason = reason;
+    this.textApiCalls = textApiCalls;
   }
 }
 
@@ -165,6 +209,20 @@ function snapshotFromEvaluation(evaluation: CanvasEvaluation): CanvasSnapshot {
   throw new BrowserGateCanvasEvaluationError(evaluation.reason);
 }
 
+function strictTextSnapshotFromEvaluation(
+  evaluation: StrictTextCanvasEvaluation,
+): StrictTextCanvasSnapshot {
+  if (!('width' in evaluation)) {
+    throw new BrowserGateStrictTextSmokeError(evaluation.reason, evaluation.textApiCalls);
+  }
+
+  if (evaluation.textApiCalls.length > 0) {
+    throw new BrowserGateStrictTextSmokeError('text-api-call', evaluation.textApiCalls);
+  }
+
+  return evaluation;
+}
+
 function sampleForProbe(
   samples: ReadonlyMap<string, RenderFixtureRgba>,
   probe: RenderFixturePixelProbe,
@@ -187,6 +245,57 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   const strictTextFontPackSource = loadStrictTextFontPackSource();
   let servedCompiledManifest = false;
   let servedCompiledScene = false;
+
+  await page.addInitScript(() => {
+    const textApiCalls: string[] = [];
+    window.__geordiTextApiCalls = textApiCalls;
+
+    const canvasPrototype = CanvasRenderingContext2D.prototype;
+    canvasPrototype.fillText = function fillTextSpy(
+      this: CanvasRenderingContext2D,
+      text: string,
+      _x: number,
+      _y: number,
+      maxWidth?: number,
+    ): void {
+      textApiCalls.push('CanvasRenderingContext2D.fillText');
+      void text;
+      void maxWidth;
+    };
+    canvasPrototype.strokeText = function strokeTextSpy(
+      this: CanvasRenderingContext2D,
+      text: string,
+      _x: number,
+      _y: number,
+      maxWidth?: number,
+    ): void {
+      textApiCalls.push('CanvasRenderingContext2D.strokeText');
+      void text;
+      void maxWidth;
+    };
+    canvasPrototype.measureText = function measureTextSpy(
+      this: CanvasRenderingContext2D,
+      text: string,
+    ): TextMetrics {
+      textApiCalls.push('CanvasRenderingContext2D.measureText');
+      void text;
+      return { width: 0 } as TextMetrics;
+    };
+
+    const OriginalFontFace = window.FontFace;
+    if (typeof OriginalFontFace === 'function') {
+      window.FontFace = class FontFaceSpy extends OriginalFontFace {
+        constructor(
+          family: string,
+          source: string | BufferSource,
+          descriptors?: FontFaceDescriptors,
+        ) {
+          textApiCalls.push('FontFace');
+          super(family, source, descriptors);
+        }
+      };
+    }
+  });
 
   expect(artifactHash(compiledSceneSource)).toBe(manifest.artifactHash);
 
@@ -394,6 +503,92 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   await expect(
     textPanel.locator('canvas[data-geordi-strict-text-canvas="true"]'),
   ).toHaveCount(1);
+  const strictTextEvaluation = await page.evaluate<StrictTextCanvasEvaluation>(() => {
+    const textApiCalls = window.__geordiTextApiCalls ?? [];
+    const canvases = document.querySelectorAll<HTMLCanvasElement>(
+      '[data-geordi-demo-panel="text"]:not([hidden]) canvas[data-geordi-strict-text-canvas="true"]',
+    );
+    if (canvases.length !== 1) {
+      return {
+        canvasCount: canvases.length,
+        reason: 'canvas-count',
+        textApiCalls,
+      };
+    }
+
+    const canvas = canvases.item(0);
+    const context = canvas.getContext('2d');
+    if (context === null) {
+      return {
+        canvasCount: canvases.length,
+        reason: 'context-unavailable',
+        textApiCalls,
+      };
+    }
+
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let minX = canvas.width;
+    let minY = canvas.height;
+    let maxX = -1;
+    let maxY = -1;
+    let nonblankPixelCount = 0;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const alpha = pixels[index + 3] ?? 0;
+      const red = pixels[index] ?? 255;
+      const green = pixels[index + 1] ?? 255;
+      const blue = pixels[index + 2] ?? 255;
+      if (alpha > 0 && (red !== 255 || green !== 255 || blue !== 255)) {
+        const pixelIndex = index / 4;
+        const x = pixelIndex % canvas.width;
+        const y = Math.floor(pixelIndex / canvas.width);
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+        nonblankPixelCount += 1;
+      }
+    }
+
+    if (textApiCalls.length > 0) {
+      return {
+        canvasCount: canvases.length,
+        reason: 'text-api-call',
+        textApiCalls,
+      };
+    }
+
+    if (nonblankPixelCount === 0) {
+      return {
+        canvasCount: canvases.length,
+        reason: 'blank',
+        textApiCalls,
+      };
+    }
+
+    return {
+      bounds: { maxX, maxY, minX, minY },
+      canvasCount: canvases.length,
+      height: canvas.height,
+      nonblank: true,
+      nonblankPixelCount,
+      sampledPixelCount: pixels.length / 4,
+      textApiCalls,
+      width: canvas.width,
+    };
+  });
+  const strictTextSnapshot = strictTextSnapshotFromEvaluation(strictTextEvaluation);
+  expect(strictTextSnapshot.canvasCount).toBe(1);
+  expect(strictTextSnapshot.width).toBe(192);
+  expect(strictTextSnapshot.height).toBe(64);
+  expect(strictTextSnapshot.nonblankPixelCount).toBeGreaterThan(0);
+  expect(strictTextSnapshot.sampledPixelCount).toBe(
+    strictTextSnapshot.width * strictTextSnapshot.height,
+  );
+  expect(strictTextSnapshot.textApiCalls).toEqual([]);
+  expect(strictTextSnapshot.bounds.minX).toBeGreaterThanOrEqual(0);
+  expect(strictTextSnapshot.bounds.minY).toBeGreaterThanOrEqual(0);
+  expect(strictTextSnapshot.bounds.maxX).toBeLessThan(strictTextSnapshot.width);
+  expect(strictTextSnapshot.bounds.maxY).toBeLessThan(strictTextSnapshot.height);
   const textReport = textPanel.locator('[data-geordi-strict-text-report="true"]');
   await expect(textReport).toBeHidden();
   await textPanel.getByText('Text metadata').click();
