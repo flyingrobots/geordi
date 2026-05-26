@@ -32,6 +32,15 @@ fixtures/render-everywhere/assets/stanford-bunny
 The bunny path validates the checked-in mesh manifest, parses the checked-in PLY bytes, computes
 fixed-rate playback frames, and draws the mesh as a rotating Canvas 2D wireframe.
 
+The browser startup path also preflights the committed unsupported strict text fixture:
+
+```text
+fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
+```
+
+That preflight uses the shared TypeScript strict text validator and must reject the fixture before
+any browser drawing path treats it as compliant.
+
 ## Commands
 
 Run the interactive browser harness:
@@ -100,7 +109,9 @@ The current browser implementation renders through Canvas 2D. The package remain
 `@flyingrobots/geordi-runtime-webgl` because the runtime package will grow into the WebGL path, but
 this demo should not claim shader parity yet.
 
-Text is intentionally excluded from this first deterministic browser/native proof.
+Text rendering is intentionally excluded from this first deterministic browser/native proof. The
+browser harness currently proves strict text rejection only: unsupported strict text fixture
+requirements fail before drawing.
 
 The bunny mesh path does not extend the pixel-identical rectangle proof. It proves shared asset
 identity, parsed mesh metadata, deterministic sampled-frame metadata, and coarse nonblank drawing in

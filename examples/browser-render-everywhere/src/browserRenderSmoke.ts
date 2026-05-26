@@ -8,8 +8,12 @@ import {
 } from '@flyingrobots/geordi-core';
 import {
   assertRenderFixtureArtifact,
+  parseRenderFixtureStrictTextFixtureManifest,
   parseRenderFixtureManifest,
+  RenderFixtureInvalidStrictTextFixtureManifestError,
   type RenderFixtureManifest,
+  type RenderFixtureStrictTextFixtureManifest,
+  type RenderFixtureStrictTextFixtureManifestIssue,
 } from '@flyingrobots/geordi-render-fixture';
 import { renderGeordiToCanvas } from '@flyingrobots/geordi-runtime-webgl';
 
@@ -18,10 +22,20 @@ export interface BrowserRenderFixtureAssets {
   readonly sceneUrl: string;
 }
 
+export interface BrowserStrictTextFixtureAssets {
+  readonly fixtureUrl: string;
+}
+
 export interface BrowserRenderFixtureResult {
   readonly canvas: HTMLCanvasElement;
   readonly ir: GeordiIr;
   readonly manifest: RenderFixtureManifest;
+}
+
+export interface BrowserStrictTextFixtureRejection {
+  readonly fixtureUrl: string;
+  readonly issues: readonly RenderFixtureStrictTextFixtureManifestIssue[];
+  readonly rejected: true;
 }
 
 export interface BrowserHarnessFetchResponse {
@@ -46,6 +60,12 @@ export interface BrowserRenderFixtureOptions {
   readonly hashArtifact?: BrowserHarnessArtifactHasher;
   readonly jsonPort?: JsonPort;
   readonly render?: BrowserHarnessRenderer;
+}
+
+export interface BrowserStrictTextFixtureOptions {
+  readonly assets: BrowserStrictTextFixtureAssets;
+  readonly fetchText: BrowserHarnessFetchText;
+  readonly jsonPort?: JsonPort;
 }
 
 export class BrowserHarnessFetchError extends Error {
@@ -74,6 +94,33 @@ export class BrowserHarnessInvalidIrError extends Error {
     super('Browser harness IR validation failed');
     this.name = new.target.name;
     this.issues = issues;
+  }
+}
+
+export class BrowserHarnessStrictTextFixtureAcceptedError extends Error {
+  public readonly fixtureUrl: string;
+
+  constructor(fixtureUrl: string) {
+    super('Browser harness strict text fixture was accepted');
+    this.name = new.target.name;
+    this.fixtureUrl = fixtureUrl;
+  }
+}
+
+export class BrowserHarnessStrictTextFixtureRejectedError extends Error {
+  public readonly fixtureUrl: string;
+  public readonly issues: readonly RenderFixtureStrictTextFixtureManifestIssue[];
+  public readonly source: RenderFixtureInvalidStrictTextFixtureManifestError;
+
+  constructor(
+    fixtureUrl: string,
+    source: RenderFixtureInvalidStrictTextFixtureManifestError,
+  ) {
+    super('Browser harness strict text fixture was rejected');
+    this.name = new.target.name;
+    this.fixtureUrl = fixtureUrl;
+    this.issues = source.issues;
+    this.source = source;
   }
 }
 
@@ -130,6 +177,43 @@ export async function renderBrowserFixture(
     ...loaded,
     canvas: render(loaded.ir),
   };
+}
+
+export async function loadBrowserStrictTextFixture(
+  options: BrowserStrictTextFixtureOptions,
+): Promise<RenderFixtureStrictTextFixtureManifest> {
+  const jsonPort = options.jsonPort ?? canonicalJsonPort;
+  const source = await options.fetchText(options.assets.fixtureUrl);
+
+  try {
+    return parseRenderFixtureStrictTextFixtureManifest(source, jsonPort);
+  } catch (error) {
+    if (error instanceof RenderFixtureInvalidStrictTextFixtureManifestError) {
+      throw new BrowserHarnessStrictTextFixtureRejectedError(options.assets.fixtureUrl, error);
+    }
+
+    throw error;
+  }
+}
+
+export async function rejectBrowserStrictTextFixture(
+  options: BrowserStrictTextFixtureOptions,
+): Promise<BrowserStrictTextFixtureRejection> {
+  try {
+    await loadBrowserStrictTextFixture(options);
+  } catch (error) {
+    if (error instanceof BrowserHarnessStrictTextFixtureRejectedError) {
+      return {
+        fixtureUrl: error.fixtureUrl,
+        issues: error.issues,
+        rejected: true,
+      };
+    }
+
+    throw error;
+  }
+
+  throw new BrowserHarnessStrictTextFixtureAcceptedError(options.assets.fixtureUrl);
 }
 
 function assertBrowserHarnessGeordiIr(value: JsonValue): GeordiIr {

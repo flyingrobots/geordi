@@ -5,9 +5,11 @@ import { canonicalJsonPort, type JsonObject, type JsonValue } from '@flyingrobot
 import { RenderFixtureArtifactValidationError } from '@flyingrobots/geordi-render-fixture';
 import { GeordiRuntimeUnsupportedProfileError } from '@flyingrobots/geordi-runtime-webgl';
 import {
+  BrowserHarnessStrictTextFixtureAcceptedError,
   BrowserHarnessFetchError,
   BrowserHarnessInvalidIrError,
   createBrowserFetchText,
+  rejectBrowserStrictTextFixture,
   renderBrowserFixture,
   type BrowserHarnessFetchText,
 } from './browserRenderSmoke.js';
@@ -103,6 +105,8 @@ const hadDocument = Object.prototype.hasOwnProperty.call(globalThis, 'document')
 const originalDocument = hadDocument ? globalThis.document : undefined;
 const HELLO_PANEL_FIXTURE = 'hello-panel';
 const UNSUPPORTED_STRICT_TEXT_FIXTURE = 'unsupported-strict-text';
+const UNSUPPORTED_RUNTIME_SHAPING_STRICT_TEXT_FIXTURE =
+  'unsupported-runtime-shaping.strict-text.geordi.json';
 
 afterEach(() => {
   if (hadDocument && originalDocument) {
@@ -119,6 +123,13 @@ afterEach(() => {
 function fixtureSource(path: string, fixtureName = HELLO_PANEL_FIXTURE): string {
   return readFileSync(
     new URL(`../../../fixtures/render-everywhere/${fixtureName}/${path}`, import.meta.url),
+    'utf8',
+  );
+}
+
+function strictTextFixtureSource(path: string): string {
+  return readFileSync(
+    new URL(`../../../fixtures/render-everywhere/strict-text/${path}`, import.meta.url),
     'utf8',
   );
 }
@@ -180,6 +191,17 @@ function makeFixtureFetchText(options: FixtureFetchTextOptions = {}): BrowserHar
     ['scene.geordi.json', sceneSource],
   ]);
 
+  return (url: string): Promise<string> => {
+    const source = sources.get(url);
+    if (source === undefined) {
+      throw new BrowserRenderSmokeTestError(url);
+    }
+
+    return Promise.resolve(source);
+  };
+}
+
+function makeStrictTextFetchText(sources: ReadonlyMap<string, string>): BrowserHarnessFetchText {
   return (url: string): Promise<string> => {
     const source = sources.get(url);
     if (source === undefined) {
@@ -289,6 +311,50 @@ describe('browser render smoke', () => {
     expect(canvas.width).toBe(0);
     expect(canvas.height).toBe(0);
     expect(context.calls).toHaveLength(0);
+  });
+
+  it('rejects unsupported strict text fixture artifacts before drawing', async () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    const fixtureUrl = UNSUPPORTED_RUNTIME_SHAPING_STRICT_TEXT_FIXTURE;
+    const sources = new Map<string, string>([
+      [
+        fixtureUrl,
+        strictTextFixtureSource(`failures/${UNSUPPORTED_RUNTIME_SHAPING_STRICT_TEXT_FIXTURE}`),
+      ],
+    ]);
+    installCanvasDocument(canvas);
+
+    const rejection = await rejectBrowserStrictTextFixture({
+      assets: { fixtureUrl },
+      fetchText: makeStrictTextFetchText(sources),
+    });
+
+    expect(rejection).toMatchObject({
+      fixtureUrl,
+      rejected: true,
+    });
+    expect(rejection.issues).toContainEqual({
+      message: 'Strict text feature is not supported',
+      path: '$.features[3]',
+    });
+    expect(canvas.width).toBe(0);
+    expect(canvas.height).toBe(0);
+    expect(context.calls).toHaveLength(0);
+  });
+
+  it('fails the strict text rejection guard when the artifact is accepted', async () => {
+    const fixtureUrl = 'geordi.strict-text.geordi.json';
+    const sources = new Map<string, string>([
+      [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
+    ]);
+
+    await expect(
+      rejectBrowserStrictTextFixture({
+        assets: { fixtureUrl },
+        fetchText: makeStrictTextFetchText(sources),
+      }),
+    ).rejects.toBeInstanceOf(BrowserHarnessStrictTextFixtureAcceptedError);
   });
 
   it('wraps failed fetch responses in a custom browser harness error', async () => {

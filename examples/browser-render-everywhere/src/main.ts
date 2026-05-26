@@ -5,7 +5,11 @@ import {
   mountBrowserHarnessShell,
   mountRenderedFixtureCanvas,
 } from './domShell.js';
-import { createBrowserFetchText, renderBrowserFixture } from './browserRenderSmoke.js';
+import {
+  createBrowserFetchText,
+  rejectBrowserStrictTextFixture,
+  renderBrowserFixture,
+} from './browserRenderSmoke.js';
 import { STANFORD_BUNNY_ASSETS } from './bunnyAssets.js';
 import {
   BUNNY_BROWSER_RENDERER_NAME,
@@ -16,12 +20,17 @@ import {
 } from './bunnyRender.js';
 import { HELLO_PANEL_FIXTURE_ASSETS } from './fixtureAssets.js';
 import { createBrowserHarnessStatus } from './harnessModel.js';
+import { UNSUPPORTED_RUNTIME_SHAPING_STRICT_TEXT_ASSETS } from './strictTextAssets.js';
 
 async function startBrowserHarness(): Promise<void> {
   const root = document.querySelector<HTMLElement>('#app');
   const fetchText = createBrowserFetchText((url) => globalThis.fetch(url));
   const result = await renderBrowserFixture({
     assets: HELLO_PANEL_FIXTURE_ASSETS,
+    fetchText,
+  });
+  await rejectBrowserStrictTextFixture({
+    assets: UNSUPPORTED_RUNTIME_SHAPING_STRICT_TEXT_ASSETS,
     fetchText,
   });
   const bunny = await renderBunnyFixtureFrame(STANFORD_BUNNY_ASSETS, 0, fetchText);
