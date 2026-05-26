@@ -298,6 +298,27 @@ S064 owns native visible text smoke assertions. Current nonclaims remain: no ful
 parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no host font
 lookup, and no general text support.
 
+## S064 Native Visible Text Smoke
+
+The native strict text smoke mode now fails unless the rendered offscreen buffer contains nonblank
+text pixels. The smoke report records deterministic nonblank pixel count and coarse bounds for the
+canonical `GEORDI` outline proof:
+
+~~~text
+nonblankPixels=2092
+nonblankBounds=2,13..175,47
+smoke=passed
+~~~
+
+The blank-output negative test mutates a valid outline evidence pack to non-drawing glyphs, renders
+through the public strict text renderer, and verifies `NativeStrictTextSmokeError` rather than a
+successful smoke claim.
+
+S065 owns browser/native metadata equality. S067 owns stable native coarse probes, and S069 owns the
+later cross-runtime nonblank bounds policy. Current nonclaims remain: no full text antialiasing
+parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no host font
+lookup, and no general text support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -315,7 +336,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S064**.
+Current OPEN node: **S065**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1016,7 +1037,7 @@ Current OPEN node: **S064**.
 
 ### S064: Native visible text smoke
 
-- [ ] **S064: Native visible text smoke** (OPEN)
+- [x] **S064: Native visible text smoke** (COMPLETE)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native visible text smoke documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native visible text smoke.
@@ -1027,7 +1048,7 @@ Current OPEN node: **S064**.
 
 ### S065: Browser/native metadata equality
 
-- [ ] **S065: Browser/native metadata equality** (BLOCKED)
+- [ ] **S065: Browser/native metadata equality** (OPEN)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with browser/native metadata equality documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Browser/native metadata equality.
@@ -1137,7 +1158,7 @@ Current OPEN node: **S064**.
 
 ### S075: Native text demo docs
 
-- [ ] **S075: Native text demo docs** (BLOCKED)
+- [ ] **S075: Native text demo docs** (OPEN)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with native text demo docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Native text demo docs.

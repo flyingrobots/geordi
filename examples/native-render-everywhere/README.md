@@ -175,7 +175,10 @@ semanticTextLanguage=en
 semanticTextAffectsPixels=false
 semanticTextRole=non-rendering metadata; pixels follow glyph evidence
 canvas=192x64
+nonblankPixels=2092
+nonblankBounds=2,13..175,47
 rendered=true
+smoke=passed
 ```
 
 ## Boundaries

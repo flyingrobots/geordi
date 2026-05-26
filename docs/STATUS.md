@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the lowest active open node is `S064`, native visible text smoke, after `S063` expanded the native
-strict text metadata report.
+the lowest active open node is `S065`, browser/native metadata equality, after `S064` added native
+visible strict text smoke assertions.
 
 ## Completed Capabilities
 
@@ -41,7 +41,7 @@ strict text metadata report.
 | Strict text receipts | The receipt schema defines fixture, font-pack, glyph-run, line-box, semantic-text, and future glyph-evidence hash inputs; TypeScript and Rust can build canonical receipts for both strict text fixtures. |
 | Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, covered by glyph-id smoke tests, parsed by TypeScript/Rust DTO APIs, and guarded by command-shape failure fixtures. |
 | Browser strict text renderer | Browser harness code can load a strict text fixture/evidence/font-pack asset set, validate font references, render parsed outline evidence into Canvas path geometry without calling Canvas text APIs, disclose the strict text metadata contract in the browser UI, and pass a Playwright nonblank/text-API smoke. |
-| Native strict text renderer | Rust renderer code can validate a strict text fixture/evidence pair, lower fixed 26.6 outline evidence into software path segments, fill nonzero outline geometry into the shared RGBA8 buffer, and report native strict text renderer metadata. The native harness has `--strict-text-smoke` for offscreen fixture/evidence/font validation, rendering, and browser-aligned metadata reporting without opening a window. |
+| Native strict text renderer | Rust renderer code can validate a strict text fixture/evidence pair, lower fixed 26.6 outline evidence into software path segments, fill nonzero outline geometry into the shared RGBA8 buffer, and report native strict text renderer metadata. The native harness has `--strict-text-smoke` for offscreen fixture/evidence/font validation, rendering, browser-aligned metadata reporting, and nonblank visible-text smoke without opening a window. |
 
 ## Active Work
 

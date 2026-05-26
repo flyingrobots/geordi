@@ -621,6 +621,11 @@ id/kind/hash, text profile, position encoding, renderer name, glyph counts, comm
 semantic-text nonauthority fields. The fixture/font/glyph-run/line-box values come from the Rust
 strict text receipt builder, while the evidence hash covers the exact outline evidence bytes.
 
+S064 adds native visible text smoke assertions. `--strict-text-smoke` now computes nonblank pixel
+count and coarse nonblank bounds from the offscreen RGBA8 output, fails blank text with
+`NativeStrictTextSmokeError`, and prints `smoke=passed` only after visible evidence is present. This
+is still a coarse smoke, not the later stable probe policy or cross-runtime bounds gate.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

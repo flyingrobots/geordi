@@ -221,6 +221,7 @@ struct LoadedStrictTextFixture {
     fixture_path: PathBuf,
     image: RenderedImage,
     metadata: NativeStrictTextMetadataReport,
+    smoke: NativeStrictTextSmokeReport,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -244,6 +245,15 @@ struct NativeStrictTextMetadataReport {
     semantic_text_role: &'static str,
     semantic_text_source: String,
     text_profile: String,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct NativeStrictTextSmokeReport {
+    max_x: usize,
+    max_y: usize,
+    min_x: usize,
+    min_y: usize,
+    nonblank_pixel_count: usize,
 }
 
 #[derive(Debug)]
@@ -341,6 +351,7 @@ enum NativeAppError {
     StrictTextPath(NativeStrictTextPathError),
     StrictTextReceipt(GeordiStrictTextFixtureReceiptError),
     StrictTextRender(GeordiStrictTextRenderError),
+    StrictTextSmoke(NativeStrictTextSmokeError),
     StrictTextValidation(geordi_ir::GeordiStrictTextFixtureValidationError),
     StrictTextOutlineEvidenceLoad(geordi_ir::GeordiStrictTextOutlineEvidenceLoadError),
     Window(NativeWindowError),
@@ -376,6 +387,7 @@ impl Error for NativeAppError {
             Self::StrictTextPath(source) => Some(source),
             Self::StrictTextReceipt(source) => Some(source),
             Self::StrictTextRender(source) => Some(source),
+            Self::StrictTextSmoke(source) => Some(source),
             Self::StrictTextValidation(source) => Some(source),
             Self::StrictTextOutlineEvidenceLoad(source) => Some(source),
             Self::Window(source) => Some(source),
@@ -506,6 +518,12 @@ impl From<GeordiStrictTextRenderError> for NativeAppError {
 impl From<GeordiStrictTextFixtureReceiptError> for NativeAppError {
     fn from(error: GeordiStrictTextFixtureReceiptError) -> Self {
         Self::StrictTextReceipt(error)
+    }
+}
+
+impl From<NativeStrictTextSmokeError> for NativeAppError {
+    fn from(error: NativeStrictTextSmokeError) -> Self {
+        Self::StrictTextSmoke(error)
     }
 }
 
@@ -846,6 +864,48 @@ impl Display for NativeStrictTextPathError {
 impl Error for NativeStrictTextPathError {}
 
 #[derive(Debug)]
+struct NativeStrictTextSmokeError {
+    source: NativeStrictTextSmokeErrorSource,
+}
+
+#[derive(Debug)]
+enum NativeStrictTextSmokeErrorSource {
+    Blank { height: usize, width: usize },
+    PixelRead { x: usize, y: usize },
+}
+
+impl NativeStrictTextSmokeError {
+    const fn blank(width: usize, height: usize) -> Self {
+        Self {
+            source: NativeStrictTextSmokeErrorSource::Blank { height, width },
+        }
+    }
+
+    const fn pixel_read(x: usize, y: usize) -> Self {
+        Self {
+            source: NativeStrictTextSmokeErrorSource::PixelRead { x, y },
+        }
+    }
+}
+
+impl Display for NativeStrictTextSmokeError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        match self.source {
+            NativeStrictTextSmokeErrorSource::Blank { height, width } => write!(
+                formatter,
+                "Native strict text smoke failed because {width}x{height} output was blank"
+            ),
+            NativeStrictTextSmokeErrorSource::PixelRead { x, y } => write!(
+                formatter,
+                "Native strict text smoke failed because pixel {x},{y} could not be read"
+            ),
+        }
+    }
+}
+
+impl Error for NativeStrictTextSmokeError {}
+
+#[derive(Debug)]
 struct NativeWindowError {
     source: NativeWindowErrorSource,
 }
@@ -945,12 +1005,14 @@ fn load_strict_text_fixture(
     let result = render_strict_text_outline_glyphs_to_image(&fixture, &evidence)?;
     let metadata =
         create_strict_text_metadata_report(&fixture, &evidence_path, receipt, result.report)?;
+    let smoke = assert_strict_text_visible(&result.image)?;
 
     Ok(LoadedStrictTextFixture {
         evidence_path,
         fixture_path,
         image: result.image,
         metadata,
+        smoke,
     })
 }
 
@@ -982,6 +1044,46 @@ fn create_strict_text_metadata_report(
         semantic_text_role: STRICT_TEXT_SEMANTIC_TEXT_ROLE,
         semantic_text_source: fixture.semantic_text.source.clone(),
         text_profile: render_report.text_profile,
+    })
+}
+
+fn assert_strict_text_visible(
+    image: &RenderedImage,
+) -> Result<NativeStrictTextSmokeReport, NativeStrictTextSmokeError> {
+    let mut count = 0_usize;
+    let mut min_x = image.width();
+    let mut min_y = image.height();
+    let mut max_x = 0_usize;
+    let mut max_y = 0_usize;
+
+    for y in 0..image.height() {
+        for x in 0..image.width() {
+            let [red, green, blue, alpha] = image
+                .pixel_at(x, y)
+                .ok_or_else(|| NativeStrictTextSmokeError::pixel_read(x, y))?;
+            if alpha > 0 && (red > 0 || green > 0 || blue > 0) {
+                count += 1;
+                min_x = min_x.min(x);
+                min_y = min_y.min(y);
+                max_x = max_x.max(x);
+                max_y = max_y.max(y);
+            }
+        }
+    }
+
+    if count == 0 {
+        return Err(NativeStrictTextSmokeError::blank(
+            image.width(),
+            image.height(),
+        ));
+    }
+
+    Ok(NativeStrictTextSmokeReport {
+        max_x,
+        max_y,
+        min_x,
+        min_y,
+        nonblank_pixel_count: count,
     })
 }
 
@@ -1614,7 +1716,20 @@ fn write_strict_text_fixture_summary(
         loaded.image.height()
     )
     .map_err(NativeOutputError::new)?;
-    writeln!(writer, "rendered=true").map_err(NativeOutputError::new)
+    writeln!(
+        writer,
+        "nonblankPixels={}",
+        loaded.smoke.nonblank_pixel_count
+    )
+    .map_err(NativeOutputError::new)?;
+    writeln!(
+        writer,
+        "nonblankBounds={},{}..{},{}",
+        loaded.smoke.min_x, loaded.smoke.min_y, loaded.smoke.max_x, loaded.smoke.max_y
+    )
+    .map_err(NativeOutputError::new)?;
+    writeln!(writer, "rendered=true").map_err(NativeOutputError::new)?;
+    writeln!(writer, "smoke=passed").map_err(NativeOutputError::new)
 }
 
 fn run_smoke(writer: &mut impl Write, loaded: &LoadedFixture) -> Result<(), NativeAppError> {
@@ -1700,12 +1815,16 @@ fn short_hash(hash: &str) -> String {
 mod tests {
     use super::{
         NativeAppError, NativeArgs, NativeMode, RenderFixtureSource, assert_pixel_probes,
-        load_fixture, load_manifest, load_receipt, load_strict_text_fixture,
-        reject_strict_text_fixture, resolve_strict_text_argument_path, run_smoke,
-        validate_manifest_path, validate_receipt_matches_manifest, validate_scene_artifact_hash,
-        write_fixture_summary, write_strict_text_fixture_summary,
+        assert_strict_text_visible, load_fixture, load_manifest, load_receipt,
+        load_strict_text_fixture, reject_strict_text_fixture, resolve_strict_text_argument_path,
+        run_smoke, validate_manifest_path, validate_receipt_matches_manifest,
+        validate_scene_artifact_hash, write_fixture_summary, write_strict_text_fixture_summary,
         write_strict_text_rejection_summary,
     };
+    use geordi_ir::{
+        load_geordi_strict_text_fixture_manifest, load_geordi_strict_text_outline_evidence_pack,
+    };
+    use geordi_renderer::render_strict_text_outline_glyphs_to_image;
     use std::ffi::OsString;
     use std::path::{Path, PathBuf};
 
@@ -1800,6 +1919,11 @@ mod tests {
 
         assert_eq!(loaded.image.width(), 192);
         assert_eq!(loaded.image.height(), 64);
+        assert_eq!(loaded.smoke.nonblank_pixel_count, 2092);
+        assert_eq!(loaded.smoke.min_x, 2);
+        assert_eq!(loaded.smoke.min_y, 13);
+        assert_eq!(loaded.smoke.max_x, 175);
+        assert_eq!(loaded.smoke.max_y, 47);
         let text = output_text(&output);
         assert!(text.contains("Geordi native strict text fixture loaded"));
         assert!(text.contains("rendererName=rust-software-outline-glyphs"));
@@ -1837,7 +1961,33 @@ mod tests {
             text.contains("semanticTextRole=non-rendering metadata; pixels follow glyph evidence")
         );
         assert!(text.contains("canvas=192x64"));
+        assert!(text.contains("nonblankPixels=2092"));
+        assert!(text.contains("nonblankBounds=2,13..175,47"));
         assert!(text.contains("rendered=true"));
+        assert!(text.contains("smoke=passed"));
+        Ok(())
+    }
+
+    #[test]
+    fn strict_text_smoke_mode_fails_on_blank_output() -> Result<(), NativeAppError> {
+        let fixture = load_geordi_strict_text_fixture_manifest(strict_text_fixture_path(
+            "geordi.strict-text.geordi.json",
+        ))?;
+        let mut evidence = load_geordi_strict_text_outline_evidence_pack(
+            strict_text_fixture_path("geordi.outline-evidence.geordi.json"),
+        )?;
+        for glyph in &mut evidence.glyphs {
+            glyph.draws = false;
+            glyph.commands.clear();
+        }
+        let rendered = render_strict_text_outline_glyphs_to_image(&fixture, &evidence)?;
+
+        let result = assert_strict_text_visible(&rendered.image);
+
+        assert!(matches!(
+            result,
+            Err(super::NativeStrictTextSmokeError { .. })
+        ));
         Ok(())
     }
 
