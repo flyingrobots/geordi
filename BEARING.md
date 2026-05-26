@@ -338,6 +338,21 @@ S066 and S067 own browser/native coarse pixel probes. Current nonclaims remain: 
 antialiasing parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no
 host font lookup, and no general text support.
 
+## S066 Browser Coarse Pixel Probes
+
+The Playwright browser text gate now samples explicit strict text probe points in the visible
+`Text` canvas. The first browser probe set covers transparent background points and stable interior
+fill points across the `GEORDI` glyphs. Fill probes require exact `[17, 24, 39, 255]`; transparent
+probes require alpha `0`.
+
+Probe failures throw `BrowserGateStrictTextProbeError` with fixture id, probe id, coordinates,
+expected class, and actual RGBA. These probes are deliberately coarse browser evidence only; they do
+not claim antialiasing parity with native.
+
+S067 owns native coarse probes for the same proof family. Current nonclaims remain: no full text
+antialiasing parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no
+host font lookup, and no general text support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -355,7 +370,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S066**.
+Current OPEN node: **S067**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1078,7 +1093,7 @@ Current OPEN node: **S066**.
 
 ### S066: Browser coarse pixel probes
 
-- [ ] **S066: Browser coarse pixel probes** (OPEN)
+- [x] **S066: Browser coarse pixel probes** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with browser coarse pixel probes documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Browser coarse pixel probes.

@@ -633,6 +633,11 @@ line-box hashes, evidence id/kind/hash, profile, position encoding, glyph counts
 semantic text nonauthority fields. Runtime-specific renderer names and native smoke bounds are not
 treated as equality fields.
 
+S066 adds browser coarse pixel probes. The browser Playwright gate samples named points in the
+visible strict text canvas, requiring exact interior fill at stable glyph points and transparent
+background outside the glyph evidence. Failures report fixture id, probe id, coordinates, expected
+class, and actual RGBA through `BrowserGateStrictTextProbeError`.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

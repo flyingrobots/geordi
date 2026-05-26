@@ -1002,15 +1002,15 @@
 <!-- S066 -->
 <g id="node69" class="node">
 <title>S066</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M742.63,-484C742.63,-484 631.37,-484 631.37,-484 625.37,-484 619.37,-478 619.37,-472 619.37,-472 619.37,-460 619.37,-460 619.37,-454 625.37,-448 631.37,-448 631.37,-448 742.63,-448 742.63,-448 748.63,-448 754.63,-454 754.63,-460 754.63,-460 754.63,-472 754.63,-472 754.63,-478 748.63,-484 742.63,-484"/>
-<text xml:space="preserve" text-anchor="middle" x="687" y="-467.75" font-family="Helvetica,sans-Serif" font-size="10.00">S066</text>
-<text xml:space="preserve" text-anchor="middle" x="687" y="-456.5" font-family="Helvetica,sans-Serif" font-size="10.00">Browser coarse pixel probes</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M742.63,-484C742.63,-484 631.37,-484 631.37,-484 625.37,-484 619.37,-478 619.37,-472 619.37,-472 619.37,-460 619.37,-460 619.37,-454 625.37,-448 631.37,-448 631.37,-448 742.63,-448 742.63,-448 748.63,-448 754.63,-454 754.63,-460 754.63,-460 754.63,-472 754.63,-472 754.63,-478 748.63,-484 742.63,-484"/>
+<text xml:space="preserve" text-anchor="middle" x="687" y="-467.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S066</text>
+<text xml:space="preserve" text-anchor="middle" x="687" y="-456.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Browser coarse pixel probes</text>
 </g>
 <!-- S065&#45;&gt;S066 -->
 <g id="edge73" class="edge">
 <title>S065&#45;&gt;S066</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M643.5,-518.61C650.56,-510.23 659.01,-500.21 666.58,-491.23"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="667.97,-492.84 670.23,-486.9 664.75,-490.14 667.97,-492.84"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M643.5,-518.61C650.67,-510.1 659.28,-499.89 666.94,-490.81"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="668.37,-492.36 670.64,-486.42 665.16,-489.65 668.37,-492.36"/>
 </g>
 <!-- S067 -->
 <g id="node70" class="node">
@@ -1035,8 +1035,8 @@
 <!-- S066&#45;&gt;S068 -->
 <g id="edge75" class="edge">
 <title>S066&#45;&gt;S068</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M672.53,-446.24C666.29,-438.16 658.91,-428.59 652.23,-419.93"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="653.95,-418.72 648.62,-415.25 650.62,-421.28 653.95,-418.72"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M672.81,-446.61C666.41,-438.31 658.77,-428.4 651.89,-419.49"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="653.72,-418.42 648.39,-414.95 650.39,-420.98 653.72,-418.42"/>
 </g>
 <!-- S067&#45;&gt;S068 -->
 <g id="edge76" class="edge">

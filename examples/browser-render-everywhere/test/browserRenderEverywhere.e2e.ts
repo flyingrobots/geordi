@@ -32,6 +32,19 @@ interface PixelSample {
   readonly y: number;
 }
 
+type StrictTextProbeExpectation = 'fill' | 'transparent';
+
+interface StrictTextProbeInput {
+  readonly expectation: StrictTextProbeExpectation;
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+}
+
+interface StrictTextProbeSample extends StrictTextProbeInput {
+  readonly rgba: readonly number[];
+}
+
 interface CanvasSnapshot {
   readonly canvasCount: number;
   readonly height: number;
@@ -60,6 +73,7 @@ interface StrictTextCanvasSnapshot {
   readonly height: number;
   readonly nonblank: true;
   readonly nonblankPixelCount: number;
+  readonly probes: readonly StrictTextProbeSample[];
   readonly sampledPixelCount: number;
   readonly textApiCalls: readonly string[];
   readonly width: number;
@@ -105,6 +119,26 @@ class BrowserGatePixelSampleMissingError extends Error {
   }
 }
 
+class BrowserGateStrictTextProbeError extends Error {
+  public readonly actual: readonly number[];
+  public readonly expected: StrictTextProbeExpectation;
+  public readonly fixtureId: string;
+  public readonly probeId: string;
+  public readonly x: number;
+  public readonly y: number;
+
+  constructor(fixtureId: string, probe: StrictTextProbeSample) {
+    super('Browser strict text pixel probe failed');
+    this.name = new.target.name;
+    this.actual = probe.rgba;
+    this.expected = probe.expectation;
+    this.fixtureId = fixtureId;
+    this.probeId = probe.id;
+    this.x = probe.x;
+    this.y = probe.y;
+  }
+}
+
 class BrowserGateCompiledScenePathError extends Error {
   public readonly path: string;
 
@@ -124,6 +158,17 @@ class BrowserGateCompiledManifestPathError extends Error {
     this.path = path;
   }
 }
+
+const STRICT_TEXT_BROWSER_PIXEL_PROBES: readonly StrictTextProbeInput[] = [
+  { expectation: 'transparent', id: 'text-background-top', x: 100, y: 5 },
+  { expectation: 'fill', id: 'text-g-fill-top', x: 12, y: 15 },
+  { expectation: 'fill', id: 'text-e-fill-mid', x: 40, y: 30 },
+  { expectation: 'fill', id: 'text-o-fill-mid', x: 68, y: 30 },
+  { expectation: 'fill', id: 'text-r-fill-mid', x: 108, y: 30 },
+  { expectation: 'fill', id: 'text-d-fill-mid', x: 136, y: 30 },
+  { expectation: 'fill', id: 'text-i-fill-mid', x: 172, y: 30 },
+  { expectation: 'transparent', id: 'text-background-bottom', x: 180, y: 55 },
+];
 
 function loadManifest(): RenderFixtureManifest {
   return parseRenderFixtureManifest(loadManifestSource());
@@ -233,6 +278,18 @@ function sampleForProbe(
   }
 
   return sample;
+}
+
+function assertStrictTextProbe(fixtureId: string, probe: StrictTextProbeSample): void {
+  const [red = 0, green = 0, blue = 0, alpha = 0] = probe.rgba;
+  const passes =
+    probe.expectation === 'fill'
+      ? red === 17 && green === 24 && blue === 39 && alpha === 255
+      : alpha === 0;
+
+  if (!passes) {
+    throw new BrowserGateStrictTextProbeError(fixtureId, probe);
+  }
 }
 
 test('renders the shared hello-panel fixture with exact browser pixel probes', async ({ page }) => {
@@ -503,7 +560,10 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   await expect(
     textPanel.locator('canvas[data-geordi-strict-text-canvas="true"]'),
   ).toHaveCount(1);
-  const strictTextEvaluation = await page.evaluate<StrictTextCanvasEvaluation>(() => {
+  const strictTextEvaluation = await page.evaluate<
+    StrictTextCanvasEvaluation,
+    readonly StrictTextProbeInput[]
+  >((probes) => {
     const textApiCalls = window.__geordiTextApiCalls ?? [];
     const canvases = document.querySelectorAll<HTMLCanvasElement>(
       '[data-geordi-demo-panel="text"]:not([hidden]) canvas[data-geordi-strict-text-canvas="true"]',
@@ -527,6 +587,13 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
     }
 
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    const probeSamples = probes.map((probe): StrictTextProbeSample => {
+      const data = context.getImageData(probe.x, probe.y, 1, 1).data;
+      return {
+        ...probe,
+        rgba: Array.from(data),
+      };
+    });
     let minX = canvas.width;
     let minY = canvas.height;
     let maxX = -1;
@@ -571,11 +638,12 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
       height: canvas.height,
       nonblank: true,
       nonblankPixelCount,
+      probes: probeSamples,
       sampledPixelCount: pixels.length / 4,
       textApiCalls,
       width: canvas.width,
     };
-  });
+  }, STRICT_TEXT_BROWSER_PIXEL_PROBES);
   const strictTextSnapshot = strictTextSnapshotFromEvaluation(strictTextEvaluation);
   expect(strictTextSnapshot.canvasCount).toBe(1);
   expect(strictTextSnapshot.width).toBe(192);
@@ -589,6 +657,10 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   expect(strictTextSnapshot.bounds.minY).toBeGreaterThanOrEqual(0);
   expect(strictTextSnapshot.bounds.maxX).toBeLessThan(strictTextSnapshot.width);
   expect(strictTextSnapshot.bounds.maxY).toBeLessThan(strictTextSnapshot.height);
+  expect(strictTextSnapshot.probes).toHaveLength(STRICT_TEXT_BROWSER_PIXEL_PROBES.length);
+  for (const probe of strictTextSnapshot.probes) {
+    assertStrictTextProbe(strictTextFixture.id, probe);
+  }
   const textReport = textPanel.locator('[data-geordi-strict-text-report="true"]');
   await expect(textReport).toBeHidden();
   await textPanel.getByText('Text metadata').click();
