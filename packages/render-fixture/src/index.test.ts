@@ -51,6 +51,7 @@ import {
   RENDER_FIXTURE_GLYPH_EVIDENCE_PACK_VERSION,
   RENDER_FIXTURE_GLYPH_EVIDENCE_PAINT_KIND_SOLID_FILL,
   RENDER_FIXTURE_GLYPH_EVIDENCE_WINDING_RULE_NONZERO,
+  RENDER_FIXTURE_STRICT_TEXT_BOUNDS_SOURCE_OUTLINE_EVIDENCE,
   RENDER_FIXTURE_MESH_FIXTURE_VERSION,
   RENDER_FIXTURE_MESH_ASSET_VERSION,
   RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
@@ -357,7 +358,14 @@ function makeStrictTextOutlineEvidencePack(): RenderFixtureStrictTextOutlineEvid
 
 function makeStrictTextProbePolicy(): RenderFixtureStrictTextProbePolicy {
   return {
+    allowedNonblankBounds: {
+      maxX: 176,
+      maxY: 48,
+      minX: 2,
+      minY: 13,
+    },
     antiAliasEdgePolicy: RENDER_FIXTURE_STRICT_TEXT_PROBE_ANTI_ALIAS_EDGE_POLICY,
+    boundsSource: RENDER_FIXTURE_STRICT_TEXT_BOUNDS_SOURCE_OUTLINE_EVIDENCE,
     canvas: {
       height: 64,
       width: 192,
@@ -1311,6 +1319,13 @@ describe('render fixture strict text fixture manifest validation', () => {
     expect(policy.evidencePackId).toBe(
       'render-everywhere:strict-text:geordi:outline-evidence',
     );
+    expect(policy.boundsSource).toBe(RENDER_FIXTURE_STRICT_TEXT_BOUNDS_SOURCE_OUTLINE_EVIDENCE);
+    expect(policy.allowedNonblankBounds).toEqual({
+      maxX: 176,
+      maxY: 48,
+      minX: 2,
+      minY: 13,
+    });
     expect(policy.fillRgba).toEqual([17, 24, 39, 255]);
     expect(policy.probes.map((probe) => probe.id)).toEqual([
       'text-background-top',
@@ -1327,7 +1342,14 @@ describe('render fixture strict text fixture manifest validation', () => {
   it('rejects unstable strict text probe policies', () => {
     const invalid: JsonValue = {
       ...makeStrictTextProbePolicy(),
+      allowedNonblankBounds: {
+        maxX: 300,
+        maxY: 48,
+        minX: 301,
+        minY: -1,
+      },
       antiAliasEdgePolicy: 'edge-probes-are-blocking',
+      boundsSource: 'manual-observed-pixels/1',
       fixturePath: 'fixtures/render-everywhere/assets/fonts/font-pack.geordi.json',
       probePolicyVersion: 'geordi-strict-text-probe-policy/2',
       probes: [
@@ -1361,6 +1383,10 @@ describe('render fixture strict text fixture manifest validation', () => {
       expect.arrayContaining([
         '$.probePolicyVersion',
         '$.fixturePath',
+        '$.boundsSource',
+        '$.allowedNonblankBounds',
+        '$.allowedNonblankBounds.maxX',
+        '$.allowedNonblankBounds.minY',
         '$.antiAliasEdgePolicy',
         '$.probes',
         '$.probes[0].x',

@@ -5,6 +5,7 @@ import { canonicalJsonPort, type JsonValue } from '@flyingrobots/geordi-core';
 import {
   parseRenderFixtureManifest,
   parseRenderFixtureStrictTextFixtureManifest,
+  parseRenderFixtureStrictTextOutlineEvidencePack,
   parseRenderFixtureStrictTextProbePolicy,
   assertRenderFixturePixelProbes,
   renderFixtureRgbaFromBytes,
@@ -144,6 +145,20 @@ class BrowserGateStrictTextProbeError extends Error {
   }
 }
 
+class BrowserGateStrictTextBoundsError extends Error {
+  public readonly allowed: StrictTextBounds;
+  public readonly actual: StrictTextBounds;
+  public readonly fixtureId: string;
+
+  constructor(fixtureId: string, actual: StrictTextBounds, allowed: StrictTextBounds) {
+    super('Browser strict text nonblank bounds failed');
+    this.name = new.target.name;
+    this.allowed = allowed;
+    this.actual = actual;
+    this.fixtureId = fixtureId;
+  }
+}
+
 class BrowserGateCompiledScenePathError extends Error {
   public readonly path: string;
 
@@ -239,6 +254,58 @@ function canonicalJsonHash(value: JsonValue): string {
   return artifactHash(`${canonicalJsonPort.stringify(value, { space: 2 })}\n`);
 }
 
+function strictTextEvidencePixelBounds(
+  fixture: {
+    readonly glyphRuns: readonly {
+      readonly glyphs: readonly {
+        readonly glyphId: number;
+        readonly x: number;
+        readonly xOffset: number;
+        readonly y: number;
+        readonly yOffset: number;
+      }[];
+    }[];
+  },
+  evidence: {
+    readonly glyphs: readonly {
+      readonly bounds: {
+        readonly height: number;
+        readonly width: number;
+        readonly x: number;
+        readonly y: number;
+      };
+      readonly draws: boolean;
+      readonly glyphId: number;
+    }[];
+  },
+): StrictTextBounds {
+  const evidenceByGlyphId = new Map(evidence.glyphs.map((glyph) => [glyph.glyphId, glyph]));
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+
+  for (const run of fixture.glyphRuns) {
+    for (const glyph of run.glyphs) {
+      const glyphEvidence = evidenceByGlyphId.get(glyph.glyphId);
+      if (glyphEvidence?.draws !== true) {
+        continue;
+      }
+
+      const left = glyph.x + glyph.xOffset + glyphEvidence.bounds.x;
+      const top = glyph.y + glyph.yOffset + glyphEvidence.bounds.y;
+      const right = left + glyphEvidence.bounds.width;
+      const bottom = top + glyphEvidence.bounds.height;
+      minX = Math.min(minX, Math.floor(left / 64));
+      minY = Math.min(minY, Math.floor(top / 64));
+      maxX = Math.max(maxX, Math.ceil(right / 64) - 1);
+      maxY = Math.max(maxY, Math.ceil(bottom / 64) - 1);
+    }
+  }
+
+  return { maxX, maxY, minX, minY };
+}
+
 function probeInputs(probes: readonly RenderFixturePixelProbe[]): readonly ProbeInput[] {
   return probes.map((probe) => ({
     id: probe.id,
@@ -299,6 +366,22 @@ function sampleForProbe(
   return sample;
 }
 
+function assertStrictTextBoundsInsidePolicy(
+  fixtureId: string,
+  actual: StrictTextBounds,
+  allowed: StrictTextBounds,
+): void {
+  const passes =
+    actual.minX >= allowed.minX &&
+    actual.minY >= allowed.minY &&
+    actual.maxX <= allowed.maxX &&
+    actual.maxY <= allowed.maxY;
+
+  if (!passes) {
+    throw new BrowserGateStrictTextBoundsError(fixtureId, actual, allowed);
+  }
+}
+
 function assertStrictTextProbe(
   fixtureId: string,
   fillRgba: RenderFixtureRgba,
@@ -327,6 +410,8 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   const strictTextFixtureSource = loadStrictTextFixtureSource();
   const strictTextFixture = parseRenderFixtureStrictTextFixtureManifest(strictTextFixtureSource);
   const strictTextEvidenceSource = loadStrictTextEvidenceSource();
+  const strictTextEvidence =
+    parseRenderFixtureStrictTextOutlineEvidencePack(strictTextEvidenceSource);
   const strictTextProbePolicy = parseRenderFixtureStrictTextProbePolicy(
     loadStrictTextProbePolicySource(),
   );
@@ -681,6 +766,9 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
     'render-everywhere:strict-text:geordi:outline-evidence',
   );
   expect(strictTextProbePolicy.canvas).toEqual({ height: 64, width: 192 });
+  expect(strictTextProbePolicy.allowedNonblankBounds).toEqual(
+    strictTextEvidencePixelBounds(strictTextFixture, strictTextEvidence),
+  );
   expect(strictTextSnapshot.canvasCount).toBe(1);
   expect(strictTextSnapshot.width).toBe(192);
   expect(strictTextSnapshot.height).toBe(64);
@@ -693,6 +781,11 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
   expect(strictTextSnapshot.bounds.minY).toBeGreaterThanOrEqual(0);
   expect(strictTextSnapshot.bounds.maxX).toBeLessThan(strictTextSnapshot.width);
   expect(strictTextSnapshot.bounds.maxY).toBeLessThan(strictTextSnapshot.height);
+  assertStrictTextBoundsInsidePolicy(
+    strictTextFixture.id,
+    strictTextSnapshot.bounds,
+    strictTextProbePolicy.allowedNonblankBounds,
+  );
   expect(strictTextSnapshot.probes).toHaveLength(strictTextProbePolicy.probes.length);
   for (const probe of strictTextSnapshot.probes) {
     assertStrictTextProbe(strictTextFixture.id, strictTextProbePolicy.fillRgba, probe);

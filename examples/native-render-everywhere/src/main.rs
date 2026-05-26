@@ -7,11 +7,12 @@ use geordi_ir::{
     GeordiFontPackLoadError, GeordiIr, GeordiIrLoadError, GeordiIrValidationError,
     GeordiStrictTextFixtureLoadError, GeordiStrictTextFixtureManifest,
     GeordiStrictTextFixtureReceipt, GeordiStrictTextFixtureReceiptError,
-    GeordiStrictTextFixtureValidationIssue, create_geordi_strict_text_fixture_receipt,
-    geordi_sha256_from_bytes, load_geordi_font_pack_manifest, load_geordi_ir,
-    load_geordi_strict_text_fixture_manifest, load_geordi_strict_text_outline_evidence_pack,
-    validate_geordi_font_pack_hashes, validate_geordi_ir,
-    validate_geordi_strict_text_fixture_manifest, validate_geordi_strict_text_font_references,
+    GeordiStrictTextFixtureValidationIssue, GeordiStrictTextOutlineEvidencePack,
+    create_geordi_strict_text_fixture_receipt, geordi_sha256_from_bytes,
+    load_geordi_font_pack_manifest, load_geordi_ir, load_geordi_strict_text_fixture_manifest,
+    load_geordi_strict_text_outline_evidence_pack, validate_geordi_font_pack_hashes,
+    validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
+    validate_geordi_strict_text_font_references,
 };
 use geordi_renderer::{
     GeordiRenderError, GeordiRuntimeUnsupportedProfileError, GeordiStrictTextOutlineRenderReport,
@@ -41,6 +42,8 @@ const STRICT_TEXT_PROBE_POLICY_SUFFIX: &str = ".probe-policy.geordi.json";
 const STRICT_TEXT_PROBE_POLICY_VERSION: &str = "geordi-strict-text-probe-policy/1";
 const STRICT_TEXT_PROBE_ANTI_ALIAS_EDGE_POLICY: &str =
     "edge-probes-are-non-stable-and-must-not-block";
+const STRICT_TEXT_BOUNDS_SOURCE_OUTLINE_EVIDENCE: &str =
+    "fixture-glyph-origins-plus-outline-evidence-bounds-floor-ceil-inclusive/1";
 const STRICT_TEXT_SEMANTIC_TEXT_ROLE: &str = "non-rendering metadata; pixels follow glyph evidence";
 fn main() -> Result<(), NativeAppError> {
     run_from_env(env::args_os())
@@ -346,7 +349,9 @@ struct NativeStrictTextProbeReport {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct NativeStrictTextProbePolicy {
+    allowed_nonblank_bounds: NativeStrictTextPixelBounds,
     anti_alias_edge_policy: String,
+    bounds_source: String,
     canvas: NativeStrictTextProbePolicyCanvas,
     evidence_pack_id: String,
     evidence_pack_path: String,
@@ -361,6 +366,15 @@ struct NativeStrictTextProbePolicy {
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct NativeStrictTextPixelBounds {
+    max_x: usize,
+    max_y: usize,
+    min_x: usize,
+    min_y: usize,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct NativeStrictTextProbePolicyCanvas {
     height: usize,
     width: usize,
@@ -368,6 +382,8 @@ struct NativeStrictTextProbePolicyCanvas {
 
 #[derive(Clone, Debug)]
 struct NativeStrictTextProbePolicyReport {
+    allowed_nonblank_bounds: NativeStrictTextPixelBounds,
+    bounds_source: String,
     hash: String,
     id: String,
     path: PathBuf,
@@ -465,6 +481,7 @@ enum NativeAppError {
     Render(GeordiRenderError),
     RuntimeProfile(GeordiRuntimeUnsupportedProfileError),
     StrictTextAccepted(NativeStrictTextFixtureAcceptedError),
+    StrictTextBounds(NativeStrictTextBoundsError),
     StrictTextLoad(GeordiStrictTextFixtureLoadError),
     StrictTextPath(NativeStrictTextPathError),
     StrictTextProbe(NativeStrictTextProbeError),
@@ -505,6 +522,7 @@ impl Error for NativeAppError {
             Self::Render(source) => Some(source),
             Self::RuntimeProfile(source) => Some(source),
             Self::StrictTextAccepted(source) => Some(source),
+            Self::StrictTextBounds(source) => Some(source),
             Self::StrictTextLoad(source) => Some(source),
             Self::StrictTextPath(source) => Some(source),
             Self::StrictTextProbe(source) => Some(source),
@@ -620,6 +638,12 @@ impl From<GeordiRuntimeUnsupportedProfileError> for NativeAppError {
 impl From<NativeStrictTextFixtureAcceptedError> for NativeAppError {
     fn from(error: NativeStrictTextFixtureAcceptedError) -> Self {
         Self::StrictTextAccepted(error)
+    }
+}
+
+impl From<NativeStrictTextBoundsError> for NativeAppError {
+    fn from(error: NativeStrictTextBoundsError) -> Self {
+        Self::StrictTextBounds(error)
     }
 }
 
@@ -986,6 +1010,47 @@ impl Display for NativeStrictTextFixtureAcceptedError {
 impl Error for NativeStrictTextFixtureAcceptedError {}
 
 #[derive(Debug)]
+struct NativeStrictTextBoundsError {
+    allowed: NativeStrictTextPixelBounds,
+    actual: NativeStrictTextPixelBounds,
+    fixture_id: String,
+}
+
+impl NativeStrictTextBoundsError {
+    fn new(
+        fixture_id: &str,
+        actual: NativeStrictTextPixelBounds,
+        allowed: NativeStrictTextPixelBounds,
+    ) -> Self {
+        Self {
+            allowed,
+            actual,
+            fixture_id: fixture_id.to_owned(),
+        }
+    }
+}
+
+impl Display for NativeStrictTextBoundsError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Native strict text nonblank bounds failed for {} actual {},{}..{},{} allowed {},{}..{},{}",
+            self.fixture_id,
+            self.actual.min_x,
+            self.actual.min_y,
+            self.actual.max_x,
+            self.actual.max_y,
+            self.allowed.min_x,
+            self.allowed.min_y,
+            self.allowed.max_x,
+            self.allowed.max_y
+        )
+    }
+}
+
+impl Error for NativeStrictTextBoundsError {}
+
+#[derive(Debug)]
 struct NativeStrictTextPathError {
     message: &'static str,
     path: PathBuf,
@@ -1290,6 +1355,7 @@ fn load_strict_text_fixture(
         None => derive_strict_text_outline_evidence_path(&fixture_path)?,
     };
     let evidence = load_geordi_strict_text_outline_evidence_pack(&evidence_path)?;
+    let evidence_bounds = strict_text_evidence_pixel_bounds(&fixture, &evidence);
     let result = render_strict_text_outline_glyphs_to_image(&fixture, &evidence)?;
     let metadata =
         create_strict_text_metadata_report(&fixture, &evidence_path, receipt, result.report)?;
@@ -1301,7 +1367,13 @@ fn load_strict_text_fixture(
         &metadata,
         &fixture_repo_path,
         &repository_relative_path(&evidence_path)?,
+        evidence_bounds,
         &result.image,
+    )?;
+    assert_strict_text_bounds_inside_policy(
+        &metadata.fixture_id,
+        &smoke,
+        probe_policy.allowed_nonblank_bounds,
     )?;
     let probes = assert_strict_text_pixel_probes(
         &metadata.fixture_id,
@@ -1366,6 +1438,8 @@ fn load_strict_text_probe_policy(
     let policy = serde_json::from_slice::<NativeStrictTextProbePolicy>(&bytes)
         .map_err(|error| NativeStrictTextProbePolicyParseError::new(path.to_path_buf(), error))?;
     let report = NativeStrictTextProbePolicyReport {
+        allowed_nonblank_bounds: policy.allowed_nonblank_bounds,
+        bounds_source: policy.bounds_source.clone(),
         hash: geordi_sha256_from_bytes(&bytes),
         id: policy.id.clone(),
         path: path.to_path_buf(),
@@ -1375,11 +1449,79 @@ fn load_strict_text_probe_policy(
     Ok((policy, report))
 }
 
+fn strict_text_evidence_pixel_bounds(
+    fixture: &GeordiStrictTextFixtureManifest,
+    evidence: &GeordiStrictTextOutlineEvidencePack,
+) -> Option<NativeStrictTextPixelBounds> {
+    let evidence_by_glyph_id = evidence
+        .glyphs
+        .iter()
+        .map(|glyph| (glyph.glyph_id, glyph))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let mut max_x = None::<usize>;
+    let mut max_y = None::<usize>;
+    let mut min_x = None::<usize>;
+    let mut min_y = None::<usize>;
+
+    for run in &fixture.glyph_runs {
+        for glyph in &run.glyphs {
+            let glyph_evidence = evidence_by_glyph_id.get(&glyph.glyph_id)?;
+            if !glyph_evidence.draws {
+                continue;
+            }
+
+            let left = glyph
+                .x
+                .checked_add(glyph.x_offset)?
+                .checked_add(glyph_evidence.bounds.x)?;
+            let top = glyph
+                .y
+                .checked_add(glyph.y_offset)?
+                .checked_add(glyph_evidence.bounds.y)?;
+            let right = left.checked_add(glyph_evidence.bounds.width)?;
+            let bottom = top.checked_add(glyph_evidence.bounds.height)?;
+            let glyph_min_x = fixed_floor_to_pixel(left)?;
+            let glyph_min_y = fixed_floor_to_pixel(top)?;
+            let glyph_max_x = fixed_ceil_to_inclusive_pixel(right)?;
+            let glyph_max_y = fixed_ceil_to_inclusive_pixel(bottom)?;
+
+            min_x = Some(min_x.map_or(glyph_min_x, |current| current.min(glyph_min_x)));
+            min_y = Some(min_y.map_or(glyph_min_y, |current| current.min(glyph_min_y)));
+            max_x = Some(max_x.map_or(glyph_max_x, |current| current.max(glyph_max_x)));
+            max_y = Some(max_y.map_or(glyph_max_y, |current| current.max(glyph_max_y)));
+        }
+    }
+
+    Some(NativeStrictTextPixelBounds {
+        max_x: max_x?,
+        max_y: max_y?,
+        min_x: min_x?,
+        min_y: min_y?,
+    })
+}
+
+fn fixed_floor_to_pixel(value: i64) -> Option<usize> {
+    usize::try_from(value.div_euclid(64)).ok()
+}
+
+fn fixed_ceil_to_inclusive_pixel(value: i64) -> Option<usize> {
+    let quotient = value.div_euclid(64);
+    let remainder = value.rem_euclid(64);
+    let ceiling = if remainder == 0 {
+        quotient
+    } else {
+        quotient.checked_add(1)?
+    };
+
+    usize::try_from(ceiling.checked_sub(1)?).ok()
+}
+
 fn validate_strict_text_probe_policy(
     policy: &NativeStrictTextProbePolicy,
     metadata: &NativeStrictTextMetadataReport,
     fixture_repo_path: &str,
     evidence_repo_path: &str,
+    evidence_bounds: Option<NativeStrictTextPixelBounds>,
     image: &RenderedImage,
 ) -> Result<(), NativeStrictTextProbePolicyValidationError> {
     let mut issues = Vec::new();
@@ -1396,6 +1538,13 @@ fn validate_strict_text_probe_policy(
         STRICT_TEXT_PROBE_ANTI_ALIAS_EDGE_POLICY,
         "$.antiAliasEdgePolicy",
         "Strict text probe policy anti-alias edge policy",
+        &mut issues,
+    );
+    push_strict_text_probe_policy_literal_issue(
+        &policy.bounds_source,
+        STRICT_TEXT_BOUNDS_SOURCE_OUTLINE_EVIDENCE,
+        "$.boundsSource",
+        "Strict text probe policy bounds source",
         &mut issues,
     );
     push_strict_text_probe_policy_literal_issue(
@@ -1455,6 +1604,12 @@ fn validate_strict_text_probe_policy(
             "Strict text probe policy canvas height must match rendered image",
         );
     }
+    validate_strict_text_probe_policy_allowed_bounds(
+        policy.allowed_nonblank_bounds,
+        evidence_bounds,
+        image,
+        &mut issues,
+    );
 
     validate_strict_text_probe_policy_probes(policy, image, &mut issues);
 
@@ -1462,6 +1617,55 @@ fn validate_strict_text_probe_policy(
         Ok(())
     } else {
         Err(NativeStrictTextProbePolicyValidationError::new(issues))
+    }
+}
+
+fn validate_strict_text_probe_policy_allowed_bounds(
+    allowed: NativeStrictTextPixelBounds,
+    evidence_bounds: Option<NativeStrictTextPixelBounds>,
+    image: &RenderedImage,
+    issues: &mut Vec<NativeStrictTextProbePolicyValidationIssue>,
+) {
+    if allowed.min_x > allowed.max_x {
+        push_strict_text_probe_policy_issue(
+            issues,
+            "$.allowedNonblankBounds",
+            "Strict text probe policy allowed nonblank bounds minX must be <= maxX",
+        );
+    }
+    if allowed.min_y > allowed.max_y {
+        push_strict_text_probe_policy_issue(
+            issues,
+            "$.allowedNonblankBounds",
+            "Strict text probe policy allowed nonblank bounds minY must be <= maxY",
+        );
+    }
+    if allowed.max_x >= image.width() {
+        push_strict_text_probe_policy_issue(
+            issues,
+            "$.allowedNonblankBounds.maxX",
+            "Strict text probe policy allowed nonblank bounds maxX must be inside the canvas",
+        );
+    }
+    if allowed.max_y >= image.height() {
+        push_strict_text_probe_policy_issue(
+            issues,
+            "$.allowedNonblankBounds.maxY",
+            "Strict text probe policy allowed nonblank bounds maxY must be inside the canvas",
+        );
+    }
+    match evidence_bounds {
+        Some(bounds) if allowed == bounds => {}
+        Some(_bounds) => push_strict_text_probe_policy_issue(
+            issues,
+            "$.allowedNonblankBounds",
+            "Strict text probe policy allowed nonblank bounds must match outline evidence bounds",
+        ),
+        None => push_strict_text_probe_policy_issue(
+            issues,
+            "$.allowedNonblankBounds",
+            "Strict text probe policy allowed nonblank bounds could not be derived from evidence",
+        ),
     }
 }
 
@@ -1678,6 +1882,30 @@ fn assert_strict_text_visible(
         min_y,
         nonblank_pixel_count: count,
     })
+}
+
+fn assert_strict_text_bounds_inside_policy(
+    fixture_id: &str,
+    smoke: &NativeStrictTextSmokeReport,
+    allowed: NativeStrictTextPixelBounds,
+) -> Result<(), NativeStrictTextBoundsError> {
+    let actual = NativeStrictTextPixelBounds {
+        max_x: smoke.max_x,
+        max_y: smoke.max_y,
+        min_x: smoke.min_x,
+        min_y: smoke.min_y,
+    };
+    if actual.min_x < allowed.min_x
+        || actual.min_y < allowed.min_y
+        || actual.max_x > allowed.max_x
+        || actual.max_y > allowed.max_y
+    {
+        return Err(NativeStrictTextBoundsError::new(
+            fixture_id, actual, allowed,
+        ));
+    }
+
+    Ok(())
 }
 
 fn assert_strict_text_pixel_probes(
@@ -2376,6 +2604,17 @@ fn write_strict_text_fixture_summary(
         .map_err(NativeOutputError::new)?;
     writeln!(writer, "probePolicyHash={}", loaded.probe_policy.hash)
         .map_err(NativeOutputError::new)?;
+    writeln!(writer, "boundsSource={}", loaded.probe_policy.bounds_source)
+        .map_err(NativeOutputError::new)?;
+    writeln!(
+        writer,
+        "allowedNonblankBounds={},{}..{},{}",
+        loaded.probe_policy.allowed_nonblank_bounds.min_x,
+        loaded.probe_policy.allowed_nonblank_bounds.min_y,
+        loaded.probe_policy.allowed_nonblank_bounds.max_x,
+        loaded.probe_policy.allowed_nonblank_bounds.max_y
+    )
+    .map_err(NativeOutputError::new)?;
     writeln!(
         writer,
         "canvas={}x{}",
@@ -2395,6 +2634,7 @@ fn write_strict_text_fixture_summary(
         loaded.smoke.min_x, loaded.smoke.min_y, loaded.smoke.max_x, loaded.smoke.max_y
     )
     .map_err(NativeOutputError::new)?;
+    writeln!(writer, "bounds=passed").map_err(NativeOutputError::new)?;
     for probe in &loaded.probes {
         writeln!(
             writer,
@@ -2498,11 +2738,11 @@ fn short_hash(hash: &str) -> String {
 mod tests {
     use super::{
         NativeAppError, NativeArgs, NativeMode, NativeStrictTextProbe, RenderFixtureSource,
-        assert_pixel_probes, assert_strict_text_pixel_probes, assert_strict_text_visible,
-        load_fixture, load_manifest, load_receipt, load_strict_text_fixture,
-        load_strict_text_probe_policy, reject_strict_text_fixture,
-        resolve_strict_text_argument_path, run_smoke, validate_manifest_path,
-        validate_receipt_matches_manifest, validate_scene_artifact_hash,
+        assert_pixel_probes, assert_strict_text_bounds_inside_policy,
+        assert_strict_text_pixel_probes, assert_strict_text_visible, load_fixture, load_manifest,
+        load_receipt, load_strict_text_fixture, load_strict_text_probe_policy,
+        reject_strict_text_fixture, resolve_strict_text_argument_path, run_smoke,
+        validate_manifest_path, validate_receipt_matches_manifest, validate_scene_artifact_hash,
         validate_strict_text_probe_policy, write_fixture_summary,
         write_strict_text_fixture_summary, write_strict_text_rejection_summary,
     };
@@ -2649,11 +2889,16 @@ mod tests {
         assert!(text.contains("probePolicyId=render-everywhere:strict-text:geordi:probe-policy"));
         assert!(text.contains("probePolicyVersion=geordi-strict-text-probe-policy/1"));
         assert!(text.contains(
-            "probePolicyHash=sha256:2ff0c24b406d0fb7b40f9eebe925713491025b6864a59fbfa06b11319306838e"
+            "probePolicyHash=sha256:af60398eef0c062a86b9ca0bffe32b782a629254177bfc2cebe3f97a270e1b33"
         ));
+        assert!(text.contains(
+            "boundsSource=fixture-glyph-origins-plus-outline-evidence-bounds-floor-ceil-inclusive/1"
+        ));
+        assert!(text.contains("allowedNonblankBounds=2,13..176,48"));
         assert!(text.contains("canvas=192x64"));
         assert!(text.contains("nonblankPixels=2092"));
         assert!(text.contains("nonblankBounds=2,13..175,47"));
+        assert!(text.contains("bounds=passed"));
         assert!(
             text.contains("probe=text-background-top expected=transparent tolerance=alpha-zero x=100 y=5 rgba=0,0,0,0")
         );
@@ -2715,6 +2960,31 @@ mod tests {
     }
 
     #[test]
+    fn strict_text_bounds_failures_are_custom_errors() -> Result<(), NativeAppError> {
+        let loaded = load_strict_text_fixture(
+            Path::new("geordi.strict-text.geordi.json"),
+            Option::<&Path>::None,
+        )?;
+
+        let result = assert_strict_text_bounds_inside_policy(
+            &loaded.metadata.fixture_id,
+            &loaded.smoke,
+            super::NativeStrictTextPixelBounds {
+                max_x: 174,
+                max_y: 46,
+                min_x: 3,
+                min_y: 14,
+            },
+        );
+
+        assert!(matches!(
+            result,
+            Err(super::NativeStrictTextBoundsError { .. })
+        ));
+        Ok(())
+    }
+
+    #[test]
     fn strict_text_probe_policy_validation_failures_are_custom_errors() -> Result<(), NativeAppError>
     {
         let loaded = load_strict_text_fixture(
@@ -2732,6 +3002,7 @@ mod tests {
             &loaded.metadata,
             "fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json",
             "fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json",
+            Some(policy.allowed_nonblank_bounds),
             &loaded.image,
         );
 

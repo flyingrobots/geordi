@@ -1,5 +1,12 @@
 {
+  "allowedNonblankBounds": {
+    "maxX": 176,
+    "maxY": 48,
+    "minX": 2,
+    "minY": 13
+  },
   "antiAliasEdgePolicy": "edge-probes-are-non-stable-and-must-not-block",
+  "boundsSource": "fixture-glyph-origins-plus-outline-evidence-bounds-floor-ceil-inclusive/1",
   "canvas": {
     "height": 64,
     "width": 192

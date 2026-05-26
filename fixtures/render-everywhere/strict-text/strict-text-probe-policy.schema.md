@@ -42,7 +42,14 @@ sequenceDiagram
 
 ~~~json
 {
+  "allowedNonblankBounds": {
+    "maxX": 176,
+    "maxY": 48,
+    "minX": 2,
+    "minY": 13
+  },
   "antiAliasEdgePolicy": "edge-probes-are-non-stable-and-must-not-block",
+  "boundsSource": "fixture-glyph-origins-plus-outline-evidence-bounds-floor-ceil-inclusive/1",
   "canvas": {
     "height": 64,
     "width": 192
@@ -86,6 +93,13 @@ sequenceDiagram
 - `evidencePackPath` must be a repository-relative POSIX path under
   `fixtures/render-everywhere/strict-text/` and must target the evidence pack being rendered.
 - `canvas.width` and `canvas.height` must match the rendered strict text canvas dimensions.
+- `boundsSource` must equal
+  `fixture-glyph-origins-plus-outline-evidence-bounds-floor-ceil-inclusive/1`.
+- `allowedNonblankBounds` must equal the inclusive pixel bounds derived from positioned glyph
+  origins plus drawing outline evidence bounds. The conversion floors fixed-point minima, ceils
+  fixed-point maxima, and subtracts one from the inclusive maximum pixel coordinate.
+- `allowedNonblankBounds` coordinates must be non-negative integers inside the declared canvas, and
+  `minX <= maxX`, `minY <= maxY`.
 - `fillRgba` must contain exactly four integer byte channels.
 - `antiAliasEdgePolicy` must equal `edge-probes-are-non-stable-and-must-not-block`.
 - `nonclaim` must be non-empty and must preserve the claim boundary: coarse smoke only, no full
@@ -114,3 +128,8 @@ when alpha is zero.
 The policy is intentionally sparse. Passing it proves that the expected glyph evidence produced
 visible filled pixels and did not paint the named background regions. It does not prove every glyph
 edge, curve, counter, or antialiasing decision is identical across runtimes.
+
+The bounds check is similarly conservative. Rendered nonblank pixels must fit inside
+`allowedNonblankBounds`, but the policy does not require every allowed pixel to be painted. Interior
+counters, curve rasterization, and antialiasing can leave allowed pixels empty without violating this
+slice.

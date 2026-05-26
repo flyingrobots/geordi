@@ -650,6 +650,12 @@ source, expectation, tolerance, and stability class. Browser Playwright and nati
 policy `fillRgba`, transparent probes require alpha zero, and antialiasing-edge probes are explicitly
 non-stable and nonblocking.
 
+S069 extends that policy with evidence-derived allowed nonblank bounds. The browser gate and native
+smoke path independently derive inclusive pixel bounds from positioned glyph origins plus drawing
+outline evidence bounds, verify the policy's `allowedNonblankBounds`, compute rendered nonblank
+bounds, and fail through custom bounds errors if painted pixels escape the allowed evidence box. This
+remains a containment proof, not a requirement that every allowed pixel be painted.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

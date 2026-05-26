@@ -64,6 +64,8 @@ export const RENDER_FIXTURE_STRICT_TEXT_PROBE_STABILITY_BACKGROUND_OUTSIDE_GLYPH
   'background-outside-glyph-bounds' as const;
 export const RENDER_FIXTURE_STRICT_TEXT_PROBE_ANTI_ALIAS_EDGE_POLICY =
   'edge-probes-are-non-stable-and-must-not-block' as const;
+export const RENDER_FIXTURE_STRICT_TEXT_BOUNDS_SOURCE_OUTLINE_EVIDENCE =
+  'fixture-glyph-origins-plus-outline-evidence-bounds-floor-ceil-inclusive/1' as const;
 const WINDOWS_DRIVE_PREFIX_PATTERN = /^[A-Za-z]:/u;
 const URL_SCHEME_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
@@ -217,8 +219,17 @@ export interface RenderFixtureStrictTextProbePolicyProbe extends JsonObject {
   readonly y: number;
 }
 
+export interface RenderFixtureStrictTextPixelBounds extends JsonObject {
+  readonly maxX: number;
+  readonly maxY: number;
+  readonly minX: number;
+  readonly minY: number;
+}
+
 export interface RenderFixtureStrictTextProbePolicy extends JsonObject {
+  readonly allowedNonblankBounds: RenderFixtureStrictTextPixelBounds;
   readonly antiAliasEdgePolicy: typeof RENDER_FIXTURE_STRICT_TEXT_PROBE_ANTI_ALIAS_EDGE_POLICY;
+  readonly boundsSource: typeof RENDER_FIXTURE_STRICT_TEXT_BOUNDS_SOURCE_OUTLINE_EVIDENCE;
   readonly canvas: RenderFixtureCanvas;
   readonly evidencePackId: string;
   readonly evidencePackPath: string;
@@ -1330,6 +1341,19 @@ export function validateRenderFixtureStrictTextProbePolicy(
     issues,
   );
   validateCanvas(property(value, 'canvas'), '$.canvas', issues);
+  validateLiteral(
+    property(value, 'boundsSource'),
+    RENDER_FIXTURE_STRICT_TEXT_BOUNDS_SOURCE_OUTLINE_EVIDENCE,
+    '$.boundsSource',
+    'Strict text probe policy bounds source',
+    issues,
+  );
+  validateStrictTextProbePolicyBounds(
+    property(value, 'allowedNonblankBounds'),
+    property(value, 'canvas'),
+    '$.allowedNonblankBounds',
+    issues,
+  );
   validateRgba(property(value, 'fillRgba'), '$.fillRgba', issues);
   validateLiteral(
     property(value, 'antiAliasEdgePolicy'),
@@ -2254,6 +2278,80 @@ function validateOptionalGlyphEvidenceReceiptFields(
   );
   validateArtifactHash(glyphEvidencePackHash, '$.glyphEvidencePackHash', issues);
   validateStrictTextFixturePath(glyphEvidencePackPath, '$.glyphEvidencePackPath', issues);
+}
+
+function validateStrictTextProbePolicyBounds(
+  value: JsonValue | undefined,
+  canvas: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureStrictTextProbePolicyIssue[],
+): void {
+  if (!isJsonObject(value)) {
+    pushIssue(issues, path, 'Strict text probe policy allowed nonblank bounds must be an object');
+    return;
+  }
+
+  const maxX = validateStrictTextProbeBoundsCoordinate(
+    property(value, 'maxX'),
+    `${path}.maxX`,
+    'Strict text probe policy allowed nonblank bounds maxX',
+    issues,
+  );
+  const maxY = validateStrictTextProbeBoundsCoordinate(
+    property(value, 'maxY'),
+    `${path}.maxY`,
+    'Strict text probe policy allowed nonblank bounds maxY',
+    issues,
+  );
+  const minX = validateStrictTextProbeBoundsCoordinate(
+    property(value, 'minX'),
+    `${path}.minX`,
+    'Strict text probe policy allowed nonblank bounds minX',
+    issues,
+  );
+  const minY = validateStrictTextProbeBoundsCoordinate(
+    property(value, 'minY'),
+    `${path}.minY`,
+    'Strict text probe policy allowed nonblank bounds minY',
+    issues,
+  );
+  const canvasWidth = isJsonObject(canvas) ? positiveInteger(property(canvas, 'width')) : undefined;
+  const canvasHeight = isJsonObject(canvas) ? positiveInteger(property(canvas, 'height')) : undefined;
+
+  if (minX !== undefined && maxX !== undefined && minX > maxX) {
+    pushIssue(issues, path, 'Strict text probe policy allowed nonblank bounds minX must be <= maxX');
+  }
+  if (minY !== undefined && maxY !== undefined && minY > maxY) {
+    pushIssue(issues, path, 'Strict text probe policy allowed nonblank bounds minY must be <= maxY');
+  }
+  if (canvasWidth !== undefined && maxX !== undefined && maxX >= canvasWidth) {
+    pushIssue(
+      issues,
+      `${path}.maxX`,
+      'Strict text probe policy allowed nonblank bounds maxX must be inside the canvas',
+    );
+  }
+  if (canvasHeight !== undefined && maxY !== undefined && maxY >= canvasHeight) {
+    pushIssue(
+      issues,
+      `${path}.maxY`,
+      'Strict text probe policy allowed nonblank bounds maxY must be inside the canvas',
+    );
+  }
+}
+
+function validateStrictTextProbeBoundsCoordinate(
+  value: JsonValue | undefined,
+  path: string,
+  label: string,
+  issues: RenderFixtureStrictTextProbePolicyIssue[],
+): number | undefined {
+  const coordinate = nonNegativeInteger(value);
+  if (coordinate === undefined) {
+    pushIssue(issues, path, `${label} must be a non-negative integer`);
+  }
+
+  return coordinate;
 }
 
 function validateStrictTextProbePolicyProbes(

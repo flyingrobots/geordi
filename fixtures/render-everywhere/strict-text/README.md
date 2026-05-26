@@ -60,6 +60,9 @@ fixture-local `outlinePaths` geometry from the same font bytes. Its current comm
 The S068 probe policy defines the named coarse browser/native sample points for this fixture. It is
 blocking smoke only: fill probes must match the evidence paint exactly, transparent probes must have
 alpha zero, and contour-edge samples are explicitly non-stable.
+S069 extends that policy with `allowedNonblankBounds=2,13..176,48`, derived from fixture glyph
+origins plus outline evidence bounds. Rendered browser/native nonblank pixels must stay inside that
+box, but the policy does not require every allowed pixel to be painted.
 
 Canonical fixture B:
 

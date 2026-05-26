@@ -177,10 +177,13 @@ semanticTextRole=non-rendering metadata; pixels follow glyph evidence
 probePolicy=<repo>/fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json
 probePolicyId=render-everywhere:strict-text:geordi:probe-policy
 probePolicyVersion=geordi-strict-text-probe-policy/1
-probePolicyHash=sha256:2ff0c24b406d0fb7b40f9eebe925713491025b6864a59fbfa06b11319306838e
+probePolicyHash=sha256:af60398eef0c062a86b9ca0bffe32b782a629254177bfc2cebe3f97a270e1b33
+boundsSource=fixture-glyph-origins-plus-outline-evidence-bounds-floor-ceil-inclusive/1
+allowedNonblankBounds=2,13..176,48
 canvas=192x64
 nonblankPixels=2092
 nonblankBounds=2,13..175,47
+bounds=passed
 probe=text-background-top expected=transparent tolerance=alpha-zero x=100 y=5 rgba=0,0,0,0
 probe=text-g-fill-top expected=fill tolerance=exact-fill-rgba x=12 y=15 rgba=17,24,39,255
 probe=text-e-fill-mid expected=fill tolerance=exact-fill-rgba x=40 y=30 rgba=17,24,39,255
