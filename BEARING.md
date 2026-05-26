@@ -115,7 +115,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S045**.
+Current OPEN node: **S046**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -607,7 +607,7 @@ Current OPEN node: **S045**.
 
 ### S045: TypeScript text fixture receipt
 
-- [ ] **S045: TypeScript text fixture receipt** (OPEN)
+- [x] **S045: TypeScript text fixture receipt** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with typescript text fixture receipt documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: TypeScript text fixture receipt.

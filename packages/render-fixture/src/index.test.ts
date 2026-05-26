@@ -18,31 +18,38 @@ import {
   assertRenderFixturePixelProbes,
   assertRenderFixtureStrictTextFontReferences,
   assertRenderFixtureStrictTextFixtureManifest,
+  assertRenderFixtureStrictTextFixtureReceipt,
   createRenderFixtureMeshPlaybackFrame,
   isRenderFixtureFontPackManifest,
   isRenderFixtureMeshAssetManifest,
   isRenderFixtureMeshFixtureManifest,
   isRenderFixtureManifest,
   isRenderFixtureStrictTextFixtureManifest,
+  isRenderFixtureStrictTextFixtureReceipt,
   parseRenderFixtureAsciiPlyTriangleMesh,
   parseRenderFixtureFontPackManifest,
   parseRenderFixtureMeshAssetManifest,
   parseRenderFixtureMeshFixtureManifest,
   parseRenderFixtureManifest,
   parseRenderFixtureStrictTextFixtureManifest,
+  parseRenderFixtureStrictTextFixtureReceipt,
   RENDER_FIXTURE_ASCII_PLY_TRIANGLE_MESH_PROFILE,
   RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING,
   RENDER_FIXTURE_FONT_FORMAT_TTF,
   RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE,
   RENDER_FIXTURE_FONT_PACK_VERSION,
+  RENDER_FIXTURE_HASH_ALGORITHM_SHA256,
   RENDER_FIXTURE_MESH_FIXTURE_VERSION,
   RENDER_FIXTURE_MESH_ASSET_VERSION,
   RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
   RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
+  RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION,
   RENDER_FIXTURE_STRICT_TEXT_FIXTURE_VERSION,
+  RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
   RENDER_FIXTURE_TEXT_FEATURE_FONT_PACK,
   RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES,
   RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS,
+  RENDER_FIXTURE_TYPESCRIPT_STRICT_TEXT_RECEIPT_GENERATOR,
   RENDER_FIXTURE_VERSION,
   RenderFixtureArtifactValidationError,
   RenderFixtureInvalidFontPackManifestError,
@@ -54,6 +61,7 @@ import {
   RenderFixtureInvalidPlaybackFrameError,
   RenderFixtureInvalidStrictTextFontReferenceError,
   RenderFixtureInvalidStrictTextFixtureManifestError,
+  RenderFixtureInvalidStrictTextFixtureReceiptError,
   RenderFixturePlyFaceError,
   RenderFixturePlyHeaderError,
   RenderFixturePlyVertexError,
@@ -66,12 +74,14 @@ import {
   validateRenderFixtureManifest,
   validateRenderFixtureStrictTextFontReferences,
   validateRenderFixtureStrictTextFixtureManifest,
+  validateRenderFixtureStrictTextFixtureReceipt,
   type RenderFixtureFontPackManifest,
   type RenderFixtureManifest,
   type RenderFixtureMeshAssetManifest,
   type RenderFixtureMeshFixtureManifest,
   type RenderFixturePixelProbe,
   type RenderFixtureStrictTextFixtureManifest,
+  type RenderFixtureStrictTextFixtureReceipt,
 } from './index.js';
 
 function makeManifest(): RenderFixtureManifest {
@@ -242,6 +252,25 @@ function makeStrictTextFixtureManifest(): RenderFixtureStrictTextFixtureManifest
       language: 'en',
       source: 'GEORDI',
     },
+    textProfile: RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
+  };
+}
+
+function makeStrictTextFixtureReceipt(): RenderFixtureStrictTextFixtureReceipt {
+  return {
+    fixtureHash: 'sha256:e3686b463296e0e7b019d7b014537a300f8fe6949a9053cf7d62067a978bf8c0',
+    fixturePath: 'fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json',
+    fontPackHash: 'sha256:1b7ad58b48a3ad0d1aff0736ef014783945dc0a472de1f14b48c4211eb53533d',
+    fontPackPath: 'fixtures/render-everywhere/assets/fonts/font-pack.geordi.json',
+    generatedBy: RENDER_FIXTURE_TYPESCRIPT_STRICT_TEXT_RECEIPT_GENERATOR,
+    glyphRunHash: 'sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472',
+    hashAlgorithm: RENDER_FIXTURE_HASH_ALGORITHM_SHA256,
+    lineBoxHash: 'sha256:6d0b4e63bd04bd33e7213240a173f86fb478f23fa4cd505514c0b8af425f1e10',
+    positionEncodingProfile: RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING,
+    receiptVersion: RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION,
+    semanticTextAffectsPixels: false,
+    semanticTextHash: 'sha256:c1c66afeda52b1b7ef23ad22a11e631fb02d21db27ea92ad5823d2a28bca3ab3',
+    shapingProfile: RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
     textProfile: RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
   };
 }
@@ -865,6 +894,59 @@ describe('render fixture strict text fixture manifest validation', () => {
 
       expect(source).toBe(`${normalized}\n`);
     }
+  });
+
+  it('accepts a typed valid strict text fixture receipt object', () => {
+    const receipt = makeStrictTextFixtureReceipt();
+
+    expect(validateRenderFixtureStrictTextFixtureReceipt(receipt)).toEqual({
+      ok: true,
+      issues: [],
+    });
+    expect(isRenderFixtureStrictTextFixtureReceipt(receipt)).toBe(true);
+    expect(assertRenderFixtureStrictTextFixtureReceipt(receipt)).toBe(receipt);
+  });
+
+  it('parses strict text fixture receipts through the canonical JSON port', () => {
+    const source = canonicalJsonPort.stringify(makeStrictTextFixtureReceipt(), { space: 2 });
+
+    const parsed = parseRenderFixtureStrictTextFixtureReceipt(source);
+
+    expect(parsed.receiptVersion).toBe(RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION);
+    expect(parsed.glyphRunHash).toBe(
+      'sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472',
+    );
+  });
+
+  it('rejects invalid strict text fixture receipts', () => {
+    const invalid: JsonValue = {
+      ...makeStrictTextFixtureReceipt(),
+      fixtureHash: 'sha256:not-a-hash',
+      fixturePath: 'fixtures/render-everywhere/assets/fonts/font-pack.geordi.json',
+      glyphEvidenceKind: 'outlinePaths',
+      hashAlgorithm: 'sha512',
+      receiptVersion: 'geordi-strict-text-fixture-receipt/2',
+      semanticTextAffectsPixels: true,
+    };
+
+    const result = validateRenderFixtureStrictTextFixtureReceipt(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toEqual(
+      expect.arrayContaining([
+        '$.receiptVersion',
+        '$.hashAlgorithm',
+        '$.fixturePath',
+        '$.fixtureHash',
+        '$.semanticTextAffectsPixels',
+        '$.glyphEvidenceKind',
+        '$.glyphEvidencePackHash',
+        '$.glyphEvidencePackPath',
+      ]),
+    );
+    expect(() => assertRenderFixtureStrictTextFixtureReceipt(invalid)).toThrow(
+      RenderFixtureInvalidStrictTextFixtureReceiptError,
+    );
   });
 
   it('validates strict text font references against a font pack', () => {

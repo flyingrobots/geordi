@@ -673,15 +673,15 @@
 <!-- S045 -->
 <g id="node48" class="node">
 <title>S045</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M465.88,-1546.25C465.88,-1546.25 350.12,-1546.25 350.12,-1546.25 344.12,-1546.25 338.12,-1540.25 338.12,-1534.25 338.12,-1534.25 338.12,-1522.25 338.12,-1522.25 338.12,-1516.25 344.12,-1510.25 350.12,-1510.25 350.12,-1510.25 465.88,-1510.25 465.88,-1510.25 471.88,-1510.25 477.88,-1516.25 477.88,-1522.25 477.88,-1522.25 477.88,-1534.25 477.88,-1534.25 477.88,-1540.25 471.88,-1546.25 465.88,-1546.25"/>
-<text xml:space="preserve" text-anchor="middle" x="408" y="-1530" font-family="Helvetica,sans-Serif" font-size="10.00">S045</text>
-<text xml:space="preserve" text-anchor="middle" x="408" y="-1518.75" font-family="Helvetica,sans-Serif" font-size="10.00">TypeScript text fixture receipt</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M465.88,-1546.25C465.88,-1546.25 350.12,-1546.25 350.12,-1546.25 344.12,-1546.25 338.12,-1540.25 338.12,-1534.25 338.12,-1534.25 338.12,-1522.25 338.12,-1522.25 338.12,-1516.25 344.12,-1510.25 350.12,-1510.25 350.12,-1510.25 465.88,-1510.25 465.88,-1510.25 471.88,-1510.25 477.88,-1516.25 477.88,-1522.25 477.88,-1522.25 477.88,-1534.25 477.88,-1534.25 477.88,-1540.25 471.88,-1546.25 465.88,-1546.25"/>
+<text xml:space="preserve" text-anchor="middle" x="408" y="-1530" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S045</text>
+<text xml:space="preserve" text-anchor="middle" x="408" y="-1518.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">TypeScript text fixture receipt</text>
 </g>
 <!-- S044&#45;&gt;S045 -->
 <g id="edge47" class="edge">
 <title>S044&#45;&gt;S045</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M418.32,-1580.86C416.76,-1573.04 414.91,-1563.79 413.21,-1555.29"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="415.29,-1555.01 412.06,-1549.54 411.18,-1555.84 415.29,-1555.01"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M418.32,-1580.86C416.73,-1572.92 414.85,-1563.5 413.13,-1554.89"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="415.2,-1554.53 411.96,-1549.06 411.08,-1555.35 415.2,-1554.53"/>
 </g>
 <!-- S046 -->
 <g id="node49" class="node">
@@ -706,8 +706,8 @@
 <!-- S045&#45;&gt;S047 -->
 <g id="edge49" class="edge">
 <title>S045&#45;&gt;S047</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M431.85,-1508.49C442.72,-1499.94 455.71,-1489.72 467.22,-1480.67"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="468.24,-1482.54 471.66,-1477.18 465.64,-1479.24 468.24,-1482.54"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M431.38,-1508.86C442.35,-1500.23 455.54,-1489.86 467.21,-1480.68"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="468.31,-1482.49 471.73,-1477.13 465.71,-1479.19 468.31,-1482.49"/>
 </g>
 <!-- S046&#45;&gt;S047 -->
 <g id="edge50" class="edge">

@@ -1,8 +1,22 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, realpathSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
+import { TextDecoder, TextEncoder } from 'node:util';
 
-import { RENDER_FIXTURE_HASH_PREFIX, type RenderFixtureFontPackManifest } from './index.js';
+import { canonicalJsonPort, type JsonValue } from '@flyingrobots/geordi-core';
+
+import {
+  assertRenderFixtureStrictTextFixtureReceipt,
+  parseRenderFixtureFontPackManifest,
+  parseRenderFixtureStrictTextFixtureManifest,
+  RENDER_FIXTURE_HASH_ALGORITHM_SHA256,
+  RENDER_FIXTURE_HASH_PREFIX,
+  RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION,
+  RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
+  RENDER_FIXTURE_TYPESCRIPT_STRICT_TEXT_RECEIPT_GENERATOR,
+  type RenderFixtureFontPackManifest,
+  type RenderFixtureStrictTextFixtureReceipt,
+} from './index.js';
 
 export class RenderFixtureHashMismatchError extends Error {
   public readonly actual: string;
@@ -57,6 +71,12 @@ export interface RenderFixtureFontPackHashVerification {
   readonly sha256: string;
 }
 
+export interface RenderFixtureStrictTextFixtureReceiptBuildInput {
+  readonly fixturePath: string;
+  readonly generatedBy?: string;
+  readonly repositoryRoot: string;
+}
+
 export function renderFixtureSha256FromBytes(bytes: Uint8Array): string {
   return `${RENDER_FIXTURE_HASH_PREFIX}${createHash('sha256').update(bytes).digest('hex')}`;
 }
@@ -98,6 +118,39 @@ export function assertRenderFixtureFontPackHashes(
   }
 
   return verifications;
+}
+
+export function createRenderFixtureStrictTextFixtureReceipt(
+  input: RenderFixtureStrictTextFixtureReceiptBuildInput,
+): RenderFixtureStrictTextFixtureReceipt {
+  const fixtureBytes = readFixtureLocalBytes(input.repositoryRoot, input.fixturePath);
+  const fixtureSource = decodeUtf8(fixtureBytes);
+  const manifest = parseRenderFixtureStrictTextFixtureManifest(fixtureSource);
+  const fontPackBytes = readFixtureLocalBytes(input.repositoryRoot, manifest.fontPackPath);
+  parseRenderFixtureFontPackManifest(decodeUtf8(fontPackBytes));
+
+  return assertRenderFixtureStrictTextFixtureReceipt({
+    fixtureHash: renderFixtureSha256FromBytes(fixtureBytes),
+    fixturePath: input.fixturePath,
+    fontPackHash: renderFixtureSha256FromBytes(fontPackBytes),
+    fontPackPath: manifest.fontPackPath,
+    generatedBy: input.generatedBy ?? RENDER_FIXTURE_TYPESCRIPT_STRICT_TEXT_RECEIPT_GENERATOR,
+    glyphRunHash: renderFixtureSha256FromCanonicalJson(manifest.glyphRuns),
+    hashAlgorithm: RENDER_FIXTURE_HASH_ALGORITHM_SHA256,
+    lineBoxHash: renderFixtureSha256FromCanonicalJson(manifest.lineBoxes),
+    positionEncodingProfile: manifest.positionEncoding,
+    receiptVersion: RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION,
+    semanticTextAffectsPixels: manifest.semanticText.affectsPixels,
+    semanticTextHash: renderFixtureSha256FromCanonicalJson(manifest.semanticText),
+    shapingProfile: RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
+    textProfile: manifest.textProfile,
+  });
+}
+
+export function renderFixtureSha256FromCanonicalJson(value: JsonValue): string {
+  return renderFixtureSha256FromBytes(
+    encodeUtf8(`${canonicalJsonPort.stringify(value, { space: 2 })}\n`),
+  );
 }
 
 interface FontPackAssetHashInput {
@@ -154,6 +207,14 @@ function readFixtureLocalBytes(repositoryRoot: string, fixtureLocalPath: string)
   } catch {
     throw new RenderFixtureFontPackAssetReadError(fixtureLocalPath);
   }
+}
+
+function decodeUtf8(bytes: Uint8Array): string {
+  return new TextDecoder().decode(bytes);
+}
+
+function encodeUtf8(value: string): Uint8Array {
+  return new TextEncoder().encode(value);
 }
 
 function isPathWithinRoot(resolvedRoot: string, resolvedPath: string): boolean {

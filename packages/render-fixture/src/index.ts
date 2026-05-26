@@ -28,6 +28,8 @@ export const RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITE
   'trim-trailing-ascii-whitespace/1' as const;
 export const RENDER_FIXTURE_STRICT_TEXT_FIXTURE_VERSION =
   'geordi-strict-text-fixture/1' as const;
+export const RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION =
+  'geordi-strict-text-fixture-receipt/1' as const;
 export const RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE =
   'geordi-strict-positioned-glyph-run/1' as const;
 export const RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING = 'geordi-fixed-26.6/1' as const;
@@ -35,6 +37,12 @@ export const RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS =
   'text.positionedGlyphRuns' as const;
 export const RENDER_FIXTURE_TEXT_FEATURE_FONT_PACK = 'text.fontPack' as const;
 export const RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES = 'text.lineBoxes' as const;
+export const RENDER_FIXTURE_HASH_ALGORITHM_SHA256 = 'sha256' as const;
+export const RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED =
+  'precomputed-fixture/1' as const;
+export const RENDER_FIXTURE_TYPESCRIPT_STRICT_TEXT_RECEIPT_GENERATOR =
+  'typescript-render-fixture/1' as const;
+export const RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS = 'outlinePaths' as const;
 const WINDOWS_DRIVE_PREFIX_PATTERN = /^[A-Za-z]:/u;
 const URL_SCHEME_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]*:\/\//u;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
@@ -43,6 +51,7 @@ const ASCII_PLY_NUMBER_TOKEN_PATTERN =
   /^[+-]?(?:(?:[0-9]+(?:\.[0-9]*)?)|(?:\.[0-9]+))(?:[eE][+-]?[0-9]+)?$/u;
 const FONT_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const GIT_COMMIT_HEX_LENGTH = 40 as const;
+const STRICT_TEXT_FIXTURE_PATH_PREFIX = 'fixtures/render-everywhere/strict-text/' as const;
 
 export interface RenderFixtureManifestIssue extends JsonObject {
   readonly path: string;
@@ -92,6 +101,13 @@ export interface RenderFixtureStrictTextFontReferenceValidationInput {
 export interface RenderFixtureStrictTextFontReferenceValidationResult {
   readonly ok: boolean;
   readonly issues: readonly RenderFixtureStrictTextFontReferenceIssue[];
+}
+
+export type RenderFixtureStrictTextFixtureReceiptIssue = RenderFixtureManifestIssue;
+
+export interface RenderFixtureStrictTextFixtureReceiptValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureStrictTextFixtureReceiptIssue[];
 }
 
 export interface RenderFixtureArtifactIssue extends JsonObject {
@@ -290,6 +306,26 @@ export interface RenderFixtureStrictTextFixtureManifest extends JsonObject {
   readonly textProfile: typeof RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE;
 }
 
+export interface RenderFixtureStrictTextFixtureReceipt extends JsonObject {
+  readonly fixtureHash: string;
+  readonly fixturePath: string;
+  readonly fontPackHash: string;
+  readonly fontPackPath: string;
+  readonly generatedBy: string;
+  readonly glyphEvidenceKind?: typeof RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS;
+  readonly glyphEvidencePackHash?: string;
+  readonly glyphEvidencePackPath?: string;
+  readonly glyphRunHash: string;
+  readonly hashAlgorithm: typeof RENDER_FIXTURE_HASH_ALGORITHM_SHA256;
+  readonly lineBoxHash: string;
+  readonly positionEncodingProfile: typeof RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING;
+  readonly receiptVersion: typeof RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION;
+  readonly semanticTextAffectsPixels: false;
+  readonly semanticTextHash: string;
+  readonly shapingProfile: typeof RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED;
+  readonly textProfile: typeof RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE;
+}
+
 export interface RenderFixturePlyVertex extends JsonObject {
   readonly position: RenderFixtureVector3;
 }
@@ -412,6 +448,16 @@ export class RenderFixtureInvalidStrictTextFontReferenceError extends Error {
 
   constructor(issues: readonly RenderFixtureStrictTextFontReferenceIssue[]) {
     super('Invalid render fixture strict text font references');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
+
+export class RenderFixtureInvalidStrictTextFixtureReceiptError extends Error {
+  public readonly issues: readonly RenderFixtureStrictTextFixtureReceiptIssue[];
+
+  constructor(issues: readonly RenderFixtureStrictTextFixtureReceiptIssue[]) {
+    super('Invalid render fixture strict text fixture receipt');
     this.name = new.target.name;
     this.issues = issues;
   }
@@ -547,6 +593,13 @@ export function parseRenderFixtureStrictTextFixtureManifest(
   return assertRenderFixtureStrictTextFixtureManifest(jsonPort.parse(source));
 }
 
+export function parseRenderFixtureStrictTextFixtureReceipt(
+  source: string,
+  jsonPort: JsonPort = canonicalJsonPort,
+): RenderFixtureStrictTextFixtureReceipt {
+  return assertRenderFixtureStrictTextFixtureReceipt(jsonPort.parse(source));
+}
+
 export function assertRenderFixtureManifest(
   value: JsonValue | undefined,
 ): RenderFixtureManifest {
@@ -613,6 +666,17 @@ export function assertRenderFixtureStrictTextFontReferences(
   throw new RenderFixtureInvalidStrictTextFontReferenceError(result.issues);
 }
 
+export function assertRenderFixtureStrictTextFixtureReceipt(
+  value: JsonValue | undefined,
+): RenderFixtureStrictTextFixtureReceipt {
+  const result = validateRenderFixtureStrictTextFixtureReceipt(value);
+  if (result.ok && isJsonObject(value)) {
+    return value as RenderFixtureStrictTextFixtureReceipt;
+  }
+
+  throw new RenderFixtureInvalidStrictTextFixtureReceiptError(result.issues);
+}
+
 export function isRenderFixtureManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureManifest {
@@ -641,6 +705,12 @@ export function isRenderFixtureStrictTextFixtureManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureStrictTextFixtureManifest {
   return validateRenderFixtureStrictTextFixtureManifest(value).ok;
+}
+
+export function isRenderFixtureStrictTextFixtureReceipt(
+  value: JsonValue | undefined,
+): value is RenderFixtureStrictTextFixtureReceipt {
+  return validateRenderFixtureStrictTextFixtureReceipt(value).ok;
 }
 
 export function validateRenderFixtureManifest(
@@ -810,6 +880,81 @@ export function validateRenderFixtureStrictTextFontReferences(
       );
     }
   }
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function validateRenderFixtureStrictTextFixtureReceipt(
+  value: JsonValue | undefined,
+): RenderFixtureStrictTextFixtureReceiptValidationResult {
+  const issues: RenderFixtureStrictTextFixtureReceiptIssue[] = [];
+
+  if (!isJsonObject(value)) {
+    pushIssue(issues, '$', 'Strict text fixture receipt must be an object');
+    return { ok: false, issues };
+  }
+
+  validateLiteral(
+    property(value, 'receiptVersion'),
+    RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION,
+    '$.receiptVersion',
+    'Strict text fixture receipt version',
+    issues,
+  );
+  validateLiteral(
+    property(value, 'hashAlgorithm'),
+    RENDER_FIXTURE_HASH_ALGORITHM_SHA256,
+    '$.hashAlgorithm',
+    'Strict text fixture receipt hash algorithm',
+    issues,
+  );
+  validateStrictTextFixturePath(property(value, 'fixturePath'), '$.fixturePath', issues);
+  validateArtifactHash(property(value, 'fixtureHash'), '$.fixtureHash', issues);
+  validateRelativePath(
+    property(value, 'fontPackPath'),
+    '$.fontPackPath',
+    'Strict text fixture receipt font pack path',
+    issues,
+  );
+  validateArtifactHash(property(value, 'fontPackHash'), '$.fontPackHash', issues);
+  validateNonEmptyString(
+    property(value, 'generatedBy'),
+    '$.generatedBy',
+    'Strict text fixture receipt generator',
+    issues,
+  );
+  validateArtifactHash(property(value, 'glyphRunHash'), '$.glyphRunHash', issues);
+  validateArtifactHash(property(value, 'lineBoxHash'), '$.lineBoxHash', issues);
+  validateArtifactHash(property(value, 'semanticTextHash'), '$.semanticTextHash', issues);
+  validateLiteral(
+    property(value, 'textProfile'),
+    RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
+    '$.textProfile',
+    'Strict text fixture receipt text profile',
+    issues,
+  );
+  validateLiteral(
+    property(value, 'positionEncodingProfile'),
+    RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING,
+    '$.positionEncodingProfile',
+    'Strict text fixture receipt position encoding profile',
+    issues,
+  );
+  validateLiteral(
+    property(value, 'shapingProfile'),
+    RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
+    '$.shapingProfile',
+    'Strict text fixture receipt shaping profile',
+    issues,
+  );
+  if (property(value, 'semanticTextAffectsPixels') !== false) {
+    pushIssue(
+      issues,
+      '$.semanticTextAffectsPixels',
+      'Strict text fixture receipt semantic text affects pixels must be false',
+    );
+  }
+  validateOptionalGlyphEvidenceReceiptFields(value, issues);
 
   return { ok: issues.length === 0, issues };
 }
@@ -1657,6 +1802,58 @@ function validateStrictTextLinkage(
       );
     }
   }
+}
+
+function validateStrictTextFixturePath(
+  value: JsonValue | undefined,
+  path: string,
+  issues: RenderFixtureManifestIssue[],
+): void {
+  validateRelativePath(value, path, 'Strict text fixture receipt fixture path', issues);
+  if (
+    typeof value === 'string' &&
+    isFixtureLocalRelativePath(value) &&
+    !value.startsWith(STRICT_TEXT_FIXTURE_PATH_PREFIX)
+  ) {
+    pushIssue(
+      issues,
+      path,
+      `Strict text fixture receipt fixture path must be under ${STRICT_TEXT_FIXTURE_PATH_PREFIX}`,
+    );
+  }
+}
+
+function validateOptionalGlyphEvidenceReceiptFields(
+  value: JsonObject,
+  issues: RenderFixtureStrictTextFixtureReceiptIssue[],
+): void {
+  const glyphEvidenceKind = property(value, 'glyphEvidenceKind');
+  const glyphEvidencePackHash = property(value, 'glyphEvidencePackHash');
+  const glyphEvidencePackPath = property(value, 'glyphEvidencePackPath');
+  const presentCount = [glyphEvidenceKind, glyphEvidencePackHash, glyphEvidencePackPath].filter(
+    (item) => item !== undefined,
+  ).length;
+  if (presentCount === 0) {
+    return;
+  }
+
+  if (presentCount !== 3) {
+    pushIssue(
+      issues,
+      '$.glyphEvidenceKind',
+      'Strict text fixture receipt glyph evidence fields must be present together',
+    );
+  }
+
+  validateLiteral(
+    glyphEvidenceKind,
+    RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS,
+    '$.glyphEvidenceKind',
+    'Strict text fixture receipt glyph evidence kind',
+    issues,
+  );
+  validateArtifactHash(glyphEvidencePackHash, '$.glyphEvidencePackHash', issues);
+  validateStrictTextFixturePath(glyphEvidencePackPath, '$.glyphEvidencePackPath', issues);
 }
 
 function validatePositionedGlyphs(
