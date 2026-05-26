@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the active open node is `S058`, browser text fixture mode, after `S057` added a browser Canvas path
-renderer for parsed outline glyph evidence.
+the active open node is `S059`, browser text metadata disclosure, after `S058` added browser fixture
+mode loading for strict text fixture and outline evidence asset pairs.
 
 ## Completed Capabilities
 
@@ -40,7 +40,7 @@ renderer for parsed outline glyph evidence.
 | Strict text manifests | TypeScript and Rust can validate strict text manifest structure, font references, line-box geometry, both canonical checked-in fixtures, and canonical fixture JSON normalization. |
 | Strict text receipts | The receipt schema defines fixture, font-pack, glyph-run, line-box, semantic-text, and future glyph-evidence hash inputs; TypeScript and Rust can build canonical receipts for both strict text fixtures. |
 | Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, covered by glyph-id smoke tests, parsed by TypeScript/Rust DTO APIs, and guarded by command-shape failure fixtures. |
-| Browser strict text renderer | Browser harness code can render parsed strict text outline evidence into Canvas path geometry without calling Canvas text APIs. Fixture loading mode is still a later slice. |
+| Browser strict text renderer | Browser harness code can load a strict text fixture/evidence asset pair and render parsed outline evidence into Canvas path geometry without calling Canvas text APIs. UI disclosure is still a later slice. |
 
 ## Active Work
 

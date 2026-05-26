@@ -205,8 +205,18 @@ DTOs plus parsed outline evidence DTOs, converts fixed 26.6 glyph-origin command
 calls, fills the path with the evidence `solidFill` paint, and reports renderer metadata. Tests prove
 the renderer uses path APIs and does not call Canvas text APIs.
 
-This is not a browser fixture loading mode yet. Current nonclaims remain: no browser strict text
-fixture mode, no native strict text renderer, no glyph evidence coverage/linkage enforcement, no
+S058 adds the browser fixture loading mode; native renderer, coverage/linkage enforcement, platform
+text API compliance, and general text support remain separate concerns.
+
+## S058 Browser Text Fixture Mode
+
+The browser harness now exposes `renderBrowserStrictTextFixture`, a fixture mode that fetches a
+strict text fixture URL plus an outline evidence pack URL, parses both through the shared DTO
+validators, rejects invalid evidence before drawing, and routes valid inputs through the browser
+outline renderer. `strictTextAssets.ts` now names the canonical `GEORDI` fixture/evidence asset pair.
+
+This is still not mounted in the browser UI. Current nonclaims remain: no browser text metadata
+disclosure UI, no native strict text renderer, no glyph evidence coverage/linkage enforcement, no
 platform text API compliance path, and no general text support.
 
 ## DAG Operating Rule
@@ -226,7 +236,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S058**.
+Current OPEN node: **S059**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -861,7 +871,7 @@ Current OPEN node: **S058**.
 
 ### S058: Browser text fixture mode
 
-- [ ] **S058: Browser text fixture mode** (OPEN)
+- [x] **S058: Browser text fixture mode** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser text fixture mode documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser text fixture mode.
@@ -872,7 +882,7 @@ Current OPEN node: **S058**.
 
 ### S059: Browser text metadata disclosure
 
-- [ ] **S059: Browser text metadata disclosure** (BLOCKED)
+- [ ] **S059: Browser text metadata disclosure** (OPEN)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser text metadata disclosure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser text metadata disclosure.

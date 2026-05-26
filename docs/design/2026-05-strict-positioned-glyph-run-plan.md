@@ -584,6 +584,10 @@ S057 adds the browser Canvas path renderer for already-parsed strict text fixtur
 evidence. It converts fixed 26.6 outline commands into path geometry and explicitly avoids Canvas
 text APIs. Browser fixture loading and UI mode integration remain in S058 and later slices.
 
+S058 adds browser strict text fixture mode loading: the harness fetches a strict text fixture and an
+outline evidence pack, parses both with shared validators, rejects invalid evidence before drawing,
+and routes valid inputs through the S057 renderer.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

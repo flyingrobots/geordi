@@ -10,10 +10,12 @@ import {
 import { GeordiRuntimeUnsupportedProfileError } from '@flyingrobots/geordi-runtime-webgl';
 import {
   BrowserHarnessStrictTextFixtureAcceptedError,
+  BrowserHarnessStrictTextOutlineEvidenceRejectedError,
   BrowserHarnessFetchError,
   BrowserHarnessInvalidIrError,
   createBrowserFetchText,
   rejectBrowserStrictTextFixture,
+  renderBrowserStrictTextFixture,
   renderBrowserFixture,
   type BrowserHarnessFetchText,
 } from './browserRenderSmoke.js';
@@ -408,6 +410,50 @@ describe('browser render smoke', () => {
     expect(context.calls.some((call) => call.name === 'fillText')).toBe(false);
     expect(context.calls.some((call) => call.name === 'strokeText')).toBe(false);
     expect(context.calls.some((call) => call.name === 'measureText')).toBe(false);
+  });
+
+  it('loads and renders strict text fixture mode from fixture and evidence assets', async () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    const fixtureUrl = 'geordi.strict-text.geordi.json';
+    const evidenceUrl = 'geordi.outline-evidence.geordi.json';
+    const sources = new Map<string, string>([
+      [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
+      [evidenceUrl, strictTextFixtureSource(evidenceUrl)],
+    ]);
+    installCanvasDocument(canvas);
+
+    const result = await renderBrowserStrictTextFixture({
+      assets: {
+        evidenceUrl,
+        fixtureUrl,
+      },
+      fetchText: makeStrictTextFetchText(sources),
+    });
+
+    expect(result.canvas).toBe(canvas);
+    expect(result.report.rendererName).toBe('browser-canvas-outline-glyphs');
+    expect(result.report.evidencePackId).toBe('render-everywhere:strict-text:geordi:outline-evidence');
+    expect(context.calls.some((call) => call.name === 'fillText')).toBe(false);
+  });
+
+  it('rejects invalid strict text evidence before fixture mode drawing', async () => {
+    const fixtureUrl = 'geordi.strict-text.geordi.json';
+    const evidenceUrl = 'bad-outline-command.outline-evidence.geordi.json';
+    const sources = new Map<string, string>([
+      [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
+      [evidenceUrl, strictTextFixtureSource(`failures/${evidenceUrl}`)],
+    ]);
+
+    await expect(
+      renderBrowserStrictTextFixture({
+        assets: {
+          evidenceUrl,
+          fixtureUrl,
+        },
+        fetchText: makeStrictTextFetchText(sources),
+      }),
+    ).rejects.toBeInstanceOf(BrowserHarnessStrictTextOutlineEvidenceRejectedError);
   });
 
   it('fails the strict text rejection guard when the artifact is accepted', async () => {
