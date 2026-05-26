@@ -73,13 +73,13 @@ digraph StrictPositionedGlyphRunPlan {
     S047 [label="S047\nUnsupported strict text fixture", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S048 [label="S048\nBrowser strict text rejection", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S049 [label="S049\nNative strict text rejection", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S050 [label="S050\nGlyph-run checkpoint gate", color="#16a34a", penwidth=4];
+    S050 [label="S050\nGlyph-run checkpoint gate", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
   }
 
   subgraph cluster_browser {
     label="Arc 4a: Browser Proof";
     color="#e2e8f0";
-    S051 [label="S051\nRendering evidence strategy decision", color="#dc2626", penwidth=4];
+    S051 [label="S051\nRendering evidence strategy decision", color="#16a34a", penwidth=4];
     S052 [label="S052\nOutline evidence pack schema", color="#dc2626", penwidth=4];
     S053 [label="S053\nOutline evidence fixture data", color="#dc2626", penwidth=4];
     S054 [label="S054\nTypeScript outline evidence parser", color="#dc2626", penwidth=4];

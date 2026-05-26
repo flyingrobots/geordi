@@ -1015,6 +1015,45 @@ The first manifest binds logical font id `lato-regular` to:
 This manifest is data only. Parser, hash-verifier, and failure-fixture implementation starts in the
 later TypeScript/Rust font-manifest slices.
 
+## S050 Glyph-Run Checkpoint
+
+S050 closes the glyph-run validation arc and opens the rendering-evidence arc. This checkpoint does
+not claim that Geordi renders strict text yet. It claims that the strict text fixture boundary is
+validated enough to decide how glyph evidence will be represented and rendered.
+
+Checkpoint claims:
+
+- `geordi-strict-text-fixture/1` is represented by committed canonical fixture data for `GEORDI`
+  and `text 0123`.
+- TypeScript and Rust parse strict text fixture manifests through typed boundaries and custom error
+  types.
+- TypeScript and Rust validate profile names, required feature vocabulary, fixed 26.6 coordinate
+  integers, font-local glyph ids, glyph advances, glyph offsets, line boxes, semantic-text
+  nonauthority, duplicate ids, missing references, unsafe integers, negative values, and unresolved
+  font ids.
+- Strict text fixtures resolve font ids through the checked-in `geordi-font-pack/1` manifest and
+  the Lato Regular content-addressed font asset.
+- Canonical JSON normalization is pinned for committed strict text fixtures.
+- `geordi-strict-text-fixture-receipt/1` records fixture, font-pack, glyph-run, line-box,
+  semantic-text, text-profile, position-encoding, shaping-profile, and future glyph-evidence hash
+  inputs.
+- TypeScript and Rust build matching canonical receipts for both valid strict text fixtures.
+- The committed unsupported runtime-shaping fixture remains rejected by TypeScript, Rust, browser
+  harness preflight, and native harness preflight before drawing.
+
+Checkpoint nonclaims:
+
+- No glyph evidence pack schema exists yet.
+- No outline path command vocabulary has been implemented.
+- No browser or native runtime renders strict text pixels.
+- No text pixel probes, metadata parity report, or nonblank text bounds check exists yet.
+- Strict text has not graduated into `geordi-ir/1`.
+- Runtime shaping, platform text APIs, host font fallback, wrapping, bidi, complex scripts, variable
+  font axes, and broad text support remain unsupported.
+
+The next OPEN node after this checkpoint is `S051`, rendering evidence strategy decision. That slice
+must choose the evidence path before `S052` can formalize the outline evidence pack schema.
+
 ## Active DAG
 
 The active dependency graph is rendered from [2026-05-strict-positioned-glyph-run-dag.dot](./2026-05-strict-positioned-glyph-run-dag.dot) to [2026-05-strict-positioned-glyph-run-dag.svg](./2026-05-strict-positioned-glyph-run-dag.svg).

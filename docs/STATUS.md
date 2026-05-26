@@ -20,9 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the active open node is `S050`, glyph-run checkpoint gate, after `S049` added a native harness
-strict text rejection mode that rejects the committed unsupported strict text fixture before
-drawing.
+the active open node is `S051`, rendering evidence strategy decision, after `S050` locked the
+glyph-run checkpoint claims, nonclaims, and next evidence-rendering entry point.
 
 ## Completed Capabilities
 

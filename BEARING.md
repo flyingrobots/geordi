@@ -98,6 +98,30 @@ not text rendering:
 - Next OPEN node after this checkpoint: `S031`, because `S039` remains blocked until glyph-run
   validation slices complete.
 
+## S050 Glyph-Run Checkpoint
+
+The glyph-run arc is complete when S050 is checked off. Its result is a validated strict text
+fixture boundary, not text rendering:
+
+- Current claim: strict text has committed `geordi-strict-text-fixture/1` fixtures for `GEORDI` and
+  `text 0123`.
+- Current claim: TypeScript and Rust parse and validate strict text fixture shape, text profile,
+  feature requirements, fixed 26.6 coordinates, font-local glyph ids, advances, offsets, line boxes,
+  semantic-text nonauthority, and font-pack references.
+- Current claim: canonical JSON normalization is pinned for committed strict text fixtures.
+- Current claim: `geordi-strict-text-fixture-receipt/1` records fixture, font-pack, glyph-run,
+  line-box, semantic-text, position-encoding, text-profile, and shaping-profile provenance hashes.
+- Current claim: TypeScript and Rust build matching canonical strict text fixture receipts for both
+  committed valid fixtures.
+- Current claim: the committed unsupported runtime-shaping fixture is rejected by TypeScript, Rust,
+  browser harness preflight, and native harness preflight before drawing.
+- Current nonclaim: Geordi still does not provide strict text glyph evidence packs, outline command
+  validation, browser strict text rendering, native strict text rendering, text pixel probes, text
+  parity reports, or `geordi-ir/1` text-node integration.
+- Current nonclaim: platform text APIs, host font lookup, runtime shaping, fallback, wrapping, bidi,
+  complex scripts, variable font axes, and broad text support remain unsupported.
+- Next OPEN node after this checkpoint: `S051`, rendering evidence strategy decision.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -115,7 +139,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S050**.
+Current OPEN node: **S051**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -662,7 +686,7 @@ Current OPEN node: **S050**.
 
 ### S050: Glyph-run checkpoint gate
 
-- [ ] **S050: Glyph-run checkpoint gate** (OPEN)
+- [x] **S050: Glyph-run checkpoint gate** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with glyph-run checkpoint gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Glyph-run checkpoint gate.
@@ -673,7 +697,7 @@ Current OPEN node: **S050**.
 
 ### S051: Rendering evidence strategy decision
 
-- [ ] **S051: Rendering evidence strategy decision** (BLOCKED)
+- [ ] **S051: Rendering evidence strategy decision** (OPEN)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with rendering evidence strategy decision documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Rendering evidence strategy decision.
