@@ -1015,20 +1015,20 @@
 <!-- S067 -->
 <g id="node70" class="node">
 <title>S067</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M588.88,-484C588.88,-484 485.12,-484 485.12,-484 479.12,-484 473.12,-478 473.12,-472 473.12,-472 473.12,-460 473.12,-460 473.12,-454 479.12,-448 485.12,-448 485.12,-448 588.88,-448 588.88,-448 594.88,-448 600.88,-454 600.88,-460 600.88,-460 600.88,-472 600.88,-472 600.88,-478 594.88,-484 588.88,-484"/>
-<text xml:space="preserve" text-anchor="middle" x="537" y="-467.75" font-family="Helvetica,sans-Serif" font-size="10.00">S067</text>
-<text xml:space="preserve" text-anchor="middle" x="537" y="-456.5" font-family="Helvetica,sans-Serif" font-size="10.00">Native coarse pixel probes</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M588.88,-484C588.88,-484 485.12,-484 485.12,-484 479.12,-484 473.12,-478 473.12,-472 473.12,-472 473.12,-460 473.12,-460 473.12,-454 479.12,-448 485.12,-448 485.12,-448 588.88,-448 588.88,-448 594.88,-448 600.88,-454 600.88,-460 600.88,-460 600.88,-472 600.88,-472 600.88,-478 594.88,-484 588.88,-484"/>
+<text xml:space="preserve" text-anchor="middle" x="537" y="-467.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S067</text>
+<text xml:space="preserve" text-anchor="middle" x="537" y="-456.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Native coarse pixel probes</text>
 </g>
 <!-- S065&#45;&gt;S067 -->
 <g id="edge74" class="edge">
 <title>S065&#45;&gt;S067</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M604.09,-518.61C592.88,-509.98 579.39,-499.61 567.46,-490.43"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="568.86,-488.86 562.82,-486.86 566.3,-492.19 568.86,-488.86"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M604.09,-518.61C592.7,-509.85 578.96,-499.28 566.89,-489.99"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="568.23,-488.37 562.19,-486.38 565.66,-491.7 568.23,-488.37"/>
 </g>
 <!-- S068 -->
 <g id="node71" class="node">
 <title>S068</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M678.13,-412C678.13,-412 587.87,-412 587.87,-412 581.87,-412 575.87,-406 575.87,-400 575.87,-400 575.87,-388 575.87,-388 575.87,-382 581.87,-376 587.87,-376 587.87,-376 678.13,-376 678.13,-376 684.13,-376 690.13,-382 690.13,-388 690.13,-388 690.13,-400 690.13,-400 690.13,-406 684.13,-412 678.13,-412"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M678.13,-412C678.13,-412 587.87,-412 587.87,-412 581.87,-412 575.87,-406 575.87,-400 575.87,-400 575.87,-388 575.87,-388 575.87,-382 581.87,-376 587.87,-376 587.87,-376 678.13,-376 678.13,-376 684.13,-376 690.13,-382 690.13,-388 690.13,-388 690.13,-400 690.13,-400 690.13,-406 684.13,-412 678.13,-412"/>
 <text xml:space="preserve" text-anchor="middle" x="633" y="-395.75" font-family="Helvetica,sans-Serif" font-size="10.00">S068</text>
 <text xml:space="preserve" text-anchor="middle" x="633" y="-384.5" font-family="Helvetica,sans-Serif" font-size="10.00">Stable text probe policy</text>
 </g>
@@ -1041,8 +1041,8 @@
 <!-- S067&#45;&gt;S068 -->
 <g id="edge76" class="edge">
 <title>S067&#45;&gt;S068</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M562.98,-446.06C574.61,-437.58 588.45,-427.49 600.74,-418.53"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="601.92,-420.26 605.53,-415.03 599.45,-416.87 601.92,-420.26"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M562.22,-446.61C574.16,-437.91 588.54,-427.42 601.21,-418.18"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="602.2,-420.06 605.81,-414.83 599.72,-416.66 602.2,-420.06"/>
 </g>
 <!-- S069 -->
 <g id="node72" class="node">

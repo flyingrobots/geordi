@@ -370,7 +370,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S067**.
+Current OPEN node: **S068**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1104,7 +1104,7 @@ Current OPEN node: **S067**.
 
 ### S067: Native coarse pixel probes
 
-- [ ] **S067: Native coarse pixel probes** (OPEN)
+- [x] **S067: Native coarse pixel probes** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with native coarse pixel probes documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Native coarse pixel probes.
@@ -1115,7 +1115,7 @@ Current OPEN node: **S067**.
 
 ### S068: Stable text probe policy
 
-- [ ] **S068: Stable text probe policy** (BLOCKED)
+- [ ] **S068: Stable text probe policy** (OPEN)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with stable text probe policy documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Stable text probe policy.

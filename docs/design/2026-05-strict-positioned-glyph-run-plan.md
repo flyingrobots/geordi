@@ -638,6 +638,11 @@ visible strict text canvas, requiring exact interior fill at stable glyph points
 background outside the glyph evidence. Failures report fixture id, probe id, coordinates, expected
 class, and actual RGBA through `BrowserGateStrictTextProbeError`.
 
+S067 adds matching native coarse pixel probes. The native `--strict-text-smoke` path samples the
+same named coordinates as the browser gate, requires exact fill `[17, 24, 39, 255]` for interior
+glyph probes, requires transparent alpha for background probes, emits every probe result in the CLI
+summary, and fails through `NativeStrictTextProbeError` before reporting `smoke=passed`.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

@@ -177,6 +177,14 @@ semanticTextRole=non-rendering metadata; pixels follow glyph evidence
 canvas=192x64
 nonblankPixels=2092
 nonblankBounds=2,13..175,47
+probe=text-background-top expected=transparent x=100 y=5 rgba=0,0,0,0
+probe=text-g-fill-top expected=fill x=12 y=15 rgba=17,24,39,255
+probe=text-e-fill-mid expected=fill x=40 y=30 rgba=17,24,39,255
+probe=text-o-fill-mid expected=fill x=68 y=30 rgba=17,24,39,255
+probe=text-r-fill-mid expected=fill x=108 y=30 rgba=17,24,39,255
+probe=text-d-fill-mid expected=fill x=136 y=30 rgba=17,24,39,255
+probe=text-i-fill-mid expected=fill x=172 y=30 rgba=17,24,39,255
+probe=text-background-bottom expected=transparent x=180 y=55 rgba=0,0,0,0
 rendered=true
 smoke=passed
 ```

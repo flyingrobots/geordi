@@ -38,6 +38,16 @@ const STRICT_TEXT_FIXTURE_ROOT_FROM_REPO: &str = "fixtures/render-everywhere/str
 const STRICT_TEXT_FIXTURE_SUFFIX: &str = ".strict-text.geordi.json";
 const STRICT_TEXT_OUTLINE_EVIDENCE_SUFFIX: &str = ".outline-evidence.geordi.json";
 const STRICT_TEXT_SEMANTIC_TEXT_ROLE: &str = "non-rendering metadata; pixels follow glyph evidence";
+const NATIVE_STRICT_TEXT_PIXEL_PROBES: &[NativeStrictTextProbe] = &[
+    NativeStrictTextProbe::transparent("text-background-top", 100, 5),
+    NativeStrictTextProbe::fill("text-g-fill-top", 12, 15),
+    NativeStrictTextProbe::fill("text-e-fill-mid", 40, 30),
+    NativeStrictTextProbe::fill("text-o-fill-mid", 68, 30),
+    NativeStrictTextProbe::fill("text-r-fill-mid", 108, 30),
+    NativeStrictTextProbe::fill("text-d-fill-mid", 136, 30),
+    NativeStrictTextProbe::fill("text-i-fill-mid", 172, 30),
+    NativeStrictTextProbe::transparent("text-background-bottom", 180, 55),
+];
 fn main() -> Result<(), NativeAppError> {
     run_from_env(env::args_os())
 }
@@ -221,6 +231,7 @@ struct LoadedStrictTextFixture {
     fixture_path: PathBuf,
     image: RenderedImage,
     metadata: NativeStrictTextMetadataReport,
+    probes: Vec<NativeStrictTextProbeReport>,
     smoke: NativeStrictTextSmokeReport,
 }
 
@@ -254,6 +265,58 @@ struct NativeStrictTextSmokeReport {
     min_x: usize,
     min_y: usize,
     nonblank_pixel_count: usize,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum NativeStrictTextProbeExpectation {
+    Fill,
+    Transparent,
+}
+
+impl NativeStrictTextProbeExpectation {
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::Fill => "fill",
+            Self::Transparent => "transparent",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct NativeStrictTextProbe {
+    expectation: NativeStrictTextProbeExpectation,
+    id: &'static str,
+    x: usize,
+    y: usize,
+}
+
+impl NativeStrictTextProbe {
+    const fn fill(id: &'static str, x: usize, y: usize) -> Self {
+        Self {
+            expectation: NativeStrictTextProbeExpectation::Fill,
+            id,
+            x,
+            y,
+        }
+    }
+
+    const fn transparent(id: &'static str, x: usize, y: usize) -> Self {
+        Self {
+            expectation: NativeStrictTextProbeExpectation::Transparent,
+            id,
+            x,
+            y,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct NativeStrictTextProbeReport {
+    actual: [u8; 4],
+    expectation: NativeStrictTextProbeExpectation,
+    id: &'static str,
+    x: usize,
+    y: usize,
 }
 
 #[derive(Debug)]
@@ -349,6 +412,7 @@ enum NativeAppError {
     StrictTextAccepted(NativeStrictTextFixtureAcceptedError),
     StrictTextLoad(GeordiStrictTextFixtureLoadError),
     StrictTextPath(NativeStrictTextPathError),
+    StrictTextProbe(NativeStrictTextProbeError),
     StrictTextReceipt(GeordiStrictTextFixtureReceiptError),
     StrictTextRender(GeordiStrictTextRenderError),
     StrictTextSmoke(NativeStrictTextSmokeError),
@@ -385,6 +449,7 @@ impl Error for NativeAppError {
             Self::StrictTextAccepted(source) => Some(source),
             Self::StrictTextLoad(source) => Some(source),
             Self::StrictTextPath(source) => Some(source),
+            Self::StrictTextProbe(source) => Some(source),
             Self::StrictTextReceipt(source) => Some(source),
             Self::StrictTextRender(source) => Some(source),
             Self::StrictTextSmoke(source) => Some(source),
@@ -512,6 +577,12 @@ impl From<NativeStrictTextPathError> for NativeAppError {
 impl From<GeordiStrictTextRenderError> for NativeAppError {
     fn from(error: GeordiStrictTextRenderError) -> Self {
         Self::StrictTextRender(error)
+    }
+}
+
+impl From<NativeStrictTextProbeError> for NativeAppError {
+    fn from(error: NativeStrictTextProbeError) -> Self {
+        Self::StrictTextProbe(error)
     }
 }
 
@@ -906,6 +977,46 @@ impl Display for NativeStrictTextSmokeError {
 impl Error for NativeStrictTextSmokeError {}
 
 #[derive(Debug)]
+struct NativeStrictTextProbeError {
+    actual: Option<[u8; 4]>,
+    expectation: NativeStrictTextProbeExpectation,
+    fixture_id: String,
+    probe_id: &'static str,
+    x: usize,
+    y: usize,
+}
+
+impl NativeStrictTextProbeError {
+    fn new(fixture_id: &str, probe: NativeStrictTextProbe, actual: Option<[u8; 4]>) -> Self {
+        Self {
+            actual,
+            expectation: probe.expectation,
+            fixture_id: fixture_id.to_owned(),
+            probe_id: probe.id,
+            x: probe.x,
+            y: probe.y,
+        }
+    }
+}
+
+impl Display for NativeStrictTextProbeError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Native strict text probe failed for {}:{} at {},{} expected {} actual {:?}",
+            self.fixture_id,
+            self.probe_id,
+            self.x,
+            self.y,
+            self.expectation.as_str(),
+            self.actual
+        )
+    }
+}
+
+impl Error for NativeStrictTextProbeError {}
+
+#[derive(Debug)]
 struct NativeWindowError {
     source: NativeWindowErrorSource,
 }
@@ -1006,12 +1117,18 @@ fn load_strict_text_fixture(
     let metadata =
         create_strict_text_metadata_report(&fixture, &evidence_path, receipt, result.report)?;
     let smoke = assert_strict_text_visible(&result.image)?;
+    let probes = assert_strict_text_pixel_probes(
+        &metadata.fixture_id,
+        &result.image,
+        NATIVE_STRICT_TEXT_PIXEL_PROBES,
+    )?;
 
     Ok(LoadedStrictTextFixture {
         evidence_path,
         fixture_path,
         image: result.image,
         metadata,
+        probes,
         smoke,
     })
 }
@@ -1085,6 +1202,40 @@ fn assert_strict_text_visible(
         min_y,
         nonblank_pixel_count: count,
     })
+}
+
+fn assert_strict_text_pixel_probes(
+    fixture_id: &str,
+    image: &RenderedImage,
+    probes: &[NativeStrictTextProbe],
+) -> Result<Vec<NativeStrictTextProbeReport>, NativeStrictTextProbeError> {
+    let mut reports = Vec::with_capacity(probes.len());
+    for probe in probes {
+        let actual = image
+            .pixel_at(probe.x, probe.y)
+            .ok_or_else(|| NativeStrictTextProbeError::new(fixture_id, *probe, None))?;
+        let passes = matches!(
+            (probe.expectation, actual),
+            (NativeStrictTextProbeExpectation::Fill, [17, 24, 39, 255])
+                | (NativeStrictTextProbeExpectation::Transparent, [_, _, _, 0])
+        );
+        if !passes {
+            return Err(NativeStrictTextProbeError::new(
+                fixture_id,
+                *probe,
+                Some(actual),
+            ));
+        }
+        reports.push(NativeStrictTextProbeReport {
+            actual,
+            expectation: probe.expectation,
+            id: probe.id,
+            x: probe.x,
+            y: probe.y,
+        });
+    }
+
+    Ok(reports)
 }
 
 fn resolve_strict_text_argument_path(
@@ -1728,6 +1879,21 @@ fn write_strict_text_fixture_summary(
         loaded.smoke.min_x, loaded.smoke.min_y, loaded.smoke.max_x, loaded.smoke.max_y
     )
     .map_err(NativeOutputError::new)?;
+    for probe in &loaded.probes {
+        writeln!(
+            writer,
+            "probe={} expected={} x={} y={} rgba={},{},{},{}",
+            probe.id,
+            probe.expectation.as_str(),
+            probe.x,
+            probe.y,
+            probe.actual[0],
+            probe.actual[1],
+            probe.actual[2],
+            probe.actual[3]
+        )
+        .map_err(NativeOutputError::new)?;
+    }
     writeln!(writer, "rendered=true").map_err(NativeOutputError::new)?;
     writeln!(writer, "smoke=passed").map_err(NativeOutputError::new)
 }
@@ -1814,12 +1980,13 @@ fn short_hash(hash: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        NativeAppError, NativeArgs, NativeMode, RenderFixtureSource, assert_pixel_probes,
-        assert_strict_text_visible, load_fixture, load_manifest, load_receipt,
-        load_strict_text_fixture, reject_strict_text_fixture, resolve_strict_text_argument_path,
-        run_smoke, validate_manifest_path, validate_receipt_matches_manifest,
-        validate_scene_artifact_hash, write_fixture_summary, write_strict_text_fixture_summary,
-        write_strict_text_rejection_summary,
+        NATIVE_STRICT_TEXT_PIXEL_PROBES, NativeAppError, NativeArgs, NativeMode,
+        NativeStrictTextProbe, RenderFixtureSource, assert_pixel_probes,
+        assert_strict_text_pixel_probes, assert_strict_text_visible, load_fixture, load_manifest,
+        load_receipt, load_strict_text_fixture, reject_strict_text_fixture,
+        resolve_strict_text_argument_path, run_smoke, validate_manifest_path,
+        validate_receipt_matches_manifest, validate_scene_artifact_hash, write_fixture_summary,
+        write_strict_text_fixture_summary, write_strict_text_rejection_summary,
     };
     use geordi_ir::{
         load_geordi_strict_text_fixture_manifest, load_geordi_strict_text_outline_evidence_pack,
@@ -1924,6 +2091,7 @@ mod tests {
         assert_eq!(loaded.smoke.min_y, 13);
         assert_eq!(loaded.smoke.max_x, 175);
         assert_eq!(loaded.smoke.max_y, 47);
+        assert_eq!(loaded.probes.len(), NATIVE_STRICT_TEXT_PIXEL_PROBES.len());
         let text = output_text(&output);
         assert!(text.contains("Geordi native strict text fixture loaded"));
         assert!(text.contains("rendererName=rust-software-outline-glyphs"));
@@ -1963,6 +2131,16 @@ mod tests {
         assert!(text.contains("canvas=192x64"));
         assert!(text.contains("nonblankPixels=2092"));
         assert!(text.contains("nonblankBounds=2,13..175,47"));
+        assert!(
+            text.contains("probe=text-background-top expected=transparent x=100 y=5 rgba=0,0,0,0")
+        );
+        assert!(text.contains("probe=text-g-fill-top expected=fill x=12 y=15 rgba=17,24,39,255"));
+        assert!(text.contains("probe=text-i-fill-mid expected=fill x=172 y=30 rgba=17,24,39,255"));
+        assert!(
+            text.contains(
+                "probe=text-background-bottom expected=transparent x=180 y=55 rgba=0,0,0,0"
+            )
+        );
         assert!(text.contains("rendered=true"));
         assert!(text.contains("smoke=passed"));
         Ok(())
@@ -1987,6 +2165,24 @@ mod tests {
         assert!(matches!(
             result,
             Err(super::NativeStrictTextSmokeError { .. })
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn strict_text_probe_failures_are_custom_errors() -> Result<(), NativeAppError> {
+        let loaded = load_strict_text_fixture(
+            Path::new("geordi.strict-text.geordi.json"),
+            Option::<&Path>::None,
+        )?;
+        let bad_probe = [NativeStrictTextProbe::fill("bad-fill", 100, 5)];
+
+        let result =
+            assert_strict_text_pixel_probes(&loaded.metadata.fixture_id, &loaded.image, &bad_probe);
+
+        assert!(matches!(
+            result,
+            Err(super::NativeStrictTextProbeError { .. })
         ));
         Ok(())
     }
