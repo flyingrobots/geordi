@@ -33,6 +33,15 @@ fixtures/render-everywhere/assets/stanford-bunny
 The bunny path validates the checked-in mesh manifest, parses the checked-in PLY bytes, computes
 fixed-rate playback frames, and draws the mesh as a rotating software wireframe.
 
+The native harness also has a strict text rejection preflight for committed negative fixtures:
+
+```text
+fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
+```
+
+That preflight uses the Rust strict text validator and must reject unsupported strict text fixture
+requirements before any native drawing path treats them as compliant.
+
 ## Commands
 
 Run the smoke gate without opening a window:
@@ -71,6 +80,12 @@ Open the native bunny window:
 
 ```bash
 cargo run -p native-render-everywhere -- --bunny-window fixtures/render-everywhere/assets/stanford-bunny
+```
+
+Run the strict text rejection preflight:
+
+```bash
+cargo run -p native-render-everywhere -- --strict-text-reject fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
 ```
 
 Run tests and lints:
@@ -138,7 +153,8 @@ paint.solid
 ```
 
 Unsupported feature requirements must fail before drawing. Text is intentionally excluded from this
-first deterministic browser/native proof.
+first deterministic browser/native proof. The native harness currently proves strict text rejection
+only: unsupported strict text fixture requirements fail before drawing.
 
 The bunny mesh path is a demo harness path, not a general mesh node inside core Geordi IR. It proves
 shared asset identity, parsed mesh metadata, deterministic sampled-frame metadata, and coarse

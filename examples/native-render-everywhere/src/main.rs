@@ -3,12 +3,15 @@
 pub mod bunny;
 
 use geordi_ir::{
-    GEORDI_CORE_PROFILE, GEORDI_IR_VERSION, GEORDI_NUMERIC_PROFILE, GeordiIr, GeordiIrLoadError,
-    GeordiIrValidationError, load_geordi_ir, validate_geordi_ir,
+    load_geordi_ir, load_geordi_strict_text_fixture_manifest, validate_geordi_ir,
+    validate_geordi_strict_text_fixture_manifest, GeordiIr, GeordiIrLoadError,
+    GeordiIrValidationError, GeordiStrictTextFixtureLoadError,
+    GeordiStrictTextFixtureValidationIssue, GEORDI_CORE_PROFILE, GEORDI_IR_VERSION,
+    GEORDI_NUMERIC_PROFILE,
 };
 use geordi_renderer::{
-    GeordiRenderError, GeordiRuntimeUnsupportedProfileError, RenderedImage,
-    assert_native_runtime_profile, render_geordi_to_image,
+    assert_native_runtime_profile, render_geordi_to_image, GeordiRenderError,
+    GeordiRuntimeUnsupportedProfileError, RenderedImage,
 };
 use minifb::{Key, Window, WindowOptions};
 use serde::Deserialize;
@@ -51,6 +54,11 @@ fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAp
             bunny::open_bunny_window(&args.fixture_dir)?;
             Ok(())
         }
+        NativeMode::StrictTextReject => {
+            let rejection = reject_strict_text_fixture(&args.fixture_dir)?;
+            write_strict_text_rejection_summary(&mut io::stdout().lock(), &rejection)?;
+            Ok(())
+        }
         NativeMode::Check => {
             let loaded = load_fixture(&args.fixture_dir)?;
             write_fixture_summary(&mut io::stdout().lock(), &loaded)?;
@@ -77,6 +85,7 @@ enum NativeMode {
     BunnyWindow,
     Check,
     Smoke,
+    StrictTextReject,
     Window,
 }
 
@@ -105,6 +114,11 @@ impl NativeArgs {
                 fixture_dir: PathBuf::from(fixture_dir),
                 frame_index: 0,
                 mode: NativeMode::BunnyWindow,
+            }),
+            [flag, fixture_path] if flag == OsStr::new("--strict-text-reject") => Ok(Self {
+                fixture_dir: PathBuf::from(fixture_path),
+                frame_index: 0,
+                mode: NativeMode::StrictTextReject,
             }),
             [flag, frame_flag, frame_index, fixture_dir]
                 if flag == OsStr::new("--bunny-check") && frame_flag == OsStr::new("--frame") =>
@@ -154,6 +168,12 @@ struct LoadedFixture {
     image: RenderedImage,
     ir: GeordiIr,
     manifest: RenderFixtureManifest,
+}
+
+#[derive(Debug)]
+struct NativeStrictTextFixtureRejection {
+    path: PathBuf,
+    issues: Vec<GeordiStrictTextFixtureValidationIssue>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -238,6 +258,8 @@ enum NativeAppError {
     ReceiptParse(NativeReceiptParseError),
     Render(GeordiRenderError),
     RuntimeProfile(GeordiRuntimeUnsupportedProfileError),
+    StrictTextAccepted(NativeStrictTextFixtureAcceptedError),
+    StrictTextLoad(GeordiStrictTextFixtureLoadError),
     Window(NativeWindowError),
 }
 
@@ -264,6 +286,8 @@ impl Error for NativeAppError {
             Self::ReceiptParse(source) => Some(source),
             Self::Render(source) => Some(source),
             Self::RuntimeProfile(source) => Some(source),
+            Self::StrictTextAccepted(source) => Some(source),
+            Self::StrictTextLoad(source) => Some(source),
             Self::Window(source) => Some(source),
         }
     }
@@ -353,6 +377,18 @@ impl From<GeordiRuntimeUnsupportedProfileError> for NativeAppError {
     }
 }
 
+impl From<NativeStrictTextFixtureAcceptedError> for NativeAppError {
+    fn from(error: NativeStrictTextFixtureAcceptedError) -> Self {
+        Self::StrictTextAccepted(error)
+    }
+}
+
+impl From<GeordiStrictTextFixtureLoadError> for NativeAppError {
+    fn from(error: GeordiStrictTextFixtureLoadError) -> Self {
+        Self::StrictTextLoad(error)
+    }
+}
+
 impl From<NativeWindowError> for NativeAppError {
     fn from(error: NativeWindowError) -> Self {
         Self::Window(error)
@@ -365,7 +401,7 @@ struct NativeArgsError;
 impl Display for NativeArgsError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         formatter.write_str(
-            "Usage: native-render-everywhere [--check|--smoke|--bunny-check|--bunny-smoke|--bunny-window] [--frame <index>] <fixture-dir>",
+            "Usage: native-render-everywhere [--check|--smoke|--bunny-check|--bunny-smoke|--bunny-window|--strict-text-reject] [--frame <index>] <fixture-dir-or-strict-text-fixture>",
         )
     }
 }
@@ -627,6 +663,29 @@ impl Display for NativePixelProbeError {
 impl Error for NativePixelProbeError {}
 
 #[derive(Debug)]
+struct NativeStrictTextFixtureAcceptedError {
+    path: PathBuf,
+}
+
+impl NativeStrictTextFixtureAcceptedError {
+    const fn new(path: PathBuf) -> Self {
+        Self { path }
+    }
+}
+
+impl Display for NativeStrictTextFixtureAcceptedError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Native strict text fixture rejection failed because {} was accepted",
+            self.path.display()
+        )
+    }
+}
+
+impl Error for NativeStrictTextFixtureAcceptedError {}
+
+#[derive(Debug)]
 struct NativeWindowError {
     source: NativeWindowErrorSource,
 }
@@ -687,6 +746,20 @@ fn load_fixture(fixture_dir: &Path) -> Result<LoadedFixture, NativeAppError> {
         ir,
         manifest,
     })
+}
+
+fn reject_strict_text_fixture(
+    path: &Path,
+) -> Result<NativeStrictTextFixtureRejection, NativeAppError> {
+    let manifest = load_geordi_strict_text_fixture_manifest(path)?;
+
+    match validate_geordi_strict_text_fixture_manifest(&manifest) {
+        Ok(()) => Err(NativeStrictTextFixtureAcceptedError::new(path.to_path_buf()).into()),
+        Err(error) => Ok(NativeStrictTextFixtureRejection {
+            path: path.to_path_buf(),
+            issues: error.issues().to_vec(),
+        }),
+    }
 }
 
 fn load_artifact_bytes(path: &Path) -> Result<Vec<u8>, NativeArtifactLoadError> {
@@ -1164,6 +1237,23 @@ fn write_fixture_summary(
     .map_err(NativeOutputError::new)
 }
 
+fn write_strict_text_rejection_summary(
+    writer: &mut impl Write,
+    rejection: &NativeStrictTextFixtureRejection,
+) -> Result<(), NativeOutputError> {
+    writeln!(writer, "Geordi native strict text fixture rejected")
+        .map_err(NativeOutputError::new)?;
+    writeln!(writer, "rendererName={NATIVE_RENDERER_NAME}").map_err(NativeOutputError::new)?;
+    writeln!(writer, "strictTextFixture={}", rejection.path.display())
+        .map_err(NativeOutputError::new)?;
+    writeln!(writer, "rejected=true").map_err(NativeOutputError::new)?;
+    for issue in &rejection.issues {
+        writeln!(writer, "issue={}: {}", issue.path, issue.message)
+            .map_err(NativeOutputError::new)?;
+    }
+    Ok(())
+}
+
 fn run_smoke(writer: &mut impl Write, loaded: &LoadedFixture) -> Result<(), NativeAppError> {
     assert_pixel_probes(loaded)?;
     writeln!(writer, "smoke=passed").map_err(NativeOutputError::new)?;
@@ -1246,9 +1336,10 @@ fn short_hash(hash: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        NativeAppError, NativeArgs, NativeMode, RenderFixtureSource, assert_pixel_probes,
-        load_fixture, load_manifest, load_receipt, run_smoke, validate_manifest_path,
-        validate_receipt_matches_manifest, validate_scene_artifact_hash, write_fixture_summary,
+        assert_pixel_probes, load_fixture, load_manifest, load_receipt, reject_strict_text_fixture,
+        run_smoke, validate_manifest_path, validate_receipt_matches_manifest,
+        validate_scene_artifact_hash, write_fixture_summary, write_strict_text_rejection_summary,
+        NativeAppError, NativeArgs, NativeMode, RenderFixtureSource,
     };
     use std::ffi::OsString;
     use std::path::{Path, PathBuf};
@@ -1301,6 +1392,35 @@ mod tests {
         let result = load_fixture(&fixture_path("unsupported-strict-text"));
 
         assert!(matches!(result, Err(NativeAppError::RuntimeProfile(_))));
+    }
+
+    #[test]
+    fn strict_text_reject_mode_rejects_committed_unsupported_fixture() -> Result<(), NativeAppError>
+    {
+        let rejection = reject_strict_text_fixture(&strict_text_fixture_path(
+            "failures/unsupported-runtime-shaping.strict-text.geordi.json",
+        ))?;
+        let mut output = Vec::new();
+
+        write_strict_text_rejection_summary(&mut output, &rejection)?;
+
+        assert!(rejection.issues.iter().any(|issue| {
+            issue.path == "$.features[3]" && issue.message == "Strict text feature is not supported"
+        }));
+        let text = output_text(&output);
+        assert!(text.contains("Geordi native strict text fixture rejected"));
+        assert!(text.contains("rendererName=rust-software-rectangles"));
+        assert!(text.contains("rejected=true"));
+        assert!(text.contains("issue=$.features[3]: Strict text feature is not supported"));
+        Ok(())
+    }
+
+    #[test]
+    fn strict_text_reject_mode_fails_when_fixture_is_accepted() {
+        let result =
+            reject_strict_text_fixture(&strict_text_fixture_path("geordi.strict-text.geordi.json"));
+
+        assert!(matches!(result, Err(NativeAppError::StrictTextAccepted(_))));
     }
 
     #[test]
@@ -1445,6 +1565,27 @@ mod tests {
     }
 
     #[test]
+    fn parses_strict_text_reject_mode_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--strict-text-reject"),
+            OsString::from(
+                "fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json",
+            ),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::StrictTextReject);
+        assert_eq!(args.frame_index, 0);
+        assert_eq!(
+            args.fixture_dir,
+            PathBuf::from(
+                "fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json"
+            )
+        );
+        Ok(())
+    }
+
+    #[test]
     fn parses_bunny_fixed_frame_arguments() -> Result<(), NativeAppError> {
         let args = NativeArgs::parse([
             OsString::from("native-render-everywhere"),
@@ -1483,6 +1624,12 @@ mod tests {
     fn fixture_path(path: &str) -> PathBuf {
         Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../fixtures/render-everywhere")
+            .join(path)
+    }
+
+    fn strict_text_fixture_path(path: &str) -> PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../fixtures/render-everywhere/strict-text")
             .join(path)
     }
 }
