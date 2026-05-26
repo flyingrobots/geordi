@@ -558,6 +558,15 @@ fixture-local path/hash expectations, and stable diagnostic codes for TypeScript
 slices. It is a contract for prepared evidence only; it is not a font parser, shaper, platform text
 adapter, or general text feature.
 
+S053 commits the first two fixture-local outline packs:
+
+- `fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json`
+- `fixtures/render-everywhere/strict-text/text-0123.outline-evidence.geordi.json`
+
+These packs cover every glyph id referenced by the canonical strict text fixtures and keep the space
+glyph as explicit non-drawing evidence. They are data inputs for S054/S055 parsers; they do not make
+browser or native rendering compliant by themselves.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

@@ -81,8 +81,8 @@ digraph StrictPositionedGlyphRunPlan {
     color="#e2e8f0";
     S051 [label="S051\nRendering evidence strategy decision", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S052 [label="S052\nOutline evidence pack schema", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S053 [label="S053\nOutline evidence fixture data", color="#16a34a", penwidth=4];
-    S054 [label="S054\nTypeScript outline evidence parser", color="#dc2626", penwidth=4];
+    S053 [label="S053\nOutline evidence fixture data", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S054 [label="S054\nTypeScript outline evidence parser", color="#16a34a", penwidth=4];
     S056 [label="S056\nOutline command validation", color="#dc2626", penwidth=4];
     S057 [label="S057\nBrowser outline glyph renderer", color="#dc2626", penwidth=4];
     S058 [label="S058\nBrowser text fixture mode", color="#dc2626", penwidth=4];
@@ -93,7 +93,7 @@ digraph StrictPositionedGlyphRunPlan {
   subgraph cluster_native {
     label="Arc 4b: Native Proof";
     color="#e2e8f0";
-    S055 [label="S055\nRust outline evidence parser", color="#dc2626", penwidth=4];
+    S055 [label="S055\nRust outline evidence parser", color="#16a34a", penwidth=4];
     S061 [label="S061\nNative outline glyph renderer", color="#dc2626", penwidth=4];
     S062 [label="S062\nNative text fixture CLI mode", color="#dc2626", penwidth=4];
     S063 [label="S063\nNative text metadata report", color="#dc2626", penwidth=4];

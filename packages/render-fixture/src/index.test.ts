@@ -6,6 +6,7 @@ import {
   GEORDI_IR_VERSION,
   GEORDI_NUMERIC_PROFILE,
   type GeordiIr,
+  type JsonObject,
   type JsonValue,
 } from '@flyingrobots/geordi-core';
 import {
@@ -39,6 +40,7 @@ import {
   RENDER_FIXTURE_FONT_LICENSE_NORMALIZATION_TRIM_TRAILING_ASCII_WHITESPACE,
   RENDER_FIXTURE_FONT_PACK_VERSION,
   RENDER_FIXTURE_HASH_ALGORITHM_SHA256,
+  RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS,
   RENDER_FIXTURE_MESH_FIXTURE_VERSION,
   RENDER_FIXTURE_MESH_ASSET_VERSION,
   RENDER_FIXTURE_SOURCE_KIND_GPVUE_DRAFT,
@@ -381,6 +383,16 @@ function strictTextFixtureBSource(): string {
   );
 }
 
+function strictTextOutlineEvidenceSource(name: 'geordi' | 'text-0123'): string {
+  return readFileSync(
+    new URL(
+      `../../../fixtures/render-everywhere/strict-text/${name}.outline-evidence.geordi.json`,
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
 function strictTextFailureFixtureSource(name: string): string {
   return readFileSync(
     new URL(
@@ -420,6 +432,36 @@ class RenderFixtureTestError extends Error {
 
 function requireFirstFont(manifest: RenderFixtureFontPackManifest): RenderFixtureFontPackManifest['fonts'][number] {
   return manifest.fonts[0];
+}
+
+function requireJsonObject(value: JsonValue, label: string): JsonObject {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new RenderFixtureTestError(`${label} must be a JSON object`);
+  }
+
+  return value;
+}
+
+function isJsonValueArray(value: JsonValue | undefined): value is readonly JsonValue[] {
+  return Array.isArray(value);
+}
+
+function requireJsonArrayField(object: JsonObject, key: string, label: string): readonly JsonValue[] {
+  const value = object[key];
+  if (!isJsonValueArray(value)) {
+    throw new RenderFixtureTestError(`${label}.${key} must be a JSON array`);
+  }
+
+  return value;
+}
+
+function requireJsonNumberField(object: JsonObject, key: string, label: string): number {
+  const value = object[key];
+  if (typeof value !== 'number') {
+    throw new RenderFixtureTestError(`${label}.${key} must be a number`);
+  }
+
+  return value;
 }
 
 function makeProbe(): RenderFixturePixelProbe {
@@ -903,6 +945,65 @@ describe('render fixture strict text fixture manifest validation', () => {
       });
 
       expect(source).toBe(`${normalized}\n`);
+    }
+  });
+
+  it('keeps committed strict text outline evidence packs canonical JSON normalized', () => {
+    const sources = [strictTextOutlineEvidenceSource('geordi'), strictTextOutlineEvidenceSource('text-0123')];
+
+    for (const source of sources) {
+      const normalized = canonicalJsonPort.stringify(canonicalJsonPort.parse(source), {
+        space: 2,
+      });
+
+      expect(source).toBe(`${normalized}\n`);
+    }
+  });
+
+  it('commits fixture-local outline evidence for every canonical strict text glyph id', () => {
+    const fixtures = [
+      {
+        evidence: strictTextOutlineEvidenceSource('geordi'),
+        fixture: parseRenderFixtureStrictTextFixtureManifest(strictTextFixtureASource()),
+      },
+      {
+        evidence: strictTextOutlineEvidenceSource('text-0123'),
+        fixture: parseRenderFixtureStrictTextFixtureManifest(strictTextFixtureBSource()),
+      },
+    ];
+
+    for (const { evidence, fixture } of fixtures) {
+      const pack = requireJsonObject(canonicalJsonPort.parse(evidence), 'outline evidence pack');
+      const glyphEntries = requireJsonArrayField(pack, 'glyphs', 'outline evidence pack').map(
+        (entry, index) => requireJsonObject(entry, `outline evidence pack glyph ${index}`),
+      );
+      const coveredGlyphIds = glyphEntries.map((entry) =>
+        requireJsonNumberField(entry, 'glyphId', 'outline evidence pack glyph'),
+      );
+      const referencedGlyphIds = [
+        ...new Set(fixture.glyphRuns.flatMap((run) => run.glyphs.map((glyph) => glyph.glyphId))),
+      ];
+
+      expect(pack.evidencePackVersion).toBe('geordi-glyph-evidence-pack/1');
+      expect(pack.evidenceKind).toBe(RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS);
+      expect(pack.textProfile).toBe(RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE);
+      expect(pack.positionEncoding).toBe(RENDER_FIXTURE_FIXED_26_6_POSITION_ENCODING);
+      expect(pack.fontId).toBe('lato-regular');
+      expect(pack.fontSha256).toBe(
+        'sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251',
+      );
+      expect(coveredGlyphIds).toEqual(referencedGlyphIds);
+
+      for (const entry of glyphEntries) {
+        const commands = requireJsonArrayField(entry, 'commands', 'outline evidence pack glyph');
+        if (entry.glyphId === 2) {
+          expect(entry.draws).toBe(false);
+          expect(commands).toEqual([]);
+        } else {
+          expect(entry.draws).toBe(true);
+          expect(commands.length).toBeGreaterThan(0);
+        }
+      }
     }
   });
 

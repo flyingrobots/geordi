@@ -145,9 +145,24 @@ The first strict text outline evidence pack schema is
 26.6 command coordinates, nonzero solid-fill geometry, font identity binding, command vocabulary,
 and stable diagnostic codes for the TypeScript and Rust parser slices.
 
-The schema does not make strict text renderable by itself. Current nonclaims remain: no committed
-outline evidence data, no outline parser, no browser or native strict text renderer, no platform
-text API compliance path, and no general text support.
+The schema did not make strict text renderable by itself; S053 adds committed data, while parser and
+renderer support remain separate slices.
+
+## S053 Outline Evidence Fixture Data
+
+The canonical strict text fixtures now have fixture-local outline evidence packs:
+
+- `fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json`
+- `fixtures/render-everywhere/strict-text/text-0123.outline-evidence.geordi.json`
+
+The packs contain simple TrueType outline paths from the committed Lato Regular bytes, scaled to
+the fixture's 48px fixed 26.6 coordinate system. Each referenced `fontId + glyphId` pair has one
+evidence entry; the space glyph uses `draws: false` with empty commands and zero-area bounds.
+
+The data still does not make strict text renderable by itself. Current nonclaims remain: no
+TypeScript or Rust outline evidence parser, no command validation beyond fixture-data smoke tests,
+no browser or native strict text renderer, no platform text API compliance path, and no general text
+support.
 
 ## DAG Operating Rule
 
@@ -166,7 +181,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S053**.
+Current OPEN node: **S054**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -746,7 +761,7 @@ Current OPEN node: **S053**.
 
 ### S053: Outline evidence fixture data
 
-- [ ] **S053: Outline evidence fixture data** (OPEN)
+- [x] **S053: Outline evidence fixture data** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with outline evidence fixture data documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Outline evidence fixture data.
@@ -757,7 +772,7 @@ Current OPEN node: **S053**.
 
 ### S054: TypeScript outline evidence parser
 
-- [ ] **S054: TypeScript outline evidence parser** (BLOCKED)
+- [ ] **S054: TypeScript outline evidence parser** (OPEN)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with typescript outline evidence parser documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: TypeScript outline evidence parser.
@@ -768,7 +783,7 @@ Current OPEN node: **S053**.
 
 ### S055: Rust outline evidence parser
 
-- [ ] **S055: Rust outline evidence parser** (BLOCKED)
+- [ ] **S055: Rust outline evidence parser** (OPEN)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with rust outline evidence parser documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Rust outline evidence parser.
