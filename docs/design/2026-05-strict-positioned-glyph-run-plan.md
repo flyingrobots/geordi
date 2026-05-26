@@ -1054,6 +1054,67 @@ Checkpoint nonclaims:
 The next OPEN node after this checkpoint is `S051`, rendering evidence strategy decision. That slice
 must choose the evidence path before `S052` can formalize the outline evidence pack schema.
 
+## S051 Rendering Evidence Strategy Decision
+
+Decision: the first strict text renderer proof uses fixture-local `outlinePaths` glyph evidence,
+not runtime font parsing, not platform text APIs, not a shared rasterizer, and not WASM.
+
+The first visible proof therefore has this data flow:
+
+~~~text
+strict text fixture
+  -> font pack identity check
+  -> positioned glyph-run validation
+  -> fixture-local glyph evidence pack validation
+  -> browser/native outline path drawing
+  -> metadata parity and scoped visual probes
+~~~
+
+Chosen strategy:
+
+- Evidence kind: `outlinePaths`.
+- Evidence pack scope: fixture-local minimal pack. It contains only glyph evidence needed by the
+  fixture unless a later reusable-pack profile explicitly changes cache semantics.
+- Evidence coordinates: fixed 26.6 px coordinates in glyph-origin local space, already scaled and
+  y-oriented for Geordi scene coordinates by text preparation. Renderers translate by validated
+  glyph position; they do not apply font-unit scaling, y-axis inversion, kerning, shaping, fallback,
+  or platform metrics.
+- Evidence identity: every glyph evidence entry is keyed by `fontId`, font hash, face index,
+  text profile, shaping profile, glyph id, and evidence kind.
+- Paint scope: first proof is fill-only monochrome. Stroke, gradients, effects, multiple fills,
+  text decorations, and CSS-like text paint are known failures until separately named.
+- Winding: first proof uses nonzero fill rule.
+- Curves: the schema may name `moveTo`, `lineTo`, `quadTo`, `cubicTo`, and `closePath`, but each
+  command must be explicit fixture data. Native curve flattening, if needed, must use a named
+  tolerance in metadata before it can affect parity claims.
+- Browser renderer: consume evidence as Canvas 2D path geometry. The strict path must not call
+  `fillText`, `strokeText`, `measureText`, `FontFace`, DOM text layout, CSS font matching, or host
+  font fallback.
+- Native renderer: consume the same evidence commands through the Rust harness. The strict path must
+  not call OS text APIs, font lookup APIs, runtime shapers, or platform line-metric APIs.
+- Parity target: exact metadata first; scoped visual probes second. The first outline proof may
+  claim visible, nonblank, bounded text from shared evidence, not full antialiasing pixel identity.
+
+Rejected strategies for this milestone:
+
+| Strategy | Rejection reason |
+| --- | --- |
+| Browser Canvas text (`fillText`, `measureText`) | Reintroduces browser shaping, metrics, fallback, and font loading. |
+| Native OS text APIs | Reintroduces platform shaping and rasterization differences. |
+| Runtime OpenType parsing in each renderer | Duplicates hard font logic before the evidence contract is stable. |
+| Rust/WASM font kernel as a required browser dependency | Loader/package friction is not justified before outline evidence proves the contract. |
+| Bitmap or SDF atlas first | More pixel- and cache-policy surface than needed for the first visible proof. |
+| Shared rasterizer first | Prematurely optimizes pixel identity before metadata/evidence identity is proven. |
+
+Consequences for the next slices:
+
+- `S052` must define `geordi-glyph-evidence-pack/1` as an outline path evidence schema.
+- `S053` must add fixture-local outline evidence for the existing canonical strict text fixtures.
+- `S054` and `S055` must parse the same outline evidence shape in TypeScript and Rust.
+- Browser and native rendering slices must reject missing evidence before drawing.
+- Receipts must keep `glyphEvidencePackHash` optional until a real pack exists, then make it present
+  for renderable strict text fixtures.
+
 ## Active DAG
 
 The active dependency graph is rendered from [2026-05-strict-positioned-glyph-run-dag.dot](./2026-05-strict-positioned-glyph-run-dag.dot) to [2026-05-strict-positioned-glyph-run-dag.svg](./2026-05-strict-positioned-glyph-run-dag.svg).

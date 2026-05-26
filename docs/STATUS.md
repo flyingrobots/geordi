@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the active open node is `S051`, rendering evidence strategy decision, after `S050` locked the
-glyph-run checkpoint claims, nonclaims, and next evidence-rendering entry point.
+the active open node is `S052`, outline evidence pack schema, after `S051` selected fixture-local
+outline path glyph evidence as the first strict text rendering strategy.
 
 ## Completed Capabilities
 
@@ -62,6 +62,7 @@ Current rules:
 | Shared DTO drift | Serialized TypeScript/Rust contract DTOs must be generated from one Wesley common schema. |
 | Runtime boundary | TypeScript remains native at browser, Node, tooling, and fixture-authoring edges. Rust remains native at the renderer and CLI core. WASM is reserved for hard deterministic kernels. |
 | Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
+| Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. |
 
 Primary docs:
 

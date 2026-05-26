@@ -763,28 +763,28 @@
 <!-- S051 -->
 <g id="node54" class="node">
 <title>S051</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M625.51,-1237.5C625.51,-1237.5 474.49,-1237.5 474.49,-1237.5 468.49,-1237.5 462.49,-1231.5 462.49,-1225.5 462.49,-1225.5 462.49,-1213.5 462.49,-1213.5 462.49,-1207.5 468.49,-1201.5 474.49,-1201.5 474.49,-1201.5 625.51,-1201.5 625.51,-1201.5 631.51,-1201.5 637.51,-1207.5 637.51,-1213.5 637.51,-1213.5 637.51,-1225.5 637.51,-1225.5 637.51,-1231.5 631.51,-1237.5 625.51,-1237.5"/>
-<text xml:space="preserve" text-anchor="middle" x="550" y="-1221.25" font-family="Helvetica,sans-Serif" font-size="10.00">S051</text>
-<text xml:space="preserve" text-anchor="middle" x="550" y="-1210" font-family="Helvetica,sans-Serif" font-size="10.00">Rendering evidence strategy decision</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M625.51,-1237.5C625.51,-1237.5 474.49,-1237.5 474.49,-1237.5 468.49,-1237.5 462.49,-1231.5 462.49,-1225.5 462.49,-1225.5 462.49,-1213.5 462.49,-1213.5 462.49,-1207.5 468.49,-1201.5 474.49,-1201.5 474.49,-1201.5 625.51,-1201.5 625.51,-1201.5 631.51,-1201.5 637.51,-1207.5 637.51,-1213.5 637.51,-1213.5 637.51,-1225.5 637.51,-1225.5 637.51,-1231.5 631.51,-1237.5 625.51,-1237.5"/>
+<text xml:space="preserve" text-anchor="middle" x="550" y="-1221.25" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S051</text>
+<text xml:space="preserve" text-anchor="middle" x="550" y="-1210" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Rendering evidence strategy decision</text>
 </g>
 <!-- S050&#45;&gt;S051 -->
 <g id="edge55" class="edge">
 <title>S050&#45;&gt;S051</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M550,-1292.89C550,-1279.78 550,-1261.94 550,-1247.25"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="552.1,-1247.28 550,-1241.28 547.9,-1247.28 552.1,-1247.28"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M550,-1292.89C550,-1279.48 550,-1261.12 550,-1246.25"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="552.1,-1246.65 550,-1240.65 547.9,-1246.65 552.1,-1246.65"/>
 </g>
 <!-- S052 -->
 <g id="node55" class="node">
 <title>S052</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M621.88,-1165.5C621.88,-1165.5 500.12,-1165.5 500.12,-1165.5 494.12,-1165.5 488.12,-1159.5 488.12,-1153.5 488.12,-1153.5 488.12,-1141.5 488.12,-1141.5 488.12,-1135.5 494.12,-1129.5 500.12,-1129.5 500.12,-1129.5 621.88,-1129.5 621.88,-1129.5 627.88,-1129.5 633.88,-1135.5 633.88,-1141.5 633.88,-1141.5 633.88,-1153.5 633.88,-1153.5 633.88,-1159.5 627.88,-1165.5 621.88,-1165.5"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M621.88,-1165.5C621.88,-1165.5 500.12,-1165.5 500.12,-1165.5 494.12,-1165.5 488.12,-1159.5 488.12,-1153.5 488.12,-1153.5 488.12,-1141.5 488.12,-1141.5 488.12,-1135.5 494.12,-1129.5 500.12,-1129.5 500.12,-1129.5 621.88,-1129.5 621.88,-1129.5 627.88,-1129.5 633.88,-1135.5 633.88,-1141.5 633.88,-1141.5 633.88,-1153.5 633.88,-1153.5 633.88,-1159.5 627.88,-1165.5 621.88,-1165.5"/>
 <text xml:space="preserve" text-anchor="middle" x="561" y="-1149.25" font-family="Helvetica,sans-Serif" font-size="10.00">S052</text>
 <text xml:space="preserve" text-anchor="middle" x="561" y="-1138" font-family="Helvetica,sans-Serif" font-size="10.00">Outline evidence pack schema</text>
 </g>
 <!-- S051&#45;&gt;S052 -->
 <g id="edge56" class="edge">
 <title>S051&#45;&gt;S052</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M552.95,-1199.74C554.14,-1192.13 555.55,-1183.2 556.84,-1174.95"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="558.91,-1175.36 557.76,-1169.1 554.76,-1174.71 558.91,-1175.36"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M552.89,-1200.11C554.12,-1192.29 555.57,-1183.04 556.91,-1174.54"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="558.95,-1175.06 557.81,-1168.81 554.8,-1174.41 558.95,-1175.06"/>
 </g>
 <!-- S052&#45;&gt;S053 -->
 <g id="edge57" class="edge">

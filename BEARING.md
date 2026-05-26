@@ -122,6 +122,19 @@ fixture boundary, not text rendering:
   complex scripts, variable font axes, and broad text support remain unsupported.
 - Next OPEN node after this checkpoint: `S051`, rendering evidence strategy decision.
 
+## S051 Rendering Evidence Strategy
+
+The first strict text rendering proof uses fixture-local `outlinePaths` glyph evidence. Renderers
+consume explicit fixed 26.6 outline commands and validated glyph positions; they do not parse fonts,
+shape text, query platform metrics, use host fallback, call browser text APIs, or require a WASM font
+kernel for this milestone.
+
+The first visible proof is fill-only monochrome outline geometry with exact metadata parity and
+scoped visual probes. It does not claim full text antialiasing pixel identity, reusable glyph-cache
+semantics, bitmap/SDF atlases, shared rasterization, or broad text paint support.
+
+Next OPEN node after this decision: `S052`, outline evidence pack schema.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -139,7 +152,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S051**.
+Current OPEN node: **S052**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -697,7 +710,7 @@ Current OPEN node: **S051**.
 
 ### S051: Rendering evidence strategy decision
 
-- [ ] **S051: Rendering evidence strategy decision** (OPEN)
+- [x] **S051: Rendering evidence strategy decision** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with rendering evidence strategy decision documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Rendering evidence strategy decision.
@@ -708,7 +721,7 @@ Current OPEN node: **S051**.
 
 ### S052: Outline evidence pack schema
 
-- [ ] **S052: Outline evidence pack schema** (BLOCKED)
+- [ ] **S052: Outline evidence pack schema** (OPEN)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with outline evidence pack schema documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Outline evidence pack schema.
