@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the active open node is `S056`, outline command validation, after `S055` added the Rust DTOs and
-validator for `geordi-glyph-evidence-pack/1`.
+the active open node is `S057`, browser outline glyph renderer, after `S056` hardened outline
+command validation in both TypeScript and Rust.
 
 ## Completed Capabilities
 
@@ -39,7 +39,7 @@ validator for `geordi-glyph-evidence-pack/1`.
 | Strict font assets | Lato font pack and failure fixtures prove content-addressed font/license boundaries. |
 | Strict text manifests | TypeScript and Rust can validate strict text manifest structure, font references, line-box geometry, both canonical checked-in fixtures, and canonical fixture JSON normalization. |
 | Strict text receipts | The receipt schema defines fixture, font-pack, glyph-run, line-box, semantic-text, and future glyph-evidence hash inputs; TypeScript and Rust can build canonical receipts for both strict text fixtures. |
-| Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, covered by glyph-id smoke tests, and parsed by TypeScript and Rust DTO/validator APIs. |
+| Strict text outline evidence | The first `geordi-glyph-evidence-pack/1` schema and two fixture-local `outlinePaths` evidence files are committed, canonicalized, covered by glyph-id smoke tests, parsed by TypeScript/Rust DTO APIs, and guarded by command-shape failure fixtures. |
 
 ## Active Work
 

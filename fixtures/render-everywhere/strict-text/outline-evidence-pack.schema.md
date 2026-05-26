@@ -163,6 +163,15 @@ All command coordinates must be finite safe integers in `geordi-fixed-26.6/1` un
 commands, missing command fields, extra command-specific coordinate names, and coordinates outside
 the shared safe integer range are hard validation failures.
 
+S056 hardens command validation in both TypeScript and Rust:
+
+- each command may contain only the fields allowed by its `op`;
+- drawing glyph commands must start each contour with `moveTo`;
+- `lineTo`, `quadTo`, and `cubicTo` require an open contour;
+- `moveTo` must be the first command or must follow `closePath`;
+- `closePath` requires an open contour with at least one segment;
+- every opened contour must close before the command array ends.
+
 ## Fixture Linkage
 
 S052 defines the evidence pack shape. Later implementation slices attach it to fixtures and

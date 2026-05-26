@@ -457,6 +457,16 @@ function strictTextOutlineEvidenceSource(name: 'geordi' | 'text-0123'): string {
   );
 }
 
+function strictTextOutlineEvidenceFailureSource(name: string): string {
+  return readFileSync(
+    new URL(
+      `../../../fixtures/render-everywhere/strict-text/failures/${name}.outline-evidence.geordi.json`,
+      import.meta.url,
+    ),
+    'utf8',
+  );
+}
+
 function strictTextFailureFixtureSource(name: string): string {
   return readFileSync(
     new URL(
@@ -1188,6 +1198,29 @@ describe('render fixture strict text fixture manifest validation', () => {
     expect(() => assertRenderFixtureStrictTextOutlineEvidencePack(invalid)).toThrow(
       RenderFixtureInvalidStrictTextOutlineEvidencePackError,
     );
+  });
+
+  it('rejects outline evidence commands with invalid contour state or fields', () => {
+    const pack = canonicalJsonPort.parse(
+      strictTextOutlineEvidenceFailureSource('bad-outline-command'),
+    );
+    const result = validateRenderFixtureStrictTextOutlineEvidencePack(pack);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.code)).toEqual(
+      expect.arrayContaining(['GEORDI_TEXT_EVIDENCE_BAD_COMMAND']),
+    );
+    expect(result.issues.map((issue) => issue.path)).toEqual(
+      expect.arrayContaining([
+        '$.glyphs[0].commands[0].op',
+        '$.glyphs[0].commands[2].op',
+        '$.glyphs[0].commands[3].x',
+        '$.glyphs[0].commands[3].y',
+      ]),
+    );
+    expect(() => parseRenderFixtureStrictTextOutlineEvidencePack(
+      strictTextOutlineEvidenceFailureSource('bad-outline-command'),
+    )).toThrow(RenderFixtureInvalidStrictTextOutlineEvidencePackError);
   });
 
   it('accepts a typed valid strict text fixture receipt object', () => {

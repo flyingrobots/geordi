@@ -2332,8 +2332,73 @@ function validateOutlineEvidenceCommands(
     return;
   }
 
+  let contourOpen = false;
+  let segmentCount = 0;
   for (let index = 0; index < value.length; index++) {
-    validateOutlineEvidenceCommand(value[index], `${path}[${index}]`, issues);
+    const itemPath = `${path}[${index}]`;
+    const command = value[index];
+    validateOutlineEvidenceCommand(command, itemPath, issues);
+    if (!isJsonObject(command)) {
+      continue;
+    }
+
+    const op = property(command, 'op');
+    if (op === 'moveTo') {
+      if (contourOpen) {
+        pushOutlineEvidenceIssue(
+          issues,
+          `${itemPath}.op`,
+          'Strict text outline evidence moveTo must follow closePath or start commands',
+          'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+        );
+      }
+      contourOpen = true;
+      segmentCount = 0;
+      continue;
+    }
+
+    if (op === 'lineTo' || op === 'quadTo' || op === 'cubicTo') {
+      if (!contourOpen) {
+        pushOutlineEvidenceIssue(
+          issues,
+          `${itemPath}.op`,
+          'Strict text outline evidence segment command requires an open contour',
+          'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+        );
+      } else {
+        segmentCount += 1;
+      }
+      continue;
+    }
+
+    if (op === 'closePath') {
+      if (!contourOpen) {
+        pushOutlineEvidenceIssue(
+          issues,
+          `${itemPath}.op`,
+          'Strict text outline evidence closePath requires an open contour',
+          'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+        );
+      } else if (segmentCount === 0) {
+        pushOutlineEvidenceIssue(
+          issues,
+          `${itemPath}.op`,
+          'Strict text outline evidence closePath requires at least one segment',
+          'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+        );
+      }
+      contourOpen = false;
+      segmentCount = 0;
+    }
+  }
+
+  if (contourOpen) {
+    pushOutlineEvidenceIssue(
+      issues,
+      path,
+      'Strict text outline evidence commands must close every opened contour',
+      'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+    );
   }
 }
 
@@ -2354,11 +2419,13 @@ function validateOutlineEvidenceCommand(
 
   const op = property(value, 'op');
   if (op === 'moveTo' || op === 'lineTo') {
+    validateOutlineEvidenceCommandAllowedKeys(value, path, ['op', 'x', 'y'], issues);
     validateOutlineEvidenceCommandCoordinatePair(value, path, issues);
     return;
   }
 
   if (op === 'quadTo') {
+    validateOutlineEvidenceCommandAllowedKeys(value, path, ['cx', 'cy', 'op', 'x', 'y'], issues);
     validateOutlineEvidenceSafeInteger(
       property(value, 'cx'),
       `${path}.cx`,
@@ -2378,6 +2445,12 @@ function validateOutlineEvidenceCommand(
   }
 
   if (op === 'cubicTo') {
+    validateOutlineEvidenceCommandAllowedKeys(
+      value,
+      path,
+      ['cx1', 'cx2', 'cy1', 'cy2', 'op', 'x', 'y'],
+      issues,
+    );
     validateOutlineEvidenceSafeInteger(
       property(value, 'cx1'),
       `${path}.cx1`,
@@ -2411,6 +2484,7 @@ function validateOutlineEvidenceCommand(
   }
 
   if (op === 'closePath') {
+    validateOutlineEvidenceCommandAllowedKeys(value, path, ['op'], issues);
     return;
   }
 
@@ -2420,6 +2494,25 @@ function validateOutlineEvidenceCommand(
     'Strict text outline evidence command op must be moveTo, lineTo, quadTo, cubicTo, or closePath',
     'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
   );
+}
+
+function validateOutlineEvidenceCommandAllowedKeys(
+  value: JsonObject,
+  path: string,
+  allowedKeys: readonly string[],
+  issues: RenderFixtureStrictTextOutlineEvidencePackIssue[],
+): void {
+  const allowed = new Set(allowedKeys);
+  for (const key of Object.keys(value).sort()) {
+    if (!allowed.has(key)) {
+      pushOutlineEvidenceIssue(
+        issues,
+        `${path}.${key}`,
+        'Strict text outline evidence command contains a field not allowed for its op',
+        'GEORDI_TEXT_EVIDENCE_BAD_COMMAND',
+      );
+    }
+  }
 }
 
 function validateOutlineEvidenceCommandCoordinatePair(

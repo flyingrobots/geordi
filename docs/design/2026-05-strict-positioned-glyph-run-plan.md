@@ -576,6 +576,10 @@ S055 mirrors that parser surface in `geordi-ir` with Rust DTOs, parse/load helpe
 the same diagnostic code strings. Browser and native rendering remain unclaimed until later slices
 consume validated evidence.
 
+S056 hardens outline command validation in both runtimes and adds
+`fixtures/render-everywhere/strict-text/failures/bad-outline-command.outline-evidence.geordi.json`
+as the shared failure fixture for invalid contour state and command-specific fields.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

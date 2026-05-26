@@ -308,7 +308,7 @@ pub struct GeordiStrictTextOutlineEvidenceBounds {
 
 /// Outline command record. Coordinates are optional so validation can return stable diagnostics.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
 pub struct GeordiStrictTextOutlineCommand {
     /// Command operation name.
     pub op: String,
@@ -2054,8 +2054,66 @@ fn validate_outline_evidence_commands(
     path: &str,
     issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
 ) {
+    let mut contour_open = false;
+    let mut segment_count = 0;
     for (index, command) in commands.iter().enumerate() {
-        validate_outline_evidence_command(command, &format!("{path}[{index}]"), issues);
+        let command_path = format!("{path}[{index}]");
+        validate_outline_evidence_command(command, &command_path, issues);
+        match command.op.as_str() {
+            "moveTo" => {
+                if contour_open {
+                    push_outline_evidence_issue(
+                        issues,
+                        &format!("{command_path}.op"),
+                        "Strict text outline evidence moveTo must follow closePath or start commands",
+                        "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+                    );
+                }
+                contour_open = true;
+                segment_count = 0;
+            }
+            "lineTo" | "quadTo" | "cubicTo" => {
+                if contour_open {
+                    segment_count += 1;
+                } else {
+                    push_outline_evidence_issue(
+                        issues,
+                        &format!("{command_path}.op"),
+                        "Strict text outline evidence segment command requires an open contour",
+                        "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+                    );
+                }
+            }
+            "closePath" => {
+                if !contour_open {
+                    push_outline_evidence_issue(
+                        issues,
+                        &format!("{command_path}.op"),
+                        "Strict text outline evidence closePath requires an open contour",
+                        "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+                    );
+                } else if segment_count == 0 {
+                    push_outline_evidence_issue(
+                        issues,
+                        &format!("{command_path}.op"),
+                        "Strict text outline evidence closePath requires at least one segment",
+                        "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+                    );
+                }
+                contour_open = false;
+                segment_count = 0;
+            }
+            _ => {}
+        }
+    }
+
+    if contour_open {
+        push_outline_evidence_issue(
+            issues,
+            path,
+            "Strict text outline evidence commands must close every opened contour",
+            "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+        );
     }
 }
 
@@ -2065,8 +2123,32 @@ fn validate_outline_evidence_command(
     issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
 ) {
     match command.op.as_str() {
-        "moveTo" | "lineTo" => validate_outline_evidence_command_point(command, path, issues),
+        "moveTo" | "lineTo" => {
+            validate_outline_evidence_forbidden_command_coordinates(
+                [
+                    ("cx", command.cx),
+                    ("cy", command.cy),
+                    ("cx1", command.cx1),
+                    ("cy1", command.cy1),
+                    ("cx2", command.cx2),
+                    ("cy2", command.cy2),
+                ],
+                path,
+                issues,
+            );
+            validate_outline_evidence_command_point(command, path, issues);
+        }
         "quadTo" => {
+            validate_outline_evidence_forbidden_command_coordinates(
+                [
+                    ("cx1", command.cx1),
+                    ("cy1", command.cy1),
+                    ("cx2", command.cx2),
+                    ("cy2", command.cy2),
+                ],
+                path,
+                issues,
+            );
             validate_outline_evidence_command_required_integer(
                 command.cx,
                 &format!("{path}.cx"),
@@ -2082,6 +2164,11 @@ fn validate_outline_evidence_command(
             validate_outline_evidence_command_point(command, path, issues);
         }
         "cubicTo" => {
+            validate_outline_evidence_forbidden_command_coordinates(
+                [("cx", command.cx), ("cy", command.cy)],
+                path,
+                issues,
+            );
             validate_outline_evidence_command_required_integer(
                 command.cx1,
                 &format!("{path}.cx1"),
@@ -2108,13 +2195,45 @@ fn validate_outline_evidence_command(
             );
             validate_outline_evidence_command_point(command, path, issues);
         }
-        "closePath" => {}
+        "closePath" => {
+            validate_outline_evidence_forbidden_command_coordinates(
+                [
+                    ("x", command.x),
+                    ("y", command.y),
+                    ("cx", command.cx),
+                    ("cy", command.cy),
+                    ("cx1", command.cx1),
+                    ("cy1", command.cy1),
+                    ("cx2", command.cx2),
+                    ("cy2", command.cy2),
+                ],
+                path,
+                issues,
+            );
+        }
         _ => push_outline_evidence_issue(
             issues,
             &format!("{path}.op"),
             "Strict text outline evidence command op must be moveTo, lineTo, quadTo, cubicTo, or closePath",
             "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
         ),
+    }
+}
+
+fn validate_outline_evidence_forbidden_command_coordinates(
+    coordinates: impl IntoIterator<Item = (&'static str, Option<i64>)>,
+    path: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    for (field, value) in coordinates {
+        if value.is_some() {
+            push_outline_evidence_issue(
+                issues,
+                &format!("{path}.{field}"),
+                "Strict text outline evidence command contains a field not allowed for its op",
+                "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+            );
+        }
     }
 }
 
@@ -3521,6 +3640,28 @@ mod tests {
         assert_paths_include(&paths, "$.glyphs[0].commands[0].op");
         assert_paths_include(&paths, "$.paint.kind");
         assert_paths_include(&paths, "$.windingRule");
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_bad_outline_command_failure_fixture() -> Result<(), GeordiIrTestError> {
+        let pack = load_geordi_strict_text_outline_evidence_pack(fixture_path(
+            "strict-text/failures/bad-outline-command.outline-evidence.geordi.json",
+        ))?;
+        let error = match validate_geordi_strict_text_outline_evidence_pack(&pack) {
+            Ok(()) => return Err(GeordiIrTestError::ExpectedFailure),
+            Err(error) => error,
+        };
+        let paths = error
+            .issues()
+            .iter()
+            .map(|issue| issue.path.clone())
+            .collect::<Vec<_>>();
+
+        assert_paths_include(&paths, "$.glyphs[0].commands[0].op");
+        assert_paths_include(&paths, "$.glyphs[0].commands[2].op");
+        assert_paths_include(&paths, "$.glyphs[0].commands[3].x");
+        assert_paths_include(&paths, "$.glyphs[0].commands[3].y");
         Ok(())
     }
 

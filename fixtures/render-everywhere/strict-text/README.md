@@ -34,8 +34,13 @@ support lands in later slices; this directory must not imply general text or pla
 Failure fixtures:
 
 ~~~text
+fixtures/render-everywhere/strict-text/failures/bad-outline-command.outline-evidence.geordi.json
 fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
 ~~~
+
+`bad-outline-command.outline-evidence.geordi.json` is an S056 evidence-pack failure fixture. It
+keeps top-level evidence metadata valid while violating command contour state and per-command field
+rules.
 
 Canonical fixture A:
 

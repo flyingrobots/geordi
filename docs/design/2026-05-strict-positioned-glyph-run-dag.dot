@@ -83,8 +83,8 @@ digraph StrictPositionedGlyphRunPlan {
     S052 [label="S052\nOutline evidence pack schema", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S053 [label="S053\nOutline evidence fixture data", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S054 [label="S054\nTypeScript outline evidence parser", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S056 [label="S056\nOutline command validation", color="#16a34a", penwidth=4];
-    S057 [label="S057\nBrowser outline glyph renderer", color="#dc2626", penwidth=4];
+    S056 [label="S056\nOutline command validation", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S057 [label="S057\nBrowser outline glyph renderer", color="#16a34a", penwidth=4];
     S058 [label="S058\nBrowser text fixture mode", color="#dc2626", penwidth=4];
     S059 [label="S059\nBrowser text metadata disclosure", color="#dc2626", penwidth=4];
     S060 [label="S060\nBrowser visible text smoke", color="#dc2626", penwidth=4];
@@ -94,7 +94,7 @@ digraph StrictPositionedGlyphRunPlan {
     label="Arc 4b: Native Proof";
     color="#e2e8f0";
     S055 [label="S055\nRust outline evidence parser", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S061 [label="S061\nNative outline glyph renderer", color="#dc2626", penwidth=4];
+    S061 [label="S061\nNative outline glyph renderer", color="#16a34a", penwidth=4];
     S062 [label="S062\nNative text fixture CLI mode", color="#dc2626", penwidth=4];
     S063 [label="S063\nNative text metadata report", color="#dc2626", penwidth=4];
     S064 [label="S064\nNative visible text smoke", color="#dc2626", penwidth=4];
@@ -108,7 +108,7 @@ digraph StrictPositionedGlyphRunPlan {
     S067 [label="S067\nNative coarse pixel probes", color="#dc2626", penwidth=4];
     S068 [label="S068\nStable text probe policy", color="#dc2626", penwidth=4];
     S069 [label="S069\nNonblank text bounds check", color="#dc2626", penwidth=4];
-    S070 [label="S070\nMissing glyph evidence failure", color="#dc2626", penwidth=4];
+    S070 [label="S070\nMissing glyph evidence failure", color="#16a34a", penwidth=4];
     S071 [label="S071\nGlyph id not found failure", color="#dc2626", penwidth=4];
     S072 [label="S072\nBad line box failure", color="#dc2626", penwidth=4];
     S073 [label="S073\nUnsupported text fill/stroke failure", color="#dc2626", penwidth=4];

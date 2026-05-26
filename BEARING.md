@@ -185,6 +185,18 @@ The Rust parser is not a native text renderer and does not resolve fixture glyph
 font pack yet. Current nonclaims remain: no browser or native strict text renderer, no platform text
 API compliance path, and no general text support.
 
+## S056 Outline Command Validation
+
+TypeScript and Rust outline evidence validators now enforce exact first-profile command field shape
+and contour state. Drawing glyphs must open contours with `moveTo`, use segment commands only inside
+an open contour, close every contour with `closePath`, and avoid command fields that are not allowed
+for the command `op`. The shared failure fixture is
+`fixtures/render-everywhere/strict-text/failures/bad-outline-command.outline-evidence.geordi.json`.
+
+This still does not render text. Current nonclaims remain: no browser or native strict text renderer,
+no platform text API compliance path, no glyph evidence coverage/linkage enforcement, and no general
+text support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -202,7 +214,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S056**.
+Current OPEN node: **S057**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -815,7 +827,7 @@ Current OPEN node: **S056**.
 
 ### S056: Outline command validation
 
-- [ ] **S056: Outline command validation** (OPEN)
+- [x] **S056: Outline command validation** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with outline command validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Outline command validation.
@@ -826,7 +838,7 @@ Current OPEN node: **S056**.
 
 ### S057: Browser outline glyph renderer
 
-- [ ] **S057: Browser outline glyph renderer** (BLOCKED)
+- [ ] **S057: Browser outline glyph renderer** (OPEN)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser outline glyph renderer documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser outline glyph renderer.
@@ -870,7 +882,7 @@ Current OPEN node: **S056**.
 
 ### S061: Native outline glyph renderer
 
-- [ ] **S061: Native outline glyph renderer** (BLOCKED)
+- [ ] **S061: Native outline glyph renderer** (OPEN)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native outline glyph renderer documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native outline glyph renderer.
@@ -969,7 +981,7 @@ Current OPEN node: **S056**.
 
 ### S070: Missing glyph evidence failure
 
-- [ ] **S070: Missing glyph evidence failure** (BLOCKED)
+- [ ] **S070: Missing glyph evidence failure** (OPEN)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with missing glyph evidence failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Missing glyph evidence failure.
