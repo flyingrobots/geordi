@@ -180,8 +180,8 @@ receipts:
 ## Diagnostic Vocabulary
 
 Implementation slices must use stable diagnostic identities for outline evidence validation. S054
-implements the TypeScript parser with these codes. Error message prose may differ between
-TypeScript and Rust, but diagnostic codes must stay stable.
+implements the TypeScript parser with these codes, and S055 mirrors the parser in Rust. Error
+message prose may differ between TypeScript and Rust, but diagnostic codes must stay stable.
 
 | Code | Trigger |
 | --- | --- |

@@ -572,6 +572,10 @@ the committed packs, preserves canonical JSON expectations, and reports stable
 `GEORDI_TEXT_EVIDENCE_*` diagnostic codes for malformed pack metadata, glyph entries, bounds, paint,
 and command field shape. It does not render text or resolve runtime glyph coverage.
 
+S055 mirrors that parser surface in `geordi-ir` with Rust DTOs, parse/load helpers, validation, and
+the same diagnostic code strings. Browser and native rendering remain unclaimed until later slices
+consume validated evidence.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

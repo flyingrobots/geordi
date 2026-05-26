@@ -170,9 +170,20 @@ helpers, and `validateRenderFixtureStrictTextOutlineEvidencePack` for
 metadata, font identity shape, glyph entries, bounds, paint, and command field shape with stable
 `GEORDI_TEXT_EVIDENCE_*` diagnostic codes.
 
-The parser is not a renderer and does not resolve fixture glyph coverage against a font pack yet.
-Current nonclaims remain: no Rust outline evidence parser, no browser or native strict text
-renderer, no platform text API compliance path, and no general text support.
+The TypeScript parser is not a renderer and does not resolve fixture glyph coverage against a font
+pack yet. S055 adds the Rust parser while renderer support remains separate.
+
+## S055 Rust Outline Evidence Parser
+
+`geordi-ir` now exports Rust DTOs, parse/load helpers, and
+`validate_geordi_strict_text_outline_evidence_pack` for the same
+`geordi-glyph-evidence-pack/1` `outlinePaths` shape. The Rust validator mirrors the TypeScript
+first-profile checks and reports stable `GEORDI_TEXT_EVIDENCE_*` diagnostic code strings for invalid
+metadata, font identity shape, glyph entries, bounds, paint, and command field shape.
+
+The Rust parser is not a native text renderer and does not resolve fixture glyph coverage against a
+font pack yet. Current nonclaims remain: no browser or native strict text renderer, no platform text
+API compliance path, and no general text support.
 
 ## DAG Operating Rule
 
@@ -191,7 +202,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S055**.
+Current OPEN node: **S056**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -793,7 +804,7 @@ Current OPEN node: **S055**.
 
 ### S055: Rust outline evidence parser
 
-- [ ] **S055: Rust outline evidence parser** (OPEN)
+- [x] **S055: Rust outline evidence parser** (COMPLETE)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with rust outline evidence parser documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Rust outline evidence parser.
@@ -804,7 +815,7 @@ Current OPEN node: **S055**.
 
 ### S056: Outline command validation
 
-- [ ] **S056: Outline command validation** (BLOCKED)
+- [ ] **S056: Outline command validation** (OPEN)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with outline command validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Outline command validation.

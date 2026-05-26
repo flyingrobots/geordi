@@ -60,6 +60,22 @@ pub const GEORDI_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED: &str = "precomputed-fi
 /// Generator identity recorded by the Rust strict text fixture receipt builder.
 pub const GEORDI_RUST_STRICT_TEXT_RECEIPT_GENERATOR: &str = "rust-geordi-ir/1";
 
+/// Current supported strict text glyph evidence pack version.
+pub const GEORDI_GLYPH_EVIDENCE_PACK_VERSION: &str = "geordi-glyph-evidence-pack/1";
+
+/// First supported strict text glyph evidence kind.
+pub const GEORDI_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS: &str = "outlinePaths";
+
+/// Current supported glyph-origin coordinate space for outline evidence.
+pub const GEORDI_GLYPH_EVIDENCE_COORDINATE_SPACE_GLYPH_ORIGIN_FIXED_26_6: &str =
+    "glyph-origin-fixed-26.6/1";
+
+/// Current supported outline fill winding rule.
+pub const GEORDI_GLYPH_EVIDENCE_WINDING_RULE_NONZERO: &str = "nonzero";
+
+/// Current supported strict text evidence paint kind.
+pub const GEORDI_GLYPH_EVIDENCE_PAINT_KIND_SOLID_FILL: &str = "solidFill";
+
 const GEORDI_JSON_SAFE_INTEGER_MAX: i64 = 9_007_199_254_740_991;
 
 const GEORDI_KNOWN_FEATURES: &[&str] = &[
@@ -218,6 +234,100 @@ pub struct GeordiStrictTextFixtureReceipt {
     pub semantic_text_affects_pixels: bool,
     /// Shaping profile used to produce positioned glyph runs.
     pub shaping_profile: String,
+}
+
+/// Fixture-local outline glyph evidence pack for strict positioned glyph-run text.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiStrictTextOutlineEvidencePack {
+    /// Glyph evidence pack schema version.
+    pub evidence_pack_version: String,
+    /// Evidence kind. First profile supports `outlinePaths`.
+    pub evidence_kind: String,
+    /// Strict text profile name.
+    pub text_profile: String,
+    /// Fixed-point coordinate encoding.
+    pub position_encoding: String,
+    /// Coordinate space of path commands.
+    pub coordinate_space: String,
+    /// Shaping profile that produced positioned glyphs.
+    pub shaping_profile: String,
+    /// Stable evidence artifact id.
+    pub id: String,
+    /// Font id shared by all glyph evidence entries in the first pack shape.
+    pub font_id: String,
+    /// Content hash of the source font bytes.
+    pub font_sha256: String,
+    /// Zero-based font face index.
+    pub face_index: i64,
+    /// Fill winding rule.
+    pub winding_rule: String,
+    /// First-profile paint declaration.
+    pub paint: GeordiStrictTextOutlineEvidencePaint,
+    /// Glyph evidence entries.
+    pub glyphs: Vec<GeordiStrictTextOutlineEvidenceGlyph>,
+}
+
+/// First-profile paint declaration for outline evidence.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiStrictTextOutlineEvidencePaint {
+    /// Paint kind. First profile supports `solidFill`.
+    pub kind: String,
+    /// RGBA byte channels.
+    pub rgba: Vec<i64>,
+}
+
+/// One font-local glyph's outline evidence.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiStrictTextOutlineEvidenceGlyph {
+    /// Font-local glyph id.
+    pub glyph_id: i64,
+    /// Whether this glyph contributes drawing commands.
+    pub draws: bool,
+    /// Glyph-origin local bounds in fixed 26.6 units.
+    pub bounds: GeordiStrictTextOutlineEvidenceBounds,
+    /// Outline commands. Command contour-state hardening is a later slice.
+    pub commands: Vec<GeordiStrictTextOutlineCommand>,
+}
+
+/// Glyph-origin local bounds in fixed 26.6 units.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct GeordiStrictTextOutlineEvidenceBounds {
+    /// Left coordinate.
+    pub x: i64,
+    /// Top coordinate in Geordi scene orientation.
+    pub y: i64,
+    /// Non-negative width.
+    pub width: i64,
+    /// Non-negative height.
+    pub height: i64,
+}
+
+/// Outline command record. Coordinates are optional so validation can return stable diagnostics.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct GeordiStrictTextOutlineCommand {
+    /// Command operation name.
+    pub op: String,
+    /// End point x for commands that require it.
+    pub x: Option<i64>,
+    /// End point y for commands that require it.
+    pub y: Option<i64>,
+    /// Quadratic control x.
+    pub cx: Option<i64>,
+    /// Quadratic control y.
+    pub cy: Option<i64>,
+    /// First cubic control x.
+    pub cx1: Option<i64>,
+    /// First cubic control y.
+    pub cy1: Option<i64>,
+    /// Second cubic control x.
+    pub cx2: Option<i64>,
+    /// Second cubic control y.
+    pub cy2: Option<i64>,
 }
 
 /// Non-rendering semantic/source text metadata.
@@ -444,6 +554,30 @@ impl Error for GeordiStrictTextFixtureParseError {
     }
 }
 
+/// Custom error returned when parsing a strict text outline evidence JSON string fails.
+#[derive(Debug)]
+pub struct GeordiStrictTextOutlineEvidenceParseError {
+    source: serde_json::Error,
+}
+
+impl GeordiStrictTextOutlineEvidenceParseError {
+    const fn new(source: serde_json::Error) -> Self {
+        Self { source }
+    }
+}
+
+impl Display for GeordiStrictTextOutlineEvidenceParseError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Geordi strict text outline evidence parse failed")
+    }
+}
+
+impl Error for GeordiStrictTextOutlineEvidenceParseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        Some(&self.source)
+    }
+}
+
 /// Custom error returned when loading a Geordi IR artifact from disk fails.
 #[derive(Debug)]
 pub struct GeordiIrLoadError {
@@ -598,6 +732,60 @@ impl Error for GeordiStrictTextFixtureLoadError {
         match &self.source {
             GeordiStrictTextFixtureLoadErrorSource::File(source) => Some(source),
             GeordiStrictTextFixtureLoadErrorSource::Parse(source) => Some(source),
+        }
+    }
+}
+
+/// Custom error returned when loading a strict text outline evidence pack from disk fails.
+#[derive(Debug)]
+pub struct GeordiStrictTextOutlineEvidenceLoadError {
+    path: PathBuf,
+    source: GeordiStrictTextOutlineEvidenceLoadErrorSource,
+}
+
+#[derive(Debug)]
+enum GeordiStrictTextOutlineEvidenceLoadErrorSource {
+    File(std::io::Error),
+    Parse(GeordiStrictTextOutlineEvidenceParseError),
+}
+
+impl GeordiStrictTextOutlineEvidenceLoadError {
+    const fn file(path: PathBuf, source: std::io::Error) -> Self {
+        Self {
+            path,
+            source: GeordiStrictTextOutlineEvidenceLoadErrorSource::File(source),
+        }
+    }
+
+    const fn parse(path: PathBuf, source: GeordiStrictTextOutlineEvidenceParseError) -> Self {
+        Self {
+            path,
+            source: GeordiStrictTextOutlineEvidenceLoadErrorSource::Parse(source),
+        }
+    }
+
+    /// Path that failed to load.
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Display for GeordiStrictTextOutlineEvidenceLoadError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "Geordi strict text outline evidence load failed: {}",
+            self.path.display()
+        )
+    }
+}
+
+impl Error for GeordiStrictTextOutlineEvidenceLoadError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match &self.source {
+            GeordiStrictTextOutlineEvidenceLoadErrorSource::File(source) => Some(source),
+            GeordiStrictTextOutlineEvidenceLoadErrorSource::Parse(source) => Some(source),
         }
     }
 }
@@ -962,6 +1150,53 @@ impl Display for GeordiStrictTextFixtureValidationError {
 
 impl Error for GeordiStrictTextFixtureValidationError {}
 
+/// One structural validation failure for a strict text outline evidence pack.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GeordiStrictTextOutlineEvidenceValidationIssue {
+    /// Stable diagnostic code shared across TypeScript and Rust.
+    pub code: String,
+    /// JSON-path-like location of the invalid field.
+    pub path: String,
+    /// Human-readable validation message.
+    pub message: String,
+}
+
+impl GeordiStrictTextOutlineEvidenceValidationIssue {
+    fn new(path: &str, message: &str, code: &str) -> Self {
+        Self {
+            code: code.to_owned(),
+            path: path.to_owned(),
+            message: message.to_owned(),
+        }
+    }
+}
+
+/// Custom error returned when typed strict text outline evidence validation fails.
+#[derive(Debug)]
+pub struct GeordiStrictTextOutlineEvidenceValidationError {
+    issues: Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+}
+
+impl GeordiStrictTextOutlineEvidenceValidationError {
+    const fn new(issues: Vec<GeordiStrictTextOutlineEvidenceValidationIssue>) -> Self {
+        Self { issues }
+    }
+
+    /// Validation issues collected in deterministic traversal order.
+    #[must_use]
+    pub fn issues(&self) -> &[GeordiStrictTextOutlineEvidenceValidationIssue] {
+        &self.issues
+    }
+}
+
+impl Display for GeordiStrictTextOutlineEvidenceValidationError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Geordi strict text outline evidence validation failed")
+    }
+}
+
+impl Error for GeordiStrictTextOutlineEvidenceValidationError {}
+
 /// Parse a Geordi IR JSON string into typed Rust structs.
 ///
 /// # Errors
@@ -994,6 +1229,18 @@ pub fn parse_geordi_strict_text_fixture_manifest(
     source: &str,
 ) -> Result<GeordiStrictTextFixtureManifest, GeordiStrictTextFixtureParseError> {
     serde_json::from_str(source).map_err(GeordiStrictTextFixtureParseError::new)
+}
+
+/// Parse a Geordi strict text outline evidence JSON string into typed Rust structs.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextOutlineEvidenceParseError` when the source is not valid JSON or does
+/// not match the strict text outline evidence pack shape.
+pub fn parse_geordi_strict_text_outline_evidence_pack(
+    source: &str,
+) -> Result<GeordiStrictTextOutlineEvidencePack, GeordiStrictTextOutlineEvidenceParseError> {
+    serde_json::from_str(source).map_err(GeordiStrictTextOutlineEvidenceParseError::new)
 }
 
 /// Load a Geordi IR artifact from a path into typed Rust structs.
@@ -1042,6 +1289,24 @@ pub fn load_geordi_strict_text_fixture_manifest(
 
     parse_geordi_strict_text_fixture_manifest(&source)
         .map_err(|error| GeordiStrictTextFixtureLoadError::parse(path.to_path_buf(), error))
+}
+
+/// Load a Geordi strict text outline evidence pack from a path into typed Rust structs.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextOutlineEvidenceLoadError` when the file cannot be read or its contents
+/// cannot be parsed as a strict text outline evidence pack.
+pub fn load_geordi_strict_text_outline_evidence_pack(
+    path: impl AsRef<Path>,
+) -> Result<GeordiStrictTextOutlineEvidencePack, GeordiStrictTextOutlineEvidenceLoadError> {
+    let path = path.as_ref();
+    let source = fs::read_to_string(path).map_err(|error| {
+        GeordiStrictTextOutlineEvidenceLoadError::file(path.to_path_buf(), error)
+    })?;
+
+    parse_geordi_strict_text_outline_evidence_pack(&source)
+        .map_err(|error| GeordiStrictTextOutlineEvidenceLoadError::parse(path.to_path_buf(), error))
 }
 
 /// Compute a `sha256:` hash string from font-pack asset bytes.
@@ -1388,6 +1653,28 @@ pub fn validate_geordi_strict_text_font_references(
     }
 }
 
+/// Validate typed strict text outline evidence semantics beyond JSON shape.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextOutlineEvidenceValidationError` when evidence metadata, glyph entries,
+/// bounds, paint, or command field shape violates the first outline evidence profile.
+pub fn validate_geordi_strict_text_outline_evidence_pack(
+    pack: &GeordiStrictTextOutlineEvidencePack,
+) -> Result<(), GeordiStrictTextOutlineEvidenceValidationError> {
+    let mut issues = Vec::new();
+
+    validate_outline_evidence_pack_contract(pack, &mut issues);
+    validate_outline_evidence_paint(&pack.paint, "$.paint", &mut issues);
+    validate_outline_evidence_glyphs(&pack.glyphs, "$.glyphs", &mut issues);
+
+    if issues.is_empty() {
+        Ok(())
+    } else {
+        Err(GeordiStrictTextOutlineEvidenceValidationError::new(issues))
+    }
+}
+
 /// Validate typed Geordi IR for the rectangle-only Rust MVP subset.
 ///
 /// # Errors
@@ -1505,6 +1792,419 @@ fn receipt_utf8<'a>(
 ) -> Result<&'a str, GeordiStrictTextFixtureReceiptError> {
     std::str::from_utf8(bytes)
         .map_err(|error| GeordiStrictTextFixtureReceiptError::utf8(path, error))
+}
+
+fn validate_outline_evidence_pack_contract(
+    pack: &GeordiStrictTextOutlineEvidencePack,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    validate_outline_evidence_literal(
+        &pack.evidence_pack_version,
+        GEORDI_GLYPH_EVIDENCE_PACK_VERSION,
+        "$.evidencePackVersion",
+        "Strict text outline evidence pack version",
+        "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_VERSION",
+        issues,
+    );
+    validate_outline_evidence_literal(
+        &pack.evidence_kind,
+        GEORDI_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS,
+        "$.evidenceKind",
+        "Strict text outline evidence kind",
+        "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_KIND",
+        issues,
+    );
+    validate_outline_evidence_literal(
+        &pack.text_profile,
+        GEORDI_STRICT_POSITIONED_GLYPH_RUN_PROFILE,
+        "$.textProfile",
+        "Strict text outline evidence text profile",
+        "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE",
+        issues,
+    );
+    validate_outline_evidence_literal(
+        &pack.position_encoding,
+        GEORDI_FIXED_26_6_POSITION_ENCODING,
+        "$.positionEncoding",
+        "Strict text outline evidence position encoding",
+        "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE",
+        issues,
+    );
+    validate_outline_evidence_literal(
+        &pack.coordinate_space,
+        GEORDI_GLYPH_EVIDENCE_COORDINATE_SPACE_GLYPH_ORIGIN_FIXED_26_6,
+        "$.coordinateSpace",
+        "Strict text outline evidence coordinate space",
+        "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE",
+        issues,
+    );
+    validate_outline_evidence_literal(
+        &pack.shaping_profile,
+        GEORDI_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
+        "$.shapingProfile",
+        "Strict text outline evidence shaping profile",
+        "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE",
+        issues,
+    );
+    if pack.id.is_empty() {
+        push_outline_evidence_issue(
+            issues,
+            "$.id",
+            "Strict text outline evidence pack id must be a non-empty string",
+            "GEORDI_TEXT_EVIDENCE_BAD_PACK",
+        );
+    }
+    if pack.font_id.is_empty() || !is_lowercase_kebab_ascii(&pack.font_id) {
+        push_outline_evidence_issue(
+            issues,
+            "$.fontId",
+            "Strict text outline evidence font id must be lowercase kebab-case ASCII",
+            "GEORDI_TEXT_EVIDENCE_BAD_FONT_ID",
+        );
+    }
+    if !is_geordi_sha256(&pack.font_sha256) {
+        push_outline_evidence_issue(
+            issues,
+            "$.fontSha256",
+            "Strict text outline evidence font hash must be sha256:<64 lowercase hex chars>",
+            "GEORDI_TEXT_EVIDENCE_BAD_FONT_HASH",
+        );
+    }
+    validate_outline_evidence_safe_non_negative_integer(
+        pack.face_index,
+        "$.faceIndex",
+        "Strict text outline evidence face index",
+        "GEORDI_TEXT_EVIDENCE_BAD_FACE_INDEX",
+        issues,
+    );
+    validate_outline_evidence_literal(
+        &pack.winding_rule,
+        GEORDI_GLYPH_EVIDENCE_WINDING_RULE_NONZERO,
+        "$.windingRule",
+        "Strict text outline evidence winding rule",
+        "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_WINDING_RULE",
+        issues,
+    );
+}
+
+fn validate_outline_evidence_paint(
+    paint: &GeordiStrictTextOutlineEvidencePaint,
+    path: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    validate_outline_evidence_literal(
+        &paint.kind,
+        GEORDI_GLYPH_EVIDENCE_PAINT_KIND_SOLID_FILL,
+        &format!("{path}.kind"),
+        "Strict text outline evidence paint kind",
+        "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT",
+        issues,
+    );
+    if paint.rgba.len() != 4 {
+        push_outline_evidence_issue(
+            issues,
+            &format!("{path}.rgba"),
+            "Strict text outline evidence paint rgba must contain exactly four byte channels",
+            "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT",
+        );
+        return;
+    }
+    for (index, channel) in paint.rgba.iter().enumerate() {
+        if !(0..=255).contains(channel) {
+            push_outline_evidence_issue(
+                issues,
+                &format!("{path}.rgba[{index}]"),
+                "Strict text outline evidence paint rgba channel must be an integer byte",
+                "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT",
+            );
+        }
+    }
+}
+
+fn validate_outline_evidence_glyphs(
+    glyphs: &[GeordiStrictTextOutlineEvidenceGlyph],
+    path: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    if glyphs.is_empty() {
+        push_outline_evidence_issue(
+            issues,
+            path,
+            "Strict text outline evidence glyphs must not be empty",
+            "GEORDI_TEXT_EVIDENCE_BAD_GLYPH",
+        );
+        return;
+    }
+
+    let mut glyph_ids = Vec::<i64>::new();
+    for (index, glyph) in glyphs.iter().enumerate() {
+        let glyph_path = format!("{path}[{index}]");
+        validate_outline_evidence_glyph(glyph, &glyph_path, issues);
+        if is_strict_text_safe_non_negative_integer(glyph.glyph_id) {
+            if glyph_ids.contains(&glyph.glyph_id) {
+                push_outline_evidence_issue(
+                    issues,
+                    &format!("{glyph_path}.glyphId"),
+                    "Strict text outline evidence glyph id must not be duplicated",
+                    "GEORDI_TEXT_EVIDENCE_DUPLICATE_GLYPH",
+                );
+            }
+            glyph_ids.push(glyph.glyph_id);
+        }
+    }
+}
+
+fn validate_outline_evidence_glyph(
+    glyph: &GeordiStrictTextOutlineEvidenceGlyph,
+    path: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    validate_outline_evidence_safe_non_negative_integer(
+        glyph.glyph_id,
+        &format!("{path}.glyphId"),
+        "Strict text outline evidence glyph id",
+        "GEORDI_TEXT_EVIDENCE_BAD_GLYPH",
+        issues,
+    );
+    validate_outline_evidence_bounds(&glyph.bounds, &format!("{path}.bounds"), issues);
+    validate_outline_evidence_commands(&glyph.commands, &format!("{path}.commands"), issues);
+
+    if glyph.draws && glyph.commands.is_empty() {
+        push_outline_evidence_issue(
+            issues,
+            &format!("{path}.commands"),
+            "Drawing strict text outline evidence glyph must include commands",
+            "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+        );
+    }
+    if !glyph.draws && !glyph.commands.is_empty() {
+        push_outline_evidence_issue(
+            issues,
+            &format!("{path}.commands"),
+            "Non-drawing strict text outline evidence glyph must not include commands",
+            "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+        );
+    }
+}
+
+fn validate_outline_evidence_bounds(
+    bounds: &GeordiStrictTextOutlineEvidenceBounds,
+    path: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    validate_outline_evidence_safe_integer(
+        bounds.x,
+        &format!("{path}.x"),
+        "Strict text outline evidence bounds x",
+        "GEORDI_TEXT_EVIDENCE_BAD_BOUNDS",
+        issues,
+    );
+    validate_outline_evidence_safe_integer(
+        bounds.y,
+        &format!("{path}.y"),
+        "Strict text outline evidence bounds y",
+        "GEORDI_TEXT_EVIDENCE_BAD_BOUNDS",
+        issues,
+    );
+    validate_outline_evidence_safe_non_negative_integer(
+        bounds.width,
+        &format!("{path}.width"),
+        "Strict text outline evidence bounds width",
+        "GEORDI_TEXT_EVIDENCE_BAD_BOUNDS",
+        issues,
+    );
+    validate_outline_evidence_safe_non_negative_integer(
+        bounds.height,
+        &format!("{path}.height"),
+        "Strict text outline evidence bounds height",
+        "GEORDI_TEXT_EVIDENCE_BAD_BOUNDS",
+        issues,
+    );
+
+    if is_strict_text_safe_integer(bounds.x)
+        && is_strict_text_safe_non_negative_integer(bounds.width)
+    {
+        match bounds.x.checked_add(bounds.width) {
+            Some(right_edge) if is_strict_text_safe_integer(right_edge) => {}
+            _ => push_outline_evidence_issue(
+                issues,
+                &format!("{path}.width"),
+                "Strict text outline evidence bounds right edge must be a safe integer",
+                "GEORDI_TEXT_EVIDENCE_BAD_BOUNDS",
+            ),
+        }
+    }
+    if is_strict_text_safe_integer(bounds.y)
+        && is_strict_text_safe_non_negative_integer(bounds.height)
+    {
+        match bounds.y.checked_add(bounds.height) {
+            Some(bottom_edge) if is_strict_text_safe_integer(bottom_edge) => {}
+            _ => push_outline_evidence_issue(
+                issues,
+                &format!("{path}.height"),
+                "Strict text outline evidence bounds bottom edge must be a safe integer",
+                "GEORDI_TEXT_EVIDENCE_BAD_BOUNDS",
+            ),
+        }
+    }
+}
+
+fn validate_outline_evidence_commands(
+    commands: &[GeordiStrictTextOutlineCommand],
+    path: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    for (index, command) in commands.iter().enumerate() {
+        validate_outline_evidence_command(command, &format!("{path}[{index}]"), issues);
+    }
+}
+
+fn validate_outline_evidence_command(
+    command: &GeordiStrictTextOutlineCommand,
+    path: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    match command.op.as_str() {
+        "moveTo" | "lineTo" => validate_outline_evidence_command_point(command, path, issues),
+        "quadTo" => {
+            validate_outline_evidence_command_required_integer(
+                command.cx,
+                &format!("{path}.cx"),
+                "Strict text outline evidence command cx",
+                issues,
+            );
+            validate_outline_evidence_command_required_integer(
+                command.cy,
+                &format!("{path}.cy"),
+                "Strict text outline evidence command cy",
+                issues,
+            );
+            validate_outline_evidence_command_point(command, path, issues);
+        }
+        "cubicTo" => {
+            validate_outline_evidence_command_required_integer(
+                command.cx1,
+                &format!("{path}.cx1"),
+                "Strict text outline evidence command cx1",
+                issues,
+            );
+            validate_outline_evidence_command_required_integer(
+                command.cy1,
+                &format!("{path}.cy1"),
+                "Strict text outline evidence command cy1",
+                issues,
+            );
+            validate_outline_evidence_command_required_integer(
+                command.cx2,
+                &format!("{path}.cx2"),
+                "Strict text outline evidence command cx2",
+                issues,
+            );
+            validate_outline_evidence_command_required_integer(
+                command.cy2,
+                &format!("{path}.cy2"),
+                "Strict text outline evidence command cy2",
+                issues,
+            );
+            validate_outline_evidence_command_point(command, path, issues);
+        }
+        "closePath" => {}
+        _ => push_outline_evidence_issue(
+            issues,
+            &format!("{path}.op"),
+            "Strict text outline evidence command op must be moveTo, lineTo, quadTo, cubicTo, or closePath",
+            "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+        ),
+    }
+}
+
+fn validate_outline_evidence_command_point(
+    command: &GeordiStrictTextOutlineCommand,
+    path: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    validate_outline_evidence_command_required_integer(
+        command.x,
+        &format!("{path}.x"),
+        "Strict text outline evidence command x",
+        issues,
+    );
+    validate_outline_evidence_command_required_integer(
+        command.y,
+        &format!("{path}.y"),
+        "Strict text outline evidence command y",
+        issues,
+    );
+}
+
+fn validate_outline_evidence_command_required_integer(
+    value: Option<i64>,
+    path: &str,
+    label: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    match value {
+        Some(value) => validate_outline_evidence_safe_integer(
+            value,
+            path,
+            label,
+            "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+            issues,
+        ),
+        None => push_outline_evidence_issue(
+            issues,
+            path,
+            &format!("{label} must be a safe integer"),
+            "GEORDI_TEXT_EVIDENCE_BAD_COMMAND",
+        ),
+    }
+}
+
+fn validate_outline_evidence_literal(
+    value: &str,
+    expected: &str,
+    path: &str,
+    label: &str,
+    code: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    if value != expected {
+        push_outline_evidence_issue(issues, path, &format!("{label} must be {expected}"), code);
+    }
+}
+
+fn validate_outline_evidence_safe_integer(
+    value: i64,
+    path: &str,
+    label: &str,
+    code: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    if !is_strict_text_safe_integer(value) {
+        push_outline_evidence_issue(
+            issues,
+            path,
+            &format!("{label} must be a safe integer"),
+            code,
+        );
+    }
+}
+
+fn validate_outline_evidence_safe_non_negative_integer(
+    value: i64,
+    path: &str,
+    label: &str,
+    code: &str,
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+) {
+    if !is_strict_text_safe_non_negative_integer(value) {
+        push_outline_evidence_issue(
+            issues,
+            path,
+            &format!("{label} must be a safe non-negative integer"),
+            code,
+        );
+    }
 }
 
 fn validate_strict_text_fixture_contract(
@@ -1830,6 +2530,27 @@ fn push_strict_text_issue(
     issues.push(GeordiStrictTextFixtureValidationIssue::new(path, message));
 }
 
+fn push_outline_evidence_issue(
+    issues: &mut Vec<GeordiStrictTextOutlineEvidenceValidationIssue>,
+    path: &str,
+    message: &str,
+    code: &str,
+) {
+    issues.push(GeordiStrictTextOutlineEvidenceValidationIssue::new(
+        path, message, code,
+    ));
+}
+
+fn is_lowercase_kebab_ascii(value: &str) -> bool {
+    !value.is_empty()
+        && value.split('-').all(|part| {
+            !part.is_empty()
+                && part
+                    .bytes()
+                    .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
+        })
+}
+
 fn is_fixture_local_path(path: &str) -> bool {
     !path.is_empty()
         && !path.contains('\\')
@@ -2090,12 +2811,16 @@ mod tests {
         GeordiFontPackParseError, GeordiIrLoadError, GeordiIrParseError, GeordiIrValidationError,
         GeordiStrictTextFixtureLoadError, GeordiStrictTextFixtureParseError,
         GeordiStrictTextFixtureReceiptError, GeordiStrictTextFixtureValidationError,
-        create_geordi_strict_text_fixture_receipt, geordi_sha256_from_bytes,
-        geordi_sha256_from_canonical_json_value, load_geordi_font_pack_manifest, load_geordi_ir,
-        load_geordi_strict_text_fixture_manifest, parse_geordi_font_pack_manifest, parse_geordi_ir,
-        parse_geordi_strict_text_fixture_manifest, validate_geordi_font_pack_hashes,
+        GeordiStrictTextOutlineEvidenceLoadError, GeordiStrictTextOutlineEvidenceParseError,
+        GeordiStrictTextOutlineEvidenceValidationError, create_geordi_strict_text_fixture_receipt,
+        geordi_sha256_from_bytes, geordi_sha256_from_canonical_json_value,
+        load_geordi_font_pack_manifest, load_geordi_ir, load_geordi_strict_text_fixture_manifest,
+        load_geordi_strict_text_outline_evidence_pack, parse_geordi_font_pack_manifest,
+        parse_geordi_ir, parse_geordi_strict_text_fixture_manifest,
+        parse_geordi_strict_text_outline_evidence_pack, validate_geordi_font_pack_hashes,
         validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
         validate_geordi_strict_text_font_references,
+        validate_geordi_strict_text_outline_evidence_pack,
     };
     use std::error::Error;
     use std::fmt::{Display, Formatter};
@@ -2115,6 +2840,9 @@ mod tests {
         StrictTextParse(GeordiStrictTextFixtureParseError),
         StrictTextReceipt(GeordiStrictTextFixtureReceiptError),
         StrictTextValidation(GeordiStrictTextFixtureValidationError),
+        OutlineEvidenceLoad(GeordiStrictTextOutlineEvidenceLoadError),
+        OutlineEvidenceParse(GeordiStrictTextOutlineEvidenceParseError),
+        OutlineEvidenceValidation(GeordiStrictTextOutlineEvidenceValidationError),
         Validation(GeordiIrValidationError),
     }
 
@@ -2139,6 +2867,9 @@ mod tests {
                 Self::StrictTextParse(source) => Some(source),
                 Self::StrictTextReceipt(source) => Some(source),
                 Self::StrictTextValidation(source) => Some(source),
+                Self::OutlineEvidenceLoad(source) => Some(source),
+                Self::OutlineEvidenceParse(source) => Some(source),
+                Self::OutlineEvidenceValidation(source) => Some(source),
                 Self::Validation(source) => Some(source),
             }
         }
@@ -2207,6 +2938,24 @@ mod tests {
     impl From<GeordiStrictTextFixtureValidationError> for GeordiIrTestError {
         fn from(error: GeordiStrictTextFixtureValidationError) -> Self {
             Self::StrictTextValidation(error)
+        }
+    }
+
+    impl From<GeordiStrictTextOutlineEvidenceLoadError> for GeordiIrTestError {
+        fn from(error: GeordiStrictTextOutlineEvidenceLoadError) -> Self {
+            Self::OutlineEvidenceLoad(error)
+        }
+    }
+
+    impl From<GeordiStrictTextOutlineEvidenceParseError> for GeordiIrTestError {
+        fn from(error: GeordiStrictTextOutlineEvidenceParseError) -> Self {
+            Self::OutlineEvidenceParse(error)
+        }
+    }
+
+    impl From<GeordiStrictTextOutlineEvidenceValidationError> for GeordiIrTestError {
+        fn from(error: GeordiStrictTextOutlineEvidenceValidationError) -> Self {
+            Self::OutlineEvidenceValidation(error)
         }
     }
 
@@ -2625,6 +3374,153 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![1094, 1602, 1530, 1101, 786, 1782, 1782, 1782, 1782]
         );
+        Ok(())
+    }
+
+    #[test]
+    fn loads_canonical_strict_text_outline_evidence_packs() -> Result<(), GeordiIrTestError> {
+        let geordi = load_geordi_strict_text_outline_evidence_pack(fixture_path(
+            "strict-text/geordi.outline-evidence.geordi.json",
+        ))?;
+        let text_0123 = load_geordi_strict_text_outline_evidence_pack(fixture_path(
+            "strict-text/text-0123.outline-evidence.geordi.json",
+        ))?;
+
+        validate_geordi_strict_text_outline_evidence_pack(&geordi)?;
+        validate_geordi_strict_text_outline_evidence_pack(&text_0123)?;
+
+        assert_eq!(geordi.evidence_pack_version, "geordi-glyph-evidence-pack/1");
+        assert_eq!(geordi.evidence_kind, "outlinePaths");
+        assert_eq!(geordi.font_id, "lato-regular");
+        assert_eq!(
+            geordi
+                .glyphs
+                .iter()
+                .map(|glyph| glyph.glyph_id)
+                .collect::<Vec<_>>(),
+            vec![14, 11, 27, 33, 9, 17]
+        );
+        assert_eq!(geordi.glyphs[0].commands[0].op, "moveTo");
+        assert_eq!(
+            text_0123
+                .glyphs
+                .iter()
+                .map(|glyph| glyph.glyph_id)
+                .collect::<Vec<_>>(),
+            vec![124, 59, 138, 2, 399, 400, 401, 402]
+        );
+        assert!(!text_0123.glyphs[3].draws);
+        assert!(text_0123.glyphs[3].commands.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn parses_strict_text_outline_evidence_pack_without_json_values()
+    -> Result<(), GeordiIrTestError> {
+        let source = r#"{
+          "coordinateSpace": "glyph-origin-fixed-26.6/1",
+          "evidenceKind": "outlinePaths",
+          "evidencePackVersion": "geordi-glyph-evidence-pack/1",
+          "faceIndex": 0,
+          "fontId": "lato-regular",
+          "fontSha256": "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251",
+          "glyphs": [
+            {
+              "bounds": { "height": 2304, "width": 1536, "x": 0, "y": -2304 },
+              "commands": [
+                { "op": "moveTo", "x": 0, "y": -2304 },
+                { "cx": 768, "cy": -2560, "op": "quadTo", "x": 1536, "y": -2304 },
+                { "op": "lineTo", "x": 1536, "y": 0 },
+                { "op": "closePath" }
+              ],
+              "draws": true,
+              "glyphId": 43
+            }
+          ],
+          "id": "render-everywhere:strict-text:unit:outline-evidence",
+          "paint": { "kind": "solidFill", "rgba": [17, 24, 39, 255] },
+          "positionEncoding": "geordi-fixed-26.6/1",
+          "shapingProfile": "precomputed-fixture/1",
+          "textProfile": "geordi-strict-positioned-glyph-run/1",
+          "windingRule": "nonzero"
+        }"#;
+
+        let pack = parse_geordi_strict_text_outline_evidence_pack(source)?;
+
+        validate_geordi_strict_text_outline_evidence_pack(&pack)?;
+        assert_eq!(pack.glyphs[0].commands[1].op, "quadTo");
+        assert_eq!(pack.paint.rgba, vec![17, 24, 39, 255]);
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_invalid_strict_text_outline_evidence_pack() -> Result<(), GeordiIrTestError> {
+        let source = r#"{
+          "coordinateSpace": "font-units/1",
+          "evidenceKind": "bitmapAtlas",
+          "evidencePackVersion": "geordi-glyph-evidence-pack/2",
+          "faceIndex": -1,
+          "fontId": "Lato Regular",
+          "fontSha256": "sha256:not-a-hash",
+          "glyphs": [
+            {
+              "bounds": { "height": -1, "width": -1, "x": 9007199254740991, "y": 0 },
+              "commands": [{ "op": "arcTo", "x": 0, "y": 0 }],
+              "draws": true,
+              "glyphId": 43
+            },
+            {
+              "bounds": { "height": 0, "width": 0, "x": 0, "y": 0 },
+              "commands": [],
+              "draws": false,
+              "glyphId": 43
+            }
+          ],
+          "id": "render-everywhere:strict-text:unit:outline-evidence",
+          "paint": { "kind": "stroke", "rgba": [0, 0, 0, 512] },
+          "positionEncoding": "float-px/1",
+          "shapingProfile": "runtime-shaping/1",
+          "textProfile": "css-text/1",
+          "windingRule": "evenodd"
+        }"#;
+        let pack = parse_geordi_strict_text_outline_evidence_pack(source)?;
+        let error = match validate_geordi_strict_text_outline_evidence_pack(&pack) {
+            Ok(()) => return Err(GeordiIrTestError::ExpectedFailure),
+            Err(error) => error,
+        };
+        let codes = error
+            .issues()
+            .iter()
+            .map(|issue| issue.code.clone())
+            .collect::<Vec<_>>();
+        let paths = error
+            .issues()
+            .iter()
+            .map(|issue| issue.path.clone())
+            .collect::<Vec<_>>();
+
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_VERSION");
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_KIND");
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PROFILE");
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_BAD_FONT_ID");
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_BAD_FONT_HASH");
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_BAD_FACE_INDEX");
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_DUPLICATE_GLYPH");
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_BAD_BOUNDS");
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_BAD_COMMAND");
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT");
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_WINDING_RULE");
+        assert_paths_include(&paths, "$.evidencePackVersion");
+        assert_paths_include(&paths, "$.evidenceKind");
+        assert_paths_include(&paths, "$.coordinateSpace");
+        assert_paths_include(&paths, "$.fontId");
+        assert_paths_include(&paths, "$.fontSha256");
+        assert_paths_include(&paths, "$.faceIndex");
+        assert_paths_include(&paths, "$.glyphs[1].glyphId");
+        assert_paths_include(&paths, "$.glyphs[0].bounds.width");
+        assert_paths_include(&paths, "$.glyphs[0].commands[0].op");
+        assert_paths_include(&paths, "$.paint.kind");
+        assert_paths_include(&paths, "$.windingRule");
         Ok(())
     }
 
@@ -3208,5 +4104,11 @@ mod tests {
         let has_issue = paths.iter().any(|issue_path| issue_path == path);
 
         assert!(has_issue, "{path} missing from {paths:?}");
+    }
+
+    fn assert_codes_include(codes: &[String], code: &str) {
+        let has_issue = codes.iter().any(|issue_code| issue_code == code);
+
+        assert!(has_issue, "{code} missing from {codes:?}");
     }
 }
