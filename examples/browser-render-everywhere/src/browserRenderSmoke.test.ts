@@ -469,6 +469,33 @@ describe('browser render smoke', () => {
     expect(context.calls).toHaveLength(0);
   });
 
+  it('rejects unsupported strict text paint fixture artifacts before drawing', async () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    const fixtureUrl = 'unsupported-text-paint.strict-text.geordi.json';
+    const sources = new Map<string, string>([
+      [fixtureUrl, strictTextFixtureSource(`failures/${fixtureUrl}`)],
+    ]);
+    installCanvasDocument(canvas);
+
+    const rejection = await rejectBrowserStrictTextFixture({
+      assets: { fixtureUrl },
+      fetchText: makeStrictTextFetchText(sources),
+    });
+
+    expect(rejection).toMatchObject({
+      fixtureUrl,
+      rejected: true,
+    });
+    expect(rejection.issues).toContainEqual({
+      message: 'Strict text feature is not supported',
+      path: '$.features[3]',
+    });
+    expect(canvas.width).toBe(0);
+    expect(canvas.height).toBe(0);
+    expect(context.calls).toHaveLength(0);
+  });
+
   it('renders strict text outline glyphs from evidence without canvas text APIs', () => {
     const context = new FakeCanvasContext2D();
     const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
@@ -673,6 +700,35 @@ describe('browser render smoke', () => {
         fetchText: makeStrictTextFetchText(sources),
       }),
     ).rejects.toBeInstanceOf(BrowserHarnessStrictTextOutlineEvidenceRejectedError);
+  });
+
+  it('rejects unsupported strict text evidence paint before fixture mode drawing', async () => {
+    const context = new FakeCanvasContext2D();
+    const canvas = makeCanvas(context as object as CanvasRenderingContext2D);
+    const fixtureUrl = 'geordi.strict-text.geordi.json';
+    const evidenceUrl = 'unsupported-paint.outline-evidence.geordi.json';
+    const fontPackUrl = 'font-pack.geordi.json';
+    const sources = new Map<string, string>([
+      [fixtureUrl, strictTextFixtureSource(fixtureUrl)],
+      [evidenceUrl, strictTextFixtureSource(`failures/${evidenceUrl}`)],
+      [fontPackUrl, fixtureSource('font-pack.geordi.json', 'assets/fonts')],
+    ]);
+    installCanvasDocument(canvas);
+    installHashingCrypto();
+
+    await expect(
+      renderBrowserStrictTextFixture({
+        assets: {
+          evidenceUrl,
+          fontPackUrl,
+          fixtureUrl,
+        },
+        fetchText: makeStrictTextFetchText(sources),
+      }),
+    ).rejects.toBeInstanceOf(BrowserHarnessStrictTextOutlineEvidenceRejectedError);
+    expect(canvas.width).toBe(0);
+    expect(canvas.height).toBe(0);
+    expect(context.calls).toHaveLength(0);
   });
 
   it('rejects missing strict text glyph evidence before fixture mode drawing', async () => {

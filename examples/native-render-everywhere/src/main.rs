@@ -3026,6 +3026,18 @@ mod tests {
     }
 
     #[test]
+    fn strict_text_smoke_mode_fails_on_unsupported_evidence_paint() {
+        let result = load_strict_text_fixture(
+            Path::new("geordi.strict-text.geordi.json"),
+            Some(Path::new(
+                "failures/unsupported-paint.outline-evidence.geordi.json",
+            )),
+        );
+
+        assert!(matches!(result, Err(NativeAppError::StrictTextRender(_))));
+    }
+
+    #[test]
     fn strict_text_smoke_mode_fails_on_missing_glyph_evidence() {
         let result = load_strict_text_fixture(
             Path::new("geordi.strict-text.geordi.json"),
@@ -3057,6 +3069,22 @@ mod tests {
         );
 
         assert!(matches!(result, Err(NativeAppError::StrictTextRender(_))));
+    }
+
+    #[test]
+    fn strict_text_reject_mode_rejects_unsupported_text_paint_fixture() -> Result<(), NativeAppError>
+    {
+        let rejection = reject_strict_text_fixture(&strict_text_fixture_path(
+            "failures/unsupported-text-paint.strict-text.geordi.json",
+        ))?;
+
+        assert!(
+            rejection
+                .issues
+                .iter()
+                .any(|issue| issue.path == "$.features[3]")
+        );
+        Ok(())
     }
 
     #[test]

@@ -405,6 +405,23 @@ fixtures/render-everywhere/strict-text/failures/bad-line-box.strict-text.geordi.
 This keeps line boxes as explicit render contract data. Overflow remains unsupported unless a future
 strict text profile names it directly.
 
+## S073 Unsupported Text Fill/Stroke Failure
+
+The first strict text rendering proof remains fill-only. Unsupported text paint now has committed
+failure fixtures for both evidence-level paint (`paint.kind: "stroke"`) and fixture-level text paint
+feature requests (`text.stroke`). TypeScript contract tests, browser fixture mode, Rust IR
+validation, the Rust renderer, and native `--strict-text-smoke` reject those paths before drawing.
+
+The failure fixtures are:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/unsupported-paint.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/failures/unsupported-text-paint.strict-text.geordi.json
+~~~
+
+Current nonclaims remain: no text stroke, gradients, opacity effects, multi-paint text, platform
+text APIs, host font lookup, runtime shaping, or general text support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -422,7 +439,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S073**.
+Current OPEN node: **S074**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1222,7 +1239,7 @@ Current OPEN node: **S073**.
 
 ### S073: Unsupported text fill/stroke failure
 
-- [ ] **S073: Unsupported text fill/stroke failure** (OPEN)
+- [x] **S073: Unsupported text fill/stroke failure** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with unsupported text fill/stroke failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Unsupported text fill/stroke failure.

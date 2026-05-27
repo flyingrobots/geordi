@@ -111,7 +111,7 @@ digraph StrictPositionedGlyphRunPlan {
     S070 [label="S070\nMissing glyph evidence failure", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S071 [label="S071\nGlyph id not found failure", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S072 [label="S072\nBad line box failure", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S073 [label="S073\nUnsupported text fill/stroke failure", color="#16a34a", penwidth=4];
+    S073 [label="S073\nUnsupported text fill/stroke failure", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
   }
 
   subgraph cluster_shaping {

@@ -115,3 +115,4 @@ Known failures for later slices:
 - unresolved `lineBoxId`;
 - duplicate run id or line-box id.
 - `failures/bad-line-box.strict-text.geordi.json`: evidence bounds escape the declared line box.
+- `failures/unsupported-text-paint.strict-text.geordi.json`: unsupported text paint feature.

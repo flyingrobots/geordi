@@ -678,6 +678,13 @@ fixture shape valid but narrows `line-0`, and browser direct rendering, browser 
 CLI smoke mode, and the Rust renderer all reject it before drawing with
 `GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX`.
 
+S073 adds explicit unsupported text paint failures. The first strict text proof remains fill-only:
+outline evidence must use `paint.kind: "solidFill"`, and strict text fixtures must not request
+stroke-like text paint features. The `failures/unsupported-paint.outline-evidence.geordi.json` and
+`failures/unsupported-text-paint.strict-text.geordi.json` fixtures prove TypeScript, browser,
+native, and Rust paths reject unsupported paint before drawing instead of treating stroke, gradient,
+opacity-effect, or multi-paint modes as compliant.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

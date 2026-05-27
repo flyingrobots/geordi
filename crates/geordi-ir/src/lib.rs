@@ -3964,6 +3964,31 @@ mod tests {
     }
 
     #[test]
+    fn rejects_unsupported_paint_failure_fixture() -> Result<(), GeordiIrTestError> {
+        let pack = load_geordi_strict_text_outline_evidence_pack(fixture_path(
+            "strict-text/failures/unsupported-paint.outline-evidence.geordi.json",
+        ))?;
+        let error = match validate_geordi_strict_text_outline_evidence_pack(&pack) {
+            Ok(()) => return Err(GeordiIrTestError::ExpectedFailure),
+            Err(error) => error,
+        };
+        let codes = error
+            .issues()
+            .iter()
+            .map(|issue| issue.code.clone())
+            .collect::<Vec<_>>();
+        let paths = error
+            .issues()
+            .iter()
+            .map(|issue| issue.path.clone())
+            .collect::<Vec<_>>();
+
+        assert_codes_include(&codes, "GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT");
+        assert_paths_include(&paths, "$.paint.kind");
+        Ok(())
+    }
+
+    #[test]
     fn builds_canonical_strict_text_fixture_a_receipt() -> Result<(), GeordiIrTestError> {
         let receipt = create_geordi_strict_text_fixture_receipt(
             repository_root(),
@@ -4151,6 +4176,19 @@ mod tests {
     fn rejects_committed_unsupported_strict_text_fixture() -> Result<(), GeordiIrTestError> {
         let manifest = load_geordi_strict_text_fixture_manifest(fixture_path(
             "strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json",
+        ))?;
+
+        let paths =
+            strict_text_validation_paths(validate_geordi_strict_text_fixture_manifest(&manifest));
+
+        assert_paths_include(&paths, "$.features[3]");
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_committed_unsupported_strict_text_paint_fixture() -> Result<(), GeordiIrTestError> {
+        let manifest = load_geordi_strict_text_fixture_manifest(fixture_path(
+            "strict-text/failures/unsupported-text-paint.strict-text.geordi.json",
         ))?;
 
         let paths =

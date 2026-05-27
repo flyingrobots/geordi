@@ -38,6 +38,8 @@ Failure fixtures:
 fixtures/render-everywhere/strict-text/failures/bad-outline-command.outline-evidence.geordi.json
 fixtures/render-everywhere/strict-text/failures/bad-line-box.strict-text.geordi.json
 fixtures/render-everywhere/strict-text/failures/missing-glyph-evidence.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/failures/unsupported-paint.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/failures/unsupported-text-paint.strict-text.geordi.json
 fixtures/render-everywhere/strict-text/failures/unknown-glyph-evidence.outline-evidence.geordi.json
 fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
 ~~~
@@ -52,6 +54,10 @@ outline evidence, so browser and native renderers must reject before drawing.
 It keeps the evidence-pack shape valid while omitting glyph evidence required by
 `geordi.strict-text.geordi.json`, so TypeScript, browser, native, and Rust renderer paths must
 reject it before drawing.
+`unsupported-paint.outline-evidence.geordi.json` and
+`unsupported-text-paint.strict-text.geordi.json` are S073 paint-scope failure fixtures. They prove
+that the first strict text proof supports only fill-only `solidFill` outline evidence and rejects
+stroke-like text paint requests before drawing.
 `unknown-glyph-evidence.outline-evidence.geordi.json` is an S071 evidence-coverage failure fixture.
 It keeps every required glyph id present but adds unreferenced fixture-local glyph evidence, so
 coverage validation must reject it before renderers silently ignore the extra entry.

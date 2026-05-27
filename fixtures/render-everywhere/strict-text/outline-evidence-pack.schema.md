@@ -192,6 +192,9 @@ receipts:
 - S072 adds a line-box validator: drawing evidence bounds translated through positioned glyph
   origins must stay inside the glyph run's declared line box unless a future overflow profile
   explicitly changes that rule.
+- S073 keeps the first proof fill-only: evidence paint must be `solidFill` RGBA, and stroke,
+  gradient, opacity-effect, or multi-paint text modes are unsupported until a later profile names
+  their deterministic semantics.
 
 ## Diagnostic Vocabulary
 

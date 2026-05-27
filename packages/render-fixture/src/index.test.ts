@@ -1304,6 +1304,22 @@ describe('render fixture strict text fixture manifest validation', () => {
     )).toThrow(RenderFixtureInvalidStrictTextOutlineEvidencePackError);
   });
 
+  it('rejects unsupported strict text outline evidence paint', () => {
+    const source = strictTextOutlineEvidenceFailureSource('unsupported-paint');
+    const pack = canonicalJsonPort.parse(source);
+    const result = validateRenderFixtureStrictTextOutlineEvidencePack(pack);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContainEqual({
+      code: 'GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT',
+      message: 'Strict text outline evidence paint kind must be solidFill',
+      path: '$.paint.kind',
+    });
+    expect(() => parseRenderFixtureStrictTextOutlineEvidencePack(source)).toThrow(
+      RenderFixtureInvalidStrictTextOutlineEvidencePackError,
+    );
+  });
+
   it('rejects missing strict text glyph evidence coverage', () => {
     const fixture = parseRenderFixtureStrictTextFixtureManifest(strictTextFixtureASource());
     const evidence = parseRenderFixtureStrictTextOutlineEvidencePack(
@@ -1715,6 +1731,20 @@ describe('render fixture strict text fixture manifest validation', () => {
 
   it('keeps committed unsupported strict text fixture rejected', () => {
     const source = strictTextFailureFixtureSource('unsupported-runtime-shaping');
+    const result = validateRenderFixtureStrictTextFixtureManifest(canonicalJsonPort.parse(source));
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContainEqual({
+      message: 'Strict text feature is not supported',
+      path: '$.features[3]',
+    });
+    expect(() => parseRenderFixtureStrictTextFixtureManifest(source)).toThrow(
+      RenderFixtureInvalidStrictTextFixtureManifestError,
+    );
+  });
+
+  it('keeps committed unsupported strict text paint fixture rejected', () => {
+    const source = strictTextFailureFixtureSource('unsupported-text-paint');
     const result = validateRenderFixtureStrictTextFixtureManifest(canonicalJsonPort.parse(source));
 
     expect(result.ok).toBe(false);
