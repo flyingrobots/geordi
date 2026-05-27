@@ -451,6 +451,22 @@ coarse probes. Current nonclaims remain: no OS text APIs, no host font fallback,
 no wrapping, no bidi or complex scripts, no variable font axes, no native strict text window mode,
 no full antialiasing parity, and no broad `geordi-ir/1` `shape.text` support.
 
+## S076 Shaping Implementation Decision
+
+Shaping remains outside the compliant browser/native renderer path. The selected future boundary is
+a pinned text-prep CLI that emits prepared strict text fixtures, line boxes, glyph evidence, and
+receipts. TypeScript stays native for authoring helpers, browser/Node integration, fixture loading,
+docs tooling, and simple validation; the shaping core should be Rust-native when implemented because
+shaping is hard algorithmic behavior that should not be hand-mirrored across runtimes.
+
+The decision keeps current fixtures on `shapingProfile: "precomputed-fixture/1"` until a Geordi-owned
+generator exists. WASM is allowed only as an optional later exposure of a hard shaping/font/glyph
+kernel after native text-prep, fingerprints, conformance fixtures, and generated outputs are stable.
+Browser Canvas shaping, DOM/CSS text shaping, native OS text APIs, host font fallback, runtime
+shaping, mandatory WASM validation, and unfingerprinted prep scripts are rejected compliance paths.
+
+Next OPEN node after this decision: `S077`, shaping profile fingerprint law.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -468,7 +484,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S076**.
+Current OPEN node: **S077**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1301,7 +1317,7 @@ Current OPEN node: **S076**.
 
 ### S076: Shaping implementation decision
 
-- [ ] **S076: Shaping implementation decision** (OPEN)
+- [x] **S076: Shaping implementation decision** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with shaping implementation decision documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Shaping implementation decision.
@@ -1312,7 +1328,7 @@ Current OPEN node: **S076**.
 
 ### S077: Shaping profile fingerprint law
 
-- [ ] **S077: Shaping profile fingerprint law** (BLOCKED)
+- [ ] **S077: Shaping profile fingerprint law** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with shaping profile fingerprint law documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Shaping profile fingerprint law.

@@ -117,7 +117,11 @@ The active text milestone is `geordi-strict-positioned-glyph-run/1`:
 Strict mode does not allow host font fallback, platform text APIs, runtime shaping, runtime kerning,
 ligature substitution, wrapping, bidi handling, complex-script support, or variable font axes.
 
-Those may become future features only behind explicit profiles and proof gates.
+Shaping may become a future preparation feature only behind a pinned text-prep boundary with
+fingerprinted inputs and outputs. It must not become runtime shaping inside compliant renderers.
+
+Those unsupported runtime behaviors may become future features only behind explicit profiles and
+proof gates.
 
 ## Quality Bar
 

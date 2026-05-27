@@ -36,6 +36,8 @@ Active proof layer:
 - The work currently proves content-addressed font assets, strict text manifests, positioned glyph
   evidence, browser/native validation, browser/native outline rendering, metadata equality, coarse
   probes, and nonblank-bounds containment before any broad text rendering claim is made.
+- Future shaping is a text-prep concern, not a compliant runtime renderer behavior. The planned
+  boundary is pinned preparation that emits strict artifacts with fingerprinted inputs and outputs.
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
   Wesley/common-type generation.
 

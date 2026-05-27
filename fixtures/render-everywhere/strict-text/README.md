@@ -102,3 +102,8 @@ S053 evidence was generated from `fixtures/render-everywhere/assets/fonts/lato/L
 using simple TrueType `glyf` contours scaled to the fixture's 48px fixed 26.6 coordinate system.
 The evidence files are committed artifacts. Runtime parsers and renderers must consume these files;
 they must not parse the font, shape strings, or call platform text APIs while rendering strict text.
+
+S076 keeps shaping outside the compliant runtime path. Future generated fixtures must come from a
+pinned text-prep boundary with fingerprinted font, source, shaping configuration, glyph-run,
+line-box, evidence, and receipt outputs. Current fixtures remain `precomputed-fixture/1` artifacts
+until that generator exists.

@@ -961,6 +961,75 @@ If any fixture asks the runtime to do those things, the runtime fails before dra
 
 The first receiver proof can use hand-authored or precomputed fixture evidence. A durable text preparation package belongs later, after browser and native runtimes can already validate and render strict evidence.
 
+### S076 Shaping Implementation Decision
+
+Decision: shaping stays out of the compliant renderer path. The next implementation boundary for
+shaping is a pinned text-prep tool that emits prepared strict artifacts; it is not browser shaping,
+not OS shaping, not runtime shaping inside browser/native renderers, and not a mandatory
+TypeScript-to-WASM validation wrapper.
+
+The selected implementation direction is:
+
+1. Keep current fixtures on `shapingProfile: "precomputed-fixture/1"` until a Geordi-owned
+   generator exists.
+2. Introduce shaping through a text-prep CLI boundary after strict receivers are already proven.
+3. Prefer a Rust-native shaping core for the CLI because shaping is algorithmically hard and should
+   not be hand-mirrored in TypeScript.
+4. Let TypeScript remain the authoring, fixture, browser, and docs/tooling edge; a Node package may
+   invoke the CLI or consume generated artifacts, but it must not make ordinary validation depend on
+   mandatory WASM.
+5. Treat WASM as an optional later exposure of the same hard kernel only after the native text-prep
+   path, fingerprints, conformance fixtures, and generated outputs are stable.
+
+The decision rejects these paths for compliance:
+
+| Rejected path | Reason |
+| --- | --- |
+| Browser Canvas or DOM shaping | Reintroduces host font loading, browser metrics, fallback, and timing differences. |
+| Native OS text APIs | Reintroduces CoreText/DirectWrite/Pango/etc. differences as renderer behavior. |
+| Runtime shaping in browser/native renderers | Makes glyph ids and positions depend on runtime environment instead of artifact data. |
+| Hand-mirrored TypeScript and Rust shapers | High drift risk for a hard algorithmic domain. |
+| Mandatory WASM for all TypeScript validation | Adds loader/package friction for ordinary object-shaped fixture checks. |
+| Unfingerprinted prep scripts | Cannot explain why glyph ids, advances, line boxes, or evidence changed. |
+
+The text-prep artifact boundary must look like this:
+
+~~~mermaid
+sequenceDiagram
+  autonumber
+  participant Author as Authoring Input
+  participant Prep as Pinned Text Prep CLI
+  participant Font as Content-Addressed Font Pack
+  participant Shaper as Pinned Shaping Core
+  participant Fixture as Strict Text Fixture
+  participant Evidence as Glyph Evidence Pack
+  participant Receipt as Provenance Receipt
+  participant Runtime as Browser/Native Runtime
+
+  Author->>Prep: source text, language, script, direction, features
+  Font->>Prep: font bytes, face index, hashes
+  Prep->>Shaper: normalized source and fingerprinted config
+  Shaper-->>Prep: glyph ids, advances, offsets
+  Prep->>Fixture: positioned glyph runs and line boxes
+  Prep->>Evidence: glyph evidence references or generated evidence
+  Prep->>Receipt: shaping fingerprint and output hashes
+  Runtime->>Fixture: validate prepared artifact
+  Runtime->>Evidence: render evidence only
+  Runtime-->>Author: no runtime shaping, no host fallback
+~~~
+
+Minimum S076 policy for future shaping artifacts:
+
+- Every shaping-affecting input must be fingerprinted before a generated fixture can be called
+  strict-compliant.
+- Runtime renderers consume only the generated fixture, line boxes, font pack, evidence pack, and
+  receipt fields.
+- Source strings remain semantic/debug/accessibility metadata in runtime artifacts.
+- Generated glyph ids, advances, offsets, line boxes, and evidence hashes must be reviewable and
+  reproducible from pinned inputs.
+- The engine choice is intentionally not finalized in S076; S077 owns the fingerprint law, S078 owns
+  any shaping spike, and S079 owns the compiler/text-prep boundary.
+
 Planned package and CLI shape:
 
 ~~~text
