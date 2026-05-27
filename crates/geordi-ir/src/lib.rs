@@ -4071,6 +4071,21 @@ mod tests {
     }
 
     #[test]
+    fn builds_generated_strict_text_fixture_glyph_run_receipt_hash() -> Result<(), GeordiIrTestError>
+    {
+        let receipt = create_geordi_strict_text_fixture_receipt(
+            repository_root(),
+            "fixtures/render-everywhere/strict-text/generated/geordi.strict-text.geordi.json",
+        )?;
+
+        assert_eq!(
+            receipt.glyph_run_hash,
+            "sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn hashes_canonical_strict_text_receipt_fragments() -> Result<(), GeordiIrTestError> {
         let source =
             std::fs::read_to_string(fixture_path("strict-text/geordi.strict-text.geordi.json"))?;

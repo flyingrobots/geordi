@@ -1542,6 +1542,30 @@ opt into the fingerprinted profile without accepting arbitrary runtime-shaping s
 S084 does not add generated receipt files yet. S085 and S086 continue the receipt arc by tightening
 glyph-run and line-box checksum handling for generated output.
 
+### S085 Receipt Glyph-Run Checksum Field
+
+`glyphRunHash` was already part of the strict text fixture receipt schema. S085 hardens that field
+against generated fixture drift by extending TypeScript and Rust receipt tests to the generated
+strict text fixture:
+
+~~~text
+fixtures/render-everywhere/strict-text/generated/geordi.strict-text.geordi.json
+~~~
+
+Both receipt builders now prove that the generated fixture's canonical `glyphRuns` fragment hashes
+to:
+
+~~~text
+sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472
+~~~
+
+That is the same positioned glyph-run evidence as the canonical `GEORDI` fixture, under a generated
+fixture id. The hash input remains `canonicalJsonPort.stringify(glyphRuns, { space: 2 }) + "\n"`;
+source text, fixture id, and receipt metadata are not part of the glyph-run checksum.
+
+S085 does not add generated receipt files or line-box checksum hardening. S086 owns the generated
+line-box checksum proof.
+
 ## Backlog And Design Index Alignment
 
 This plan is the active execution source for the P0 backlog item named `Define the strict

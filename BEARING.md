@@ -596,6 +596,20 @@ precomputed fixture receipts.
 
 Next OPEN node after this receipt field: `S085`, receipt glyph-run checksum field.
 
+## S085 Receipt Glyph-Run Checksum Field
+
+The strict text receipt `glyphRunHash` field is now tested against the generated fixture path in
+both TypeScript and Rust. The generated `GEORDI` fixture's canonical `glyphRuns` fragment hashes to:
+
+~~~text
+sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472
+~~~
+
+This proves the checksum is tied to positioned glyph-run evidence, not fixture id, source text, or
+receipt metadata. S086 owns the matching line-box checksum hardening.
+
+Next OPEN node after this checksum field: `S086`, receipt line-box checksum field.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -613,7 +627,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S085**.
+Current OPEN node: **S086**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1545,7 +1559,7 @@ Current OPEN node: **S085**.
 
 ### S085: Receipt glyph-run checksum field
 
-- [ ] **S085: Receipt glyph-run checksum field** (OPEN)
+- [x] **S085: Receipt glyph-run checksum field** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with receipt glyph-run checksum field documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Receipt glyph-run checksum field.
@@ -1556,7 +1570,7 @@ Current OPEN node: **S085**.
 
 ### S086: Receipt line-box checksum field
 
-- [ ] **S086: Receipt line-box checksum field** (BLOCKED)
+- [ ] **S086: Receipt line-box checksum field** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with receipt line-box checksum field documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Receipt line-box checksum field.

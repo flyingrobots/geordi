@@ -126,8 +126,8 @@ digraph StrictPositionedGlyphRunPlan {
     S082 [label="S082\nGenerated fixture artifact", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S083 [label="S083\nGenerated artifact comparison", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S084 [label="S084\nReceipt shaping profile field", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S085 [label="S085\nReceipt glyph-run checksum field", color="#16a34a", penwidth=4];
-    S086 [label="S086\nReceipt line-box checksum field", color="#dc2626", penwidth=4];
+    S085 [label="S085\nReceipt glyph-run checksum field", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S086 [label="S086\nReceipt line-box checksum field", color="#16a34a", penwidth=4];
     S087 [label="S087\nNo-fallback validator", color="#dc2626", penwidth=4];
     S088 [label="S088\nFallback-chain rejection fixture", color="#dc2626", penwidth=4];
     S089 [label="S089\nMultiline rejection fixture", color="#dc2626", penwidth=4];

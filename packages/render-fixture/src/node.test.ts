@@ -28,6 +28,8 @@ const STRICT_TEXT_FIXTURE_A_PATH =
   'fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json';
 const STRICT_TEXT_FIXTURE_B_PATH =
   'fixtures/render-everywhere/strict-text/text-0123.strict-text.geordi.json';
+const STRICT_TEXT_GENERATED_FIXTURE_PATH =
+  'fixtures/render-everywhere/strict-text/generated/geordi.strict-text.geordi.json';
 
 function bunnyBytes(): Uint8Array {
   return readFileSync(
@@ -182,6 +184,20 @@ describe('Node render fixture hash helpers', () => {
     );
     expect(receipt.shapingProfile).toBe(
       RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT,
+    );
+  });
+
+  it('hashes generated fixture glyph runs in strict text receipts', () => {
+    const receipt = createRenderFixtureStrictTextFixtureReceipt({
+      fixturePath: STRICT_TEXT_GENERATED_FIXTURE_PATH,
+      repositoryRoot: repositoryRoot(),
+      shapingFingerprintHash:
+        'sha256:4294d2f13356d55ab7a92957d5aa43b0243141eb0728428b94ee666f8c98d7db',
+      shapingProfile: RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT,
+    });
+
+    expect(receipt.glyphRunHash).toBe(
+      'sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472',
     );
   });
 
