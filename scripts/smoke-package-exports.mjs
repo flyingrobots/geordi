@@ -83,6 +83,23 @@ const checks = [
     ],
   },
   {
+    packageName: '@flyingrobots/geordi-text-prep',
+    packageDir: 'packages/text-prep',
+    exports: [
+      'TEXT_PREP_GENERATION_PLAN_VERSION',
+      'TEXT_PREP_INPUT_VERSION',
+      'TextPrepValidationError',
+      'prepareTextPrepGenerationPlan',
+      'validateTextPrepInput',
+    ],
+  },
+  {
+    packageName: '@flyingrobots/geordi-text-prep/cli',
+    packageDir: 'packages/text-prep',
+    exportPath: './cli',
+    exports: ['runTextPrepCli'],
+  },
+  {
     packageName: '@flyingrobots/geordi-wesley-generator',
     packageDir: 'packages/wesley-generator',
     exports: ['GeordiGeneratorPlugin'],

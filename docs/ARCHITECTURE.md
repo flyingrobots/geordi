@@ -43,6 +43,22 @@ are generated from a common source; WASM is introduced only for hard determinist
 
 **Key principle**: Thin transport layer. Brain lives in compiler-core.
 
+### `@flyingrobots/geordi-text-prep`
+
+**Pinned strict text preparation tooling**
+
+- **CLI** (`src/cli.ts`): `geordi-text-prep prepare --input <file> --output <dir>`
+- **Validation** (`src/index.ts`): `geordi-text-prep-input/1` shape, hash, path, font, shaping,
+  geometry, and output-intent checks
+- **Plan artifact** (`text-prep.generation-plan.geordi.json`): deterministic audit data for the
+  future generated strict text fixture, evidence pack, receipt, and bundle manifest
+- **Diagnostics**: stable `GEORDI_TEXT_PREP_*` codes for host font lookup, fallback, multiline,
+  bidi/complex script, variable axes, bad paths, missing fingerprints, file IO failures, and source hash drift
+
+**Key principle**: Tooling may validate pinned source/font/shaping intent, but renderers still
+consume prepared strict artifacts only. This package is not a WASM wrapper and does not claim
+runtime text shaping or fixture generation until later slices add those artifacts.
+
 ## Compilation Pipeline
 
 ```text

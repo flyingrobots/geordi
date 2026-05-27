@@ -1310,8 +1310,8 @@ The schema requires:
 
 Generated output manifests must not contain renderer names, `rendered=true`, `smoke=passed`, host
 font family names, platform metrics, local absolute paths, wall-clock timestamps, or spike artifacts.
-S081 owns the command that emits the schema, S082 owns the first generated fixture artifact, and S083
-owns regeneration comparison.
+S081 introduced the first command surface and deterministic prep plan, S082 owns the first generated
+fixture artifact, and S083 owns regeneration comparison.
 
 Planned package and CLI shape:
 
@@ -1333,6 +1333,109 @@ flowchart LR
   Prep --> Evidence[Glyph evidence pack]
   Prep --> Receipt[Text provenance receipt]
 ~~~
+
+### S081 Glyph-Run Generation CLI
+
+The first CLI surface is implemented in:
+
+~~~text
+packages/text-prep
+@flyingrobots/geordi-text-prep
+geordi-text-prep prepare --input text-prep.input.geordi.json --output fixtures/render-everywhere/strict-text/generated
+~~~
+
+This slice intentionally creates the command boundary before claiming full generation. The command
+parses pinned `geordi-text-prep-input/1` JSON, validates the first strict text-prep subset, and
+writes `text-prep.generation-plan.geordi.json` as deterministic audit data. The plan is not a
+renderer input and declares `mayFeedStrictRenderer: false`; S082 must add the first generated strict
+text fixture before any generated output can enter render-everywhere fixture review.
+
+The input validator requires:
+
+- `inputVersion: "geordi-text-prep-input/1"`;
+- `textPrepBoundary: "geordi-text-prep-boundary/1"`;
+- `textProfile: "geordi-strict-positioned-glyph-run/1"`;
+- normalized UTF-8 source text plus `sourceTextHash`;
+- content-addressed font-pack path/hash, font id, font file hash, face index, and `ttf` format;
+- `shapingProfile: "geordi-text-prep-shaping-fingerprint/1"` plus fingerprint path/hash;
+- first-profile shaping metadata: `script: "Latn"`, `direction: "ltr"`, language, OpenType
+  feature list, and empty variation-axis list;
+- fixed 26.6 geometry policy, rounding policy, baseline policy, line-box policy, and output intent.
+
+The plan output carries only hashes and policy fields required for later artifact generation:
+
+~~~mermaid
+classDiagram
+  class TextPrepInput {
+    +inputVersion
+    +textPrepBoundary
+    +textProfile
+    +source
+    +font
+    +shaping
+    +geometry
+    +output
+  }
+  class TextPrepGenerationPlan {
+    +planVersion
+    +status
+    +compliance
+    +mayFeedStrictRenderer
+    +inputHash
+    +source
+    +font
+    +shaping
+    +geometry
+    +output
+  }
+  class GeneratedOutputManifest {
+    +outputVersion
+    +source
+    +font
+    +shaping
+    +artifacts
+    +hashes
+  }
+  TextPrepInput --> TextPrepGenerationPlan : validates into
+  TextPrepGenerationPlan ..> GeneratedOutputManifest : S082-S083 extend into
+~~~
+
+The generation plan never contains pixel-authoritative source text. It records `sourceTextHash`,
+font identity, shaping fingerprint identity, feature-list hash, variation-axis hash, fixed-position
+encoding, and output fixture intent. It exists so reviewers can audit the exact pinned intent before
+later slices create generated fixtures, evidence packs, receipts, and bundle manifests.
+
+~~~mermaid
+sequenceDiagram
+  participant User
+  participant CLI as geordi-text-prep prepare
+  participant Validator as Input Validator
+  participant Plan as Generation Plan Writer
+  User->>CLI: --input text-prep.input.geordi.json --output generated/
+  CLI->>Validator: parse canonical JSON
+  Validator-->>CLI: valid pinned intent or GEORDI_TEXT_PREP_* diagnostics
+  CLI->>Plan: write deterministic plan when valid
+  Plan-->>User: text-prep.generation-plan.geordi.json
+~~~
+
+Stable diagnostics introduced by this slice:
+
+| Code | Meaning |
+| --- | --- |
+| `GEORDI_TEXT_PREP_BAD_INPUT` | Required shape, profile, or scalar field is malformed. |
+| `GEORDI_TEXT_PREP_BAD_PATH` | Font or shaping fingerprint path is not repository-relative POSIX. |
+| `GEORDI_TEXT_PREP_HOST_FONT_LOOKUP` | Input attempted host/system font lookup. |
+| `GEORDI_TEXT_PREP_IO_ERROR` | CLI input or output file IO failed. |
+| `GEORDI_TEXT_PREP_FALLBACK_REQUIRED` | Input attempted a fallback chain. |
+| `GEORDI_TEXT_PREP_MISSING_FINGERPRINT` | Input omitted `geordi-text-prep-shaping-fingerprint/1`. |
+| `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE` | Source requested multiline/wrapping behavior. |
+| `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI` | Input requested bidi or non-Latin first-profile shaping. |
+| `GEORDI_TEXT_PREP_UNSUPPORTED_VARIABLE_AXES` | Input requested variable font axes before an axis fingerprint profile exists. |
+| `GEORDI_TEXT_PREP_UNSTABLE_INPUT` | Source normalization or source hash is not pinned. |
+
+S081 does not implement shaping, font parsing, glyph outline extraction, line-box measurement,
+generated strict text fixtures, receipts, generated output manifests, or comparison. It gives those
+later slices a tested CLI/API boundary with deterministic output and no ambient host font lookup.
 
 ## Backlog And Design Index Alignment
 

@@ -16,6 +16,8 @@
       "@flyingrobots/geordi-render-fixture": ["packages/render-fixture/src/index.ts"],
       "@flyingrobots/geordi-runtime-webgl": ["packages/runtime-webgl/src/index.ts"],
       "@flyingrobots/geordi-schema-graphql": ["packages/schema-graphql/src/index.ts"],
+      "@flyingrobots/geordi-text-prep": ["packages/text-prep/src/index.ts"],
+      "@flyingrobots/geordi-text-prep/cli": ["packages/text-prep/src/cli.ts"],
       "@flyingrobots/geordi-wesley-generator": ["packages/wesley-generator/src/index.ts"]
     },
     "rootDir": ".",

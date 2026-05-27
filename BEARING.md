@@ -516,10 +516,30 @@ receipt, and canonical glyph-run/line-box/fixture hashes into one reviewable uni
 
 The manifest is audit/comparison data, not a renderer input by itself. It must not contain renderer
 names, `rendered=true`, `smoke=passed`, host font families, platform metrics, absolute paths,
-wall-clock timestamps, or spike artifacts. S081 owns the command that emits it, S082 owns the first
-generated artifact, and S083 owns drift comparison.
+wall-clock timestamps, or spike artifacts. S081 introduced the first command surface and
+deterministic prep plan, S082 owns the first generated artifact, and S083 owns drift comparison.
 
-Next OPEN node after this schema: `S081`, glyph-run generation CLI.
+## S081 Glyph-Run Generation CLI
+
+`@flyingrobots/geordi-text-prep` now exposes the first pinned text-prep CLI surface:
+
+~~~bash
+geordi-text-prep prepare --input text-prep.input.geordi.json --output fixtures/render-everywhere/strict-text/generated
+~~~
+
+The command validates `geordi-text-prep-input/1` JSON and writes
+`text-prep.generation-plan.geordi.json` as deterministic audit data. The plan records source hash,
+content-addressed font identity, shaping fingerprint identity, first-profile geometry policy, and
+output intent. It omits pixel-authoritative source text and declares `mayFeedStrictRenderer: false`
+because generated strict fixtures, evidence packs, receipts, and generated output manifests remain
+future slices.
+
+The validator rejects host font lookup, fallback chains, multiline source, bidi or non-Latin
+first-profile shaping, variable axes, non-repository-relative font/fingerprint paths, missing
+shaping fingerprints, and source hash or normalization drift with stable `GEORDI_TEXT_PREP_*`
+diagnostics.
+
+Next OPEN node after this CLI: `S082`, generated fixture artifact.
 
 ## DAG Operating Rule
 
@@ -538,7 +558,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S081**.
+Current OPEN node: **S082**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1426,7 +1446,7 @@ Current OPEN node: **S081**.
 
 ### S081: Glyph-run generation CLI
 
-- [ ] **S081: Glyph-run generation CLI** (OPEN)
+- [x] **S081: Glyph-run generation CLI** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with glyph-run generation cli documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Glyph-run generation CLI.
@@ -1437,7 +1457,7 @@ Current OPEN node: **S081**.
 
 ### S082: Generated fixture artifact
 
-- [ ] **S082: Generated fixture artifact** (BLOCKED)
+- [ ] **S082: Generated fixture artifact** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with generated fixture artifact documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Generated fixture artifact.

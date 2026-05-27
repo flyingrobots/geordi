@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the lowest active open node is `S081`, glyph-run generation CLI, after the generated shaped output
-schema was recorded.
+the lowest active open node is `S082`, generated fixture artifact, after the first text-prep CLI
+surface and deterministic generation-plan artifact were added.
 
 ## Completed Capabilities
 
@@ -43,6 +43,7 @@ schema was recorded.
 | Browser strict text renderer | Browser harness code can load a strict text fixture/evidence/font-pack asset set, validate font references, render parsed outline evidence into Canvas path geometry without calling Canvas text APIs, disclose the strict text metadata contract in the browser UI, pass Playwright nonblank/text-API/coarse-probe smoke, and document the `Text` panel's exact claim boundary. |
 | Native strict text renderer | Rust renderer code can validate a strict text fixture/evidence pair, lower fixed 26.6 outline evidence into software path segments, fill nonzero outline geometry into the shared RGBA8 buffer, and report native strict text renderer metadata. The native harness has `--strict-text-smoke` for offscreen fixture/evidence/font validation, rendering, browser-aligned metadata reporting, nonblank visible-text smoke, named coarse pixel probes, and documented native claim boundaries without opening a window. |
 | Strict text parity | Browser and native strict text reports now compare exact fixture/font/glyph-run/line-box/evidence/profile/count/semantic metadata before any pixel parity claim, and both runtimes guard the canonical text proof with the same fixture-local fill/transparent probe policy and evidence-derived allowed nonblank bounds. |
+| Text-prep tooling | `@flyingrobots/geordi-text-prep` provides `geordi-text-prep prepare`, validates pinned `geordi-text-prep-input/1` JSON, rejects host font lookup/fallback/multiline/bidi/variable-axis/source-drift inputs with stable diagnostics, and writes deterministic `text-prep.generation-plan.geordi.json` audit data. |
 
 ## Active Work
 
@@ -69,6 +70,7 @@ Current rules:
 | Shaping spike boundary | Exploratory shaping output must use `geordi-text-shaping-spike-noncompliant/1`, declare `mayFeedStrictRenderer: false`, and stay out of browser/native strict smoke gates. |
 | Text-prep boundary | `geordi-text-prep-boundary/1` keeps source strings, shaping, line metrics, and evidence generation in compiler/tooling space; renderers consume prepared strict artifacts only. |
 | Generated shaped output | `geordi-text-prep-generated-output/1` defines the text-prep output bundle manifest tying source hash, font identity, shaping fingerprint, generated strict fixture, evidence pack, and receipt hashes together for audit/comparison tooling. |
+| Text-prep CLI | The first CLI surface emits a deterministic generation plan, not renderer input. S082-S083 must add generated fixtures/manifests and comparison before generated text can be reviewed as strict fixture output. |
 | Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
 | Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054/S055 add independent parsers; S056 hardens command validation; S057-S069 add browser/native render, probe, metadata, and bounds gates; S070-S073 add missing/unknown glyph, line-box containment, and unsupported-paint rejection; S074-S075 align browser/native demo documentation. |
 
@@ -90,7 +92,7 @@ Geordi does not currently claim:
 - runtime shaping in strict mode;
 - pixel-identical 3D mesh rasterization;
 - production WebGPU/Metal/Vulkan renderers;
-- a production CLI;
+- a production-grade full Geordi CLI;
 - binary IR packing;
 - generated common DTOs already implemented;
 - a required WASM dependency for ordinary TypeScript validation.
