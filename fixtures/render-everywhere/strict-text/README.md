@@ -48,6 +48,7 @@ fixtures/render-everywhere/strict-text/failures/unsupported-text-paint.strict-te
 fixtures/render-everywhere/strict-text/failures/unknown-glyph-evidence.outline-evidence.geordi.json
 fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
 fixtures/render-everywhere/strict-text/failures/fallback-chain.text-prep.input.geordi.json
+fixtures/render-everywhere/strict-text/failures/multiline.text-prep.input.geordi.json
 ~~~
 
 `bad-outline-command.outline-evidence.geordi.json` is an S056 evidence-pack failure fixture. It
@@ -71,6 +72,10 @@ coverage validation must reject it before renderers silently ignore the extra en
 generated `GEORDI` source, geometry, and prepared glyph-run/line-box data intact while adding
 fallback-chain fields and `fallbackPolicy: "font-fallback-chain/1"`, so text-prep must reject it
 with `GEORDI_TEXT_PREP_FALLBACK_REQUIRED` before any generated artifact is written.
+`multiline.text-prep.input.geordi.json` is an S089 text-prep failure fixture. It pins the normalized
+UTF-8 hash for `GEORDI\nTEXT` and otherwise keeps first-profile font, geometry, shaping, and
+prepared fixture data valid, so text-prep must reject it with
+`GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE`.
 
 Canonical fixture A:
 

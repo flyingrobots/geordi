@@ -49,6 +49,14 @@ fixtures/render-everywhere/strict-text/failures/fallback-chain.text-prep.input.g
 
 It must remain rejected with `GEORDI_TEXT_PREP_FALLBACK_REQUIRED`.
 
+The committed multiline rejection fixture lives at:
+
+```text
+fixtures/render-everywhere/strict-text/failures/multiline.text-prep.input.geordi.json
+```
+
+It must remain rejected with `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE`.
+
 ## Current Diagnostics
 
 The first profile rejects unsupported or unstable inputs with stable diagnostic codes:

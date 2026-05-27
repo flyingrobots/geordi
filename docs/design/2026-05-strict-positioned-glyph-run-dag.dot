@@ -130,8 +130,8 @@ digraph StrictPositionedGlyphRunPlan {
     S086 [label="S086\nReceipt line-box checksum field", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S087 [label="S087\nNo-fallback validator", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S088 [label="S088\nFallback-chain rejection fixture", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S089 [label="S089\nMultiline rejection fixture", color="#16a34a", penwidth=4];
-    S090 [label="S090\nBidi and complex-script rejection fixtures", color="#dc2626", penwidth=4];
+    S089 [label="S089\nMultiline rejection fixture", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S090 [label="S090\nBidi and complex-script rejection fixtures", color="#16a34a", penwidth=4];
     S091 [label="S091\nVariable-font-axis rejection fixture", color="#dc2626", penwidth=4];
     S092 [label="S092\nMeasured line-box generation", color="#dc2626", penwidth=4];
   }

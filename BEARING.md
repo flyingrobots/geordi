@@ -657,6 +657,20 @@ on the fallback-chain paths.
 
 Next OPEN node after this failure fixture: `S089`, multiline rejection fixture.
 
+## S089 Multiline Rejection Fixture
+
+The committed multiline text-prep failure fixture now lives at:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/multiline.text-prep.input.geordi.json
+~~~
+
+It pins the normalized UTF-8 source `GEORDI\nTEXT` and otherwise keeps first-profile font, geometry,
+no-fallback shaping, and prepared fixture data valid. The text-prep test suite reads this fixture
+from disk and requires `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE` at `$.source.sourceText`.
+
+Next OPEN node after this failure fixture: `S090`, bidi and complex-script rejection fixtures.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -674,7 +688,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S089**.
+Current OPEN node: **S090**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1650,7 +1664,7 @@ Current OPEN node: **S089**.
 
 ### S089: Multiline rejection fixture
 
-- [ ] **S089: Multiline rejection fixture** (OPEN)
+- [x] **S089: Multiline rejection fixture** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with multiline rejection fixture documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Multiline rejection fixture.
@@ -1661,7 +1675,7 @@ Current OPEN node: **S089**.
 
 ### S090: Bidi and complex-script rejection fixtures
 
-- [ ] **S090: Bidi and complex-script rejection fixtures** (BLOCKED)
+- [ ] **S090: Bidi and complex-script rejection fixtures** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with bidi and complex-script rejection fixtures documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Bidi and complex-script rejection fixtures.

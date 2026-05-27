@@ -1652,6 +1652,28 @@ living only in synthetic inline tests.
 S088 does not add multiline, bidi, complex-script, or variable-axis rejection fixtures. S089 and
 later slices own those unsupported-input proofs.
 
+### S089 Multiline Rejection Fixture
+
+S089 commits the multiline text-prep failure fixture:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/multiline.text-prep.input.geordi.json
+~~~
+
+The fixture pins the normalized UTF-8 source text `GEORDI\nTEXT` and its hash:
+
+~~~text
+sha256:de636fbea6fb465b0edc87f79d4d38f02feb795c46825d5b742c994cdab4ef21
+~~~
+
+All other first-profile fields remain pinned to the generated `GEORDI` font, geometry, shaping
+fingerprint, no-fallback policy, and prepared glyph-run/line-box data. The text-prep unit suite now
+loads this committed fixture from disk and requires
+`GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE` at `$.source.sourceText`.
+
+S089 does not add bidi, complex-script, or variable-axis fixtures. S090 and S091 own those
+unsupported-input proofs.
+
 ## Backlog And Design Index Alignment
 
 This plan is the active execution source for the P0 backlog item named `Define the strict
