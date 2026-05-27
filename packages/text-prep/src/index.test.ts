@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { canonicalJsonPort, type JsonObject } from '@flyingrobots/geordi-core';
 import {
@@ -20,6 +21,15 @@ import {
 import { runTextPrepCli, type TextPrepCliIo } from './cli.js';
 
 const HASH = 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' as const;
+
+function textPrepFailureFixtureSource(name: string): string {
+  const fixtureUrl = new URL(
+    `../../../fixtures/render-everywhere/strict-text/failures/${name}.json`,
+    import.meta.url,
+  );
+
+  return readFileSync(fixtureUrl, 'utf8');
+}
 
 class TextPrepTestIoError extends Error {
   constructor() {
@@ -272,6 +282,28 @@ describe('validateTextPrepInput', () => {
       );
       expect(result.diagnostics.map((issue) => issue.code)).toEqual(
         expect.arrayContaining(['GEORDI_TEXT_PREP_FALLBACK_REQUIRED']),
+      );
+    }
+  });
+
+  it('keeps the committed fallback-chain text-prep fixture rejected', () => {
+    const result = validateTextPrepInput(
+      canonicalJsonPort.parse(
+        textPrepFailureFixtureSource('fallback-chain.text-prep.input.geordi'),
+      ),
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.diagnostics.map((issue) => issue.code)).toEqual(
+        expect.arrayContaining(['GEORDI_TEXT_PREP_FALLBACK_REQUIRED']),
+      );
+      expect(result.diagnostics.map((issue) => issue.path)).toEqual(
+        expect.arrayContaining([
+          '$.font.fallbackFontIds',
+          '$.shaping.fallbackChain',
+          '$.shaping.fallbackPolicy',
+        ]),
       );
     }
   });

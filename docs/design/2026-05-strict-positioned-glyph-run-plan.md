@@ -1629,6 +1629,29 @@ no-fallback policy, while the generated strict text fixture bytes remain unchang
 S087 does not add a separate fallback-chain failure fixture. S088 owns the committed rejection
 fixture that proves the diagnostic survives outside unit tests.
 
+### S088 Fallback-Chain Rejection Fixture
+
+S088 commits the first text-prep failure fixture:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/fallback-chain.text-prep.input.geordi.json
+~~~
+
+The fixture preserves the generated `GEORDI` source hash, content-addressed Lato font identity,
+first-profile geometry policy, and prepared glyph-run/line-box data. It changes only fallback
+contract data:
+
+- `font.fallbackFontIds: ["host-serif"]`;
+- `shaping.fallbackChain: ["host-serif"]`;
+- `shaping.fallbackPolicy: "font-fallback-chain/1"`.
+
+`@flyingrobots/geordi-text-prep` now reads this committed fixture in its unit suite and requires
+`GEORDI_TEXT_PREP_FALLBACK_REQUIRED` on the fallback-chain paths. This keeps fallback rejection from
+living only in synthetic inline tests.
+
+S088 does not add multiline, bidi, complex-script, or variable-axis rejection fixtures. S089 and
+later slices own those unsupported-input proofs.
+
 ## Backlog And Design Index Alignment
 
 This plan is the active execution source for the P0 backlog item named `Define the strict

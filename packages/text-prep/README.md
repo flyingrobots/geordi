@@ -41,6 +41,14 @@ manifests, and comparison gates.
 `compare` regenerates the same artifacts in memory and fails with
 `GEORDI_TEXT_PREP_COMPARE_DRIFT` when committed bytes differ. It does not rewrite files.
 
+The committed fallback-chain rejection fixture lives at:
+
+```text
+fixtures/render-everywhere/strict-text/failures/fallback-chain.text-prep.input.geordi.json
+```
+
+It must remain rejected with `GEORDI_TEXT_PREP_FALLBACK_REQUIRED`.
+
 ## Current Diagnostics
 
 The first profile rejects unsupported or unstable inputs with stable diagnostic codes:

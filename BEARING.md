@@ -642,6 +642,21 @@ policy. The generated strict text fixture bytes remain unchanged.
 
 Next OPEN node after this validator: `S088`, fallback-chain rejection fixture.
 
+## S088 Fallback-Chain Rejection Fixture
+
+The committed text-prep failure fixture now lives at:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/fallback-chain.text-prep.input.geordi.json
+~~~
+
+It preserves the generated `GEORDI` source, font identity, geometry, and prepared fixture data while
+adding a fallback font id, fallback chain, and `fallbackPolicy: "font-fallback-chain/1"`. The
+text-prep test suite reads this fixture from disk and requires `GEORDI_TEXT_PREP_FALLBACK_REQUIRED`
+on the fallback-chain paths.
+
+Next OPEN node after this failure fixture: `S089`, multiline rejection fixture.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -659,7 +674,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S088**.
+Current OPEN node: **S089**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1624,7 +1639,7 @@ Current OPEN node: **S088**.
 
 ### S088: Fallback-chain rejection fixture
 
-- [ ] **S088: Fallback-chain rejection fixture** (OPEN)
+- [x] **S088: Fallback-chain rejection fixture** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with fallback-chain rejection fixture documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Fallback-chain rejection fixture.
@@ -1635,7 +1650,7 @@ Current OPEN node: **S088**.
 
 ### S089: Multiline rejection fixture
 
-- [ ] **S089: Multiline rejection fixture** (BLOCKED)
+- [ ] **S089: Multiline rejection fixture** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with multiline rejection fixture documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Multiline rejection fixture.
