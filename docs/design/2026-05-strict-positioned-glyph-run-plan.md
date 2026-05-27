@@ -1030,6 +1030,86 @@ Minimum S076 policy for future shaping artifacts:
 - The engine choice is intentionally not finalized in S076; S077 owns the fingerprint law, S078 owns
   any shaping spike, and S079 owns the compiler/text-prep boundary.
 
+### S077 Shaping Profile Fingerprint Law
+
+Any artifact that claims a Geordi-owned shaper produced glyph ids, advances, offsets, line boxes, or
+evidence must carry a complete shaping profile fingerprint. Without that fingerprint, the artifact is
+only `precomputed-fixture/1` review data and must not claim generated strict-text compliance.
+
+The first fingerprint profile name is:
+
+~~~text
+geordi-text-prep-shaping-fingerprint/1
+~~~
+
+The fingerprint is contract data, not a debug note. It must be canonical JSON, hashable, and linked
+from the generated fixture receipt. Its job is to answer this question for every generated glyph run:
+
+~~~text
+Given these exact inputs and this exact toolchain, why are these the glyph ids,
+positions, line boxes, and evidence references?
+~~~
+
+Required fingerprint fields:
+
+| Group | Required fields | Why it matters |
+| --- | --- | --- |
+| Profile identity | `fingerprintVersion`, `textProfile`, `positionEncodingProfile`, `generatedAtPolicy` | Prevents accidental reuse across incompatible strict-text profiles or timestamp-bearing builds. |
+| Generator identity | `generatorName`, `generatorVersion`, `generatorSourceHash`, `generatorConfigHash` | Identifies the Geordi-owned prep tool and its pinned configuration. |
+| Shaper identity | `shaperName`, `shaperVersion`, `shaperBuildHash`, `shaperConfigHash` | Identifies the hard shaping kernel whose behavior affects glyph identity and positions. |
+| Font identity | `fontPackHash`, `fontId`, `fontFileHash`, `faceIndex`, `fontFormat` | Binds glyph ids to exact font bytes and face selection. |
+| Source identity | `sourceTextHash`, `sourceEncoding`, `normalizationProfile`, `semanticLanguage` | Makes source text and Unicode normalization reviewable without making strings runtime authority. |
+| Shaping inputs | `script`, `language`, `direction`, `openTypeFeatures`, `variationAxes` | Captures inputs that can change substitution, positioning, or metrics. |
+| Geometry policy | `pxPerEm`, `coordinateSpace`, `roundingPolicy`, `baselinePolicy`, `lineBoxPolicy` | Binds numeric conversion and line metrics to deterministic rules instead of host measurement. |
+| Output identity | `glyphRunHash`, `lineBoxHash`, `glyphEvidenceKind`, `glyphEvidencePackHash`, `fixtureHash` | Links the fingerprint to the generated artifacts that runtimes actually consume. |
+
+Canonicalization rules:
+
+- The fingerprint must be serialized through the same canonical JSON port used by other Geordi
+  receipts.
+- Hash fields use `sha256:` lowercase hex strings.
+- OpenType feature records are sorted by tag, then value.
+- Variation-axis records are sorted by axis tag and must be empty for the first static-font profile.
+- `generatedAtPolicy` must be `no-wall-clock-input/1` until a later reproducibility profile states
+  how timestamps are excluded from artifact hashes.
+- `normalizationProfile` must name both the normalization form and the Unicode data version used by
+  the prep tool.
+- `language` and `semanticLanguage` are distinct: `language` is a shaping input; semantic language
+  remains metadata for humans and accessibility experiments.
+- If a field is not applicable, it must use a profile-defined sentinel such as `none/1` or an empty
+  canonical array; it must not be omitted.
+
+Future generated fixture receipts must link the fingerprint like this:
+
+~~~json
+{
+  "shapingProfile": "geordi-text-prep-shaping-fingerprint/1",
+  "shapingFingerprintHash": "sha256:...",
+  "fontPackHash": "sha256:...",
+  "glyphRunHash": "sha256:...",
+  "lineBoxHash": "sha256:...",
+  "glyphEvidencePackHash": "sha256:..."
+}
+~~~
+
+The fingerprint owns provenance; it does not authorize runtime shaping. Browser and native
+renderers still consume prepared glyph runs, line boxes, and evidence only.
+
+Future validators should use stable diagnostic identities for fingerprint failures:
+
+| Code | Meaning |
+| --- | --- |
+| `GEORDI_TEXT_SHAPING_FINGERPRINT_REQUIRED` | A generated artifact claims shaped output but has no fingerprint. |
+| `GEORDI_TEXT_SHAPING_FINGERPRINT_BAD_PROFILE` | `fingerprintVersion` or `shapingProfile` is missing or unsupported. |
+| `GEORDI_TEXT_SHAPING_FINGERPRINT_MISSING_FIELD` | A required fingerprint field is absent instead of using a profile-defined sentinel. |
+| `GEORDI_TEXT_SHAPING_FINGERPRINT_BAD_HASH` | A hash field is malformed or does not match generated artifact bytes. |
+| `GEORDI_TEXT_SHAPING_FINGERPRINT_UNSTABLE_INPUT` | The fingerprint depends on wall-clock time, host font lookup, ambient locale, or another unpinned input. |
+| `GEORDI_TEXT_SHAPING_FINGERPRINT_OUTPUT_MISMATCH` | Output hashes do not match the fixture, line boxes, glyph run, or evidence pack being validated. |
+
+S077 does not choose a shaping engine, implement a generator, or make shaped output compliant. It
+only defines the minimum evidence that later slices must produce before generated strict text can be
+trusted.
+
 Planned package and CLI shape:
 
 ~~~text

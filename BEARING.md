@@ -465,7 +465,22 @@ kernel after native text-prep, fingerprints, conformance fixtures, and generated
 Browser Canvas shaping, DOM/CSS text shaping, native OS text APIs, host font fallback, runtime
 shaping, mandatory WASM validation, and unfingerprinted prep scripts are rejected compliance paths.
 
-Next OPEN node after this decision: `S077`, shaping profile fingerprint law.
+## S077 Shaping Profile Fingerprint Law
+
+Generated strict text cannot claim Geordi-owned shaping provenance unless it carries a complete
+`geordi-text-prep-shaping-fingerprint/1` record. The fingerprint must canonicalize profile identity,
+generator identity, shaper identity, font identity, source identity, shaping inputs, geometry policy,
+and output hashes. Required fields include the font pack hash, font file hash, face index, shaper
+name/version/build/config hashes, script, language, direction, OpenType features, normalization
+profile, variation axes, source text hash, glyph-run hash, line-box hash, glyph evidence hash, and
+fixture hash.
+
+The law also defines future stable diagnostic identities for missing fingerprints, unsupported
+fingerprint profiles, missing required fields, malformed or mismatched hashes, unstable inputs, and
+output mismatches. S077 does not implement a shaping engine, generator, or compliant shaped output;
+it only defines the provenance contract later slices must satisfy.
+
+Next OPEN node after this law: `S078`, shaping spike outside compliance path.
 
 ## DAG Operating Rule
 
@@ -484,7 +499,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S077**.
+Current OPEN node: **S078**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1328,7 +1343,7 @@ Current OPEN node: **S077**.
 
 ### S077: Shaping profile fingerprint law
 
-- [ ] **S077: Shaping profile fingerprint law** (OPEN)
+- [x] **S077: Shaping profile fingerprint law** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with shaping profile fingerprint law documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Shaping profile fingerprint law.
@@ -1339,7 +1354,7 @@ Current OPEN node: **S077**.
 
 ### S078: Shaping spike outside compliance path
 
-- [ ] **S078: Shaping spike outside compliance path** (BLOCKED)
+- [ ] **S078: Shaping spike outside compliance path** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with shaping spike outside compliance path documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Shaping spike outside compliance path.

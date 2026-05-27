@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the lowest active open node is `S077`, shaping profile fingerprint law, after the shaping
-implementation decision was recorded.
+the lowest active open node is `S078`, shaping spike outside compliance path, after the shaping
+profile fingerprint law was recorded.
 
 ## Completed Capabilities
 
@@ -65,7 +65,7 @@ Current rules:
 | --- | --- |
 | Shared DTO drift | Serialized TypeScript/Rust contract DTOs must be generated from one Wesley common schema. |
 | Runtime boundary | TypeScript remains native at browser, Node, tooling, and fixture-authoring edges. Rust remains native at the renderer and CLI core. WASM is reserved for hard deterministic kernels. |
-| Shaping boundary | Compliant browser/native renderers do not shape strings. Future shaping enters through a pinned text-prep CLI, preferably with a Rust-native core; WASM is optional only after the hard kernel is justified. |
+| Shaping boundary | Compliant browser/native renderers do not shape strings. Future shaping enters through a pinned text-prep CLI, preferably with a Rust-native core; WASM is optional only after the hard kernel is justified. Any generated shaped artifact must carry a complete `geordi-text-prep-shaping-fingerprint/1` record before it can claim Geordi-owned shaping provenance. |
 | Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
 | Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054/S055 add independent parsers; S056 hardens command validation; S057-S069 add browser/native render, probe, metadata, and bounds gates; S070-S073 add missing/unknown glyph, line-box containment, and unsupported-paint rejection; S074-S075 align browser/native demo documentation. |
 
