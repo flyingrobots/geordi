@@ -565,6 +565,22 @@ remain future slices.
 
 Next OPEN node after this artifact: `S083`, generated artifact comparison.
 
+## S083 Generated Artifact Comparison
+
+Generated strict text artifacts now have a byte-for-byte regeneration gate:
+
+~~~bash
+pnpm test:render-everywhere:strict-text-generated
+~~~
+
+The gate runs `geordi-text-prep compare` against
+`fixtures/render-everywhere/strict-text/generated/geordi.text-prep.input.geordi.json` and the
+committed generated directory. The command regenerates the plan and strict fixture in memory, reads
+the expected committed files, and fails with `GEORDI_TEXT_PREP_COMPARE_DRIFT` or
+`GEORDI_TEXT_PREP_COMPARE_MISSING_ARTIFACT` when the committed bytes no longer match.
+
+Next OPEN node after this comparison: `S084`, receipt shaping profile field.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -582,7 +598,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S083**.
+Current OPEN node: **S084**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1492,7 +1508,7 @@ Current OPEN node: **S083**.
 
 ### S083: Generated artifact comparison
 
-- [ ] **S083: Generated artifact comparison** (OPEN)
+- [x] **S083: Generated artifact comparison** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with generated artifact comparison documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Generated artifact comparison.
@@ -1503,7 +1519,7 @@ Current OPEN node: **S083**.
 
 ### S084: Receipt shaping profile field
 
-- [ ] **S084: Receipt shaping profile field** (BLOCKED)
+- [ ] **S084: Receipt shaping profile field** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with receipt shaping profile field documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Receipt shaping profile field.

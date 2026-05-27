@@ -197,6 +197,7 @@ Run the render-everywhere smoke paths:
 pnpm test:render-everywhere:gpvue
 pnpm test:render-everywhere:bunny
 pnpm test:render-everywhere:strict-text
+pnpm test:render-everywhere:strict-text-generated
 ```
 
 ## Compiler Usage

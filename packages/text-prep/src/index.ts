@@ -32,6 +32,8 @@ export type TextPrepDiagnosticCode =
   | 'GEORDI_TEXT_PREP_BAD_INPUT'
   | 'GEORDI_TEXT_PREP_BAD_GENERATED_FIXTURE'
   | 'GEORDI_TEXT_PREP_BAD_PATH'
+  | 'GEORDI_TEXT_PREP_COMPARE_DRIFT'
+  | 'GEORDI_TEXT_PREP_COMPARE_MISSING_ARTIFACT'
   | 'GEORDI_TEXT_PREP_HOST_FONT_LOOKUP'
   | 'GEORDI_TEXT_PREP_IO_ERROR'
   | 'GEORDI_TEXT_PREP_FALLBACK_REQUIRED'
@@ -42,7 +44,10 @@ export type TextPrepDiagnosticCode =
   | 'GEORDI_TEXT_PREP_UNSTABLE_INPUT';
 
 export interface TextPrepDiagnostic extends JsonObject {
+  readonly actualHash?: string;
+  readonly artifactPath?: string;
   readonly code: TextPrepDiagnosticCode;
+  readonly expectedHash?: string;
   readonly message: string;
   readonly path: string;
 }

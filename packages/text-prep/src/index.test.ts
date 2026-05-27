@@ -384,6 +384,110 @@ describe('runTextPrepCli', () => {
     expect(stdout.join('')).toContain('strictTextFixturePath');
   });
 
+  it('compares regenerated artifacts against committed bytes', async () => {
+    const preparedSource = canonicalJsonPort.stringify(makePreparedFixtureInput(), { space: 2 });
+    const prepared = prepareTextPrepArtifacts(preparedSource);
+    expect(prepared.ok).toBe(true);
+    if (!prepared.ok) {
+      return;
+    }
+
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+    const io: TextPrepCliIo = {
+      mkdir(): Promise<void> {
+        return Promise.resolve();
+      },
+      readFile(path: string): Promise<string> {
+        if (path === 'text-prep.input.geordi.json') {
+          return Promise.resolve(preparedSource);
+        }
+        if (path === `expected/${TEXT_PREP_GENERATION_PLAN_FILENAME}`) {
+          return Promise.resolve(prepared.serializedPlan);
+        }
+        if (path === 'expected/geordi.strict-text.geordi.json') {
+          return Promise.resolve(prepared.serializedStrictTextFixture ?? '');
+        }
+        return Promise.reject(new TextPrepTestIoError());
+      },
+      stderr: {
+        write(content: string): void {
+          stderr.push(content);
+        },
+      },
+      stdout: {
+        write(content: string): void {
+          stdout.push(content);
+        },
+      },
+      writeFile(): Promise<void> {
+        return Promise.resolve();
+      },
+    };
+
+    const exitCode = await runTextPrepCli(
+      ['compare', '--input', 'text-prep.input.geordi.json', '--expected', 'expected'],
+      io,
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stderr).toHaveLength(0);
+    expect(stdout.join('')).toContain('comparedArtifacts');
+  });
+
+  it('reports stable drift diagnostics during comparison', async () => {
+    const preparedSource = canonicalJsonPort.stringify(makePreparedFixtureInput(), { space: 2 });
+    const prepared = prepareTextPrepArtifacts(preparedSource);
+    expect(prepared.ok).toBe(true);
+    if (!prepared.ok) {
+      return;
+    }
+
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+    const io: TextPrepCliIo = {
+      mkdir(): Promise<void> {
+        return Promise.resolve();
+      },
+      readFile(path: string): Promise<string> {
+        if (path === 'text-prep.input.geordi.json') {
+          return Promise.resolve(preparedSource);
+        }
+        if (path === `expected/${TEXT_PREP_GENERATION_PLAN_FILENAME}`) {
+          return Promise.resolve(`${prepared.serializedPlan}\n`);
+        }
+        if (path === 'expected/geordi.strict-text.geordi.json') {
+          return Promise.resolve(prepared.serializedStrictTextFixture ?? '');
+        }
+        return Promise.reject(new TextPrepTestIoError());
+      },
+      stderr: {
+        write(content: string): void {
+          stderr.push(content);
+        },
+      },
+      stdout: {
+        write(content: string): void {
+          stdout.push(content);
+        },
+      },
+      writeFile(): Promise<void> {
+        return Promise.resolve();
+      },
+    };
+
+    const exitCode = await runTextPrepCli(
+      ['compare', '--input', 'text-prep.input.geordi.json', '--expected', 'expected'],
+      io,
+    );
+
+    expect(exitCode).toBe(1);
+    expect(stdout).toHaveLength(0);
+    expect(stderr.join('')).toContain('GEORDI_TEXT_PREP_COMPARE_DRIFT');
+    expect(stderr.join('')).toContain('actualHash');
+    expect(stderr.join('')).toContain('expectedHash');
+  });
+
   it('returns stable diagnostics for invalid input', async () => {
     const stdout: string[] = [];
     const stderr: string[] = [];
