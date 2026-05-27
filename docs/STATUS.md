@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the lowest active open node is `S087`, no-fallback validator, after generated fixture line-box
-receipt checksums were hardened in TypeScript and Rust.
+the lowest active open node is `S088`, fallback-chain rejection fixture, after text-prep made
+`shaping.fallbackPolicy: "no-fallback/1"` an explicit generated-plan contract.
 
 ## Completed Capabilities
 
@@ -74,6 +74,7 @@ Current rules:
 | Receipt shaping provenance | Strict text fixture receipts now accept either `precomputed-fixture/1` or `geordi-text-prep-shaping-fingerprint/1`; the fingerprinted profile requires `shapingFingerprintHash`, while precomputed receipts must omit it. |
 | Receipt glyph-run checksum | TypeScript and Rust receipt builders prove the generated strict text fixture's canonical `glyphRuns` fragment hashes to `sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472`. |
 | Receipt line-box checksum | TypeScript and Rust receipt builders prove the generated strict text fixture's canonical `lineBoxes` fragment hashes to `sha256:6d0b4e63bd04bd33e7213240a173f86fb478f23fa4cd505514c0b8af425f1e10`. |
+| No-fallback validator | Text-prep input requires `shaping.fallbackPolicy: "no-fallback/1"`, carries that policy into the generation plan, and rejects fallback-chain keys by presence under `font` or `shaping`, including empty arrays. |
 | Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
 | Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054/S055 add independent parsers; S056 hardens command validation; S057-S069 add browser/native render, probe, metadata, and bounds gates; S070-S073 add missing/unknown glyph, line-box containment, and unsupported-paint rejection; S074-S075 align browser/native demo documentation. |
 

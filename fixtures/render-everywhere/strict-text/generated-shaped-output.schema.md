@@ -54,7 +54,8 @@ erDiagram
   "shaping": {
     "shapingProfile": "geordi-text-prep-shaping-fingerprint/1",
     "shapingFingerprintPath": "fixtures/render-everywhere/strict-text/generated/geordi.shaping-fingerprint.geordi.json",
-    "shapingFingerprintHash": "sha256:<64 lowercase hex chars>"
+    "shapingFingerprintHash": "sha256:<64 lowercase hex chars>",
+    "fallbackPolicy": "no-fallback/1"
   },
   "artifacts": {
     "strictTextFixturePath": "fixtures/render-everywhere/strict-text/generated/geordi.strict-text.geordi.json",
@@ -88,6 +89,7 @@ erDiagram
   and `font.fontFormat` must match the generated fixture and shaping fingerprint.
 - `shaping.shapingProfile` must equal `geordi-text-prep-shaping-fingerprint/1`.
 - `shaping.shapingFingerprintHash` must hash the exact canonical fingerprint bytes.
+- `shaping.fallbackPolicy` must equal `no-fallback/1` for the first generated output schema.
 - Artifact paths must be repository-relative POSIX paths and must not escape the repository.
 - Artifact paths must not point at `spike`, `noncompliant`, or
   `geordi-text-shaping-spike-noncompliant/1` output.
@@ -100,8 +102,9 @@ erDiagram
 - `hashes.fixtureHash` must equal `artifacts.strictTextFixtureHash`.
 - The receipt must repeat the output's text profile, position encoding, font hash, glyph-run hash,
   line-box hash, glyph evidence hash, shaping profile, and shaping fingerprint hash.
-- No renderer name, `rendered=true`, `smoke=passed`, host font family, platform metric, local
-  absolute path, or wall-clock timestamp may appear in generated output manifests.
+- No renderer name, `rendered=true`, `smoke=passed`, host font family, fallback-chain field,
+  platform metric, local absolute path, or wall-clock timestamp may appear in generated output
+  manifests.
 
 ## Validation Diagnostics
 

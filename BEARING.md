@@ -625,6 +625,23 @@ checksum.
 
 Next OPEN node after this checksum field: `S087`, no-fallback validator.
 
+## S087 No-Fallback Validator
+
+Text-prep input now requires `shaping.fallbackPolicy: "no-fallback/1"` and the generation plan
+carries that policy forward for audit. Fallback-chain keys are rejected by presence under `font` or
+`shaping`, including empty arrays:
+
+~~~text
+fallbackFonts
+fallbackFontIds
+fallbackChain
+~~~
+
+The generated text-prep input and generation plan were regenerated with the explicit no-fallback
+policy. The generated strict text fixture bytes remain unchanged.
+
+Next OPEN node after this validator: `S088`, fallback-chain rejection fixture.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -642,7 +659,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S087**.
+Current OPEN node: **S088**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1596,7 +1613,7 @@ Current OPEN node: **S087**.
 
 ### S087: No-fallback validator
 
-- [ ] **S087: No-fallback validator** (OPEN)
+- [x] **S087: No-fallback validator** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with no-fallback validator documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: No-fallback validator.
@@ -1607,7 +1624,7 @@ Current OPEN node: **S087**.
 
 ### S088: Fallback-chain rejection fixture
 
-- [ ] **S088: Fallback-chain rejection fixture** (BLOCKED)
+- [ ] **S088: Fallback-chain rejection fixture** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with fallback-chain rejection fixture documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Fallback-chain rejection fixture.

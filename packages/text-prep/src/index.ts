@@ -21,6 +21,7 @@ export const FIXED_26_6_POSITION_ENCODING = 'geordi-fixed-26.6/1' as const;
 export const UTF8_SOURCE_ENCODING = 'utf-8/1' as const;
 export const TTF_FONT_FORMAT = 'ttf' as const;
 export const OUTLINE_PATHS_EVIDENCE_KIND = 'outlinePaths' as const;
+export const NO_FALLBACK_POLICY = 'no-fallback/1' as const;
 
 const STRICT_TEXT_FEATURES = [
   'text.positionedGlyphRuns',
@@ -71,6 +72,7 @@ export interface TextPrepInputFont extends JsonObject {
 
 export interface TextPrepInputShaping extends JsonObject {
   readonly direction: 'ltr';
+  readonly fallbackPolicy: typeof NO_FALLBACK_POLICY;
   readonly language: string;
   readonly openTypeFeatures: readonly string[];
   readonly script: 'Latn';
@@ -122,6 +124,7 @@ export interface TextPrepPlanSource extends JsonObject {
 
 export interface TextPrepPlanShaping extends JsonObject {
   readonly direction: 'ltr';
+  readonly fallbackPolicy: typeof NO_FALLBACK_POLICY;
   readonly language: string;
   readonly openTypeFeaturesHash: string;
   readonly script: 'Latn';
@@ -414,6 +417,7 @@ export function createTextPrepGenerationPlan(input: TextPrepInput): TextPrepGene
   };
   const shaping: TextPrepPlanShaping = {
     direction: input.shaping.direction,
+    fallbackPolicy: input.shaping.fallbackPolicy,
     language: input.shaping.language,
     openTypeFeaturesHash: sha256Json(input.shaping.openTypeFeatures),
     script: input.shaping.script,
@@ -680,6 +684,12 @@ function validateShaping(
   const script = requireString(shaping, 'script', '$.shaping.script', diagnostics);
   const language = requireString(shaping, 'language', '$.shaping.language', diagnostics);
   const direction = requireString(shaping, 'direction', '$.shaping.direction', diagnostics);
+  const fallbackPolicy = optionalString(
+    shaping,
+    'fallbackPolicy',
+    '$.shaping.fallbackPolicy',
+    diagnostics,
+  );
   const openTypeFeatures = requireStringArray(
     shaping,
     'openTypeFeatures',
@@ -732,6 +742,15 @@ function validateShaping(
       ),
     );
   }
+  if (fallbackPolicy !== NO_FALLBACK_POLICY) {
+    diagnostics.push(
+      diagnostic(
+        'GEORDI_TEXT_PREP_FALLBACK_REQUIRED',
+        '$.shaping.fallbackPolicy',
+        `Expected ${NO_FALLBACK_POLICY}.`,
+      ),
+    );
+  }
   if (variationAxes !== undefined && variationAxes.length > 0) {
     diagnostics.push(
       diagnostic(
@@ -749,6 +768,7 @@ function validateShaping(
     script !== 'Latn' ||
     language === undefined ||
     direction !== 'ltr' ||
+    fallbackPolicy !== NO_FALLBACK_POLICY ||
     openTypeFeatures === undefined ||
     variationAxes === undefined
   ) {
@@ -757,6 +777,7 @@ function validateShaping(
 
   return {
     direction,
+    fallbackPolicy,
     language,
     openTypeFeatures,
     script,
@@ -989,19 +1010,16 @@ function rejectFallbackFonts(
   diagnostics: TextPrepDiagnostic[],
 ): void {
   for (const key of ['fallbackFonts', 'fallbackFontIds', 'fallbackChain']) {
-    const fallback = property(object, key);
-    if (fallback === undefined) {
+    if (property(object, key) === undefined) {
       continue;
     }
-    if (!Array.isArray(fallback) || fallback.length > 0) {
-      diagnostics.push(
-        diagnostic(
-          'GEORDI_TEXT_PREP_FALLBACK_REQUIRED',
-          `${path}.${key}`,
-          'The first strict text-prep profile rejects fallback chains.',
-        ),
-      );
-    }
+    diagnostics.push(
+      diagnostic(
+        'GEORDI_TEXT_PREP_FALLBACK_REQUIRED',
+        `${path}.${key}`,
+        'Use $.shaping.fallbackPolicy: no-fallback/1; fallback-chain fields are unsupported.',
+      ),
+    );
   }
 }
 

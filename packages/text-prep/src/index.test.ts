@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { canonicalJsonPort, type JsonObject } from '@flyingrobots/geordi-core';
 import {
   FIXED_26_6_POSITION_ENCODING,
+  NO_FALLBACK_POLICY,
   OUTLINE_PATHS_EVIDENCE_KIND,
   STRICT_POSITIONED_GLYPH_RUN_PROFILE,
   TEXT_PREP_BOUNDARY_PROFILE,
@@ -53,6 +54,7 @@ function makeInput(overrides: JsonObject = {}): JsonObject {
     },
     shaping: {
       direction: 'ltr',
+      fallbackPolicy: NO_FALLBACK_POLICY,
       language: 'en',
       openTypeFeatures: [],
       script: 'Latn',
@@ -172,6 +174,7 @@ describe('validateTextPrepInput', () => {
       },
       shaping: {
         direction: 'rtl',
+        fallbackPolicy: 'font-fallback-chain/1',
         language: 'ar',
         openTypeFeatures: [],
         script: 'Arab',
@@ -201,6 +204,74 @@ describe('validateTextPrepInput', () => {
           'GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE',
           'GEORDI_TEXT_PREP_UNSUPPORTED_VARIABLE_AXES',
         ]),
+      );
+    }
+  });
+
+  it('requires the explicit no-fallback shaping policy and rejects empty fallback fields', () => {
+    const missingPolicy = validateTextPrepInput(
+      makeInput({
+        shaping: {
+          direction: 'ltr',
+          language: 'en',
+          openTypeFeatures: [],
+          script: 'Latn',
+          shapingFingerprintHash: HASH,
+          shapingFingerprintPath:
+            'fixtures/render-everywhere/strict-text/generated/geordi.shaping-fingerprint.geordi.json',
+          shapingProfile: TEXT_PREP_SHAPING_FINGERPRINT_PROFILE,
+          variationAxes: [],
+        },
+      }),
+    );
+    const input = makeInput({
+      font: {
+        faceIndex: 0,
+        fallbackFontIds: [],
+        fontFileHash: HASH,
+        fontFormat: 'ttf',
+        fontId: 'lato-regular',
+        fontPackHash: HASH,
+        fontPackPath: 'fixtures/render-everywhere/assets/fonts/font-pack.geordi.json',
+      },
+      shaping: {
+        direction: 'ltr',
+        fallbackChain: [],
+        fallbackPolicy: 'none/1',
+        language: 'en',
+        openTypeFeatures: [],
+        script: 'Latn',
+        shapingFingerprintHash: HASH,
+        shapingFingerprintPath:
+          'fixtures/render-everywhere/strict-text/generated/geordi.shaping-fingerprint.geordi.json',
+        shapingProfile: TEXT_PREP_SHAPING_FINGERPRINT_PROFILE,
+        variationAxes: [],
+      },
+    });
+
+    expect(missingPolicy.ok).toBe(false);
+    if (!missingPolicy.ok) {
+      expect(missingPolicy.diagnostics).toContainEqual(
+        expect.objectContaining({
+          code: 'GEORDI_TEXT_PREP_FALLBACK_REQUIRED',
+          path: '$.shaping.fallbackPolicy',
+        }),
+      );
+    }
+
+    const result = validateTextPrepInput(input);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.diagnostics.map((issue) => issue.path)).toEqual(
+        expect.arrayContaining([
+          '$.font.fallbackFontIds',
+          '$.shaping.fallbackChain',
+          '$.shaping.fallbackPolicy',
+        ]),
+      );
+      expect(result.diagnostics.map((issue) => issue.code)).toEqual(
+        expect.arrayContaining(['GEORDI_TEXT_PREP_FALLBACK_REQUIRED']),
       );
     }
   });
@@ -283,6 +354,7 @@ describe('prepareTextPrepGenerationPlan', () => {
       expect(first.plan.planVersion).toBe(TEXT_PREP_GENERATION_PLAN_VERSION);
       expect(first.plan.generatedOutputVersion).toBe(TEXT_PREP_GENERATED_OUTPUT_VERSION);
       expect(first.plan.mayFeedStrictRenderer).toBe(false);
+      expect(first.plan.shaping.fallbackPolicy).toBe(NO_FALLBACK_POLICY);
       expect(first.serializedPlan).not.toContain('"sourceText"');
       expect(first.serializedPlan).toContain(sha256Utf8('GEORDI'));
     }

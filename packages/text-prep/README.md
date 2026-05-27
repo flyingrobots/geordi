@@ -32,8 +32,9 @@ canonical JSON and may be reviewed by strict fixture validators, but it still la
 evidence, receipt, comparison, and bundle-manifest coverage.
 
 The generation plan is audit data, not renderer input. It contains source hashes, content-addressed
-font identity, shaping fingerprint identity, geometry policy, prepared fixture hash, and output
-intent. It intentionally omits the pixel-authoritative source string and declares
+font identity, shaping fingerprint identity, explicit `no-fallback/1` policy, geometry policy,
+prepared fixture hash, and output intent. It intentionally omits the pixel-authoritative source
+string and declares
 `mayFeedStrictRenderer: false` until later slices emit evidence packs, receipts, generated output
 manifests, and comparison gates.
 
@@ -53,7 +54,7 @@ The first profile rejects unsupported or unstable inputs with stable diagnostic 
 | `GEORDI_TEXT_PREP_COMPARE_MISSING_ARTIFACT` | A comparison target is absent or unreadable. |
 | `GEORDI_TEXT_PREP_HOST_FONT_LOOKUP` | Input attempted host/system font lookup. |
 | `GEORDI_TEXT_PREP_IO_ERROR` | CLI input or output file IO failed. |
-| `GEORDI_TEXT_PREP_FALLBACK_REQUIRED` | Input attempted a fallback chain. |
+| `GEORDI_TEXT_PREP_FALLBACK_REQUIRED` | Input omitted or misdeclared `fallbackPolicy: "no-fallback/1"`, or attempted a fallback-chain field. |
 | `GEORDI_TEXT_PREP_MISSING_FINGERPRINT` | Shaping did not use `geordi-text-prep-shaping-fingerprint/1`. |
 | `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE` | Source text requested multiline/wrapping behavior. |
 | `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI` | Input requested bidi or non-Latin first-profile shaping. |
@@ -68,5 +69,6 @@ The first profile rejects unsupported or unstable inputs with stable diagnostic 
 - no generated output bundle manifest yet;
 - no generated receipt yet;
 - no runtime text shaping;
+- no font fallback;
 - no host font lookup;
 - no required WASM dependency.

@@ -19,7 +19,7 @@
     "roundingPolicy": "precomputed-fixed-26.6/1"
   },
   "id": "render-everywhere:strict-text:generated-geordi",
-  "inputHash": "sha256:f9e374d5d23e3c7aa9c8a2707a27508a459ee4b0669a9fbc1e28410a4b180f6f",
+  "inputHash": "sha256:7b0fd1d06155d9ed64135aa9adf3556da3b19ecc2dabbe68950bc938d1070004",
   "mayFeedStrictRenderer": false,
   "output": {
     "evidenceKind": "outlinePaths",
@@ -30,6 +30,7 @@
   "preparedFixtureHash": "sha256:bb9f043434fff814672d2f60201b98325dabd503f5cfbe762d7058c7bf97aab5",
   "shaping": {
     "direction": "ltr",
+    "fallbackPolicy": "no-fallback/1",
     "language": "en",
     "openTypeFeaturesHash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
     "script": "Latn",

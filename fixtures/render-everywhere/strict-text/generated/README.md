@@ -12,7 +12,7 @@ geordi.strict-text.geordi.json
 
 `geordi.text-prep.input.geordi.json` is pinned `geordi-text-prep-input/1` data. It identifies source
 hashes, content-addressed Lato font identity, first-profile geometry policy, shaping fingerprint
-identity, and explicitly prepared glyph-run/line-box data.
+identity, explicit `no-fallback/1` policy, and explicitly prepared glyph-run/line-box data.
 
 `text-prep.generation-plan.geordi.json` is deterministic audit data emitted by
 `geordi-text-prep prepare`. It is not renderer input and declares `mayFeedStrictRenderer: false`.
@@ -38,4 +38,4 @@ Current nonclaims:
 - no generated output bundle manifest yet;
 - no text shaping engine;
 - no line-box measurement engine;
-- no fallback, wrapping, bidi, complex script, or variable-axis support.
+- no font fallback, wrapping, bidi, complex script, or variable-axis support.

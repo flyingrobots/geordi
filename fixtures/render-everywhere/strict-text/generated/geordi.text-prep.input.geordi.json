@@ -93,6 +93,7 @@
   },
   "shaping": {
     "direction": "ltr",
+    "fallbackPolicy": "no-fallback/1",
     "language": "en",
     "openTypeFeatures": [],
     "script": "Latn",

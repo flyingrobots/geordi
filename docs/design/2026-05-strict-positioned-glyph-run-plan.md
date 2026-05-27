@@ -1059,7 +1059,7 @@ Required fingerprint fields:
 | Shaper identity | `shaperName`, `shaperVersion`, `shaperBuildHash`, `shaperConfigHash` | Identifies the hard shaping kernel whose behavior affects glyph identity and positions. |
 | Font identity | `fontPackHash`, `fontId`, `fontFileHash`, `faceIndex`, `fontFormat` | Binds glyph ids to exact font bytes and face selection. |
 | Source identity | `sourceTextHash`, `sourceEncoding`, `normalizationProfile`, `semanticLanguage` | Makes source text and Unicode normalization reviewable without making strings runtime authority. |
-| Shaping inputs | `script`, `language`, `direction`, `openTypeFeatures`, `variationAxes` | Captures inputs that can change substitution, positioning, or metrics. |
+| Shaping inputs | `script`, `language`, `direction`, `fallbackPolicy`, `openTypeFeatures`, `variationAxes` | Captures inputs that can change substitution, positioning, metrics, or font selection. |
 | Geometry policy | `pxPerEm`, `coordinateSpace`, `roundingPolicy`, `baselinePolicy`, `lineBoxPolicy` | Binds numeric conversion and line metrics to deterministic rules instead of host measurement. |
 | Output identity | `glyphRunHash`, `lineBoxHash`, `glyphEvidenceKind`, `glyphEvidencePackHash`, `fixtureHash` | Links the fingerprint to the generated artifacts that runtimes actually consume. |
 
@@ -1070,6 +1070,8 @@ Canonicalization rules:
 - Hash fields use `sha256:` lowercase hex strings.
 - OpenType feature records are sorted by tag, then value.
 - Variation-axis records are sorted by axis tag and must be empty for the first static-font profile.
+- `fallbackPolicy` must be `no-fallback/1` for the first profile; fallback-chain fields must not
+  appear as empty arrays or future-looking placeholders.
 - `generatedAtPolicy` must be `no-wall-clock-input/1` until a later reproducibility profile states
   how timestamps are excluded from artifact hashes.
 - `normalizationProfile` must name both the normalization form and the Unicode data version used by
@@ -1359,7 +1361,7 @@ The input validator requires:
 - content-addressed font-pack path/hash, font id, font file hash, face index, and `ttf` format;
 - `shapingProfile: "geordi-text-prep-shaping-fingerprint/1"` plus fingerprint path/hash;
 - first-profile shaping metadata: `script: "Latn"`, `direction: "ltr"`, language, OpenType
-  feature list, and empty variation-axis list;
+  feature list, `fallbackPolicy: "no-fallback/1"`, and empty variation-axis list;
 - fixed 26.6 geometry policy, rounding policy, baseline policy, line-box policy, and output intent.
 
 The plan output carries only hashes and policy fields required for later artifact generation:
@@ -1426,7 +1428,7 @@ Stable diagnostics introduced by this slice:
 | `GEORDI_TEXT_PREP_BAD_PATH` | Font or shaping fingerprint path is not repository-relative POSIX. |
 | `GEORDI_TEXT_PREP_HOST_FONT_LOOKUP` | Input attempted host/system font lookup. |
 | `GEORDI_TEXT_PREP_IO_ERROR` | CLI input or output file IO failed. |
-| `GEORDI_TEXT_PREP_FALLBACK_REQUIRED` | Input attempted a fallback chain. |
+| `GEORDI_TEXT_PREP_FALLBACK_REQUIRED` | Input omitted or misdeclared `fallbackPolicy: "no-fallback/1"`, or attempted a fallback-chain field. |
 | `GEORDI_TEXT_PREP_MISSING_FINGERPRINT` | Input omitted `geordi-text-prep-shaping-fingerprint/1`. |
 | `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE` | Source requested multiline/wrapping behavior. |
 | `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI` | Input requested bidi or non-Latin first-profile shaping. |
@@ -1594,6 +1596,38 @@ Source text, fixture id, and receipt metadata are not part of the line-box check
 
 S086 does not add generated receipt files or fallback-chain validation. S087 owns the no-fallback
 validator.
+
+### S087 No-Fallback Validator
+
+S087 makes no-fallback an explicit text-prep shaping policy instead of relying on the absence of
+fallback-chain data. The first strict text-prep profile now requires:
+
+~~~json
+{
+  "shaping": {
+    "fallbackPolicy": "no-fallback/1"
+  }
+}
+~~~
+
+The validator rejects any of these keys wherever they appear under `font` or `shaping`:
+
+~~~text
+fallbackFonts
+fallbackFontIds
+fallbackChain
+~~~
+
+Presence alone is invalid, including empty arrays. Empty fallback arrays are not a stable contract;
+`fallbackPolicy: "no-fallback/1"` is the only first-profile sentinel.
+
+The generation plan carries `shaping.fallbackPolicy` forward so audit tooling can verify that a
+generated glyph-run plan did not depend on host font fallback or a hidden fallback chain. The
+committed generated text-prep input and generation plan were regenerated with the explicit
+no-fallback policy, while the generated strict text fixture bytes remain unchanged.
+
+S087 does not add a separate fallback-chain failure fixture. S088 owns the committed rejection
+fixture that proves the diagnostic survives outside unit tests.
 
 ## Backlog And Design Index Alignment
 
