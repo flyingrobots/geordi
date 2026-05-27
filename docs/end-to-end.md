@@ -24,7 +24,7 @@ The repository currently has three paths that are intentionally converging:
 
 4. The strict positioned glyph-run text path:
    A checked-in strict text fixture, content-addressed font pack, outline evidence pack, and probe
-   policy are validated and rendered by the browser harness without platform text APIs.
+   policy are validated and rendered by browser and native harnesses without platform text APIs.
 
 The broader GPVue SDK is still planned. A constrained GPVue fixture compiler exists for the current
 rectangle proof, while the bunny proof is intentionally asset-driven rather than core IR-driven.
@@ -71,9 +71,22 @@ font-pack.geordi.json
 -> named probes and nonblank-bounds containment
 ```
 
+The native strict text proof follows the same artifact path and renders into an offscreen RGBA8
+buffer:
+
+```text
+font-pack.geordi.json
+-> geordi.strict-text.geordi.json
+-> geordi.outline-evidence.geordi.json
+-> geordi.probe-policy.geordi.json
+-> Rust software outline rendering
+-> native nonblank bounds and probe-policy samples
+-> rendered=true and smoke=passed
+```
+
 Today, the rectangle browser/native proof uses the fixture at
 `fixtures/render-everywhere/hello-panel/scene.geordi.json`. The bunny proof uses the asset bundle at
-`fixtures/render-everywhere/assets/stanford-bunny`. The strict text browser proof uses fixture
+`fixtures/render-everywhere/assets/stanford-bunny`. The strict text proof uses fixture
 assets in `fixtures/render-everywhere/strict-text` plus the font pack in
 `fixtures/render-everywhere/assets/fonts`.
 
@@ -985,6 +998,49 @@ Expected success includes:
 smoke=passed
 ```
 
+### Native Strict Text Path
+
+The native strict text path does not load `scene.geordi.json` and does not call OS text APIs. It
+loads a strict text fixture, resolves its font pack, validates the committed outline evidence pack,
+draws fill-only outline geometry into an RGBA8 buffer, and checks the fixture-local probe policy.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant CLI as native-render-everywhere
+  participant Fixture as Strict Text Fixture
+  participant Font as Font Pack
+  participant Evidence as Outline Evidence
+  participant Renderer as geordi-renderer
+  participant Image as RGBA8 Buffer
+  participant Probes as Probe Policy
+
+  CLI->>Fixture: read geordi.strict-text.geordi.json
+  Fixture->>Fixture: validate profile, glyph runs, line boxes
+  CLI->>Font: load font-pack.geordi.json and font bytes
+  Font->>Font: verify content hashes and referenced font ids
+  CLI->>Evidence: load geordi.outline-evidence.geordi.json
+  Evidence->>Evidence: validate commands, coverage, paint, line-box containment
+  CLI->>Renderer: render_strict_text_outline_glyphs_to_image()
+  Renderer->>Image: fill nonzero outline geometry
+  CLI->>Probes: check nonblank bounds and named samples
+  Probes-->>CLI: rendered=true and smoke=passed
+```
+
+Expected native strict text success includes:
+
+```text
+rendererName=rust-software-outline-glyphs
+fixtureId=render-everywhere:strict-text:geordi
+evidenceKind=outlinePaths
+textProfile=geordi-strict-positioned-glyph-run/1
+positionEncoding=geordi-fixed-26.6/1
+semanticTextAffectsPixels=false
+bounds=passed
+rendered=true
+smoke=passed
+```
+
 ### Native Bunny Mesh Path
 
 The native bunny path uses the same fixture descriptor, asset manifest, and PLY bytes as the browser
@@ -1428,6 +1484,8 @@ They are expected to agree on:
 - bunny asset hash
 - bunny mesh counts and bounds
 - bunny sampled-frame metadata
+- strict text fixture/font/evidence hashes
+- strict text profile, position encoding, semantic-text nonauthority, probe policy, and bounds policy
 
 That is platform agnosticism with a testable contract, not just a slogan. The rectangle proof uses
 exact pixel probes. The bunny proof uses shared asset identity plus deterministic sampled-frame
@@ -1451,6 +1509,17 @@ That gate also exercises the `Text` panel. It validates the strict positioned gl
 font pack, outline evidence, and probe policy; samples named fill and transparent pixels; verifies
 rendered nonblank bounds; and fails if browser text APIs are called while producing strict text
 pixels.
+
+The native strict text smoke gate:
+
+```bash
+cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+```
+
+That gate validates the same strict text fixture family, renders through Rust software outline
+geometry into an offscreen image buffer, reports browser-aligned metadata fields, samples the same
+probe policy, and fails before success on unsupported features, missing or extra evidence, line-box
+escape, unsupported paint, blank output, or nonblank pixels outside the allowed bounds.
 
 The native smoke gate:
 
@@ -1563,7 +1632,7 @@ boundary either validates or fails loudly.
 The current repo does not yet claim:
 
 - a general GPVue application SDK
-- full browser/native parity for text
+- full antialiasing parity for text
 - deterministic font shaping
 - binary `.geordi` packing
 - WebGPU, Metal, Vulkan, or wgpu rendering

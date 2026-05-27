@@ -34,7 +34,8 @@ Active proof layer:
 
 - Strict text is being built fixture-first as `geordi-strict-positioned-glyph-run/1`.
 - The work currently proves content-addressed font assets, strict text manifests, positioned glyph
-  evidence, validation, and cross-runtime agreement before any broad text rendering claim is made.
+  evidence, browser/native validation, browser/native outline rendering, metadata equality, coarse
+  probes, and nonblank-bounds containment before any broad text rendering claim is made.
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
   Wesley/common-type generation.
 
@@ -189,6 +190,7 @@ Run the render-everywhere smoke paths:
 ```bash
 pnpm test:render-everywhere:gpvue
 pnpm test:render-everywhere:bunny
+pnpm test:render-everywhere:strict-text
 ```
 
 ## Compiler Usage

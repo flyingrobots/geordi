@@ -117,7 +117,7 @@ digraph StrictPositionedGlyphRunPlan {
   subgraph cluster_shaping {
     label="Arc 5: Shaping";
     color="#e2e8f0";
-    S076 [label="S076\nShaping implementation decision", color="#dc2626", penwidth=4];
+    S076 [label="S076\nShaping implementation decision", color="#16a34a", penwidth=4];
     S077 [label="S077\nShaping profile fingerprint law", color="#dc2626", penwidth=4];
     S078 [label="S078\nShaping spike outside compliance path", color="#dc2626", penwidth=4];
     S079 [label="S079\nCompiler text preparation boundary", color="#dc2626", penwidth=4];
@@ -140,7 +140,7 @@ digraph StrictPositionedGlyphRunPlan {
     label="Docs and Gates";
     color="#e2e8f0";
     S074 [label="S074\nBrowser text demo docs", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S075 [label="S075\nNative text demo docs", color="#16a34a", penwidth=4];
+    S075 [label="S075\nNative text demo docs", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S093 [label="S093\nRaw runtime text noncompliance docs", color="#dc2626", penwidth=4];
     S094 [label="S094\nEnd-to-end text pipeline docs", color="#dc2626", penwidth=4];
     S095 [label="S095\nRender-everywhere text docs", color="#dc2626", penwidth=4];

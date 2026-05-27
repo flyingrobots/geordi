@@ -692,6 +692,14 @@ route; list expected metadata fields; and preserve the no-platform-text-API spie
 `strokeText`, `measureText`, and `FontFace`. The docs explicitly keep the proof outside `geordi-ir/1`
 and outside general text support.
 
+S075 documents the native strict text demo as the Rust `--strict-text-smoke` proof. The native docs
+name the same strict text fixture, outline evidence, probe policy, and font-pack assets; describe
+fixture path resolution and explicit evidence overrides; record browser-aligned output fields; and
+preserve hard failures for unsupported features, missing or unreferenced evidence, line-box escape,
+unsupported paint, blank output, probe mismatch, and nonblank-bounds escape. The docs explicitly
+keep native strict text outside OS text APIs, host fallback, native window presentation, and broad
+`geordi-ir/1` text support.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

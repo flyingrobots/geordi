@@ -23,13 +23,14 @@ one canonical Stanford bunny mesh asset
 -> coarse nonblank render smoke
 ```
 
-It also includes the first strict text browser proof outside `geordi-ir/1`:
+It also includes the first strict text proof outside `geordi-ir/1`:
 
 ```text
 one strict positioned glyph-run fixture
 -> one content-addressed font pack
 -> one fixture-local outline evidence pack
 -> browser Canvas path rendering
+-> native Rust software outline rendering
 -> metadata, probe-policy, and no-platform-text-API gates
 ```
 
@@ -49,11 +50,11 @@ Stanford bunny PLY bytes, validate the same mesh manifest, report the same asset
 same vertex and face counts, and compute comparable fixed-frame rotation metadata for the same
 sampled frames. The bunny path is a mesh sanity proof, not a pixel-identical 3D rasterization proof.
 
-The strict text browser demo proves another separate claim: the browser harness can load a checked-in
-`geordi-strict-positioned-glyph-run/1` fixture, verify the content-addressed font pack and
-fixture-local `outlinePaths` evidence, draw glyph outlines with Canvas path APIs, and prove through
-tests that Canvas text APIs and `FontFace` are not used. This is not a general text-rendering claim
-and it is not a `geordi-ir/1` text-node claim.
+The strict text demo proves another separate claim: the browser and native harnesses can load a
+checked-in `geordi-strict-positioned-glyph-run/1` fixture, verify the content-addressed font pack and
+fixture-local `outlinePaths` evidence, draw glyph outlines without platform text APIs, and compare
+metadata plus scoped probes. This is not a general text-rendering claim and it is not a `geordi-ir/1`
+text-node claim.
 
 The shared fixture is:
 
@@ -153,7 +154,7 @@ rotationAxis=[3,5,2]
 sampledFrames=0,15,60
 ```
 
-The strict text browser proof uses:
+The strict text proof uses:
 
 ```text
 fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
@@ -162,7 +163,7 @@ fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json
 fixtures/render-everywhere/assets/fonts/font-pack.geordi.json
 ```
 
-The browser `Text` panel currently reports:
+The browser `Text` panel and native `--strict-text-smoke` mode currently agree on:
 
 ```text
 rendererName=browser-canvas-outline-glyphs
@@ -175,6 +176,9 @@ drawGlyphCount=6
 semanticTextAffectsPixels=false
 ```
 
+The native renderer reports `rendererName=rust-software-outline-glyphs`; renderer names remain
+runtime-specific.
+
 ## Non-Claims
 
 The interactive browser and native demo commands do not compile GPVue while serving the page or
@@ -185,7 +189,8 @@ fixture directory and feeds both runtime gates from it.
 This demo does not claim general deterministic text. The strict text path is a separate prepared
 artifact proof, outside `geordi-ir/1`, that renders positioned glyph evidence. It does not shape
 strings, resolve host fonts, wrap lines, use CSS text, or provide a broad `shape.text` feature.
-Semantic strings are metadata only and must not determine pixels.
+Semantic strings are metadata only and must not determine pixels. The strict text path does not claim
+full antialiasing identity across browser and native rasterizers.
 
 This demo does not claim GPU shader parity. The browser package name includes `runtime-webgl`, but
 the current browser implementation is a Canvas 2D proof path. The native Rust harness renders the
@@ -375,6 +380,35 @@ Expected behavior:
 - the window draws the Stanford bunny as a rotating wireframe mesh;
 - pressing Escape closes the window.
 
+Run native strict text smoke:
+
+```bash
+cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+```
+
+Expected native strict text output includes:
+
+```text
+Geordi native strict text fixture loaded
+rendererName=rust-software-outline-glyphs
+fixtureId=render-everywhere:strict-text:geordi
+evidenceKind=outlinePaths
+textProfile=geordi-strict-positioned-glyph-run/1
+positionEncoding=geordi-fixed-26.6/1
+glyphCount=6
+drawGlyphCount=6
+commandCount=155
+semanticTextAffectsPixels=false
+bounds=passed
+rendered=true
+smoke=passed
+```
+
+The native strict text smoke validates fixture shape, font-pack hashes, font references, outline
+evidence, glyph coverage, line-box containment, fill-only paint scope, nonblank bounds, and
+fixture-local probe-policy samples before reporting success. It opens no window and does not call OS
+text APIs.
+
 ## Shared Fixture Contract
 
 Both harnesses consume the same fixture directory. There is no browser-specific scene and no
@@ -451,6 +485,7 @@ Run the native gates:
 cargo test -p native-render-everywhere
 cargo clippy -p native-render-everywhere --all-targets -- -D warnings
 cargo run -p native-render-everywhere -- --smoke fixtures/render-everywhere/hello-panel
+cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
 ```
 
 Run the bunny gates:
@@ -483,6 +518,12 @@ Run the end-to-end GPVue render-everywhere gate:
 pnpm test:render-everywhere:gpvue
 ```
 
+Run the strict text render-everywhere gate:
+
+```bash
+pnpm test:render-everywhere:strict-text
+```
+
 ## Where This Goes Next
 
 The constrained compiler is now wired into the smoke path:
@@ -500,8 +541,8 @@ The browser and native interactive demo commands still load the checked-in artif
 `pnpm test:render-everywhere:gpvue` gate is the command path that proves compile-then-render across
 both runtimes.
 
-The bunny mesh milestone is complete for its stated claim boundary. The next render-everywhere
-checkpoint is strict text/font law:
+The bunny mesh milestone is complete for its stated claim boundary. The active render-everywhere
+checkpoint is strict text/font evidence:
 
 ```text
 one content-addressed font pack

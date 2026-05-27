@@ -118,6 +118,71 @@ cargo test -p native-render-everywhere
 cargo clippy -p native-render-everywhere --all-targets -- -D warnings
 ```
 
+## Strict Text Native Demo
+
+The native strict text mode is the Rust proof for `geordi-strict-positioned-glyph-run/1`. It is not
+part of `geordi-ir/1` yet. The mode consumes the same canonical strict text bundle as the browser
+demo:
+
+```text
+fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json
+fixtures/render-everywhere/assets/fonts/font-pack.geordi.json
+```
+
+Run it with:
+
+```bash
+cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+```
+
+The CLI resolves the fixture path inside `fixtures/render-everywhere/strict-text`, derives the
+matching `.outline-evidence.geordi.json` path unless `--evidence` is supplied, verifies the font-pack
+manifest and referenced font bytes, validates fixture-to-evidence glyph coverage, checks translated
+outline bounds against line boxes, renders fill-only outline geometry into an offscreen RGBA8 buffer,
+and samples the fixture-local probe policy.
+
+Expected contract fields:
+
+| Field | Expected value or source |
+| --- | --- |
+| Renderer | `rust-software-outline-glyphs` |
+| Fixture id | `render-everywhere:strict-text:geordi` |
+| Text profile | `geordi-strict-positioned-glyph-run/1` |
+| Position encoding | `geordi-fixed-26.6/1` |
+| Evidence kind | `outlinePaths` |
+| Glyph count | `6` |
+| Draw glyph count | `6` |
+| Command count | `155` |
+| Bounds result | `bounds=passed` |
+| Smoke result | `smoke=passed` |
+| Semantic text | `semanticTextAffectsPixels=false` |
+
+The strict text smoke path treats these as hard failures before reporting success:
+
+| Failure family | Diagnostic surface |
+| --- | --- |
+| Escaping fixture or evidence path | custom native CLI argument/load error |
+| Unsupported strict text feature | strict text validation error before drawing |
+| Missing glyph evidence | `GEORDI_TEXT_EVIDENCE_MISSING_GLYPH` |
+| Unreferenced glyph evidence | `GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH` |
+| Outline outside line box | `GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX` |
+| Unsupported evidence paint | `GEORDI_TEXT_EVIDENCE_BAD_PAINT` |
+| Blank rendered output | `NativeStrictTextSmokeError` |
+| Probe mismatch | `NativeStrictTextProbeError` |
+| Nonblank pixels outside allowed bounds | native strict text bounds error |
+
+Current native text nonclaims:
+
+- no OS text API path;
+- no host font fallback;
+- no runtime shaping, kerning, ligatures, glyph substitution, wrapping, bidi, or complex scripts;
+- no variable font axes;
+- no native window mode for strict text;
+- no full antialiasing parity with browser;
+- no broad `shape.text` support inside `geordi-ir/1`.
+
 ## Expected Smoke Output
 
 ```text

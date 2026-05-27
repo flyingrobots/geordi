@@ -436,6 +436,21 @@ no CSS text, no platform-native text path, no host font fallback, no runtime sha
 no bidi or complex scripts, no variable font axes, no full antialiasing parity, and no broad
 `geordi-ir/1` `shape.text` support.
 
+## S075 Native Text Demo Docs
+
+The native render-everywhere docs now describe `--strict-text-smoke` as the Rust proof for
+`geordi-strict-positioned-glyph-run/1`, not as OS text support. The documented path names the exact
+strict text fixture, outline evidence, probe policy, and font-pack assets; explains fixture path
+resolution and evidence override behavior; records the browser-aligned metadata fields; and lists
+the hard failure families for escaping paths, unsupported features, missing or unknown evidence,
+line-box escape, unsupported paint, blank output, probe mismatch, and nonblank-bounds escape.
+
+The high-level README, render-everywhere guide, end-to-end guide, status signpost, and vision
+signpost now describe strict text as a browser/native prepared-artifact proof with metadata and
+coarse probes. Current nonclaims remain: no OS text APIs, no host font fallback, no runtime shaping,
+no wrapping, no bidi or complex scripts, no variable font axes, no native strict text window mode,
+no full antialiasing parity, and no broad `geordi-ir/1` `shape.text` support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -453,7 +468,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S075**.
+Current OPEN node: **S076**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1275,7 +1290,7 @@ Current OPEN node: **S075**.
 
 ### S075: Native text demo docs
 
-- [ ] **S075: Native text demo docs** (OPEN)
+- [x] **S075: Native text demo docs** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with native text demo docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Native text demo docs.
@@ -1286,7 +1301,7 @@ Current OPEN node: **S075**.
 
 ### S076: Shaping implementation decision
 
-- [ ] **S076: Shaping implementation decision** (BLOCKED)
+- [ ] **S076: Shaping implementation decision** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with shaping implementation decision documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Shaping implementation decision.
