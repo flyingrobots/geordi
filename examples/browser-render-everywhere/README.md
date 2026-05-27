@@ -86,6 +86,70 @@ browser calls Canvas text APIs or `FontFace` while producing the strict text pro
 the gate uses those files instead; this is how the root render-everywhere smoke shares one temporary
 fixture directory with the native Rust harness.
 
+## Strict Text Browser Demo
+
+The `Text` panel is the browser proof for `geordi-strict-positioned-glyph-run/1`. It is not part of
+`geordi-ir/1` yet. It loads this fixture-local bundle:
+
+```text
+fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json
+fixtures/render-everywhere/assets/fonts/font-pack.geordi.json
+```
+
+Startup validates the strict text fixture, font-pack bytes, font references, outline evidence
+shape, outline command state, fixture-to-evidence glyph coverage, line-box containment, and fill-only
+paint scope before drawing. Valid input renders through Canvas path commands from committed
+`outlinePaths` evidence:
+
+```text
+moveTo / lineTo / quadTo / cubicTo / closePath -> CanvasPath -> fill
+```
+
+The browser demo must not call:
+
+- `CanvasRenderingContext2D.fillText`;
+- `CanvasRenderingContext2D.strokeText`;
+- `CanvasRenderingContext2D.measureText`;
+- `FontFace`;
+- host font lookup or fallback APIs.
+
+Expected `Text metadata` fields include:
+
+| Field | Expected value or source |
+| --- | --- |
+| Renderer | `browser-canvas-outline-glyphs` |
+| Fixture id | `render-everywhere:strict-text:geordi` |
+| Text profile | `geordi-strict-positioned-glyph-run/1` |
+| Position encoding | `geordi-fixed-26.6/1` |
+| Evidence kind | `outlinePaths` |
+| Glyph count | `6` |
+| Draw glyph count | `6` |
+| Semantic text | `semanticTextAffectsPixels=false` |
+
+The browser gate checks visibility, exact metadata fields, named probe-policy samples, nonblank
+bounds containment, and browser text API spies. It treats these as hard failures:
+
+| Failure family | Diagnostic surface |
+| --- | --- |
+| Missing glyph evidence | `GEORDI_TEXT_EVIDENCE_MISSING_GLYPH` |
+| Unreferenced glyph evidence | `GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH` |
+| Outline outside line box | `GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX` |
+| Unsupported evidence paint | `GEORDI_TEXT_EVIDENCE_BAD_PAINT` |
+| Unsupported fixture text paint | strict text feature rejection before drawing |
+| Canvas text or font API call | `BrowserGateStrictTextSmokeError` with recorded calls |
+
+Current browser text nonclaims:
+
+- no CSS text;
+- no platform-native text rendering;
+- no host font fallback;
+- no runtime shaping, kerning, ligatures, glyph substitution, wrapping, bidi, or complex scripts;
+- no variable font axes;
+- no full antialiasing parity with native;
+- no broad `shape.text` support inside `geordi-ir/1`.
+
 Run typecheck, lint, and build:
 
 ```bash

@@ -422,6 +422,20 @@ fixtures/render-everywhere/strict-text/failures/unsupported-text-paint.strict-te
 Current nonclaims remain: no text stroke, gradients, opacity effects, multi-paint text, platform
 text APIs, host font lookup, runtime shaping, or general text support.
 
+## S074 Browser Text Demo Docs
+
+The browser render-everywhere docs now describe the `Text` panel as a strict positioned glyph-run
+proof, not as general text support. The documented path names the exact fixture, outline evidence,
+probe policy, and font-pack assets consumed by the browser harness; the validation sequence before
+drawing; the Canvas path-only rendering route; the expected metadata fields; and the browser gate's
+text API spies for `fillText`, `strokeText`, `measureText`, and `FontFace`.
+
+The higher-level render-everywhere and end-to-end docs now distinguish the strict text browser proof
+from the rectangle `geordi-ir/1` proof and the bunny mesh sanity proof. Current nonclaims remain:
+no CSS text, no platform-native text path, no host font fallback, no runtime shaping, no wrapping,
+no bidi or complex scripts, no variable font axes, no full antialiasing parity, and no broad
+`geordi-ir/1` `shape.text` support.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -439,7 +453,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S074**.
+Current OPEN node: **S075**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1250,7 +1264,7 @@ Current OPEN node: **S074**.
 
 ### S074: Browser text demo docs
 
-- [ ] **S074: Browser text demo docs** (OPEN)
+- [x] **S074: Browser text demo docs** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with browser text demo docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Browser text demo docs.

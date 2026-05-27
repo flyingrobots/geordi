@@ -685,6 +685,13 @@ stroke-like text paint features. The `failures/unsupported-paint.outline-evidenc
 native, and Rust paths reject unsupported paint before drawing instead of treating stroke, gradient,
 opacity-effect, or multi-paint modes as compliant.
 
+S074 documents the browser strict text demo as the first UI-facing `Text` panel proof. The browser
+docs name the exact strict text fixture, outline evidence, probe policy, and font-pack assets;
+describe validation before drawing; identify Canvas path rendering as the only compliant browser
+route; list expected metadata fields; and preserve the no-platform-text-API spies for `fillText`,
+`strokeText`, `measureText`, and `FontFace`. The docs explicitly keep the proof outside `geordi-ir/1`
+and outside general text support.
+
 The first outline evidence command vocabulary is intentionally small:
 
 ~~~ts

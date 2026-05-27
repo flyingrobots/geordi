@@ -22,6 +22,10 @@ The repository currently has three paths that are intentionally converging:
    rendered as a wireframe in browser and native harnesses, and sampled at deterministic rotation
    frames.
 
+4. The strict positioned glyph-run text path:
+   A checked-in strict text fixture, content-addressed font pack, outline evidence pack, and probe
+   policy are validated and rendered by the browser harness without platform text APIs.
+
 The broader GPVue SDK is still planned. A constrained GPVue fixture compiler exists for the current
 rectangle proof, while the bunny proof is intentionally asset-driven rather than core IR-driven.
 That separation is important: the bunny path is proving asset identity, mesh parsing, camera,
@@ -55,9 +59,23 @@ Stanford bunny PLY bytes
 -> same sampled-frame report
 ```
 
+The browser strict text proof follows this path:
+
+```text
+font-pack.geordi.json
+-> geordi.strict-text.geordi.json
+-> geordi.outline-evidence.geordi.json
+-> geordi.probe-policy.geordi.json
+-> browser Canvas path rendering
+-> no fillText/strokeText/measureText/FontFace calls
+-> named probes and nonblank-bounds containment
+```
+
 Today, the rectangle browser/native proof uses the fixture at
 `fixtures/render-everywhere/hello-panel/scene.geordi.json`. The bunny proof uses the asset bundle at
-`fixtures/render-everywhere/assets/stanford-bunny`.
+`fixtures/render-everywhere/assets/stanford-bunny`. The strict text browser proof uses fixture
+assets in `fixtures/render-everywhere/strict-text` plus the font pack in
+`fixtures/render-everywhere/assets/fonts`.
 
 ## One-Screen Pipeline
 
@@ -637,8 +655,9 @@ The browser rendering path uses:
 - `examples/browser-render-everywhere` as the demo harness
 
 Despite the package name, the current implementation is a Canvas 2D proof-of-concept. It prepares
-Geordi IR into runtime nodes, then draws rectangles and text using a 2D canvas context. WebGL shaders
-are planned later.
+Geordi IR into runtime nodes, then draws the rectangle proof using a 2D canvas context. The strict
+text browser demo is a separate fixture mode that draws committed outline evidence with Canvas path
+commands. WebGL shaders are planned later.
 
 ```mermaid
 flowchart TD
@@ -656,6 +675,33 @@ flowchart TD
 
   Manifest --> Fetch --> ManifestParse
   Scene --> Fetch --> Json --> IrValidate --> Profile --> Prepare --> Canvas --> Mount --> Probe
+```
+
+The strict text browser path is deliberately outside `scene.geordi.json` until the text proof
+graduates into core IR:
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Page as Browser Page
+  participant Fixture as Strict Text Fixture
+  participant Font as Font Pack
+  participant Evidence as Outline Evidence
+  participant Policy as Probe Policy
+  participant Renderer as strictTextRender.ts
+  participant Canvas as Canvas Path API
+  participant Gate as Playwright Gate
+
+  Page->>Fixture: fetch geordi.strict-text.geordi.json
+  Page->>Font: fetch font-pack.geordi.json and font bytes
+  Page->>Evidence: fetch geordi.outline-evidence.geordi.json
+  Page->>Policy: fetch geordi.probe-policy.geordi.json
+  Fixture->>Fixture: validate profile, glyph runs, line boxes
+  Font->>Font: verify content hashes and fixture font ids
+  Evidence->>Evidence: validate commands, coverage, paint, bounds
+  Renderer->>Canvas: moveTo/lineTo/quadTo/cubicTo/closePath/fill
+  Gate->>Canvas: assert nonblank bounds and named probes
+  Gate->>Page: assert no fillText/strokeText/measureText/FontFace calls
 ```
 
 ### Browser Runtime Classes
@@ -1400,6 +1446,11 @@ The browser gate:
 ```bash
 pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser
 ```
+
+That gate also exercises the `Text` panel. It validates the strict positioned glyph-run fixture,
+font pack, outline evidence, and probe policy; samples named fill and transparent pixels; verifies
+rendered nonblank bounds; and fails if browser text APIs are called while producing strict text
+pixels.
 
 The native smoke gate:
 

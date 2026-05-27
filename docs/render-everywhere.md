@@ -23,6 +23,16 @@ one canonical Stanford bunny mesh asset
 -> coarse nonblank render smoke
 ```
 
+It also includes the first strict text browser proof outside `geordi-ir/1`:
+
+```text
+one strict positioned glyph-run fixture
+-> one content-addressed font pack
+-> one fixture-local outline evidence pack
+-> browser Canvas path rendering
+-> metadata, probe-policy, and no-platform-text-API gates
+```
+
 The design background lives in
 [`docs/design/2026-05-render-everywhere-demo.md`](./design/2026-05-render-everywhere-demo.md).
 The full source-to-runtime walkthrough lives in [`docs/end-to-end.md`](./end-to-end.md).
@@ -38,6 +48,12 @@ The bunny demo proves a different, deliberately weaker claim: both runtimes load
 Stanford bunny PLY bytes, validate the same mesh manifest, report the same asset hash, parse the
 same vertex and face counts, and compute comparable fixed-frame rotation metadata for the same
 sampled frames. The bunny path is a mesh sanity proof, not a pixel-identical 3D rasterization proof.
+
+The strict text browser demo proves another separate claim: the browser harness can load a checked-in
+`geordi-strict-positioned-glyph-run/1` fixture, verify the content-addressed font pack and
+fixture-local `outlinePaths` evidence, draw glyph outlines with Canvas path APIs, and prove through
+tests that Canvas text APIs and `FontFace` are not used. This is not a general text-rendering claim
+and it is not a `geordi-ir/1` text-node claim.
 
 The shared fixture is:
 
@@ -137,6 +153,28 @@ rotationAxis=[3,5,2]
 sampledFrames=0,15,60
 ```
 
+The strict text browser proof uses:
+
+```text
+fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json
+fixtures/render-everywhere/assets/fonts/font-pack.geordi.json
+```
+
+The browser `Text` panel currently reports:
+
+```text
+rendererName=browser-canvas-outline-glyphs
+fixtureId=render-everywhere:strict-text:geordi
+evidenceKind=outlinePaths
+textProfile=geordi-strict-positioned-glyph-run/1
+positionEncoding=geordi-fixed-26.6/1
+glyphCount=6
+drawGlyphCount=6
+semanticTextAffectsPixels=false
+```
+
 ## Non-Claims
 
 The interactive browser and native demo commands do not compile GPVue while serving the page or
@@ -144,9 +182,10 @@ opening the native window. They load the checked-in `scene.geordi.json` directly
 command, `pnpm test:render-everywhere:gpvue`, is the compile-then-render path that emits a temporary
 fixture directory and feeds both runtime gates from it.
 
-This demo does not claim deterministic text. Text is excluded from the first deterministic
-browser/native proof because portable text requires a strict font pack, a shaping law, and a
-line-breaking law. Until those exist, text is outside the pixel-identical render claim.
+This demo does not claim general deterministic text. The strict text path is a separate prepared
+artifact proof, outside `geordi-ir/1`, that renders positioned glyph evidence. It does not shape
+strings, resolve host fonts, wrap lines, use CSS text, or provide a broad `shape.text` feature.
+Semantic strings are metadata only and must not determine pixels.
 
 This demo does not claim GPU shader parity. The browser package name includes `runtime-webgl`, but
 the current browser implementation is a Canvas 2D proof path. The native Rust harness renders the
@@ -173,6 +212,7 @@ Open the Vite URL printed by the command. The page should show:
 
 - heading: `Geordi Render Everywhere`
 - a `Rectangles` / `Bunny` scene switcher
+- a `Text` scene switcher entry
 - the `Bunny` scene selected by default
 - one visible canvas drawing the rotating Stanford bunny wireframe
 - collapsed `Bunny metadata` and `Rectangle metadata` disclosure panels for debug fields
@@ -181,6 +221,11 @@ Open the Vite URL printed by the command. The page should show:
   artifact hash `sha256:30623d6141ba69c382c14c09eca9adedd40cb02644ff4ee9621de101da6b0082`,
   IR version `geordi-ir/1`, numeric profile `geordi-finite-binary64/1`, and feature requirements
   `geordi/core/1, layout.resolved, shape.rect, paint.solid`
+- the strict positioned glyph-run canvas after selecting `Text`
+- collapsed `Text metadata` including renderer `browser-canvas-outline-glyphs`,
+  `render-everywhere:strict-text:geordi`, `outlinePaths`,
+  `geordi-strict-positioned-glyph-run/1`, `geordi-fixed-26.6/1`, and
+  `semanticTextAffectsPixels=false`
 
 Run the browser gate:
 
@@ -215,6 +260,22 @@ Expected behavior:
 
 The browser unit and Playwright gates sample deterministic frames and metadata. They do not require
 host-time animation to land on a specific wall-clock frame.
+
+Run the browser strict text proof through the Playwright gate:
+
+```bash
+pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser
+```
+
+Expected strict text behavior:
+
+- the gate switches to the `Text` panel;
+- exactly one strict text canvas is visible;
+- named probe-policy samples match exact fill or transparent expectations;
+- nonblank pixels stay inside the evidence-derived allowed bounds;
+- Canvas `fillText`, `strokeText`, `measureText`, and `FontFace` spies record zero calls;
+- missing glyph evidence, unreferenced glyph evidence, line-box overflow, unsupported evidence
+  paint, and unsupported fixture text paint fail before drawing.
 
 ## Native Rust Harness
 
