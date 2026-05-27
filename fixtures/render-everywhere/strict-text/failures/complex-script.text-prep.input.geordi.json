@@ -1,0 +1,44 @@
+{
+  "font": {
+    "faceIndex": 0,
+    "fontFileHash": "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251",
+    "fontFormat": "ttf",
+    "fontId": "lato-regular",
+    "fontPackHash": "sha256:1b7ad58b48a3ad0d1aff0736ef014783945dc0a472de1f14b48c4211eb53533d",
+    "fontPackPath": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json"
+  },
+  "geometry": {
+    "baselinePolicy": "single-line-baseline-y-3072/1",
+    "coordinateSpace": "glyph-origin-top-left-y-down/1",
+    "lineBoxPolicy": "single-line-0-0-12288-4096/1",
+    "positionEncoding": "geordi-fixed-26.6/1",
+    "pxPerEm": 48,
+    "roundingPolicy": "precomputed-fixed-26.6/1"
+  },
+  "id": "render-everywhere:strict-text:complex-script",
+  "inputVersion": "geordi-text-prep-input/1",
+  "output": {
+    "evidenceKind": "outlinePaths",
+    "fixtureId": "render-everywhere:strict-text:complex-script"
+  },
+  "shaping": {
+    "direction": "ltr",
+    "fallbackPolicy": "no-fallback/1",
+    "language": "ar",
+    "openTypeFeatures": [],
+    "script": "Arab",
+    "shapingFingerprintHash": "sha256:4294d2f13356d55ab7a92957d5aa43b0243141eb0728428b94ee666f8c98d7db",
+    "shapingFingerprintPath": "fixtures/render-everywhere/strict-text/generated/geordi.shaping-fingerprint.geordi.json",
+    "shapingProfile": "geordi-text-prep-shaping-fingerprint/1",
+    "variationAxes": []
+  },
+  "source": {
+    "normalizationProfile": "unicode-nfc/15.1",
+    "semanticLanguage": "ar",
+    "sourceEncoding": "utf-8/1",
+    "sourceText": "\u0633\u0644\u0627\u0645",
+    "sourceTextHash": "sha256:bda1fa48345336618741fd2c4bc02809eb099c49a9b02fb5056401ab6d4dc3e6"
+  },
+  "textPrepBoundary": "geordi-text-prep-boundary/1",
+  "textProfile": "geordi-strict-positioned-glyph-run/1"
+}

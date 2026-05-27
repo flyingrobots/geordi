@@ -326,6 +326,35 @@ describe('validateTextPrepInput', () => {
     }
   });
 
+  it('keeps committed bidi and complex-script text-prep fixtures rejected', () => {
+    const cases = [
+      {
+        name: 'bidi-rtl.text-prep.input.geordi',
+        path: '$.shaping.direction',
+      },
+      {
+        name: 'complex-script.text-prep.input.geordi',
+        path: '$.shaping.script',
+      },
+    ] as const;
+
+    for (const item of cases) {
+      const result = validateTextPrepInput(
+        canonicalJsonPort.parse(textPrepFailureFixtureSource(item.name)),
+      );
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.diagnostics).toContainEqual(
+          expect.objectContaining({
+            code: 'GEORDI_TEXT_PREP_UNSUPPORTED_BIDI',
+            path: item.path,
+          }),
+        );
+      }
+    }
+  });
+
   it('rejects unpinned paths and source hash drift', () => {
     const input = makeInput({
       font: {

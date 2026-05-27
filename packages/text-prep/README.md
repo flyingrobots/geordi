@@ -57,6 +57,15 @@ fixtures/render-everywhere/strict-text/failures/multiline.text-prep.input.geordi
 
 It must remain rejected with `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE`.
 
+The committed bidi and complex-script rejection fixtures live at:
+
+```text
+fixtures/render-everywhere/strict-text/failures/bidi-rtl.text-prep.input.geordi.json
+fixtures/render-everywhere/strict-text/failures/complex-script.text-prep.input.geordi.json
+```
+
+Both must remain rejected with `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI`.
+
 ## Current Diagnostics
 
 The first profile rejects unsupported or unstable inputs with stable diagnostic codes:

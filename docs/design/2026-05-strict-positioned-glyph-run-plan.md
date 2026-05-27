@@ -1674,6 +1674,30 @@ loads this committed fixture from disk and requires
 S089 does not add bidi, complex-script, or variable-axis fixtures. S090 and S091 own those
 unsupported-input proofs.
 
+### S090 Bidi And Complex-Script Rejection Fixtures
+
+S090 commits two text-prep failure fixtures:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/bidi-rtl.text-prep.input.geordi.json
+fixtures/render-everywhere/strict-text/failures/complex-script.text-prep.input.geordi.json
+~~~
+
+`bidi-rtl.text-prep.input.geordi.json` isolates `shaping.direction: "rtl"` while keeping Latin
+source text and `script: "Latn"`. It must be rejected with
+`GEORDI_TEXT_PREP_UNSUPPORTED_BIDI` at `$.shaping.direction`.
+
+`complex-script.text-prep.input.geordi.json` isolates `shaping.script: "Arab"` with Arabic
+language/semantic metadata and escaped Arabic source text whose normalized UTF-8 hash is:
+
+~~~text
+sha256:bda1fa48345336618741fd2c4bc02809eb099c49a9b02fb5056401ab6d4dc3e6
+~~~
+
+It must be rejected with `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI` at `$.shaping.script`.
+
+S090 does not add variable-axis rejection fixtures. S091 owns that proof.
+
 ## Backlog And Design Index Alignment
 
 This plan is the active execution source for the P0 backlog item named `Define the strict

@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the lowest active open node is `S090`, bidi and complex-script rejection fixtures, after the
-committed multiline text-prep fixture became part of the rejection corpus.
+the lowest active open node is `S091`, variable-font-axis rejection fixture, after committed bidi
+and complex-script text-prep fixtures became part of the rejection corpus.
 
 ## Completed Capabilities
 
@@ -77,6 +77,7 @@ Current rules:
 | No-fallback validator | Text-prep input requires `shaping.fallbackPolicy: "no-fallback/1"`, carries that policy into the generation plan, and rejects fallback-chain keys by presence under `font` or `shaping`, including empty arrays. |
 | Fallback-chain rejection fixture | `fixtures/render-everywhere/strict-text/failures/fallback-chain.text-prep.input.geordi.json` proves fallback-chain text-prep inputs remain rejected with `GEORDI_TEXT_PREP_FALLBACK_REQUIRED`. |
 | Multiline rejection fixture | `fixtures/render-everywhere/strict-text/failures/multiline.text-prep.input.geordi.json` proves multiline source text remains rejected with `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE`. |
+| Bidi and complex-script rejection fixtures | `fixtures/render-everywhere/strict-text/failures/bidi-rtl.text-prep.input.geordi.json` and `fixtures/render-everywhere/strict-text/failures/complex-script.text-prep.input.geordi.json` prove RTL direction and non-Latin script metadata remain rejected with `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI`. |
 | Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
 | Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054/S055 add independent parsers; S056 hardens command validation; S057-S069 add browser/native render, probe, metadata, and bounds gates; S070-S073 add missing/unknown glyph, line-box containment, and unsupported-paint rejection; S074-S075 align browser/native demo documentation. |
 

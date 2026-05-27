@@ -49,6 +49,8 @@ fixtures/render-everywhere/strict-text/failures/unknown-glyph-evidence.outline-e
 fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
 fixtures/render-everywhere/strict-text/failures/fallback-chain.text-prep.input.geordi.json
 fixtures/render-everywhere/strict-text/failures/multiline.text-prep.input.geordi.json
+fixtures/render-everywhere/strict-text/failures/bidi-rtl.text-prep.input.geordi.json
+fixtures/render-everywhere/strict-text/failures/complex-script.text-prep.input.geordi.json
 ~~~
 
 `bad-outline-command.outline-evidence.geordi.json` is an S056 evidence-pack failure fixture. It
@@ -76,6 +78,10 @@ with `GEORDI_TEXT_PREP_FALLBACK_REQUIRED` before any generated artifact is writt
 UTF-8 hash for `GEORDI\nTEXT` and otherwise keeps first-profile font, geometry, shaping, and
 prepared fixture data valid, so text-prep must reject it with
 `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE`.
+`bidi-rtl.text-prep.input.geordi.json` and `complex-script.text-prep.input.geordi.json` are S090
+text-prep failure fixtures. The first isolates `direction: "rtl"` on Latin source text; the second
+uses Arabic script/language metadata and an escaped Arabic source string. Both must remain rejected
+with `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI`.
 
 Canonical fixture A:
 

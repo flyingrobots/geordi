@@ -671,6 +671,22 @@ from disk and requires `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE` at `$.source.sou
 
 Next OPEN node after this failure fixture: `S090`, bidi and complex-script rejection fixtures.
 
+## S090 Bidi And Complex-Script Rejection Fixtures
+
+The committed bidi and complex-script text-prep failure fixtures now live at:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/bidi-rtl.text-prep.input.geordi.json
+fixtures/render-everywhere/strict-text/failures/complex-script.text-prep.input.geordi.json
+~~~
+
+`bidi-rtl` isolates `shaping.direction: "rtl"` on Latin source text.
+`complex-script` isolates `shaping.script: "Arab"` with Arabic language metadata and escaped Arabic
+source text. The text-prep test suite reads both fixtures from disk and requires
+`GEORDI_TEXT_PREP_UNSUPPORTED_BIDI` on the relevant shaping path.
+
+Next OPEN node after these failure fixtures: `S091`, variable-font-axis rejection fixture.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -688,7 +704,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S090**.
+Current OPEN node: **S091**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1675,7 +1691,7 @@ Current OPEN node: **S090**.
 
 ### S090: Bidi and complex-script rejection fixtures
 
-- [ ] **S090: Bidi and complex-script rejection fixtures** (OPEN)
+- [x] **S090: Bidi and complex-script rejection fixtures** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with bidi and complex-script rejection fixtures documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Bidi and complex-script rejection fixtures.
@@ -1686,7 +1702,7 @@ Current OPEN node: **S090**.
 
 ### S091: Variable-font-axis rejection fixture
 
-- [ ] **S091: Variable-font-axis rejection fixture** (BLOCKED)
+- [ ] **S091: Variable-font-axis rejection fixture** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with variable-font-axis rejection fixture documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Variable-font-axis rejection fixture.
