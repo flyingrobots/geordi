@@ -355,6 +355,24 @@ describe('validateTextPrepInput', () => {
     }
   });
 
+  it('keeps the committed variable-axis text-prep fixture rejected', () => {
+    const result = validateTextPrepInput(
+      canonicalJsonPort.parse(
+        textPrepFailureFixtureSource('variable-axis.text-prep.input.geordi'),
+      ),
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.diagnostics).toContainEqual(
+        expect.objectContaining({
+          code: 'GEORDI_TEXT_PREP_UNSUPPORTED_VARIABLE_AXES',
+          path: '$.shaping.variationAxes',
+        }),
+      );
+    }
+  });
+
   it('rejects unpinned paths and source hash drift', () => {
     const input = makeInput({
       font: {

@@ -1698,6 +1698,30 @@ It must be rejected with `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI` at `$.shaping.scrip
 
 S090 does not add variable-axis rejection fixtures. S091 owns that proof.
 
+### S091 Variable-Font-Axis Rejection Fixture
+
+S091 commits the variable-axis text-prep failure fixture:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/variable-axis.text-prep.input.geordi.json
+~~~
+
+The fixture keeps the first-profile Latin source, content-addressed font identity, no-fallback
+policy, direction, script, and OpenType feature list valid. It isolates a non-empty variation-axis
+list:
+
+~~~json
+{
+  "variationAxes": ["wght=700"]
+}
+~~~
+
+The text-prep unit suite loads this committed fixture from disk and requires
+`GEORDI_TEXT_PREP_UNSUPPORTED_VARIABLE_AXES` at `$.shaping.variationAxes`.
+
+S091 does not implement measured line-box generation. S092 owns the first generated line-box
+measurement rule.
+
 ## Backlog And Design Index Alignment
 
 This plan is the active execution source for the P0 backlog item named `Define the strict

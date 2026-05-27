@@ -687,6 +687,20 @@ source text. The text-prep test suite reads both fixtures from disk and requires
 
 Next OPEN node after these failure fixtures: `S091`, variable-font-axis rejection fixture.
 
+## S091 Variable-Font-Axis Rejection Fixture
+
+The committed variable-axis text-prep failure fixture now lives at:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/variable-axis.text-prep.input.geordi.json
+~~~
+
+It isolates `variationAxes: ["wght=700"]` while keeping first-profile Latin source, no-fallback
+shaping, font identity, and geometry valid. The text-prep test suite reads it from disk and requires
+`GEORDI_TEXT_PREP_UNSUPPORTED_VARIABLE_AXES` at `$.shaping.variationAxes`.
+
+Next OPEN node after this failure fixture: `S092`, measured line-box generation.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -704,7 +718,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S091**.
+Current OPEN node: **S092**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1702,7 +1716,7 @@ Current OPEN node: **S091**.
 
 ### S091: Variable-font-axis rejection fixture
 
-- [ ] **S091: Variable-font-axis rejection fixture** (OPEN)
+- [x] **S091: Variable-font-axis rejection fixture** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with variable-font-axis rejection fixture documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Variable-font-axis rejection fixture.
@@ -1713,7 +1727,7 @@ Current OPEN node: **S091**.
 
 ### S092: Measured line-box generation
 
-- [ ] **S092: Measured line-box generation** (BLOCKED)
+- [ ] **S092: Measured line-box generation** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with measured line-box generation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Measured line-box generation.

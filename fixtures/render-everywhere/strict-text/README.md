@@ -51,6 +51,7 @@ fixtures/render-everywhere/strict-text/failures/fallback-chain.text-prep.input.g
 fixtures/render-everywhere/strict-text/failures/multiline.text-prep.input.geordi.json
 fixtures/render-everywhere/strict-text/failures/bidi-rtl.text-prep.input.geordi.json
 fixtures/render-everywhere/strict-text/failures/complex-script.text-prep.input.geordi.json
+fixtures/render-everywhere/strict-text/failures/variable-axis.text-prep.input.geordi.json
 ~~~
 
 `bad-outline-command.outline-evidence.geordi.json` is an S056 evidence-pack failure fixture. It
@@ -82,6 +83,9 @@ prepared fixture data valid, so text-prep must reject it with
 text-prep failure fixtures. The first isolates `direction: "rtl"` on Latin source text; the second
 uses Arabic script/language metadata and an escaped Arabic source string. Both must remain rejected
 with `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI`.
+`variable-axis.text-prep.input.geordi.json` is an S091 text-prep failure fixture. It isolates a
+non-empty `variationAxes` list on otherwise first-profile Latin metadata, so text-prep must reject
+it with `GEORDI_TEXT_PREP_UNSUPPORTED_VARIABLE_AXES`.
 
 Canonical fixture A:
 

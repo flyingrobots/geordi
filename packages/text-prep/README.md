@@ -66,6 +66,14 @@ fixtures/render-everywhere/strict-text/failures/complex-script.text-prep.input.g
 
 Both must remain rejected with `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI`.
 
+The committed variable-axis rejection fixture lives at:
+
+```text
+fixtures/render-everywhere/strict-text/failures/variable-axis.text-prep.input.geordi.json
+```
+
+It must remain rejected with `GEORDI_TEXT_PREP_UNSUPPORTED_VARIABLE_AXES`.
+
 ## Current Diagnostics
 
 The first profile rejects unsupported or unstable inputs with stable diagnostic codes:
