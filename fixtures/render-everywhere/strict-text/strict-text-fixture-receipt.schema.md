@@ -65,6 +65,16 @@ The first strict text fixture receipt shape is:
 }
 ~~~
 
+For generated text-prep output, the receipt uses the fingerprinted shaping profile and includes the
+fingerprint hash:
+
+~~~json
+{
+  "shapingFingerprintHash": "sha256:<64 lowercase hex chars>",
+  "shapingProfile": "geordi-text-prep-shaping-fingerprint/1"
+}
+~~~
+
 When a glyph evidence pack exists, the receipt extends with:
 
 ~~~json
@@ -108,8 +118,11 @@ All receipt hashes use SHA-256 over UTF-8 bytes and return `sha256:<64 lowercase
   `false` for the first strict profile.
 - `glyphRunHash`, `lineBoxHash`, and `semanticTextHash` must hash the canonical fragment bytes named
   above.
-- `shapingProfile` must be `precomputed-fixture/1` until a Geordi-owned text-prep tool emits and
-  fingerprints glyph runs.
+- `shapingProfile` must be either `precomputed-fixture/1` for hand-authored/precomputed fixtures or
+  `geordi-text-prep-shaping-fingerprint/1` for text-prep generated fixtures.
+- `shapingFingerprintHash` is required when `shapingProfile` is
+  `geordi-text-prep-shaping-fingerprint/1` and must be absent when `shapingProfile` is
+  `precomputed-fixture/1`.
 - `generatedBy` records the boundary that emitted the receipt. It is review metadata, not a
   browser/native parity-equality field.
 - `glyphEvidenceKind`, `glyphEvidencePackPath`, and `glyphEvidencePackHash` must be absent before

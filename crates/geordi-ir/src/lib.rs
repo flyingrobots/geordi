@@ -57,6 +57,10 @@ pub const GEORDI_HASH_ALGORITHM_SHA256: &str = "sha256";
 /// Shaping profile recorded when glyph runs were precomputed outside Geordi tooling.
 pub const GEORDI_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED: &str = "precomputed-fixture/1";
 
+/// Shaping profile recorded when a pinned text-prep fingerprint owns generated glyph runs.
+pub const GEORDI_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT: &str =
+    "geordi-text-prep-shaping-fingerprint/1";
+
 /// Generator identity recorded by the Rust strict text fixture receipt builder.
 pub const GEORDI_RUST_STRICT_TEXT_RECEIPT_GENERATOR: &str = "rust-geordi-ir/1";
 
@@ -226,6 +230,8 @@ pub struct GeordiStrictTextFixtureReceipt {
     pub line_box_hash: String,
     /// Hash of canonical `semanticText` fragment bytes.
     pub semantic_text_hash: String,
+    /// Optional hash of the text-prep shaping fingerprint artifact.
+    pub shaping_fingerprint_hash: Option<String>,
     /// Strict text profile recorded by the fixture.
     pub text_profile: String,
     /// Position encoding profile recorded by the fixture.
@@ -1366,6 +1372,7 @@ pub fn create_geordi_strict_text_fixture_receipt(
         glyph_run_hash: receipt_fragment_hash(&fixture_value, "glyphRuns", fixture_path)?,
         line_box_hash: receipt_fragment_hash(&fixture_value, "lineBoxes", fixture_path)?,
         semantic_text_hash: receipt_fragment_hash(&fixture_value, "semanticText", fixture_path)?,
+        shaping_fingerprint_hash: None,
         text_profile: manifest.text_profile,
         position_encoding_profile: manifest.position_encoding,
         semantic_text_affects_pixels: manifest.semantic_text.affects_pixels,
@@ -4024,6 +4031,7 @@ mod tests {
             receipt.generated_by,
             GEORDI_RUST_STRICT_TEXT_RECEIPT_GENERATOR
         );
+        assert_eq!(receipt.shaping_fingerprint_hash, None);
         assert!(!receipt.semantic_text_affects_pixels);
         Ok(())
     }
@@ -4055,6 +4063,7 @@ mod tests {
             receipt.semantic_text_hash,
             "sha256:7cdec9c596a1c82fe5c08a9c1d6fa4901bf680d14f7a86d4c64288861dc39082"
         );
+        assert_eq!(receipt.shaping_fingerprint_hash, None);
         assert_eq!(receipt.text_profile, "geordi-strict-positioned-glyph-run/1");
         assert_eq!(receipt.position_encoding_profile, "geordi-fixed-26.6/1");
         assert_eq!(receipt.shaping_profile, "precomputed-fixture/1");

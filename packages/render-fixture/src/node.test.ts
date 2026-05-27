@@ -8,6 +8,7 @@ import {
   parseRenderFixtureFontPackManifest,
   parseRenderFixtureMeshAssetManifest,
   parseRenderFixtureStrictTextFixtureManifest,
+  RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT,
   RENDER_FIXTURE_TYPESCRIPT_STRICT_TEXT_RECEIPT_GENERATOR,
 } from './index.js';
 import {
@@ -165,6 +166,23 @@ describe('Node render fixture hash helpers', () => {
       shapingProfile: 'precomputed-fixture/1',
       textProfile: 'geordi-strict-positioned-glyph-run/1',
     });
+  });
+
+  it('builds a fingerprinted text-prep strict text fixture receipt', () => {
+    const receipt = createRenderFixtureStrictTextFixtureReceipt({
+      fixturePath: STRICT_TEXT_FIXTURE_A_PATH,
+      repositoryRoot: repositoryRoot(),
+      shapingFingerprintHash:
+        'sha256:4294d2f13356d55ab7a92957d5aa43b0243141eb0728428b94ee666f8c98d7db',
+      shapingProfile: RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT,
+    });
+
+    expect(receipt.shapingFingerprintHash).toBe(
+      'sha256:4294d2f13356d55ab7a92957d5aa43b0243141eb0728428b94ee666f8c98d7db',
+    );
+    expect(receipt.shapingProfile).toBe(
+      RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT,
+    );
   });
 
   it('builds the canonical strict text fixture B receipt', () => {

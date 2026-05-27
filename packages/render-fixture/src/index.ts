@@ -40,6 +40,8 @@ export const RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES = 'text.lineBoxes' as const;
 export const RENDER_FIXTURE_HASH_ALGORITHM_SHA256 = 'sha256' as const;
 export const RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED =
   'precomputed-fixture/1' as const;
+export const RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT =
+  'geordi-text-prep-shaping-fingerprint/1' as const;
 export const RENDER_FIXTURE_TYPESCRIPT_STRICT_TEXT_RECEIPT_GENERATOR =
   'typescript-render-fixture/1' as const;
 export const RENDER_FIXTURE_GLYPH_EVIDENCE_PACK_VERSION =
@@ -419,6 +421,10 @@ export interface RenderFixtureGlyphRun extends JsonObject {
   readonly lineBoxId: string;
 }
 
+export type RenderFixtureStrictTextReceiptShapingProfile =
+  | typeof RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED
+  | typeof RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT;
+
 export interface RenderFixtureStrictTextFixtureManifest extends JsonObject {
   readonly features: readonly RenderFixtureStrictTextFeatureRequirement[];
   readonly fixtureVersion: typeof RENDER_FIXTURE_STRICT_TEXT_FIXTURE_VERSION;
@@ -447,7 +453,8 @@ export interface RenderFixtureStrictTextFixtureReceipt extends JsonObject {
   readonly receiptVersion: typeof RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION;
   readonly semanticTextAffectsPixels: false;
   readonly semanticTextHash: string;
-  readonly shapingProfile: typeof RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED;
+  readonly shapingFingerprintHash?: string;
+  readonly shapingProfile: RenderFixtureStrictTextReceiptShapingProfile;
   readonly textProfile: typeof RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE;
 }
 
@@ -1251,13 +1258,7 @@ export function validateRenderFixtureStrictTextFixtureReceipt(
     'Strict text fixture receipt position encoding profile',
     issues,
   );
-  validateLiteral(
-    property(value, 'shapingProfile'),
-    RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
-    '$.shapingProfile',
-    'Strict text fixture receipt shaping profile',
-    issues,
-  );
+  validateStrictTextReceiptShapingProfile(value, issues);
   if (property(value, 'semanticTextAffectsPixels') !== false) {
     pushIssue(
       issues,
@@ -1268,6 +1269,36 @@ export function validateRenderFixtureStrictTextFixtureReceipt(
   validateOptionalGlyphEvidenceReceiptFields(value, issues);
 
   return { ok: issues.length === 0, issues };
+}
+
+function validateStrictTextReceiptShapingProfile(
+  value: JsonObject,
+  issues: RenderFixtureStrictTextFixtureReceiptIssue[],
+): void {
+  const shapingProfile = property(value, 'shapingProfile');
+  const shapingFingerprintHash = property(value, 'shapingFingerprintHash');
+
+  if (shapingProfile === RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED) {
+    if (shapingFingerprintHash !== undefined) {
+      pushIssue(
+        issues,
+        '$.shapingFingerprintHash',
+        'Strict text fixture receipt shaping fingerprint hash is only valid for fingerprinted text prep shaping',
+      );
+    }
+    return;
+  }
+
+  if (shapingProfile === RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT) {
+    validateArtifactHash(shapingFingerprintHash, '$.shapingFingerprintHash', issues);
+    return;
+  }
+
+  pushIssue(
+    issues,
+    '$.shapingProfile',
+    'Strict text fixture receipt shaping profile must be precomputed-fixture/1 or geordi-text-prep-shaping-fingerprint/1',
+  );
 }
 
 export function validateRenderFixtureStrictTextOutlineEvidencePack(

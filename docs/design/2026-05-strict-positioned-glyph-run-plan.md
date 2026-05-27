@@ -1525,6 +1525,23 @@ Comparison diagnostics:
 S083 does not make generated output renderable by itself. The generated fixture still lacks generated
 evidence, generated receipts, generated output bundle validation, and measured line boxes.
 
+### S084 Receipt Shaping Profile Field
+
+Strict text fixture receipts now allow exactly two shaping provenance profiles:
+
+| Profile | Meaning | Fingerprint hash rule |
+| --- | --- | --- |
+| `precomputed-fixture/1` | Hand-authored or externally precomputed fixture review data. | `shapingFingerprintHash` must be absent. |
+| `geordi-text-prep-shaping-fingerprint/1` | Generated text-prep output with a pinned shaping fingerprint. | `shapingFingerprintHash` is required and must be a `sha256:` hash. |
+
+TypeScript receipt DTOs, validators, and the Node receipt builder enforce this rule. Rust receipt
+structs now carry optional `shaping_fingerprint_hash` and preserve `None` for existing precomputed
+fixtures. Existing canonical receipts still build as `precomputed-fixture/1`; generated receipts can
+opt into the fingerprinted profile without accepting arbitrary runtime-shaping strings.
+
+S084 does not add generated receipt files yet. S085 and S086 continue the receipt arc by tightening
+glyph-run and line-box checksum handling for generated output.
+
 ## Backlog And Design Index Alignment
 
 This plan is the active execution source for the P0 backlog item named `Define the strict

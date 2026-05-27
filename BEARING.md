@@ -581,6 +581,21 @@ the expected committed files, and fails with `GEORDI_TEXT_PREP_COMPARE_DRIFT` or
 
 Next OPEN node after this comparison: `S084`, receipt shaping profile field.
 
+## S084 Receipt Shaping Profile Field
+
+Strict text fixture receipts now accept only these shaping profiles:
+
+- `precomputed-fixture/1`;
+- `geordi-text-prep-shaping-fingerprint/1`.
+
+When a receipt uses the fingerprinted text-prep profile, `shapingFingerprintHash` is required and
+must be a `sha256:` hash. When it uses `precomputed-fixture/1`, `shapingFingerprintHash` must be
+absent. TypeScript validators and the Node receipt builder enforce the profile/hash coupling; Rust
+receipt structs now carry optional `shaping_fingerprint_hash` and preserve `None` for existing
+precomputed fixture receipts.
+
+Next OPEN node after this receipt field: `S085`, receipt glyph-run checksum field.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -598,7 +613,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S084**.
+Current OPEN node: **S085**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1519,7 +1534,7 @@ Current OPEN node: **S084**.
 
 ### S084: Receipt shaping profile field
 
-- [ ] **S084: Receipt shaping profile field** (OPEN)
+- [x] **S084: Receipt shaping profile field** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with receipt shaping profile field documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Receipt shaping profile field.
@@ -1530,7 +1545,7 @@ Current OPEN node: **S084**.
 
 ### S085: Receipt glyph-run checksum field
 
-- [ ] **S085: Receipt glyph-run checksum field** (BLOCKED)
+- [ ] **S085: Receipt glyph-run checksum field** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with receipt glyph-run checksum field documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Receipt glyph-run checksum field.

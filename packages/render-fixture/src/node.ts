@@ -16,6 +16,7 @@ import {
   RENDER_FIXTURE_TYPESCRIPT_STRICT_TEXT_RECEIPT_GENERATOR,
   type RenderFixtureFontPackManifest,
   type RenderFixtureStrictTextFixtureReceipt,
+  type RenderFixtureStrictTextReceiptShapingProfile,
 } from './index.js';
 
 export class RenderFixtureHashMismatchError extends Error {
@@ -75,6 +76,8 @@ export interface RenderFixtureStrictTextFixtureReceiptBuildInput {
   readonly fixturePath: string;
   readonly generatedBy?: string;
   readonly repositoryRoot: string;
+  readonly shapingFingerprintHash?: string;
+  readonly shapingProfile?: RenderFixtureStrictTextReceiptShapingProfile;
 }
 
 export function renderFixtureSha256FromBytes(bytes: Uint8Array): string {
@@ -129,7 +132,7 @@ export function createRenderFixtureStrictTextFixtureReceipt(
   const fontPackBytes = readFixtureLocalBytes(input.repositoryRoot, manifest.fontPackPath);
   parseRenderFixtureFontPackManifest(decodeUtf8(fontPackBytes));
 
-  return assertRenderFixtureStrictTextFixtureReceipt({
+  const receipt: RenderFixtureStrictTextFixtureReceipt = {
     fixtureHash: renderFixtureSha256FromBytes(fixtureBytes),
     fixturePath: input.fixturePath,
     fontPackHash: renderFixtureSha256FromBytes(fontPackBytes),
@@ -142,9 +145,18 @@ export function createRenderFixtureStrictTextFixtureReceipt(
     receiptVersion: RENDER_FIXTURE_STRICT_TEXT_FIXTURE_RECEIPT_VERSION,
     semanticTextAffectsPixels: manifest.semanticText.affectsPixels,
     semanticTextHash: renderFixtureSha256FromCanonicalJson(manifest.semanticText),
-    shapingProfile: RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
+    shapingProfile: input.shapingProfile ?? RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
     textProfile: manifest.textProfile,
-  });
+  };
+
+  return assertRenderFixtureStrictTextFixtureReceipt(
+    input.shapingFingerprintHash === undefined
+      ? receipt
+      : {
+          ...receipt,
+          shapingFingerprintHash: input.shapingFingerprintHash,
+        },
+  );
 }
 
 export function renderFixtureSha256FromCanonicalJson(value: JsonValue): string {

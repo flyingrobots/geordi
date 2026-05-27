@@ -69,6 +69,7 @@ import {
   RENDER_FIXTURE_STRICT_TEXT_PROBE_TOLERANCE_ALPHA_ZERO,
   RENDER_FIXTURE_STRICT_TEXT_PROBE_TOLERANCE_EXACT_FILL_RGBA,
   RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED,
+  RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT,
   RENDER_FIXTURE_TEXT_FEATURE_FONT_PACK,
   RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES,
   RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS,
@@ -1509,6 +1510,20 @@ describe('render fixture strict text fixture manifest validation', () => {
     });
     expect(isRenderFixtureStrictTextFixtureReceipt(receipt)).toBe(true);
     expect(assertRenderFixtureStrictTextFixtureReceipt(receipt)).toBe(receipt);
+  });
+
+  it('accepts a fingerprinted text-prep strict text fixture receipt', () => {
+    const receipt: RenderFixtureStrictTextFixtureReceipt = {
+      ...makeStrictTextFixtureReceipt(),
+      shapingFingerprintHash:
+        'sha256:4294d2f13356d55ab7a92957d5aa43b0243141eb0728428b94ee666f8c98d7db',
+      shapingProfile: RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT,
+    };
+
+    expect(validateRenderFixtureStrictTextFixtureReceipt(receipt)).toEqual({
+      ok: true,
+      issues: [],
+    });
   });
 
   it('parses strict text fixture receipts through the canonical JSON port', () => {
