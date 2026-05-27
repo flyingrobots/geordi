@@ -23,6 +23,7 @@ Schema:
 
 ~~~text
 fixtures/render-everywhere/strict-text/outline-evidence-pack.schema.md
+fixtures/render-everywhere/strict-text/generated-shaped-output.schema.md
 fixtures/render-everywhere/strict-text/strict-text-fixture.schema.md
 fixtures/render-everywhere/strict-text/strict-text-fixture-receipt.schema.md
 fixtures/render-everywhere/strict-text/strict-text-probe-policy.schema.md
@@ -31,6 +32,10 @@ fixtures/render-everywhere/strict-text/strict-text-probe-policy.schema.md
 `outline-evidence-pack.schema.md` defines `geordi-glyph-evidence-pack/1`, the fixture-local
 `outlinePaths` evidence shape selected for the first visible strict text proof. Parser and renderer
 support lands in later slices; this directory must not imply general text or platform text support.
+`generated-shaped-output.schema.md` defines `geordi-text-prep-generated-output/1`, the future
+text-prep output bundle manifest that ties source hash, font identity, shaping fingerprint,
+generated strict fixture, evidence pack, and receipt hashes together. It is not a renderer input by
+itself.
 
 Failure fixtures:
 

@@ -507,7 +507,19 @@ explainability to text prep. Renderers own validation and evidence drawing only.
 cover host font lookup, fallback requirements, unsupported multiline, bidi/complex scripts,
 variable axes, and missing shaping fingerprints.
 
-Next OPEN node after this boundary: `S080`, generated shaped output schema.
+## S080 Generated Shaped Output Schema
+
+`fixtures/render-everywhere/strict-text/generated-shaped-output.schema.md` now defines
+`geordi-text-prep-generated-output/1`, the future text-prep output bundle manifest. The schema binds
+source hash, font identity, shaping fingerprint, generated strict fixture, glyph evidence pack,
+receipt, and canonical glyph-run/line-box/fixture hashes into one reviewable unit.
+
+The manifest is audit/comparison data, not a renderer input by itself. It must not contain renderer
+names, `rendered=true`, `smoke=passed`, host font families, platform metrics, absolute paths,
+wall-clock timestamps, or spike artifacts. S081 owns the command that emits it, S082 owns the first
+generated artifact, and S083 owns drift comparison.
+
+Next OPEN node after this schema: `S081`, glyph-run generation CLI.
 
 ## DAG Operating Rule
 
@@ -526,7 +538,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S080**.
+Current OPEN node: **S081**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1403,7 +1415,7 @@ Current OPEN node: **S080**.
 
 ### S080: Generated shaped output schema
 
-- [ ] **S080: Generated shaped output schema** (OPEN)
+- [x] **S080: Generated shaped output schema** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with generated shaped output schema documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Generated shaped output schema.
@@ -1414,7 +1426,7 @@ Current OPEN node: **S080**.
 
 ### S081: Glyph-run generation CLI
 
-- [ ] **S081: Glyph-run generation CLI** (BLOCKED)
+- [ ] **S081: Glyph-run generation CLI** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with glyph-run generation cli documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Glyph-run generation CLI.

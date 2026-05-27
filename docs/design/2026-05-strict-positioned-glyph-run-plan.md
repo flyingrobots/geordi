@@ -1285,6 +1285,34 @@ Future boundary diagnostics:
 S079 does not implement the CLI or schema. It defines the boundary that S080-S083 must use when they
 add generated output, generation commands, and comparison behavior.
 
+### S080 Generated Shaped Output Schema
+
+The generated output bundle schema is:
+
+~~~text
+fixtures/render-everywhere/strict-text/generated-shaped-output.schema.md
+~~~
+
+It defines `geordi-text-prep-generated-output/1`, a manifest that ties together a generated strict
+text fixture, source hash, content-addressed font identity, shaping fingerprint, glyph evidence pack,
+receipt, and canonical output hashes. The manifest is an audit/comparison bundle, not a renderer
+input by itself.
+
+The schema requires:
+
+- `source.sourceTextHash`, `sourceEncoding`, `normalizationProfile`, and `semanticLanguage`;
+- `fontPackPath`, `fontPackHash`, `fontId`, `fontFileHash`, `faceIndex`, and `fontFormat`;
+- `shapingProfile`, `shapingFingerprintPath`, and `shapingFingerprintHash`;
+- generated strict fixture path/hash;
+- glyph evidence pack path/hash/kind;
+- receipt path/hash;
+- canonical `glyphRunHash`, `lineBoxHash`, and `fixtureHash`.
+
+Generated output manifests must not contain renderer names, `rendered=true`, `smoke=passed`, host
+font family names, platform metrics, local absolute paths, wall-clock timestamps, or spike artifacts.
+S081 owns the command that emits the schema, S082 owns the first generated fixture artifact, and S083
+owns regeneration comparison.
+
 Planned package and CLI shape:
 
 ~~~text
