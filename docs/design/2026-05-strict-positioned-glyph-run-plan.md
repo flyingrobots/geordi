@@ -1187,6 +1187,104 @@ Future validators should reject accidental promotion with stable diagnostic iden
 S078 does not add spike code. It makes future spike code safe to add by ensuring exploratory shaping
 cannot become an accidental renderer claim.
 
+### S079 Compiler Text Preparation Boundary
+
+Text preparation is a compiler/tooling boundary, not a runtime renderer feature. Source strings,
+font intent, language/script metadata, and authoring conveniences may enter text prep. Browser and
+native renderers may receive only prepared strict artifacts.
+
+The boundary profile name is:
+
+~~~text
+geordi-text-prep-boundary/1
+~~~
+
+The boundary is intentionally one-way:
+
+~~~text
+authoring input -> text-prep input -> generated strict artifacts -> renderers
+~~~
+
+Renderers must never call back into text prep while drawing. A renderer that lacks prepared glyph
+runs, line boxes, font identity, evidence references, and receipt/fingerprint data must fail before
+drawing instead of shaping a string.
+
+Text-prep owns:
+
+| Responsibility | Boundary rule |
+| --- | --- |
+| Source normalization | Normalize source using an explicit `normalizationProfile`; record `sourceTextHash`. |
+| Font resolution | Resolve only fixture-local, content-addressed font assets; reject family-name lookup and fallback. |
+| Shaping | Run only through the pinned prep engine selected by future slices; record the complete fingerprint. |
+| Glyph-run generation | Emit font-local glyph ids, advances, offsets, and positions in `geordi-fixed-26.6/1`. |
+| Line-box generation | Emit deterministic line boxes from pinned policy and measured/prepared data, not runtime APIs. |
+| Evidence linkage | Reference or generate glyph evidence packs whose hashes are receipt inputs. |
+| Receipt provenance | Emit hashes for source, font pack, shaping fingerprint, glyph runs, line boxes, evidence, and fixture. |
+| Explainability | Provide a report that lets reviewers trace source text to glyph ids without making source strings pixel authority. |
+
+Renderers own:
+
+| Responsibility | Boundary rule |
+| --- | --- |
+| Artifact validation | Validate prepared fixture, font pack, line boxes, evidence, fingerprint references, and feature requirements. |
+| Drawing | Draw only from positioned glyph evidence. |
+| Failure behavior | Reject missing or unsupported prepared data before drawing. |
+
+Renderers do not own:
+
+- source-string parsing for pixels;
+- Unicode normalization;
+- font-family lookup;
+- fallback-chain selection;
+- shaping;
+- kerning or ligature decisions;
+- line breaking;
+- bidi reordering;
+- variable-axis resolution;
+- host text measurement.
+
+The future CLI surface belongs outside browser/native renderer packages:
+
+~~~text
+geordi text-prep prepare --input text-prep.input.geordi.json --output fixtures/text/generated
+geordi text-prep explain --fixture fixtures/text/generated/example.strict-text.geordi.json
+geordi text-prep compare --expected fixtures/text/generated --actual /tmp/generated
+~~~
+
+The first text-prep input must identify:
+
+| Input group | Required data |
+| --- | --- |
+| Source | Source string bytes or source artifact path, source encoding, semantic language, normalization profile. |
+| Font | Font-pack path/hash, font id, font file hash, face index. |
+| Shaping | Script, shaping language, direction, OpenType features, variation axes, shaper profile request. |
+| Geometry | Canvas/line coordinate space, px-per-em, baseline policy, line-box policy, rounding policy. |
+| Output | Fixture id, output directory, evidence kind, receipt policy, comparison policy. |
+
+The first text-prep output must include:
+
+| Output artifact | Purpose |
+| --- | --- |
+| `*.strict-text.geordi.json` | Prepared positioned glyph-run fixture. |
+| `*.outline-evidence.geordi.json` or evidence reference | Drawable glyph evidence for the prepared glyphs. |
+| `*.shaping-fingerprint.geordi.json` | Canonical shaping profile fingerprint. |
+| `*.strict-text.geordi.json.receipt` | Provenance and hash receipt. |
+| `*.text-prep-report.geordi.json` | Human/audit explanation; not renderer input unless later named. |
+
+Future boundary diagnostics:
+
+| Code | Meaning |
+| --- | --- |
+| `GEORDI_TEXT_PREP_HOST_FONT_LOOKUP` | Text prep attempted ambient family-name lookup instead of content-addressed fonts. |
+| `GEORDI_TEXT_PREP_FALLBACK_REQUIRED` | Source text required fallback outside the first strict profile. |
+| `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE` | Input requested wrapping or multiline layout before that profile exists. |
+| `GEORDI_TEXT_PREP_UNSUPPORTED_BIDI` | Input requested bidi or complex-script behavior outside the first supported subset. |
+| `GEORDI_TEXT_PREP_UNSUPPORTED_VARIABLE_AXES` | Input requested variable axes without an axis fingerprint profile. |
+| `GEORDI_TEXT_PREP_MISSING_FINGERPRINT` | Generated output lacks the shaping fingerprint required by S077. |
+
+S079 does not implement the CLI or schema. It defines the boundary that S080-S083 must use when they
+add generated output, generation commands, and comparison behavior.
+
 Planned package and CLI shape:
 
 ~~~text

@@ -20,8 +20,8 @@ ladder:
 3. Strict positioned glyph-run text: active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the lowest active open node is `S079`, compiler text preparation boundary, after the noncompliant
-shaping spike boundary was recorded.
+the lowest active open node is `S080`, generated shaped output schema, after the compiler text-prep
+boundary was recorded.
 
 ## Completed Capabilities
 
@@ -67,6 +67,7 @@ Current rules:
 | Runtime boundary | TypeScript remains native at browser, Node, tooling, and fixture-authoring edges. Rust remains native at the renderer and CLI core. WASM is reserved for hard deterministic kernels. |
 | Shaping boundary | Compliant browser/native renderers do not shape strings. Future shaping enters through a pinned text-prep CLI, preferably with a Rust-native core; WASM is optional only after the hard kernel is justified. Any generated shaped artifact must carry a complete `geordi-text-prep-shaping-fingerprint/1` record before it can claim Geordi-owned shaping provenance. |
 | Shaping spike boundary | Exploratory shaping output must use `geordi-text-shaping-spike-noncompliant/1`, declare `mayFeedStrictRenderer: false`, and stay out of browser/native strict smoke gates. |
+| Text-prep boundary | `geordi-text-prep-boundary/1` keeps source strings, shaping, line metrics, and evidence generation in compiler/tooling space; renderers consume prepared strict artifacts only. |
 | Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
 | Strict text rendering evidence | First visible text proof uses fixture-local `outlinePaths` evidence, fixed 26.6 glyph-origin local commands, fill-only monochrome geometry, and metadata-first parity. S052 defines the schema; S053 commits evidence data; S054/S055 add independent parsers; S056 hardens command validation; S057-S069 add browser/native render, probe, metadata, and bounds gates; S070-S073 add missing/unknown glyph, line-box containment, and unsupported-paint rejection; S074-S075 align browser/native demo documentation. |
 

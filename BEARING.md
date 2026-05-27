@@ -493,7 +493,21 @@ The law defines future diagnostics for spike artifacts that are supplied as stri
 noncompliance labels, or attempt host font lookup. S078 adds no spike code; it makes future spike
 work safe by preventing exploratory shaping output from becoming an accidental renderer claim.
 
-Next OPEN node after this law: `S079`, compiler text preparation boundary.
+## S079 Compiler Text Preparation Boundary
+
+Text preparation is a compiler/tooling boundary, not a renderer feature. The new
+`geordi-text-prep-boundary/1` law allows source strings, font intent, language/script metadata, and
+authoring conveniences to enter a text-prep tool, but browser/native renderers may receive only
+prepared strict artifacts: positioned glyph runs, line boxes, font identity, glyph evidence,
+fingerprint data, and receipts.
+
+The boundary assigns source normalization, content-addressed font resolution, shaping, glyph-run
+generation, deterministic line-box generation, evidence linkage, receipt provenance, and
+explainability to text prep. Renderers own validation and evidence drawing only. Future diagnostics
+cover host font lookup, fallback requirements, unsupported multiline, bidi/complex scripts,
+variable axes, and missing shaping fingerprints.
+
+Next OPEN node after this boundary: `S080`, generated shaped output schema.
 
 ## DAG Operating Rule
 
@@ -512,7 +526,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S079**.
+Current OPEN node: **S080**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1378,7 +1392,7 @@ Current OPEN node: **S079**.
 
 ### S079: Compiler text preparation boundary
 
-- [ ] **S079: Compiler text preparation boundary** (OPEN)
+- [x] **S079: Compiler text preparation boundary** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with compiler text preparation boundary documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Compiler text preparation boundary.
@@ -1389,7 +1403,7 @@ Current OPEN node: **S079**.
 
 ### S080: Generated shaped output schema
 
-- [ ] **S080: Generated shaped output schema** (BLOCKED)
+- [ ] **S080: Generated shaped output schema** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with generated shaped output schema documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Generated shaped output schema.

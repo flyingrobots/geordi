@@ -120,8 +120,8 @@ digraph StrictPositionedGlyphRunPlan {
     S076 [label="S076\nShaping implementation decision", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S077 [label="S077\nShaping profile fingerprint law", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S078 [label="S078\nShaping spike outside compliance path", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S079 [label="S079\nCompiler text preparation boundary", color="#16a34a", penwidth=4];
-    S080 [label="S080\nGenerated shaped output schema", color="#dc2626", penwidth=4];
+    S079 [label="S079\nCompiler text preparation boundary", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S080 [label="S080\nGenerated shaped output schema", color="#16a34a", penwidth=4];
     S081 [label="S081\nGlyph-run generation CLI", color="#dc2626", penwidth=4];
     S082 [label="S082\nGenerated fixture artifact", color="#dc2626", penwidth=4];
     S083 [label="S083\nGenerated artifact comparison", color="#dc2626", penwidth=4];
