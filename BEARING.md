@@ -480,7 +480,20 @@ fingerprint profiles, missing required fields, malformed or mismatched hashes, u
 output mismatches. S077 does not implement a shaping engine, generator, or compliant shaped output;
 it only defines the provenance contract later slices must satisfy.
 
-Next OPEN node after this law: `S078`, shaping spike outside compliance path.
+## S078 Shaping Spike Outside Compliance Path
+
+Any shaping experiment before the text-prep boundary is explicitly noncompliant. The spike profile is
+`geordi-text-shaping-spike-noncompliant/1`, and spike outputs must declare
+`compliance: "noncompliant-spike/1"` plus `mayFeedStrictRenderer: false`. Spike output must not use
+the `*.strict-text.geordi.json` fixture family, populate compliant receipt shaping fields, replace
+canonical fixtures, enter browser/native strict smoke gates, resolve host fonts, or hide fallback,
+multiline, bidi, complex-script, or variable-axis behavior.
+
+The law defines future diagnostics for spike artifacts that are supplied as strict fixtures, missing
+noncompliance labels, or attempt host font lookup. S078 adds no spike code; it makes future spike
+work safe by preventing exploratory shaping output from becoming an accidental renderer claim.
+
+Next OPEN node after this law: `S079`, compiler text preparation boundary.
 
 ## DAG Operating Rule
 
@@ -499,7 +512,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S078**.
+Current OPEN node: **S079**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1354,7 +1367,7 @@ Current OPEN node: **S078**.
 
 ### S078: Shaping spike outside compliance path
 
-- [ ] **S078: Shaping spike outside compliance path** (OPEN)
+- [x] **S078: Shaping spike outside compliance path** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with shaping spike outside compliance path documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Shaping spike outside compliance path.
@@ -1365,7 +1378,7 @@ Current OPEN node: **S078**.
 
 ### S079: Compiler text preparation boundary
 
-- [ ] **S079: Compiler text preparation boundary** (BLOCKED)
+- [ ] **S079: Compiler text preparation boundary** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with compiler text preparation boundary documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Compiler text preparation boundary.

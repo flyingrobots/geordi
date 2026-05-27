@@ -1110,6 +1110,83 @@ S077 does not choose a shaping engine, implement a generator, or make shaped out
 only defines the minimum evidence that later slices must produce before generated strict text can be
 trusted.
 
+### S078 Shaping Spike Outside Compliance Path
+
+Any shaping experiment before the text-prep boundary is a spike, not a product feature. A spike may
+help compare engines, inspect glyph ids, or estimate line metrics, but it must not emit artifacts
+that browser or native strict renderers can mistake for compliant fixture input.
+
+The spike profile name is:
+
+~~~text
+geordi-text-shaping-spike-noncompliant/1
+~~~
+
+Spike outputs are allowed only when all of these are true:
+
+- the output is stored under a path or manifest that names `spike` or `noncompliant`;
+- the output declares `compliance: "noncompliant-spike/1"`;
+- the output declares `mayFeedStrictRenderer: false`;
+- the output omits `geordi-strict-text-fixture/1` as a fixture version;
+- the output omits `geordi-text-prep-shaping-fingerprint/1` unless it is explicitly exercising
+  fingerprint shape validation without claiming generated compliance;
+- the output is excluded from browser/native render-everywhere fixture discovery;
+- docs and tests describe it as exploratory evidence only.
+
+Spike outputs are forbidden from:
+
+| Forbidden use | Reason |
+| --- | --- |
+| Serving as `*.strict-text.geordi.json` | That extension family is reserved for strict renderer inputs. |
+| Replacing canonical fixtures | Canonical fixtures remain hand-authored/precomputed until S080-S083 define generated output and comparison. |
+| Populating receipt `shapingProfile` as compliant | Receipts must not claim a generator path before fingerprint and output schema exist. |
+| Being loaded by browser or native strict smoke gates | Smoke gates prove receiver behavior, not exploratory shaping. |
+| Resolving host fonts by family name | Host lookup would make spike output unreproducible and normalize the wrong behavior. |
+| Hiding fallback, multiline, bidi, complex-script, or variable-axis behavior | Unsupported typography must remain visible as rejection data in later slices. |
+
+The intended spike flow is:
+
+~~~mermaid
+flowchart TD
+  Source[Source text sample] --> Spike[Noncompliant shaping spike]
+  Font[Fixture-local font bytes] --> Spike
+  Spike --> Report[Engine comparison report]
+  Spike --> Scratch[Scratch glyph observations]
+  Report -. not renderer input .-> Renderer[Strict browser/native renderers]
+  Scratch -. not fixture input .-> Fixture[Canonical strict fixtures]
+~~~
+
+Spike reports may record:
+
+- candidate engine name and version;
+- observed glyph ids;
+- observed advances and offsets;
+- observed line metrics;
+- observed unsupported-feature behavior;
+- mismatches versus current hand-authored fixtures;
+- open questions for S079-S083.
+
+Spike reports must not record:
+
+- a compliance badge;
+- a strict text fixture id;
+- `rendered=true`;
+- `smoke=passed`;
+- browser/native parity metadata;
+- any statement that the spike output is accepted by a compliant renderer.
+
+Future validators should reject accidental promotion with stable diagnostic identities:
+
+| Code | Meaning |
+| --- | --- |
+| `GEORDI_TEXT_SHAPING_SPIKE_NONCOMPLIANT` | A spike artifact is clearly labeled noncompliant and must not be rendered as strict text. |
+| `GEORDI_TEXT_SHAPING_SPIKE_USED_AS_FIXTURE` | A noncompliant spike artifact was supplied where a strict text fixture is required. |
+| `GEORDI_TEXT_SHAPING_SPIKE_MISSING_NONCOMPLIANCE_LABEL` | A spike report lacks the required noncompliance profile or `mayFeedStrictRenderer: false`. |
+| `GEORDI_TEXT_SHAPING_SPIKE_HOST_FONT_LOOKUP` | A spike tried to resolve fonts through ambient host family/fallback behavior. |
+
+S078 does not add spike code. It makes future spike code safe to add by ensuring exploratory shaping
+cannot become an accidental renderer claim.
+
 Planned package and CLI shape:
 
 ~~~text
