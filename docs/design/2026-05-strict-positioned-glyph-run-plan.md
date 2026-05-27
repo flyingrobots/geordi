@@ -1566,6 +1566,35 @@ source text, fixture id, and receipt metadata are not part of the glyph-run chec
 S085 does not add generated receipt files or line-box checksum hardening. S086 owns the generated
 line-box checksum proof.
 
+### S086 Receipt Line-Box Checksum Field
+
+`lineBoxHash` was already part of the strict text fixture receipt schema. S086 hardens that field
+against generated fixture drift by extending TypeScript and Rust receipt tests to the generated
+strict text fixture:
+
+~~~text
+fixtures/render-everywhere/strict-text/generated/geordi.strict-text.geordi.json
+~~~
+
+Both receipt builders now prove that the generated fixture's canonical `lineBoxes` fragment hashes
+to:
+
+~~~text
+sha256:6d0b4e63bd04bd33e7213240a173f86fb478f23fa4cd505514c0b8af425f1e10
+~~~
+
+The line-box checksum pins baseline, extent, and containment geometry independently from
+`glyphRunHash`. The hash input remains:
+
+~~~text
+canonicalJsonPort.stringify(lineBoxes, { space: 2 }) + "\n"
+~~~
+
+Source text, fixture id, and receipt metadata are not part of the line-box checksum.
+
+S086 does not add generated receipt files or fallback-chain validation. S087 owns the no-fallback
+validator.
+
 ## Backlog And Design Index Alignment
 
 This plan is the active execution source for the P0 backlog item named `Define the strict

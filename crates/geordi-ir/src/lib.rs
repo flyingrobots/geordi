@@ -4086,6 +4086,21 @@ mod tests {
     }
 
     #[test]
+    fn builds_generated_strict_text_fixture_line_box_receipt_hash() -> Result<(), GeordiIrTestError>
+    {
+        let receipt = create_geordi_strict_text_fixture_receipt(
+            repository_root(),
+            "fixtures/render-everywhere/strict-text/generated/geordi.strict-text.geordi.json",
+        )?;
+
+        assert_eq!(
+            receipt.line_box_hash,
+            "sha256:6d0b4e63bd04bd33e7213240a173f86fb478f23fa4cd505514c0b8af425f1e10"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn hashes_canonical_strict_text_receipt_fragments() -> Result<(), GeordiIrTestError> {
         let source =
             std::fs::read_to_string(fixture_path("strict-text/geordi.strict-text.geordi.json"))?;

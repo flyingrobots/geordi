@@ -201,6 +201,20 @@ describe('Node render fixture hash helpers', () => {
     );
   });
 
+  it('hashes generated fixture line boxes in strict text receipts', () => {
+    const receipt = createRenderFixtureStrictTextFixtureReceipt({
+      fixturePath: STRICT_TEXT_GENERATED_FIXTURE_PATH,
+      repositoryRoot: repositoryRoot(),
+      shapingFingerprintHash:
+        'sha256:4294d2f13356d55ab7a92957d5aa43b0243141eb0728428b94ee666f8c98d7db',
+      shapingProfile: RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT,
+    });
+
+    expect(receipt.lineBoxHash).toBe(
+      'sha256:6d0b4e63bd04bd33e7213240a173f86fb478f23fa4cd505514c0b8af425f1e10',
+    );
+  });
+
   it('builds the canonical strict text fixture B receipt', () => {
     expect(
       createRenderFixtureStrictTextFixtureReceipt({

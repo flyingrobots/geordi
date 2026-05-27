@@ -610,6 +610,21 @@ receipt metadata. S086 owns the matching line-box checksum hardening.
 
 Next OPEN node after this checksum field: `S086`, receipt line-box checksum field.
 
+## S086 Receipt Line-Box Checksum Field
+
+The strict text receipt `lineBoxHash` field is now tested against the generated fixture path in both
+TypeScript and Rust. The generated `GEORDI` fixture's canonical `lineBoxes` fragment hashes to:
+
+~~~text
+sha256:6d0b4e63bd04bd33e7213240a173f86fb478f23fa4cd505514c0b8af425f1e10
+~~~
+
+This proves generated fixture receipts pin line metrics and containment bounds separately from
+glyph-run evidence. Source text, fixture id, and receipt metadata are not part of the line-box
+checksum.
+
+Next OPEN node after this checksum field: `S087`, no-fallback validator.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -627,7 +642,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S086**.
+Current OPEN node: **S087**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1570,7 +1585,7 @@ Current OPEN node: **S086**.
 
 ### S086: Receipt line-box checksum field
 
-- [ ] **S086: Receipt line-box checksum field** (OPEN)
+- [x] **S086: Receipt line-box checksum field** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with receipt line-box checksum field documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Receipt line-box checksum field.
@@ -1581,7 +1596,7 @@ Current OPEN node: **S086**.
 
 ### S087: No-fallback validator
 
-- [ ] **S087: No-fallback validator** (BLOCKED)
+- [ ] **S087: No-fallback validator** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with no-fallback validator documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: No-fallback validator.
