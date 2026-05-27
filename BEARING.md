@@ -541,6 +541,30 @@ diagnostics.
 
 Next OPEN node after this CLI: `S082`, generated fixture artifact.
 
+## S082 Generated Fixture Artifact
+
+The first generated strict text fixture artifacts now live under:
+
+~~~text
+fixtures/render-everywhere/strict-text/generated/
+  README.md
+  geordi.text-prep.input.geordi.json
+  text-prep.generation-plan.geordi.json
+  geordi.strict-text.geordi.json
+~~~
+
+`geordi-text-prep prepare` lowers pinned `preparedFixture.glyphRuns` and
+`preparedFixture.lineBoxes` into a canonical `geordi-strict-text-fixture/1` file when
+`output.strictTextFixtureFile` is present. The generated fixture uses
+`render-everywhere:strict-text:generated-geordi`, keeps source text as nonauthoritative semantic
+metadata, and validates through the existing strict text fixture contract.
+
+This is not a real shaping-engine claim. The fixture is generated from explicit prepared glyph-run
+and line-box input. Generated evidence, receipts, bundle manifests, and regeneration comparison
+remain future slices.
+
+Next OPEN node after this artifact: `S083`, generated artifact comparison.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -558,7 +582,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S082**.
+Current OPEN node: **S083**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1457,7 +1481,7 @@ Current OPEN node: **S082**.
 
 ### S082: Generated fixture artifact
 
-- [ ] **S082: Generated fixture artifact** (OPEN)
+- [x] **S082: Generated fixture artifact** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with generated fixture artifact documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Generated fixture artifact.
@@ -1468,7 +1492,7 @@ Current OPEN node: **S082**.
 
 ### S083: Generated artifact comparison
 
-- [ ] **S083: Generated artifact comparison** (BLOCKED)
+- [ ] **S083: Generated artifact comparison** (OPEN)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with generated artifact comparison documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Generated artifact comparison.

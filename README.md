@@ -38,8 +38,9 @@ Active proof layer:
   probes, and nonblank-bounds containment before any broad text rendering claim is made.
 - Future shaping is a text-prep concern, not a compliant runtime renderer behavior. The planned
   boundary is pinned preparation that emits strict artifacts with fingerprinted inputs and outputs.
-  The first `@flyingrobots/geordi-text-prep` slice now validates pinned prep inputs and writes a
-  deterministic generation plan; it does not yet generate strict text fixtures.
+  `@flyingrobots/geordi-text-prep` now validates pinned prep inputs, writes a deterministic
+  generation plan, and lowers explicitly prepared glyph-run/line-box data into the first generated
+  strict text fixture.
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
   Wesley/common-type generation.
 

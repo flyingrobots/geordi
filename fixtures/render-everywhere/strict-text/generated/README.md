@@ -1,0 +1,32 @@
+# Generated Strict Text Fixtures
+
+This directory holds text-prep generated artifacts for the strict positioned glyph-run milestone.
+
+Current artifacts:
+
+```text
+geordi.text-prep.input.geordi.json
+text-prep.generation-plan.geordi.json
+geordi.strict-text.geordi.json
+```
+
+`geordi.text-prep.input.geordi.json` is pinned `geordi-text-prep-input/1` data. It identifies source
+hashes, content-addressed Lato font identity, first-profile geometry policy, shaping fingerprint
+identity, and explicitly prepared glyph-run/line-box data.
+
+`text-prep.generation-plan.geordi.json` is deterministic audit data emitted by
+`geordi-text-prep prepare`. It is not renderer input and declares `mayFeedStrictRenderer: false`.
+
+`geordi.strict-text.geordi.json` is the first generated `geordi-strict-text-fixture/1` artifact. It
+is generated from pinned prepared glyph-run/line-box input, not from runtime shaping or host font
+lookup. It is committed so S083 can add regeneration comparison and later slices can attach receipt,
+evidence, and generated-output bundle checks.
+
+Current nonclaims:
+
+- no generated glyph evidence pack yet;
+- no generated strict text receipt yet;
+- no generated output bundle manifest yet;
+- no text shaping engine;
+- no line-box measurement engine;
+- no fallback, wrapping, bidi, complex script, or variable-axis support.

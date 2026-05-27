@@ -51,13 +51,15 @@ are generated from a common source; WASM is introduced only for hard determinist
 - **Validation** (`src/index.ts`): `geordi-text-prep-input/1` shape, hash, path, font, shaping,
   geometry, and output-intent checks
 - **Plan artifact** (`text-prep.generation-plan.geordi.json`): deterministic audit data for the
-  future generated strict text fixture, evidence pack, receipt, and bundle manifest
+  generated strict text fixture plus future evidence pack, receipt, and bundle manifest
+- **Strict fixture artifact** (`geordi.strict-text.geordi.json`): canonical generated strict text
+  fixture lowered from explicitly prepared glyph-run and line-box input
 - **Diagnostics**: stable `GEORDI_TEXT_PREP_*` codes for host font lookup, fallback, multiline,
   bidi/complex script, variable axes, bad paths, missing fingerprints, file IO failures, and source hash drift
 
 **Key principle**: Tooling may validate pinned source/font/shaping intent, but renderers still
 consume prepared strict artifacts only. This package is not a WASM wrapper and does not claim
-runtime text shaping or fixture generation until later slices add those artifacts.
+runtime text shaping, font parsing, evidence generation, receipt generation, or comparison yet.
 
 ## Compilation Pipeline
 

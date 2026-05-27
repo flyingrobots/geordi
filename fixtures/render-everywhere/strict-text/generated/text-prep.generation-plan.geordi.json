@@ -1,0 +1,49 @@
+{
+  "boundaryProfile": "geordi-text-prep-boundary/1",
+  "compliance": "not-renderer-input/1",
+  "font": {
+    "faceIndex": 0,
+    "fontFileHash": "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251",
+    "fontFormat": "ttf",
+    "fontId": "lato-regular",
+    "fontPackHash": "sha256:1b7ad58b48a3ad0d1aff0736ef014783945dc0a472de1f14b48c4211eb53533d",
+    "fontPackPath": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json"
+  },
+  "generatedOutputVersion": "geordi-text-prep-generated-output/1",
+  "geometry": {
+    "baselinePolicy": "single-line-baseline-y-3072/1",
+    "coordinateSpace": "glyph-origin-top-left-y-down/1",
+    "lineBoxPolicy": "single-line-0-0-12288-4096/1",
+    "positionEncoding": "geordi-fixed-26.6/1",
+    "pxPerEm": 48,
+    "roundingPolicy": "precomputed-fixed-26.6/1"
+  },
+  "id": "render-everywhere:strict-text:generated-geordi",
+  "inputHash": "sha256:f9e374d5d23e3c7aa9c8a2707a27508a459ee4b0669a9fbc1e28410a4b180f6f",
+  "mayFeedStrictRenderer": false,
+  "output": {
+    "evidenceKind": "outlinePaths",
+    "fixtureId": "render-everywhere:strict-text:generated-geordi",
+    "strictTextFixtureFile": "geordi.strict-text.geordi.json"
+  },
+  "planVersion": "geordi-text-prep-generation-plan/1",
+  "preparedFixtureHash": "sha256:bb9f043434fff814672d2f60201b98325dabd503f5cfbe762d7058c7bf97aab5",
+  "shaping": {
+    "direction": "ltr",
+    "language": "en",
+    "openTypeFeaturesHash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "script": "Latn",
+    "shapingFingerprintHash": "sha256:4294d2f13356d55ab7a92957d5aa43b0243141eb0728428b94ee666f8c98d7db",
+    "shapingFingerprintPath": "fixtures/render-everywhere/strict-text/generated/geordi.shaping-fingerprint.geordi.json",
+    "shapingProfile": "geordi-text-prep-shaping-fingerprint/1",
+    "variationAxesHash": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "source": {
+    "normalizationProfile": "unicode-nfc/15.1",
+    "semanticLanguage": "en",
+    "sourceEncoding": "utf-8/1",
+    "sourceTextHash": "sha256:0876c874fb98bb5b9436af6cde1714bacc34b500ec6a178ea895a874070c65e5"
+  },
+  "status": "input-validated/1",
+  "textProfile": "geordi-strict-positioned-glyph-run/1"
+}

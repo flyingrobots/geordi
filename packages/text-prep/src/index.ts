@@ -1,5 +1,11 @@
 import { createHash } from 'node:crypto';
 import { canonicalJsonPort, type JsonObject, type JsonValue } from '@flyingrobots/geordi-core';
+import {
+  validateRenderFixtureStrictTextFixtureManifest,
+  type RenderFixtureGlyphRun,
+  type RenderFixtureStrictTextFixtureManifest,
+  type RenderFixtureStrictTextLineBox,
+} from '@flyingrobots/geordi-render-fixture';
 
 export const TEXT_PREP_INPUT_VERSION = 'geordi-text-prep-input/1' as const;
 export const TEXT_PREP_BOUNDARY_PROFILE = 'geordi-text-prep-boundary/1' as const;
@@ -9,14 +15,22 @@ export const TEXT_PREP_GENERATION_PLAN_FILENAME = 'text-prep.generation-plan.geo
 export const TEXT_PREP_GENERATED_OUTPUT_VERSION = 'geordi-text-prep-generated-output/1' as const;
 export const TEXT_PREP_SHAPING_FINGERPRINT_PROFILE =
   'geordi-text-prep-shaping-fingerprint/1' as const;
+export const STRICT_TEXT_FIXTURE_VERSION = 'geordi-strict-text-fixture/1' as const;
 export const STRICT_POSITIONED_GLYPH_RUN_PROFILE = 'geordi-strict-positioned-glyph-run/1' as const;
 export const FIXED_26_6_POSITION_ENCODING = 'geordi-fixed-26.6/1' as const;
 export const UTF8_SOURCE_ENCODING = 'utf-8/1' as const;
 export const TTF_FONT_FORMAT = 'ttf' as const;
 export const OUTLINE_PATHS_EVIDENCE_KIND = 'outlinePaths' as const;
 
+const STRICT_TEXT_FEATURES = [
+  'text.positionedGlyphRuns',
+  'text.fontPack',
+  'text.lineBoxes',
+] as const;
+
 export type TextPrepDiagnosticCode =
   | 'GEORDI_TEXT_PREP_BAD_INPUT'
+  | 'GEORDI_TEXT_PREP_BAD_GENERATED_FIXTURE'
   | 'GEORDI_TEXT_PREP_BAD_PATH'
   | 'GEORDI_TEXT_PREP_HOST_FONT_LOOKUP'
   | 'GEORDI_TEXT_PREP_IO_ERROR'
@@ -73,6 +87,12 @@ export interface TextPrepInputGeometry extends JsonObject {
 export interface TextPrepInputOutput extends JsonObject {
   readonly evidenceKind: typeof OUTLINE_PATHS_EVIDENCE_KIND;
   readonly fixtureId: string;
+  readonly strictTextFixtureFile?: string;
+}
+
+export interface TextPrepPreparedFixture extends JsonObject {
+  readonly glyphRuns: readonly RenderFixtureGlyphRun[];
+  readonly lineBoxes: readonly RenderFixtureStrictTextLineBox[];
 }
 
 export interface TextPrepInput extends JsonObject {
@@ -81,6 +101,7 @@ export interface TextPrepInput extends JsonObject {
   readonly id: string;
   readonly inputVersion: typeof TEXT_PREP_INPUT_VERSION;
   readonly output: TextPrepInputOutput;
+  readonly preparedFixture?: TextPrepPreparedFixture;
   readonly shaping: TextPrepInputShaping;
   readonly source: TextPrepInputSource;
   readonly textPrepBoundary: typeof TEXT_PREP_BOUNDARY_PROFILE;
@@ -116,6 +137,7 @@ export interface TextPrepGenerationPlan extends JsonObject {
   readonly mayFeedStrictRenderer: false;
   readonly output: TextPrepInputOutput;
   readonly planVersion: typeof TEXT_PREP_GENERATION_PLAN_VERSION;
+  readonly preparedFixtureHash?: string;
   readonly shaping: TextPrepPlanShaping;
   readonly source: TextPrepPlanSource;
   readonly status: typeof TEXT_PREP_GENERATION_PLAN_STATUS;
@@ -146,6 +168,22 @@ export interface TextPrepPlanSuccess {
 }
 
 export type TextPrepPlanResult = TextPrepPlanFailure | TextPrepPlanSuccess;
+
+export interface TextPrepArtifactsFailure {
+  readonly diagnostics: readonly TextPrepDiagnostic[];
+  readonly ok: false;
+}
+
+export interface TextPrepArtifactsSuccess {
+  readonly plan: TextPrepGenerationPlan;
+  readonly serializedPlan: string;
+  readonly serializedStrictTextFixture?: string;
+  readonly strictTextFixture?: RenderFixtureStrictTextFixtureManifest;
+  readonly strictTextFixtureFile?: string;
+  readonly ok: true;
+}
+
+export type TextPrepArtifactsResult = TextPrepArtifactsFailure | TextPrepArtifactsSuccess;
 
 export class TextPrepValidationError extends Error {
   public readonly diagnostics: readonly TextPrepDiagnostic[];
@@ -219,6 +257,10 @@ export function validateTextPrepInput(value: JsonValue): TextPrepValidationResul
     diagnostics,
   );
   const output = validateOutput(requireObject(value, 'output', '$.output', diagnostics), diagnostics);
+  const preparedFixture = validatePreparedFixture(
+    optionalObject(value, 'preparedFixture', '$.preparedFixture', diagnostics),
+    diagnostics,
+  );
 
   if (
     diagnostics.length > 0 ||
@@ -235,23 +277,44 @@ export function validateTextPrepInput(value: JsonValue): TextPrepValidationResul
     return failure(diagnostics);
   }
 
+  const input: TextPrepInput =
+    preparedFixture === undefined
+      ? {
+          font,
+          geometry,
+          id,
+          inputVersion,
+          output,
+          shaping,
+          source,
+          textPrepBoundary,
+          textProfile,
+        }
+      : {
+          font,
+          geometry,
+          id,
+          inputVersion,
+          output,
+          preparedFixture,
+          shaping,
+          source,
+          textPrepBoundary,
+          textProfile,
+        };
+
+  validateGeneratedStrictTextFixture(input, diagnostics);
+  if (diagnostics.length > 0) {
+    return failure(diagnostics);
+  }
+
   return {
-    input: {
-      font,
-      geometry,
-      id,
-      inputVersion,
-      output,
-      shaping,
-      source,
-      textPrepBoundary,
-      textProfile,
-    },
+    input,
     ok: true,
   };
 }
 
-export function prepareTextPrepGenerationPlan(source: string): TextPrepPlanResult {
+export function prepareTextPrepArtifacts(source: string): TextPrepArtifactsResult {
   let parsed: JsonValue;
   try {
     parsed = canonicalJsonPort.parse(source);
@@ -271,11 +334,36 @@ export function prepareTextPrepGenerationPlan(source: string): TextPrepPlanResul
   }
 
   const plan = createTextPrepGenerationPlan(validation.input);
+  const strictTextFixture = createTextPrepStrictTextFixture(validation.input);
+
+  if (strictTextFixture === undefined) {
+    return {
+      ok: true,
+      plan,
+      serializedPlan: serializeTextPrepGenerationPlan(plan),
+    };
+  }
 
   return {
     ok: true,
     plan,
     serializedPlan: serializeTextPrepGenerationPlan(plan),
+    serializedStrictTextFixture: serializeTextPrepStrictTextFixture(strictTextFixture),
+    strictTextFixture,
+    strictTextFixtureFile: validation.input.output.strictTextFixtureFile,
+  };
+}
+
+export function prepareTextPrepGenerationPlan(source: string): TextPrepPlanResult {
+  const result = prepareTextPrepArtifacts(source);
+  if (!result.ok) {
+    return result;
+  }
+
+  return {
+    ok: true,
+    plan: result.plan,
+    serializedPlan: result.serializedPlan,
   };
 }
 
@@ -286,6 +374,30 @@ export function assertTextPrepInput(value: JsonValue): TextPrepInput {
   }
 
   return result.input;
+}
+
+export function createTextPrepStrictTextFixture(
+  input: TextPrepInput,
+): RenderFixtureStrictTextFixtureManifest | undefined {
+  if (input.preparedFixture === undefined) {
+    return undefined;
+  }
+
+  return {
+    features: STRICT_TEXT_FEATURES,
+    fixtureVersion: STRICT_TEXT_FIXTURE_VERSION,
+    fontPackPath: input.font.fontPackPath,
+    glyphRuns: input.preparedFixture.glyphRuns,
+    id: input.output.fixtureId,
+    lineBoxes: input.preparedFixture.lineBoxes,
+    positionEncoding: input.geometry.positionEncoding,
+    semanticText: {
+      affectsPixels: false,
+      language: input.source.semanticLanguage,
+      source: input.source.sourceText,
+    },
+    textProfile: input.textProfile,
+  };
 }
 
 export function createTextPrepGenerationPlan(input: TextPrepInput): TextPrepGenerationPlan {
@@ -311,13 +423,15 @@ export function createTextPrepGenerationPlan(input: TextPrepInput): TextPrepGene
     id: input.id,
     inputVersion: input.inputVersion,
     output: input.output,
+    preparedFixtureHash:
+      input.preparedFixture === undefined ? undefined : sha256Json(input.preparedFixture),
     shaping,
     source,
     textPrepBoundary: input.textPrepBoundary,
     textProfile: input.textProfile,
   });
 
-  return {
+  const plan: TextPrepGenerationPlan = {
     boundaryProfile: TEXT_PREP_BOUNDARY_PROFILE,
     compliance: 'not-renderer-input/1',
     font: input.font,
@@ -333,6 +447,19 @@ export function createTextPrepGenerationPlan(input: TextPrepInput): TextPrepGene
     status: TEXT_PREP_GENERATION_PLAN_STATUS,
     textProfile: STRICT_POSITIONED_GLYPH_RUN_PROFILE,
   };
+
+  return input.preparedFixture === undefined
+    ? plan
+    : {
+        ...plan,
+        preparedFixtureHash: sha256Json(input.preparedFixture),
+      };
+}
+
+export function serializeTextPrepStrictTextFixture(
+  fixture: RenderFixtureStrictTextFixtureManifest,
+): string {
+  return `${canonicalJsonPort.stringify(fixture, { space: 2 })}\n`;
 }
 
 export function serializeTextPrepGenerationPlan(plan: TextPrepGenerationPlan): string {
@@ -721,6 +848,12 @@ function validateOutput(
 
   const fixtureId = requireString(output, 'fixtureId', '$.output.fixtureId', diagnostics);
   const evidenceKind = requireString(output, 'evidenceKind', '$.output.evidenceKind', diagnostics);
+  const strictTextFixtureFile = optionalString(
+    output,
+    'strictTextFixtureFile',
+    '$.output.strictTextFixtureFile',
+    diagnostics,
+  );
 
   if (evidenceKind !== undefined && evidenceKind !== OUTLINE_PATHS_EVIDENCE_KIND) {
     diagnostics.push(
@@ -731,15 +864,104 @@ function validateOutput(
       ),
     );
   }
+  if (strictTextFixtureFile !== undefined) {
+    validateOutputFileName(
+      strictTextFixtureFile,
+      '$.output.strictTextFixtureFile',
+      diagnostics,
+    );
+  }
 
   if (fixtureId === undefined || evidenceKind !== OUTLINE_PATHS_EVIDENCE_KIND) {
     return undefined;
   }
 
-  return {
+  const validOutput: TextPrepInputOutput = {
     evidenceKind,
     fixtureId,
   };
+
+  return strictTextFixtureFile === undefined
+    ? validOutput
+    : {
+        ...validOutput,
+        strictTextFixtureFile,
+      };
+}
+
+function validatePreparedFixture(
+  preparedFixture: JsonObject | undefined,
+  diagnostics: TextPrepDiagnostic[],
+): TextPrepPreparedFixture | undefined {
+  if (preparedFixture === undefined) {
+    return undefined;
+  }
+
+  const lineBoxes = property(preparedFixture, 'lineBoxes');
+  const glyphRuns = property(preparedFixture, 'glyphRuns');
+  if (!Array.isArray(lineBoxes)) {
+    diagnostics.push(
+      diagnostic(
+        'GEORDI_TEXT_PREP_BAD_INPUT',
+        '$.preparedFixture.lineBoxes',
+        '$.preparedFixture.lineBoxes must be an array.',
+      ),
+    );
+  }
+  if (!Array.isArray(glyphRuns)) {
+    diagnostics.push(
+      diagnostic(
+        'GEORDI_TEXT_PREP_BAD_INPUT',
+        '$.preparedFixture.glyphRuns',
+        '$.preparedFixture.glyphRuns must be an array.',
+      ),
+    );
+  }
+
+  if (!Array.isArray(lineBoxes) || !Array.isArray(glyphRuns)) {
+    return undefined;
+  }
+
+  return {
+    glyphRuns: glyphRuns as readonly RenderFixtureGlyphRun[],
+    lineBoxes: lineBoxes as readonly RenderFixtureStrictTextLineBox[],
+  };
+}
+
+function validateGeneratedStrictTextFixture(
+  input: TextPrepInput,
+  diagnostics: TextPrepDiagnostic[],
+): void {
+  if (input.preparedFixture === undefined) {
+    return;
+  }
+
+  if (input.output.strictTextFixtureFile === undefined) {
+    diagnostics.push(
+      diagnostic(
+        'GEORDI_TEXT_PREP_BAD_INPUT',
+        '$.output.strictTextFixtureFile',
+        'Prepared fixture input must name the generated strict text fixture file.',
+      ),
+    );
+    return;
+  }
+
+  const strictTextFixture = createTextPrepStrictTextFixture(input);
+  if (strictTextFixture === undefined) {
+    return;
+  }
+
+  const validation = validateRenderFixtureStrictTextFixtureManifest(strictTextFixture);
+  for (const issue of validation.issues) {
+    diagnostics.push(
+      diagnostic(
+        'GEORDI_TEXT_PREP_BAD_GENERATED_FIXTURE',
+        issue.path,
+        `Generated strict text fixture is invalid: ${issue.message}`,
+      ),
+    );
+  }
 }
 
 function rejectHostFontLookup(font: JsonObject, diagnostics: TextPrepDiagnostic[]): void {
@@ -793,6 +1015,24 @@ function requireObject(
   return value;
 }
 
+function optionalObject(
+  object: JsonObject,
+  key: string,
+  path: string,
+  diagnostics: TextPrepDiagnostic[],
+): JsonObject | undefined {
+  const value = property(object, key);
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!isJsonObject(value)) {
+    diagnostics.push(diagnostic('GEORDI_TEXT_PREP_BAD_INPUT', path, `${path} must be an object.`));
+    return undefined;
+  }
+
+  return value;
+}
+
 function requireString(
   object: JsonObject,
   key: string,
@@ -800,6 +1040,26 @@ function requireString(
   diagnostics: TextPrepDiagnostic[],
 ): string | undefined {
   const value = property(object, key);
+  if (typeof value !== 'string' || value.length === 0) {
+    diagnostics.push(
+      diagnostic('GEORDI_TEXT_PREP_BAD_INPUT', path, `${path} must be a non-empty string.`),
+    );
+    return undefined;
+  }
+
+  return value;
+}
+
+function optionalString(
+  object: JsonObject,
+  key: string,
+  path: string,
+  diagnostics: TextPrepDiagnostic[],
+): string | undefined {
+  const value = property(object, key);
+  if (value === undefined) {
+    return undefined;
+  }
   if (typeof value !== 'string' || value.length === 0) {
     diagnostics.push(
       diagnostic('GEORDI_TEXT_PREP_BAD_INPUT', path, `${path} must be a non-empty string.`),
@@ -913,6 +1173,31 @@ function validateRepoRelativePath(
         'GEORDI_TEXT_PREP_BAD_PATH',
         path,
         `${path} must be a repository-relative POSIX path.`,
+      ),
+    );
+  }
+}
+
+function validateOutputFileName(
+  value: string,
+  path: string,
+  diagnostics: TextPrepDiagnostic[],
+): void {
+  if (
+    value.length === 0 ||
+    value.startsWith('/') ||
+    /^[A-Za-z]:/u.test(value) ||
+    value.includes('\\') ||
+    value.includes('/') ||
+    value.includes('://') ||
+    value === '.' ||
+    value === '..'
+  ) {
+    diagnostics.push(
+      diagnostic(
+        'GEORDI_TEXT_PREP_BAD_PATH',
+        path,
+        `${path} must be a filename relative to the CLI output directory.`,
       ),
     );
   }

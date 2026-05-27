@@ -1437,6 +1437,51 @@ S081 does not implement shaping, font parsing, glyph outline extraction, line-bo
 generated strict text fixtures, receipts, generated output manifests, or comparison. It gives those
 later slices a tested CLI/API boundary with deterministic output and no ambient host font lookup.
 
+### S082 Generated Fixture Artifact
+
+The first generated strict text fixture artifacts are committed under:
+
+~~~text
+fixtures/render-everywhere/strict-text/generated/
+  README.md
+  geordi.text-prep.input.geordi.json
+  text-prep.generation-plan.geordi.json
+  geordi.strict-text.geordi.json
+~~~
+
+The generated input uses `geordi-text-prep-input/1` and pins the same first-profile `GEORDI`
+glyph ids, advances, offsets, and line box as the canonical hand-authored fixture. The CLI now
+lowers `preparedFixture.glyphRuns` and `preparedFixture.lineBoxes` into a canonical
+`geordi-strict-text-fixture/1` output when `output.strictTextFixtureFile` is present.
+
+This is deliberately not a shaping-engine claim. The generated fixture comes from explicit prepared
+glyph-run and line-box data, validates through the strict text fixture contract, and remains separate
+from browser/native renderer inputs until later slices add evidence, receipts, generated output
+manifests, and regeneration comparison.
+
+~~~mermaid
+flowchart LR
+  Input["geordi.text-prep.input.geordi.json"] --> CLI["geordi-text-prep prepare"]
+  CLI --> Plan["text-prep.generation-plan.geordi.json"]
+  CLI --> Fixture["geordi.strict-text.geordi.json"]
+  Fixture --> Validator["strict text fixture validator"]
+  Plan -. "audit only" .-> Reviewer["reviewer/comparison tooling"]
+~~~
+
+Generated artifact rules:
+
+- the generated fixture is canonical JSON and has a final newline;
+- the generated fixture id is `render-everywhere:strict-text:generated-geordi`;
+- the source string remains `semanticText` metadata with `affectsPixels: false`;
+- font identity comes from the content-addressed Lato font pack;
+- the generation plan omits source text and records `sourceTextHash`, `preparedFixtureHash`, font
+  identity, shaping fingerprint identity, geometry policy, and output intent;
+- the plan declares `mayFeedStrictRenderer: false` until generated evidence and receipts exist.
+
+S082 does not implement regeneration comparison, generated evidence, generated receipts, measured
+line boxes, a generated output bundle manifest, or a real shaping/font parsing kernel. S083 owns
+drift comparison for these generated artifacts.
+
 ## Backlog And Design Index Alignment
 
 This plan is the active execution source for the P0 backlog item named `Define the strict

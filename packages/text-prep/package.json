@@ -31,7 +31,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@flyingrobots/geordi-core": "workspace:*"
+    "@flyingrobots/geordi-core": "workspace:*",
+    "@flyingrobots/geordi-render-fixture": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",

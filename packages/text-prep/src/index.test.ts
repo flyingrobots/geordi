@@ -11,6 +11,7 @@ import {
   TEXT_PREP_INPUT_VERSION,
   TEXT_PREP_SHAPING_FINGERPRINT_PROFILE,
   UTF8_SOURCE_ENCODING,
+  prepareTextPrepArtifacts,
   prepareTextPrepGenerationPlan,
   sha256Utf8,
   validateTextPrepInput,
@@ -72,6 +73,54 @@ function makeInput(overrides: JsonObject = {}): JsonObject {
     textProfile: STRICT_POSITIONED_GLYPH_RUN_PROFILE,
     ...overrides,
   };
+}
+
+function makePreparedFixtureInput(overrides: JsonObject = {}): JsonObject {
+  return makeInput({
+    output: {
+      evidenceKind: OUTLINE_PATHS_EVIDENCE_KIND,
+      fixtureId: 'render-everywhere:strict-text:generated-geordi',
+      strictTextFixtureFile: 'geordi.strict-text.geordi.json',
+    },
+    preparedFixture: {
+      glyphRuns: [
+        {
+          fontId: 'lato-regular',
+          glyphs: [
+            {
+              advance: 2244,
+              glyphId: 14,
+              x: 0,
+              xOffset: 0,
+              y: 3072,
+              yOffset: 0,
+            },
+            {
+              advance: 1726,
+              glyphId: 11,
+              x: 2244,
+              xOffset: 0,
+              y: 3072,
+              yOffset: 0,
+            },
+          ],
+          id: 'run-0',
+          lineBoxId: 'line-0',
+        },
+      ],
+      lineBoxes: [
+        {
+          baselineY: 3072,
+          height: 4096,
+          id: 'line-0',
+          width: 3970,
+          x: 0,
+          y: 0,
+        },
+      ],
+    },
+    ...overrides,
+  });
 }
 
 describe('validateTextPrepInput', () => {
@@ -184,6 +233,41 @@ describe('validateTextPrepInput', () => {
       );
     }
   });
+
+  it('accepts prepared fixture data that lowers to a valid strict text fixture', () => {
+    const result = validateTextPrepInput(makePreparedFixtureInput());
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.input.preparedFixture?.glyphRuns).toHaveLength(1);
+      expect(result.input.output.strictTextFixtureFile).toBe('geordi.strict-text.geordi.json');
+    }
+  });
+
+  it('rejects prepared fixture data that cannot become a strict text fixture', () => {
+    const result = validateTextPrepInput(
+      makePreparedFixtureInput({
+        preparedFixture: {
+          glyphRuns: [
+            {
+              fontId: 'lato-regular',
+              glyphs: [],
+              id: 'run-0',
+              lineBoxId: 'missing-line',
+            },
+          ],
+          lineBoxes: [],
+        },
+      }),
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.diagnostics.map((issue) => issue.code)).toContain(
+        'GEORDI_TEXT_PREP_BAD_GENERATED_FIXTURE',
+      );
+    }
+  });
 });
 
 describe('prepareTextPrepGenerationPlan', () => {
@@ -201,6 +285,20 @@ describe('prepareTextPrepGenerationPlan', () => {
       expect(first.plan.mayFeedStrictRenderer).toBe(false);
       expect(first.serializedPlan).not.toContain('"sourceText"');
       expect(first.serializedPlan).toContain(sha256Utf8('GEORDI'));
+    }
+  });
+
+  it('emits a generated strict text fixture when prepared fixture data is present', () => {
+    const source = canonicalJsonPort.stringify(makePreparedFixtureInput(), { space: 2 });
+    const result = prepareTextPrepArtifacts(source);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.strictTextFixtureFile).toBe('geordi.strict-text.geordi.json');
+      expect(result.serializedStrictTextFixture).toContain(
+        '"fixtureVersion": "geordi-strict-text-fixture/1"',
+      );
+      expect(result.serializedPlan).toContain('"preparedFixtureHash": "sha256:');
     }
   });
 });
@@ -244,6 +342,46 @@ describe('runTextPrepCli', () => {
       TEXT_PREP_GENERATION_PLAN_VERSION,
     );
     expect(stdout.join('')).toContain(TEXT_PREP_GENERATION_PLAN_FILENAME);
+  });
+
+  it('writes a generated strict text fixture when prepared fixture data is present', async () => {
+    const writes = new Map<string, string>();
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+    const io: TextPrepCliIo = {
+      mkdir(): Promise<void> {
+        return Promise.resolve();
+      },
+      readFile(): Promise<string> {
+        return Promise.resolve(canonicalJsonPort.stringify(makePreparedFixtureInput(), { space: 2 }));
+      },
+      stderr: {
+        write(content: string): void {
+          stderr.push(content);
+        },
+      },
+      stdout: {
+        write(content: string): void {
+          stdout.push(content);
+        },
+      },
+      writeFile(path: string, content: string): Promise<void> {
+        writes.set(path, content);
+        return Promise.resolve();
+      },
+    };
+
+    const exitCode = await runTextPrepCli(
+      ['prepare', '--input', 'text-prep.input.geordi.json', '--output', 'generated'],
+      io,
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stderr).toHaveLength(0);
+    expect(writes.get('generated/geordi.strict-text.geordi.json')).toContain(
+      'geordi-strict-text-fixture/1',
+    );
+    expect(stdout.join('')).toContain('strictTextFixturePath');
   });
 
   it('returns stable diagnostics for invalid input', async () => {

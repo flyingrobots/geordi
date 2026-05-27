@@ -123,8 +123,8 @@ digraph StrictPositionedGlyphRunPlan {
     S079 [label="S079\nCompiler text preparation boundary", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S080 [label="S080\nGenerated shaped output schema", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S081 [label="S081\nGlyph-run generation CLI", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S082 [label="S082\nGenerated fixture artifact", color="#16a34a", penwidth=4];
-    S083 [label="S083\nGenerated artifact comparison", color="#dc2626", penwidth=4];
+    S082 [label="S082\nGenerated fixture artifact", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S083 [label="S083\nGenerated artifact comparison", color="#16a34a", penwidth=4];
     S084 [label="S084\nReceipt shaping profile field", color="#dc2626", penwidth=4];
     S085 [label="S085\nReceipt glyph-run checksum field", color="#dc2626", penwidth=4];
     S086 [label="S086\nReceipt line-box checksum field", color="#dc2626", penwidth=4];

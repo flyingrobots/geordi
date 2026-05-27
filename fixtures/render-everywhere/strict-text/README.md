@@ -112,3 +112,18 @@ S076 keeps shaping outside the compliant runtime path. Future generated fixtures
 pinned text-prep boundary with fingerprinted font, source, shaping configuration, glyph-run,
 line-box, evidence, and receipt outputs. Current fixtures remain `precomputed-fixture/1` artifacts
 until that generator exists.
+
+Generated fixture A:
+
+~~~text
+fixtures/render-everywhere/strict-text/generated/geordi.text-prep.input.geordi.json
+fixtures/render-everywhere/strict-text/generated/text-prep.generation-plan.geordi.json
+fixtures/render-everywhere/strict-text/generated/geordi.strict-text.geordi.json
+~~~
+
+The S082 generated fixture is emitted by `geordi-text-prep prepare` from pinned prepared
+glyph-run/line-box data. It reproduces the canonical `GEORDI` glyph positions under a generated
+fixture id without using runtime shaping, host font lookup, fallback, wrapping, bidi, or variable
+font axes. The generation plan remains audit data and explicitly declares
+`mayFeedStrictRenderer: false` until generated evidence, receipts, generated output manifests, and
+comparison gates land in later slices.

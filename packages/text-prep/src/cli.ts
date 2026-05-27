@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { canonicalJsonPort } from '@flyingrobots/geordi-core';
 import {
   formatTextPrepDiagnostics,
-  prepareTextPrepGenerationPlan,
+  prepareTextPrepArtifacts,
   TEXT_PREP_GENERATION_PLAN_FILENAME,
   type TextPrepDiagnostic,
 } from './index.js';
@@ -106,23 +106,30 @@ export async function runTextPrepCli(
     return 1;
   }
 
-  const result = prepareTextPrepGenerationPlan(source);
+  const result = prepareTextPrepArtifacts(source);
   if (!result.ok) {
     io.stderr.write(formatTextPrepDiagnostics(result.diagnostics));
     return 1;
   }
 
   const planPath = join(options.options.outputDirectory, TEXT_PREP_GENERATION_PLAN_FILENAME);
+  const strictTextFixturePath =
+    result.serializedStrictTextFixture === undefined || result.strictTextFixtureFile === undefined
+      ? undefined
+      : join(options.options.outputDirectory, result.strictTextFixtureFile);
   try {
     await io.mkdir(options.options.outputDirectory);
     await io.writeFile(planPath, result.serializedPlan);
+    if (result.serializedStrictTextFixture !== undefined && strictTextFixturePath !== undefined) {
+      await io.writeFile(strictTextFixturePath, result.serializedStrictTextFixture);
+    }
   } catch {
     io.stderr.write(
       formatTextPrepDiagnostics([
         diagnostic(
           'GEORDI_TEXT_PREP_IO_ERROR',
           '$.args.output',
-          `Unable to write text-prep generation plan: ${planPath}.`,
+          `Unable to write text-prep artifacts under: ${options.options.outputDirectory}.`,
         ),
       ]),
     );
@@ -134,6 +141,7 @@ export async function runTextPrepCli(
       {
         ok: true,
         planPath,
+        strictTextFixturePath,
       },
       { space: 2 },
     )}\n`,
