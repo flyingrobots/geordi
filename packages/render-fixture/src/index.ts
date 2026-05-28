@@ -82,6 +82,18 @@ export interface RenderFixtureStrictTextFixtureManifestValidationResult {
   readonly issues: readonly RenderFixtureStrictTextFixtureManifestIssue[];
 }
 
+export type RenderFixtureStrictTextFontReferenceIssue = RenderFixtureManifestIssue;
+
+export interface RenderFixtureStrictTextFontReferenceValidationInput {
+  readonly fontPack: RenderFixtureFontPackManifest;
+  readonly manifest: RenderFixtureStrictTextFixtureManifest;
+}
+
+export interface RenderFixtureStrictTextFontReferenceValidationResult {
+  readonly ok: boolean;
+  readonly issues: readonly RenderFixtureStrictTextFontReferenceIssue[];
+}
+
 export interface RenderFixtureArtifactIssue extends JsonObject {
   readonly path: string;
   readonly message: string;
@@ -395,6 +407,16 @@ export class RenderFixtureInvalidStrictTextFixtureManifestError extends Error {
   }
 }
 
+export class RenderFixtureInvalidStrictTextFontReferenceError extends Error {
+  public readonly issues: readonly RenderFixtureStrictTextFontReferenceIssue[];
+
+  constructor(issues: readonly RenderFixtureStrictTextFontReferenceIssue[]) {
+    super('Invalid render fixture strict text font references');
+    this.name = new.target.name;
+    this.issues = issues;
+  }
+}
+
 export class RenderFixturePlyHeaderError extends Error {
   public readonly lineNumber: number;
 
@@ -580,6 +602,17 @@ export function assertRenderFixtureStrictTextFixtureManifest(
   throw new RenderFixtureInvalidStrictTextFixtureManifestError(result.issues);
 }
 
+export function assertRenderFixtureStrictTextFontReferences(
+  input: RenderFixtureStrictTextFontReferenceValidationInput,
+): RenderFixtureStrictTextFontReferenceValidationInput {
+  const result = validateRenderFixtureStrictTextFontReferences(input);
+  if (result.ok) {
+    return input;
+  }
+
+  throw new RenderFixtureInvalidStrictTextFontReferenceError(result.issues);
+}
+
 export function isRenderFixtureManifest(
   value: JsonValue | undefined,
 ): value is RenderFixtureManifest {
@@ -758,6 +791,25 @@ export function validateRenderFixtureFontPackManifest(
     issues,
   );
   validateFontFaces(property(value, 'fonts'), '$.fonts', issues);
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function validateRenderFixtureStrictTextFontReferences(
+  input: RenderFixtureStrictTextFontReferenceValidationInput,
+): RenderFixtureStrictTextFontReferenceValidationResult {
+  const issues: RenderFixtureStrictTextFontReferenceIssue[] = [];
+  const fontIds = new Set(input.fontPack.fonts.map((font) => font.id));
+
+  for (const [index, run] of input.manifest.glyphRuns.entries()) {
+    if (!fontIds.has(run.fontId)) {
+      pushIssue(
+        issues,
+        `$.glyphRuns[${index}].fontId`,
+        'Strict text glyph run font id must reference an existing font pack font',
+      );
+    }
+  }
 
   return { ok: issues.length === 0, issues };
 }

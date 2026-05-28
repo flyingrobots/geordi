@@ -2,7 +2,12 @@
 
 ## Overview
 
-Geordi uses a **clean seam architecture** where the compiler core remains framework-agnostic and integrations (like Wesley) are thin adapter layers.
+Geordi uses a **clean seam architecture** where the compiler core remains framework-agnostic and integrations (like Wesley) are thin adapter layers. The product north star lives in [`VISION.md`](../VISION.md).
+
+The cross-runtime boundary is also explicit: TypeScript stays native at browser, Node, tooling, and
+fixture-authoring edges; Rust stays native at the renderer and CLI core; shared serialized contracts
+are generated from a common source; WASM is introduced only for hard deterministic kernels. See
+[`docs/design/2026-05-typescript-rust-wasm-boundary.md`](./design/2026-05-typescript-rust-wasm-boundary.md).
 
 ## Package Responsibilities
 

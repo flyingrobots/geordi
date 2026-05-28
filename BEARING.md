@@ -1,7 +1,7 @@
 # Geordi Bearing
 
 **Date**: 2026-05-25
-**Branch baseline**: <code>main</code> at <code>6773bbc</code>
+**Branch baseline**: <code>main</code> at <code>78c4636</code>
 **Active milestone**: Strict Positioned Glyph-Run Text
 **Active profile under design**: <code>geordi-strict-positioned-glyph-run/1</code>
 **Active design doc**: [docs/design/2026-05-strict-positioned-glyph-run-plan.md](./docs/design/2026-05-strict-positioned-glyph-run-plan.md)
@@ -9,6 +9,10 @@
 **Drift correction**: shared TypeScript/Rust contract DTOs must be generated from a Wesley common
 schema; see
 [docs/design/2026-05-wesley-common-type-generation.md](./docs/design/2026-05-wesley-common-type-generation.md).
+**Runtime boundary**: TypeScript remains native at browser, Node, tooling, and fixture-authoring
+edges; Rust remains native at the renderer and CLI core; WASM is reserved for hard deterministic
+kernels. See
+[docs/design/2026-05-typescript-rust-wasm-boundary.md](./docs/design/2026-05-typescript-rust-wasm-boundary.md).
 
 This file is the short-term operating map. Product laws remain in [docs/V0_DESIGN_LAWS.md](./docs/V0_DESIGN_LAWS.md). The active execution plan is the 100-slice strict positioned glyph-run plan below.
 
@@ -21,6 +25,10 @@ Text remains deferred as a broad feature. The next credibility milestone is not 
 The strict text DTOs currently introduced in TypeScript and Rust are provisional until the Wesley
 common-type generator replaces mirrored hand-authored shapes. Validation, custom errors, IO, and
 rendering behavior remain handwritten around generated DTOs.
+
+The TypeScript package is not intended to become a thin WASM wrapper around Rust for ordinary fixture
+validation. Shared conformance fixtures and stable diagnostic identities must prove cross-runtime
+agreement while simple edge behavior remains native in each host.
 
 ## Milestone Law
 
@@ -107,7 +115,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S039**.
+Current OPEN node: **S040**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -533,7 +541,7 @@ Current OPEN node: **S039**.
 
 ### S039: Font reference resolution validation
 
-- [ ] **S039: Font reference resolution validation** (OPEN)
+- [x] **S039: Font reference resolution validation** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with font reference resolution validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Font reference resolution validation.
@@ -544,7 +552,7 @@ Current OPEN node: **S039**.
 
 ### S040: Line box validation
 
-- [ ] **S040: Line box validation** (BLOCKED)
+- [ ] **S040: Line box validation** (OPEN)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with line box validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Line box validation.

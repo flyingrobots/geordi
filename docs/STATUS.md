@@ -1,164 +1,127 @@
-# Geordi Compiler Status
+# Geordi Status
 
-**Date**: 2026-05-23
-**Version**: 0.1.0-dev
-**Milestone**: Next slice execution starting from `main` at `1719019`
+**Date**: 2026-05-25
+**Version**: `0.1.0-dev`
+**Active milestone**: Strict Positioned Glyph-Run Text
+**Current operating map**: [`../BEARING.md`](../BEARING.md)
 
-See [`../BEARING.md`](../BEARING.md) for the current operating map.
+This document is a stable status signpost. It intentionally avoids fixed package test counts because
+those drift quickly; use CI, the current PR checks, and the commands in [`../README.md`](../README.md)
+for current gate output.
 
-## Current State
+## Current Position
 
-The compiler architecture is in place, the repo gates are real, and the next work should focus on
-semantic correctness rather than more repository scaffolding.
+The repository has moved past pure compiler scaffolding. The active work is a render-everywhere proof
+ladder:
 
-### Complete Packages
+1. Rectangle render-everywhere proof: complete.
+2. Stanford bunny mesh proof: complete for shared asset identity and coarse browser/native rendering
+   smoke, not pixel-identical 3D rasterization.
+3. Strict positioned glyph-run text: active.
 
-#### `@flyingrobots/geordi-compiler-core`
+The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
+the active open node is `S040`, line box validation, after `S039` added strict text font-reference
+validation in TypeScript and Rust.
 
-Pure, framework-agnostic compilation engine.
+## Completed Capabilities
 
-- Type system: canonical AST, diagnostics, artifacts, and IR types re-exported from core.
-- Error taxonomy with stable `GEORDI_E_*` and `GEORDI_W_*` codes.
-- Compile orchestrator with parse, canonicalize, validate, and emit phases.
-- GraphQL SDL and canonical JSON input paths.
-- Uses the core-owned deterministic JSON port for canonical parse/stringify boundaries.
-- Deterministic IR, receipt, source-map, and TypeScript type emission.
-- IR and receipt emission declare the v0 numeric profile, baseline feature requirements, and
-  feature-requirement hash.
-- Compiler tests lock emitted IR and receipt requirements to the baseline set even as core knows
-  future feature names.
-- Current public IR API names are `GeordiIr`, `validateGeordiIr()`, and `isGeordiIr()`; versioning
-  remains in serialized contract values such as `irVersion: "geordi-ir/1"`.
-- Canonical source-location model shared by AST source refs and diagnostics.
-- Deterministic diagnostic formatter for stable CLI/adapter output.
-- Type-emission tests cover Group-only scenes, and the generated-type `tsc` subprocess runs only in
-  CI or with `TSC_GATE=1`.
-- Post-build public export smoke coverage.
-
-#### `@flyingrobots/geordi-schema-graphql`
-
-GraphQL SDL to canonical AST adapter.
-
-- Directive definitions with an explicit directive version contract.
-- GraphQL parser wrapper with source naming.
-- Scene and node extraction.
-- Exact GraphQL source spans and offsets for scene, node, and directive argument diagnostics.
-- Canonical AST transform.
-- End-to-end SDL compilation coverage through compiler-core.
-
-#### `@flyingrobots/geordi-wesley-generator`
-
-Wesley GeneratorPlugin adapter scaffold.
-
-- Plugin lifecycle shape: `apiVersion`, `name`, `plan`, `generate`.
-- Compiler adapter injection via `graphqlToCanonicalAst`.
-- Public entrypoint contract test.
-- Root `pnpm wesley` script shells out to the installed Wesley CLI.
-- Behavior coverage for `plan()`, successful generation, and custom failure errors.
-
-#### `@flyingrobots/geordi-core`
-
-Core domain package.
-
-- Versioned `geordi-ir/1` constants, structural types, and validation.
-- Canonical JSON port with deterministic parse/stringify/normalize behavior and custom JSON
-  errors.
-- v0 numeric profile constant `geordi-finite-binary64/1` and graphics-number helpers.
-- Known feature registry, baseline feature profile constants rooted at `geordi/core/1`, strict text
-  feature vocabulary, and validation for `geordi-ir/1` `requires`.
-- Current `GeordiIr` structural types and validation for the `geordi-ir/1` payload contract.
-- Draw-ready runtime scene aliases named `PreparedGeordiScene` and `PreparedGeordiNode`.
-- Compatibility aliases for the older scene names remain during the v0.1 migration.
-
-#### `@flyingrobots/geordi-runtime-webgl`
-
-Canvas-backed WebGL-runtime scaffold.
-
-- Basic renderer implementation.
-- Public entrypoint contract test.
-- `renderGeordiToCanvas()` is the primary public `geordi-ir/1` rendering API.
-- `renderPreparedSceneToCanvas()` renders draw-ready runtime scenes explicitly.
-- Runtime-bound IR validation and fail-loud prop lowering use custom runtime error types.
-- Runtime capability profile declares supported IR version, numeric profile, supported feature
-  requirements, node kinds, and visual features.
-- Runtime profile checks render supported requirement subsets and reject missing, malformed,
-  unknown, or known-but-unsupported strict text requirements before drawing.
-- Compiler-emitted IR is rendered through the runtime contract in an integration test.
-
-## Infrastructure
-
-- pnpm workspace.
-- Turbo build/test/lint/typecheck pipeline.
-- GitHub Actions CI.
-- Dependabot grouped updates for npm workspace dependencies and GitHub Actions.
-- Strict TypeScript and type-aware ESLint.
-- Formal design pack for the next P0 slice sequence in `docs/design/`.
-- Root hygiene gates:
-  - `pnpm test:exports`
-  - `pnpm test:package-names`
-  - `pnpm test:docs`
-  - `pnpm test:placeholders`
-  - `pnpm test:repo-sludge`
-
-## Test Status
-
-Latest package test counts after the next-slice hit list:
-
-| Package | Tests | Status |
-| --- | ---: | --- |
-| `@flyingrobots/geordi-compiler-core` | 84 | Green |
-| `@flyingrobots/geordi-schema-graphql` | 55 | Green |
-| `@flyingrobots/geordi-core` | 32 | Green |
-| `@flyingrobots/geordi-runtime-webgl` | 17 | Green |
-| `@flyingrobots/geordi-wesley-generator` | 3 | Green |
-| **Total package tests** | **191** | Green |
-
-Additional gates:
-
-| Gate | Status |
+| Area | Current state |
 | --- | --- |
-| `pnpm lint:root` | Green |
-| `pnpm exec turbo run lint --force` | Green |
-| `pnpm typecheck` | Green |
-| `pnpm test:exports` | Green |
-| `pnpm audit --prod=false` | Green |
+| Compiler core | Canonical AST parse/canonicalize/validate/emit path with deterministic artifacts and diagnostics. |
+| GraphQL SDL adapter | Source-located SDL extraction and typed diagnostic transport into compiler-core. |
+| Core IR | `geordi-ir/1` constants, validation, numeric profile, JSON port, and feature vocabulary. |
+| Runtime profile | Runtime feature support checks reject missing, malformed, unknown, or unsupported requirements. |
+| Render fixture package | Shared fixture contracts, hash helpers, mesh/font/strict-text manifest validators, and Node helpers. |
+| GPVue fixture compiler | Constrained GPVue source can reproduce the checked-in hello-panel render fixture. |
+| Browser proof harness | Browser canvas harness renders rectangle and bunny proof paths. |
+| Native Rust proof harness | Rust workspace loads, validates, and renders rectangle and bunny proof paths. |
+| Mesh asset proof | Stanford bunny PLY bytes are content-addressed, parsed, bounded, and exercised by browser/native gates. |
+| Strict font assets | Lato font pack and failure fixtures prove content-addressed font/license boundaries. |
+| Strict text manifests | TypeScript and Rust can validate strict text manifest structure and font references. |
 
-## What's Next
+## Active Work
 
-Immediate:
+The active milestone is not "general text support." It is a strict positioned glyph-run proof.
 
-1. Specify deterministic operation-order rules for future vector, matrix, transform, and animation
-   math.
-2. Move to the next GitHub-backed compiler backlog items: artifact builder (#3), identifier-map
-   API cleanup (#2), and validation fuzzing (#4).
-3. Keep source-map, diagnostic formatter, and receipt behavior wired into future CLI/Wesley
-   entrypoints.
+Current rules:
 
-Short term:
+- strict text starts outside `geordi-ir/1`;
+- text evidence uses content-addressed font assets;
+- glyph runs are explicit positioned evidence;
+- source strings are semantic/debug metadata only in strict mode;
+- host font lookup, CSS text, platform text APIs, runtime shaping, fallback, wrapping, bidi, and
+  variable font axes are not compliant paths;
+- strict text graduates into core IR only after validation, browser rendering, native rendering,
+  parity metadata, and failure fixtures prove the contract.
 
-1. Create `@flyingrobots/geordi-cli` for compile, validate, pack, and watch workflows.
+## Active Architecture Corrections
+
+| Correction | Policy |
+| --- | --- |
+| Shared DTO drift | Serialized TypeScript/Rust contract DTOs must be generated from one Wesley common schema. |
+| Runtime boundary | TypeScript remains native at browser, Node, tooling, and fixture-authoring edges. Rust remains native at the renderer and CLI core. WASM is reserved for hard deterministic kernels. |
+| Cross-runtime validation | Use stable diagnostic identities and shared conformance fixtures. Do not compare prose error text as contract data. |
+
+Primary docs:
+
+- [`design/2026-05-wesley-common-type-generation.md`](design/2026-05-wesley-common-type-generation.md)
+- [`design/2026-05-typescript-rust-wasm-boundary.md`](design/2026-05-typescript-rust-wasm-boundary.md)
+
+## Current Nonclaims
+
+Geordi does not currently claim:
+
+- compliant general text rendering;
+- platform-native text as a deterministic path;
+- CSS text;
+- host font fallback;
+- runtime shaping in strict mode;
+- pixel-identical 3D mesh rasterization;
+- production WebGPU/Metal/Vulkan renderers;
+- a production CLI;
+- binary IR packing;
+- generated common DTOs already implemented;
+- a required WASM dependency for ordinary TypeScript validation.
+
+## Gate Map
+
+Use the narrow gate for the files changed, then run full gates before PR handoff.
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm test:docs
+pnpm test:package-names
+pnpm test:repo-sludge
+pnpm test:placeholders
+pnpm test:exports
+git diff --check
+```
+
+Rust changes should also run:
+
+```bash
+cargo fmt --check
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+```
+
+Render-everywhere proof gates:
+
+```bash
+pnpm test:render-everywhere:gpvue
+pnpm test:render-everywhere:bunny
+```
 
 ## Decision Log
 
-### Architectural Decisions
-
-1. **Seam placement**: GraphQL SDL to canonical AST to Geordi IR.
-   - Why: prevents Wesley lock-in and enables multiple frontends.
-   - Trade-off: extra abstraction layer.
-
-2. **Error codes**: stable string codes.
-   - Why: machine-parseable, documentation-stable, future-proof.
-   - Trade-off: more verbose diagnostics.
-
-3. **Hashing**: SHA-256 for current receipts.
-   - Why: standard, available, and compatible with current tooling.
-   - Trade-off: slower than future alternatives such as BLAKE3.
-
-4. **Canonical JSON boundary**: all production JSON ingress/egress goes through the core-owned
-   JSON port.
-   - Why: deterministic bytes, strict non-finite number rejection, and one place to define JSON law.
-   - Trade-off: boundary code is stricter and less convenient than native `JSON.parse/stringify`.
-
-5. **Time outside core IR**: `geordi-ir/1` describes scene snapshots.
-   - Why: keeps v0 deterministic and avoids hidden frame scheduling semantics.
-   - Trade-off: hosts must emit new scenes for animation until a future animation profile exists.
+| Decision | Current stance |
+| --- | --- |
+| Renderer contract | `geordi-ir/1` is the public renderer contract. Draw-ready scene preparation is runtime-internal unless separately versioned. |
+| Numeric profile | v0 uses `geordi-finite-binary64/1` plus explicit fixed-point profiles where needed. |
+| Feature profile | Artifacts declare required features; runtimes reject unsupported requirements loudly. |
+| JSON boundary | Production JSON ingress and egress goes through explicit ports that reject non-finite values and canonicalize output. |
+| Time | `geordi-ir/1` describes scene snapshots; animation profiles must be explicit. |
+| Text | Strict positioned glyph evidence is the current proof path; broad text remains deferred. |
+| WASM | Optional future kernel boundary, not the default TypeScript package implementation strategy. |

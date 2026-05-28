@@ -479,15 +479,15 @@
 <!-- S039 -->
 <g id="node42" class="node">
 <title>S039</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M490.88,-1991C490.88,-1991 351.12,-1991 351.12,-1991 345.12,-1991 339.12,-1985 339.12,-1979 339.12,-1979 339.12,-1967 339.12,-1967 339.12,-1961 345.12,-1955 351.12,-1955 351.12,-1955 490.88,-1955 490.88,-1955 496.88,-1955 502.88,-1961 502.88,-1967 502.88,-1967 502.88,-1979 502.88,-1979 502.88,-1985 496.88,-1991 490.88,-1991"/>
-<text xml:space="preserve" text-anchor="middle" x="421" y="-1974.75" font-family="Helvetica,sans-Serif" font-size="10.00">S039</text>
-<text xml:space="preserve" text-anchor="middle" x="421" y="-1963.5" font-family="Helvetica,sans-Serif" font-size="10.00">Font reference resolution validation</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M490.88,-1991C490.88,-1991 351.12,-1991 351.12,-1991 345.12,-1991 339.12,-1985 339.12,-1979 339.12,-1979 339.12,-1967 339.12,-1967 339.12,-1961 345.12,-1955 351.12,-1955 351.12,-1955 490.88,-1955 490.88,-1955 496.88,-1955 502.88,-1961 502.88,-1967 502.88,-1967 502.88,-1979 502.88,-1979 502.88,-1985 496.88,-1991 490.88,-1991"/>
+<text xml:space="preserve" text-anchor="middle" x="421" y="-1974.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S039</text>
+<text xml:space="preserve" text-anchor="middle" x="421" y="-1963.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Font reference resolution validation</text>
 </g>
 <!-- S030&#45;&gt;S039 -->
 <g id="edge42" class="edge">
 <title>S030&#45;&gt;S039</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M292.72,-2025.61C315.44,-2016.47 343.05,-2005.36 366.83,-1995.79"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="367.61,-1997.74 372.39,-1993.56 366.04,-1993.85 367.61,-1997.74"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M292.72,-2025.61C315.9,-2016.28 344.18,-2004.9 368.28,-1995.21"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="368.82,-1997.26 373.6,-1993.07 367.25,-1993.36 368.82,-1997.26"/>
 </g>
 <!-- S032 -->
 <g id="node35" class="node">
@@ -589,21 +589,21 @@
 <!-- S038&#45;&gt;S039 -->
 <g id="edge40" class="edge">
 <title>S038&#45;&gt;S039</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M421,-2025.61C421,-2017.87 421,-2008.73 421,-2000.3"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="423.1,-2000.33 421,-1994.33 418.9,-2000.33 423.1,-2000.33"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M421,-2025.61C421,-2017.67 421,-2008.25 421,-1999.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="423.1,-1999.84 421,-1993.84 418.9,-1999.84 423.1,-1999.84"/>
 </g>
 <!-- S040 -->
 <g id="node43" class="node">
 <title>S040</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M456.26,-1919C456.26,-1919 387.74,-1919 387.74,-1919 381.74,-1919 375.74,-1913 375.74,-1907 375.74,-1907 375.74,-1895 375.74,-1895 375.74,-1889 381.74,-1883 387.74,-1883 387.74,-1883 456.26,-1883 456.26,-1883 462.26,-1883 468.26,-1889 468.26,-1895 468.26,-1895 468.26,-1907 468.26,-1907 468.26,-1913 462.26,-1919 456.26,-1919"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M456.26,-1919C456.26,-1919 387.74,-1919 387.74,-1919 381.74,-1919 375.74,-1913 375.74,-1907 375.74,-1907 375.74,-1895 375.74,-1895 375.74,-1889 381.74,-1883 387.74,-1883 387.74,-1883 456.26,-1883 456.26,-1883 462.26,-1883 468.26,-1889 468.26,-1895 468.26,-1895 468.26,-1907 468.26,-1907 468.26,-1913 462.26,-1919 456.26,-1919"/>
 <text xml:space="preserve" text-anchor="middle" x="422" y="-1902.75" font-family="Helvetica,sans-Serif" font-size="10.00">S040</text>
 <text xml:space="preserve" text-anchor="middle" x="422" y="-1891.5" font-family="Helvetica,sans-Serif" font-size="10.00">Line box validation</text>
 </g>
 <!-- S039&#45;&gt;S040 -->
 <g id="edge41" class="edge">
 <title>S039&#45;&gt;S040</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M421.27,-1953.24C421.38,-1945.63 421.5,-1936.7 421.62,-1928.45"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="423.72,-1928.66 421.71,-1922.63 419.52,-1928.6 423.72,-1928.66"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M421.26,-1953.61C421.37,-1945.87 421.5,-1936.73 421.62,-1928.3"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="423.72,-1928.36 421.71,-1922.33 419.52,-1928.3 423.72,-1928.36"/>
 </g>
 <!-- S041 -->
 <g id="node44" class="node">

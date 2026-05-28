@@ -16,6 +16,7 @@ import {
   assertRenderFixtureMeshFixtureManifest,
   assertRenderFixturePixelProbe,
   assertRenderFixturePixelProbes,
+  assertRenderFixtureStrictTextFontReferences,
   assertRenderFixtureStrictTextFixtureManifest,
   createRenderFixtureMeshPlaybackFrame,
   isRenderFixtureFontPackManifest,
@@ -51,6 +52,7 @@ import {
   RenderFixtureInvalidMeshPlaybackError,
   RenderFixtureInvalidPixelSampleError,
   RenderFixtureInvalidPlaybackFrameError,
+  RenderFixtureInvalidStrictTextFontReferenceError,
   RenderFixtureInvalidStrictTextFixtureManifestError,
   RenderFixturePlyFaceError,
   RenderFixturePlyHeaderError,
@@ -62,6 +64,7 @@ import {
   validateRenderFixtureMeshAssetManifest,
   validateRenderFixtureMeshFixtureManifest,
   validateRenderFixtureManifest,
+  validateRenderFixtureStrictTextFontReferences,
   validateRenderFixtureStrictTextFixtureManifest,
   type RenderFixtureFontPackManifest,
   type RenderFixtureManifest,
@@ -830,6 +833,49 @@ describe('render fixture strict text fixture manifest validation', () => {
 
     expect(parsed.textProfile).toBe(RENDER_FIXTURE_STRICT_POSITIONED_GLYPH_RUN_PROFILE);
     expect(parsed.glyphRuns[0]?.glyphs[0]?.glyphId).toBe(43);
+  });
+
+  it('validates strict text font references against a font pack', () => {
+    const input = {
+      fontPack: makeFontPackManifest(),
+      manifest: makeStrictTextFixtureManifest(),
+    };
+
+    expect(validateRenderFixtureStrictTextFontReferences(input)).toEqual({
+      ok: true,
+      issues: [],
+    });
+    expect(assertRenderFixtureStrictTextFontReferences(input)).toBe(input);
+  });
+
+  it('rejects unresolved strict text font references', () => {
+    const manifest = makeStrictTextFixtureManifest();
+    const run = manifest.glyphRuns[0];
+    const input = {
+      fontPack: makeFontPackManifest(),
+      manifest: {
+        ...manifest,
+        glyphRuns: [
+          {
+            ...run,
+            fontId: 'missing-font',
+          },
+        ],
+      },
+    };
+
+    const result = validateRenderFixtureStrictTextFontReferences(input);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues).toEqual([
+      {
+        message: 'Strict text glyph run font id must reference an existing font pack font',
+        path: '$.glyphRuns[0].fontId',
+      },
+    ]);
+    expect(() => assertRenderFixtureStrictTextFontReferences(input)).toThrow(
+      RenderFixtureInvalidStrictTextFontReferenceError,
+    );
   });
 
   it('rejects invalid strict text fixture metadata', () => {
