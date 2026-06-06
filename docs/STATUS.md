@@ -96,6 +96,8 @@ Primary docs:
 Geordi does not currently claim:
 
 - compliant general text rendering;
+- `text.raw-runtime-shaping` as a compliant text path — it is the current compiler-emitted baseline
+  placeholder, not the strict text contract; it relies on host font metrics and host shaping;
 - platform-native text as a deterministic path;
 - CSS text;
 - host font fallback;

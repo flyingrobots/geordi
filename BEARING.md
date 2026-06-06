@@ -727,6 +727,23 @@ measurement engine does not retroactively alter committed artifacts.
 
 Next OPEN node after this engine: `S093`, raw runtime text noncompliance docs.
 
+## S093 Raw Runtime Text Noncompliance Docs
+
+`docs/end-to-end.md` now contains an explicit noncompliance note for `text.raw-runtime-shaping`:
+
+- `text.raw-runtime-shaping` is the current compiler-emitted baseline placeholder — it marks text
+  that relies on platform-native shaping, host font metrics, and host line breaking at runtime.
+- It is retained in `GEORDI_BASELINE_FEATURES` until the compiler can lower text to deterministic
+  strict glyph runs; it will not be removed before that capability exists.
+- A scene that requires `text.raw-runtime-shaping` is not compliant with
+  `geordi-strict-positioned-glyph-run/1`.
+- The strict text milestone proof does not go through `geordi-ir/1` text nodes; it uses a
+  separate fixture and evidence model.
+
+`docs/STATUS.md` now names `text.raw-runtime-shaping` explicitly in the nonclaims section.
+
+Next OPEN node after these doc updates: `S094`, end-to-end text pipeline docs.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -744,7 +761,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S093**.
+Current OPEN node: **S094**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1764,7 +1781,7 @@ Current OPEN node: **S093**.
 
 ### S093: Raw runtime text noncompliance docs
 
-- [ ] **S093: Raw runtime text noncompliance docs** (OPEN)
+- [x] **S093: Raw runtime text noncompliance docs** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with raw runtime text noncompliance docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Raw runtime text noncompliance docs.
@@ -1775,7 +1792,7 @@ Current OPEN node: **S093**.
 
 ### S094: End-to-end text pipeline docs
 
-- [ ] **S094: End-to-end text pipeline docs** (BLOCKED)
+- [ ] **S094: End-to-end text pipeline docs** (OPEN)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with end-to-end text pipeline docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: End-to-end text pipeline docs.

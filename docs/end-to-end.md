@@ -622,6 +622,16 @@ Known feature examples include:
 - `text.fontPack`
 - `text.glyphRuns`
 
+**Noncompliance note — `text.raw-runtime-shaping`**: this feature flag marks text that uses
+platform-native shaping APIs at runtime. It is emitted by the current compiler in
+`GEORDI_BASELINE_FEATURES` and is intentionally retained as a placeholder until the compiler can
+lower text to deterministic strict glyph runs. A scene that requires `text.raw-runtime-shaping` is
+not compliant with `geordi-strict-positioned-glyph-run/1` — it relies on host font metrics, host
+shaping, and host line breaking, none of which Geordi controls. The strict text milestone proof path
+does not go through `geordi-ir/1` text nodes and does not require this feature; it uses a separate
+fixture and evidence model that graduates into `geordi-ir/1` only after both browser and native
+renderers prove the strict contract.
+
 The browser runtime currently supports the TypeScript baseline profile. The Rust render-everywhere
 MVP supports only:
 
