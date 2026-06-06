@@ -498,6 +498,100 @@ pub struct LoadedBunnyFixture {
     style: BunnyRenderStyle,
 }
 
+impl LoadedBunnyFixture {
+    /// Bunny frame image width in pixels.
+    pub fn image_width(&self) -> usize {
+        self.image.width
+    }
+
+    /// Bunny frame image height in pixels.
+    pub fn image_height(&self) -> usize {
+        self.image.height
+    }
+
+    /// Bunny frame RGBA8 bytes in row-major order.
+    pub fn image_rgba(&self) -> &[u8] {
+        &self.image.rgba
+    }
+}
+
+/// Reusable bunny animation runtime for presentation windows.
+#[derive(Debug)]
+pub struct BunnyWindowRuntime {
+    loaded: LoadedBunnyFixture,
+}
+
+impl BunnyWindowRuntime {
+    /// Load the bunny fixture once and keep the mesh and style in memory for frame updates.
+    pub fn load(asset_dir: &Path) -> Result<Self, NativeBunnyError> {
+        Ok(Self {
+            loaded: load_bunny_fixture(asset_dir, 0)?,
+        })
+    }
+
+    /// Bunny playback sample rate in frames per second.
+    pub fn sample_rate(&self) -> u64 {
+        self.loaded.fixture.playback.sample_rate
+    }
+
+    /// Render a specific frame of the bunny animation.
+    pub fn render_frame(&self, frame_index: u64) -> BunnyWindowFrame {
+        let report = create_bunny_frame_report(
+            frame_index,
+            &self.loaded.report.asset_hash,
+            &self.loaded.mesh,
+            &self.loaded.fixture,
+        );
+        let image = render_bunny_wireframe(
+            &self.loaded.mesh,
+            &self.loaded.fixture,
+            self.loaded.style,
+            report.angle_radians,
+        );
+
+        BunnyWindowFrame {
+            fixture_id: self.loaded.fixture.id.clone(),
+            image,
+            report,
+        }
+    }
+}
+
+/// A single rendered bunny animation frame.
+#[derive(Debug)]
+pub struct BunnyWindowFrame {
+    fixture_id: String,
+    image: BunnyImage,
+    report: BunnyFrameReport,
+}
+
+impl BunnyWindowFrame {
+    /// Bunny frame image width in pixels.
+    pub fn image_width(&self) -> usize {
+        self.image.width
+    }
+
+    /// Bunny frame image height in pixels.
+    pub fn image_height(&self) -> usize {
+        self.image.height
+    }
+
+    /// Bunny frame RGBA8 bytes in row-major order.
+    pub fn image_rgba(&self) -> &[u8] {
+        &self.image.rgba
+    }
+
+    /// Bunny frame index.
+    pub fn frame_index(&self) -> u64 {
+        self.report.frame_index
+    }
+
+    /// Bunny fixture id.
+    pub fn fixture_id(&self) -> &str {
+        &self.fixture_id
+    }
+}
+
 #[derive(Debug, Eq, PartialEq)]
 struct BunnyImage {
     height: usize,
@@ -705,36 +799,31 @@ pub fn run_bunny_smoke(
 /// Returns `NativeBunnyError` when loading, rendering, buffer conversion, or window presentation
 /// fails.
 pub fn open_bunny_window(asset_dir: &Path) -> Result<(), NativeBunnyError> {
-    let loaded = load_bunny_fixture(asset_dir, 0)?;
+    let runtime = BunnyWindowRuntime::load(asset_dir)?;
+    let first_frame = runtime.render_frame(0);
     let mut window = Window::new(
-        &bunny_window_title(&loaded),
-        loaded.image.width,
-        loaded.image.height,
+        &bunny_window_title(&first_frame),
+        first_frame.image_width(),
+        first_frame.image_height(),
         WindowOptions::default(),
     )
     .map_err(NativeBunnyWindowError::window)?;
+    window.set_target_fps(60);
     let start = Instant::now();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let frame_index = bunny_frame_index_from_elapsed_ms(
             start.elapsed().as_millis(),
-            loaded.fixture.playback.sample_rate,
+            runtime.loaded.fixture.playback.sample_rate,
         );
-        let report = create_bunny_frame_report(
-            frame_index,
-            &loaded.report.asset_hash,
-            &loaded.mesh,
-            &loaded.fixture,
-        );
-        let image = render_bunny_wireframe(
-            &loaded.mesh,
-            &loaded.fixture,
-            loaded.style,
-            report.angle_radians,
-        );
-        let buffer = minifb_buffer(&image)?;
+        let frame = runtime.render_frame(frame_index);
+        let buffer = minifb_buffer_from_rgba(
+            frame.image_rgba(),
+            frame.image_width(),
+            frame.image_height(),
+        )?;
         window
-            .update_with_buffer(&buffer, image.width, image.height)
+            .update_with_buffer(&buffer, frame.image_width(), frame.image_height())
             .map_err(NativeBunnyWindowError::window)?;
     }
 
@@ -955,15 +1044,18 @@ fn render_bunny_wireframe(
     image
 }
 
-fn minifb_buffer(image: &BunnyImage) -> Result<Vec<u32>, NativeBunnyWindowError> {
+fn minifb_buffer_from_rgba(
+    rgba: &[u8],
+    width: usize,
+    height: usize,
+) -> Result<Vec<u32>, NativeBunnyWindowError> {
     let mut buffer = Vec::with_capacity(
-        image
-            .width
-            .checked_mul(image.height)
+        width
+            .checked_mul(height)
             .ok_or_else(NativeBunnyWindowError::buffer_size)?,
     );
 
-    for rgba in image.rgba.chunks_exact(4) {
+    for rgba in rgba.chunks_exact(4) {
         let red = u32::from(rgba[0]);
         let green = u32::from(rgba[1]);
         let blue = u32::from(rgba[2]);
@@ -977,10 +1069,11 @@ fn minifb_buffer(image: &BunnyImage) -> Result<Vec<u32>, NativeBunnyWindowError>
     Ok(buffer)
 }
 
-fn bunny_window_title(loaded: &LoadedBunnyFixture) -> String {
+fn bunny_window_title(frame: &BunnyWindowFrame) -> String {
     format!(
         "Geordi Native - {BUNNY_RENDERER_NAME} - {} - frame {}",
-        loaded.fixture.id, loaded.report.frame_index
+        frame.fixture_id(),
+        frame.frame_index()
     )
 }
 

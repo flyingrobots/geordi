@@ -24,6 +24,10 @@ The harness deserializes JSON at the Rust boundary, validates the artifact hash 
 the loaded scene bytes, validates the supported rectangle-only IR profile, renders to a native image
 buffer, and can either open a window or run offscreen pixel probes.
 
+The native harness also has a unified demo window that can switch between the rectangle, bunny,
+and strict-text scenes. Use `--demo` to open it and `1` / `2` / `3` or the left/right arrows to
+switch scenes.
+
 The binary also loads the Stanford bunny mesh asset from:
 
 ```text
@@ -71,6 +75,12 @@ Open the native window:
 
 ```bash
 cargo run -p native-render-everywhere -- fixtures/render-everywhere/hello-panel
+```
+
+Open the unified native demo window:
+
+```bash
+cargo run -p native-render-everywhere -- --demo
 ```
 
 Validate the bunny asset without opening a window:

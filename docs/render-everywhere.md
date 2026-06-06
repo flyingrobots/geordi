@@ -325,6 +325,20 @@ Expected behavior:
 - the window draws the same rectangle-only panel fixture;
 - pressing Escape closes the window.
 
+Run the unified native demo:
+
+```bash
+cargo run -p native-render-everywhere -- --demo
+```
+
+Expected behavior:
+
+- a native window opens with `Rectangles`, `Bunny`, and `Text` tabs;
+- `1`, `2`, `3`, or the left/right arrows switch scenes;
+- the bunny scene shows the rotating wireframe mesh;
+- the text scene shows the strict positioned glyph-run proof in the native window;
+- pressing Escape closes the window.
+
 Run manifest and load validation without opening a window:
 
 ```bash

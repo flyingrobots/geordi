@@ -701,6 +701,32 @@ shaping, font identity, and geometry valid. The text-prep test suite reads it fr
 
 Next OPEN node after this failure fixture: `S092`, measured line-box generation.
 
+## S092 Measured Line-Box Generation
+
+`@flyingrobots/geordi-text-prep` now exports `readTtfMetrics` and `measureFontLineBox`:
+
+- `readTtfMetrics(bytes: Uint8Array)` parses the `head` and `hhea` tables of a TTF font file and
+  returns `{ ascender, descender, unitsPerEm }` without font-parsing library dependencies.
+- `measureFontLineBox(metrics, pxPerEm, totalAdvanceFixed, lineBoxId?)` converts those metrics into a
+  `RenderFixtureStrictTextLineBox` with baseline and height derived from font metrics rather than
+  precomputed literals.
+
+Two policy constants name the new measurement approach:
+
+- `FONT_ASCENT_DESCENT_BASELINE_POLICY = 'font-ascent-descent/1'`
+- `SINGLE_LINE_FONT_BOUNDS_LINE_BOX_POLICY = 'single-line-font-bounds/1'`
+
+For Lato Regular at `pxPerEm = 48` (geordi-fixed-26.6/1, scale 64):
+
+- `unitsPerEm = 2000`
+- `ascender = 1974` → `baselineY = round(1974 * 48/2000 * 64) = 3036`
+- `descender = -426` → `height = round((1974 + 426) * 48/2000 * 64) = 3686`
+
+The existing generated fixture retains its precomputed `lineBoxPolicy` and `baselinePolicy`; the
+measurement engine does not retroactively alter committed artifacts.
+
+Next OPEN node after this engine: `S093`, raw runtime text noncompliance docs.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -718,7 +744,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S092**.
+Current OPEN node: **S093**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1727,7 +1753,7 @@ Current OPEN node: **S092**.
 
 ### S092: Measured line-box generation
 
-- [ ] **S092: Measured line-box generation** (OPEN)
+- [x] **S092: Measured line-box generation** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with measured line-box generation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Measured line-box generation.
@@ -1738,7 +1764,7 @@ Current OPEN node: **S092**.
 
 ### S093: Raw runtime text noncompliance docs
 
-- [ ] **S093: Raw runtime text noncompliance docs** (BLOCKED)
+- [ ] **S093: Raw runtime text noncompliance docs** (OPEN)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with raw runtime text noncompliance docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Raw runtime text noncompliance docs.

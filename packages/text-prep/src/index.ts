@@ -22,6 +22,10 @@ export const UTF8_SOURCE_ENCODING = 'utf-8/1' as const;
 export const TTF_FONT_FORMAT = 'ttf' as const;
 export const OUTLINE_PATHS_EVIDENCE_KIND = 'outlinePaths' as const;
 export const NO_FALLBACK_POLICY = 'no-fallback/1' as const;
+export const FONT_ASCENT_DESCENT_BASELINE_POLICY = 'font-ascent-descent/1' as const;
+export const SINGLE_LINE_FONT_BOUNDS_LINE_BOX_POLICY = 'single-line-font-bounds/1' as const;
+
+const FIXED_26_6_SCALE = 64;
 
 const STRICT_TEXT_FEATURES = [
   'text.positionedGlyphRuns',
@@ -491,6 +495,93 @@ export function sha256Utf8(value: string): string {
 
 export function sha256Json(value: JsonValue): string {
   return sha256Utf8(canonicalJsonPort.stringify(value));
+}
+
+// ---- TTF font metric reader ----
+
+export interface TtfFontMetrics {
+  readonly ascender: number;
+  readonly descender: number;
+  readonly unitsPerEm: number;
+}
+
+export class TtfParseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = new.target.name;
+  }
+}
+
+export function readTtfMetrics(bytes: Uint8Array): TtfFontMetrics {
+  if (bytes.length < 12) {
+    throw new TtfParseError('Font file too short to be a valid TTF.');
+  }
+
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const numTables = view.getUint16(4, false);
+  const directoryEnd = 12 + numTables * 16;
+
+  if (bytes.length < directoryEnd) {
+    throw new TtfParseError('Font file table directory extends beyond file length.');
+  }
+
+  let headOffset = -1;
+  let hheaOffset = -1;
+
+  for (let i = 0; i < numTables; i++) {
+    const base = 12 + i * 16;
+    const tag =
+      String.fromCharCode(bytes[base] ?? 0) +
+      String.fromCharCode(bytes[base + 1] ?? 0) +
+      String.fromCharCode(bytes[base + 2] ?? 0) +
+      String.fromCharCode(bytes[base + 3] ?? 0);
+    const tableOffset = view.getUint32(base + 8, false);
+    if (tag === 'head') headOffset = tableOffset;
+    if (tag === 'hhea') hheaOffset = tableOffset;
+  }
+
+  if (headOffset < 0) {
+    throw new TtfParseError('Font file is missing required head table.');
+  }
+  if (hheaOffset < 0) {
+    throw new TtfParseError('Font file is missing required hhea table.');
+  }
+  if (bytes.length < headOffset + 20) {
+    throw new TtfParseError('head table is truncated.');
+  }
+  if (bytes.length < hheaOffset + 8) {
+    throw new TtfParseError('hhea table is truncated.');
+  }
+
+  const unitsPerEm = view.getUint16(headOffset + 18, false);
+  const ascender = view.getInt16(hheaOffset + 4, false);
+  const descender = view.getInt16(hheaOffset + 6, false);
+
+  if (unitsPerEm === 0) {
+    throw new TtfParseError('Font head table has invalid unitsPerEm of 0.');
+  }
+
+  return { ascender, descender, unitsPerEm };
+}
+
+export function measureFontLineBox(
+  metrics: TtfFontMetrics,
+  pxPerEm: number,
+  totalAdvanceFixed: number,
+  lineBoxId = 'line-0',
+): RenderFixtureStrictTextLineBox {
+  const scale = (pxPerEm / metrics.unitsPerEm) * FIXED_26_6_SCALE;
+  const baselineY = Math.round(metrics.ascender * scale);
+  const height = Math.round((metrics.ascender - metrics.descender) * scale);
+
+  return {
+    baselineY,
+    height,
+    id: lineBoxId,
+    width: totalAdvanceFixed,
+    x: 0,
+    y: 0,
+  };
 }
 
 function validateSource(

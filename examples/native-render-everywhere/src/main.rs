@@ -19,7 +19,7 @@ use geordi_renderer::{
     GeordiStrictTextRenderError, RenderedImage, assert_native_runtime_profile,
     render_geordi_to_image, render_strict_text_outline_glyphs_to_image,
 };
-use minifb::{Key, Window, WindowOptions};
+use minifb::{Key, KeyRepeat, MouseButton, MouseMode, Window, WindowOptions};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::env;
@@ -29,6 +29,7 @@ use std::fmt::{Display, Formatter};
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 
 const FIXTURE_MANIFEST_PATH: &str = "fixture.json";
 const RENDER_FIXTURE_VERSION: &str = "geordi-render-fixture/1";
@@ -45,6 +46,10 @@ const STRICT_TEXT_PROBE_ANTI_ALIAS_EDGE_POLICY: &str =
 const STRICT_TEXT_BOUNDS_SOURCE_OUTLINE_EVIDENCE: &str =
     "fixture-glyph-origins-plus-outline-evidence-bounds-floor-ceil-inclusive/1";
 const STRICT_TEXT_SEMANTIC_TEXT_ROLE: &str = "non-rendering metadata; pixels follow glyph evidence";
+const DEMO_MENU_HEIGHT: usize = 56;
+const DEMO_CONTENT_HEIGHT: usize = 512;
+const DEMO_WINDOW_WIDTH: usize = 768;
+const DEMO_WINDOW_HEIGHT: usize = DEMO_MENU_HEIGHT + DEMO_CONTENT_HEIGHT;
 fn main() -> Result<(), NativeAppError> {
     run_from_env(env::args_os())
 }
@@ -53,6 +58,10 @@ fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAp
     let args = NativeArgs::parse(args)?;
 
     match args.mode {
+        NativeMode::Demo => {
+            open_demo_window()?;
+            Ok(())
+        }
         NativeMode::BunnyCheck => {
             let loaded = bunny::load_bunny_fixture(&args.fixture_dir, args.frame_index)?;
             bunny::write_bunny_summary(&mut io::stdout().lock(), &loaded)?;
@@ -104,6 +113,7 @@ fn run_from_env(args: impl IntoIterator<Item = OsString>) -> Result<(), NativeAp
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum NativeMode {
+    Demo,
     BunnyCheck,
     BunnySmoke,
     BunnyWindow,
@@ -156,6 +166,12 @@ impl NativeArgs {
                 mode: NativeMode::StrictTextSmoke,
                 strict_text_evidence_path: None,
             }),
+            [flag] if flag == OsStr::new("--demo") => Ok(Self {
+                fixture_dir: PathBuf::new(),
+                frame_index: 0,
+                mode: NativeMode::Demo,
+                strict_text_evidence_path: None,
+            }),
             [flag, evidence_flag, evidence_path, fixture_path]
                 if flag == OsStr::new("--strict-text-smoke")
                     && evidence_flag == OsStr::new("--evidence") =>
@@ -199,6 +215,7 @@ impl NativeArgs {
                 mode: NativeMode::Smoke,
                 strict_text_evidence_path: None,
             }),
+            [fixture_dir] if is_flag_like(fixture_dir) => Err(NativeArgsError),
             [fixture_dir] => Ok(Self {
                 fixture_dir: PathBuf::from(fixture_dir),
                 frame_index: 0,
@@ -215,11 +232,69 @@ fn parse_frame_index(value: &OsStr) -> Result<u64, NativeArgsError> {
     text.parse::<u64>().map_err(|_error| NativeArgsError)
 }
 
+fn is_flag_like(value: &OsStr) -> bool {
+    value.to_str().is_some_and(|text| text.starts_with("--"))
+}
+
 #[derive(Debug)]
 struct LoadedFixture {
     image: RenderedImage,
     ir: GeordiIr,
     manifest: RenderFixtureManifest,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum NativeDemoScene {
+    Rectangles,
+    Bunny,
+    Text,
+}
+
+impl NativeDemoScene {
+    const ALL: [Self; 3] = [Self::Rectangles, Self::Bunny, Self::Text];
+
+    const fn index(self) -> usize {
+        match self {
+            Self::Rectangles => 0,
+            Self::Bunny => 1,
+            Self::Text => 2,
+        }
+    }
+
+    const fn label(self) -> &'static str {
+        match self {
+            Self::Rectangles => "Rectangles",
+            Self::Bunny => "Bunny",
+            Self::Text => "Text",
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct NativeDemoSceneImage {
+    height: usize,
+    rgba: Vec<u8>,
+    width: usize,
+}
+
+impl NativeDemoSceneImage {
+    fn from_rendered(image: &RenderedImage) -> Self {
+        Self {
+            height: image.height(),
+            rgba: image.rgba().to_vec(),
+            width: image.width(),
+        }
+    }
+}
+
+struct NativeDemoWindowState {
+    active_scene: NativeDemoScene,
+    bunny_runtime: bunny::BunnyWindowRuntime,
+    rectangles: NativeDemoSceneImage,
+    text: NativeDemoSceneImage,
+    window_height: usize,
+    window_width: usize,
+    bunny_started_at: Instant,
 }
 
 #[derive(Debug)]
@@ -725,7 +800,7 @@ struct NativeArgsError;
 impl Display for NativeArgsError {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         formatter.write_str(
-            "Usage: native-render-everywhere [--check|--smoke|--bunny-check|--bunny-smoke|--bunny-window|--strict-text-reject|--strict-text-smoke [--evidence <outline-evidence>]] [--frame <index>] <fixture-dir-or-strict-text-fixture>",
+            "Usage: native-render-everywhere [--demo|--check|--smoke|--bunny-check|--bunny-smoke|--bunny-window|--strict-text-reject|--strict-text-smoke [--evidence <outline-evidence>]] [--frame <index>] <fixture-dir-or-strict-text-fixture>",
         )
     }
 }
@@ -2697,6 +2772,49 @@ fn open_fixture_window(loaded: &LoadedFixture) -> Result<(), NativeWindowError> 
     Ok(())
 }
 
+fn open_demo_window() -> Result<(), NativeAppError> {
+    let mut state = load_demo_window_state()?;
+    let mut window = Window::new(
+        &demo_window_title(state.active_scene),
+        state.window_width,
+        state.window_height,
+        WindowOptions::default(),
+    )
+    .map_err(NativeWindowError::window)?;
+    window.set_target_fps(60);
+    let mut rgba_buffer = vec![0_u8; state.window_width * state.window_height * 4];
+    let mut window_buffer = vec![0_u32; state.window_width * state.window_height];
+
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+        if let Some(scene) = poll_demo_scene_change(&window, state.active_scene, state.window_width)
+        {
+            state.active_scene = scene;
+            window.set_title(&demo_window_title(state.active_scene));
+        }
+
+        let bunny_frame = if state.active_scene == NativeDemoScene::Bunny {
+            Some(
+                state
+                    .bunny_runtime
+                    .render_frame(demo_frame_index_from_elapsed_ms(
+                        state.bunny_started_at.elapsed().as_millis(),
+                        state.bunny_runtime.sample_rate(),
+                    )),
+            )
+        } else {
+            None
+        };
+
+        compose_demo_window(&mut rgba_buffer, &state, bunny_frame.as_ref());
+        rgba_to_minifb_buffer(&rgba_buffer, &mut window_buffer)?;
+        window
+            .update_with_buffer(&window_buffer, state.window_width, state.window_height)
+            .map_err(NativeWindowError::window)?;
+    }
+
+    Ok(())
+}
+
 fn minifb_buffer(image: &RenderedImage) -> Result<Vec<u32>, NativeWindowError> {
     let mut buffer = Vec::with_capacity(
         image
@@ -2717,6 +2835,540 @@ fn minifb_buffer(image: &RenderedImage) -> Result<Vec<u32>, NativeWindowError> {
     }
 
     Ok(buffer)
+}
+
+fn load_demo_window_state() -> Result<NativeDemoWindowState, NativeAppError> {
+    let root = repository_root();
+    let rectangles = load_fixture(&root.join("fixtures/render-everywhere/hello-panel"))?;
+    let bunny_runtime = bunny::BunnyWindowRuntime::load(
+        &root.join("fixtures/render-everywhere/assets/stanford-bunny"),
+    )?;
+    let text = load_strict_text_fixture(Path::new("geordi.strict-text.geordi.json"), None)?;
+
+    Ok(NativeDemoWindowState {
+        active_scene: NativeDemoScene::Bunny,
+        bunny_runtime,
+        rectangles: NativeDemoSceneImage::from_rendered(&rectangles.image),
+        text: NativeDemoSceneImage::from_rendered(&text.image),
+        bunny_started_at: Instant::now(),
+        window_height: DEMO_WINDOW_HEIGHT,
+        window_width: DEMO_WINDOW_WIDTH,
+    })
+}
+
+fn demo_window_title(scene: NativeDemoScene) -> String {
+    format!("Geordi Native Demo - {}", scene.label())
+}
+
+fn poll_demo_scene_change(
+    window: &Window,
+    current: NativeDemoScene,
+    window_width: usize,
+) -> Option<NativeDemoScene> {
+    if window.is_key_pressed(Key::Key1, KeyRepeat::No) {
+        return Some(NativeDemoScene::Rectangles);
+    }
+    if window.is_key_pressed(Key::Key2, KeyRepeat::No) {
+        return Some(NativeDemoScene::Bunny);
+    }
+    if window.is_key_pressed(Key::Key3, KeyRepeat::No) {
+        return Some(NativeDemoScene::Text);
+    }
+    if window.is_key_pressed(Key::Left, KeyRepeat::No) {
+        return Some(previous_demo_scene(current));
+    }
+    if window.is_key_pressed(Key::Right, KeyRepeat::No) {
+        return Some(next_demo_scene(current));
+    }
+    if window.get_mouse_down(MouseButton::Left)
+        && let Some((mouse_x, mouse_y)) = window.get_mouse_pos(MouseMode::Discard)
+        && let Some(scene) = demo_scene_from_pointer(mouse_x, mouse_y, window_width)
+    {
+        return Some(scene);
+    }
+
+    None
+}
+
+fn demo_scene_from_pointer(
+    mouse_x: f32,
+    mouse_y: f32,
+    window_width: usize,
+) -> Option<NativeDemoScene> {
+    if mouse_y < 0.0 || mouse_y >= DEMO_MENU_HEIGHT as f32 {
+        return None;
+    }
+    let tab_width = window_width as f32 / NativeDemoScene::ALL.len() as f32;
+    if mouse_x < 0.0 || mouse_x >= window_width as f32 {
+        return None;
+    }
+
+    let index = (mouse_x / tab_width).floor() as usize;
+    NativeDemoScene::ALL.get(index).copied()
+}
+
+fn next_demo_scene(scene: NativeDemoScene) -> NativeDemoScene {
+    NativeDemoScene::ALL[(scene.index() + 1) % NativeDemoScene::ALL.len()]
+}
+
+fn previous_demo_scene(scene: NativeDemoScene) -> NativeDemoScene {
+    NativeDemoScene::ALL
+        [(scene.index() + NativeDemoScene::ALL.len() - 1) % NativeDemoScene::ALL.len()]
+}
+
+fn demo_frame_index_from_elapsed_ms(elapsed_ms: u128, sample_rate: u64) -> u64 {
+    let frames = elapsed_ms.saturating_mul(u128::from(sample_rate)) / 1000;
+    u64::try_from(frames).unwrap_or(u64::MAX)
+}
+
+fn compose_demo_window(
+    buffer: &mut [u8],
+    state: &NativeDemoWindowState,
+    bunny_frame: Option<&bunny::BunnyWindowFrame>,
+) {
+    fill_rgba(buffer, [15, 23, 42, 255]);
+    fill_rect_rgba(
+        buffer,
+        state.window_width,
+        0,
+        0,
+        state.window_width,
+        DEMO_MENU_HEIGHT,
+        [17, 24, 39, 255],
+    );
+    fill_rect_rgba(
+        buffer,
+        state.window_width,
+        0,
+        DEMO_MENU_HEIGHT - 4,
+        state.window_width,
+        2,
+        [56, 189, 248, 255],
+    );
+
+    draw_demo_tabs(buffer, state);
+
+    let scene_center_x = state.window_width / 2;
+    let scene_center_y = DEMO_MENU_HEIGHT + DEMO_CONTENT_HEIGHT / 2;
+
+    match state.active_scene {
+        NativeDemoScene::Rectangles => {
+            let content_x = scene_center_x.saturating_sub(state.rectangles.width / 2);
+            let content_y = scene_center_y.saturating_sub(state.rectangles.height / 2);
+            blit_rgba_image(
+                buffer,
+                state.window_width,
+                content_x,
+                content_y,
+                &state.rectangles,
+            );
+        }
+        NativeDemoScene::Bunny => {
+            let frame = bunny_frame.expect("bunny frame should be rendered for the bunny scene");
+            let content_x = scene_center_x.saturating_sub(frame.image_width() / 2);
+            let content_y = scene_center_y.saturating_sub(frame.image_height() / 2);
+            blit_rgba_slice(
+                buffer,
+                state.window_width,
+                content_x,
+                content_y,
+                frame.image_width(),
+                frame.image_height(),
+                frame.image_rgba(),
+            );
+        }
+        NativeDemoScene::Text => {
+            let content_x = scene_center_x.saturating_sub(state.text.width / 2);
+            let content_y = scene_center_y.saturating_sub(state.text.height / 2);
+            blit_rgba_image(
+                buffer,
+                state.window_width,
+                content_x,
+                content_y,
+                &state.text,
+            );
+        }
+    }
+
+    let accent = match state.active_scene {
+        NativeDemoScene::Rectangles => [59, 130, 246, 255],
+        NativeDemoScene::Bunny => [34, 197, 94, 255],
+        NativeDemoScene::Text => [251, 191, 36, 255],
+    };
+    fill_rect_rgba(
+        buffer,
+        state.window_width,
+        0,
+        DEMO_MENU_HEIGHT + DEMO_CONTENT_HEIGHT - 3,
+        state.window_width,
+        3,
+        accent,
+    );
+}
+
+fn draw_demo_tabs(buffer: &mut [u8], state: &NativeDemoWindowState) {
+    let tab_width = state.window_width / NativeDemoScene::ALL.len();
+    for scene in NativeDemoScene::ALL {
+        let left = scene.index() * tab_width;
+        let active = scene == state.active_scene;
+        let fill = match (scene, active) {
+            (NativeDemoScene::Rectangles, true) => [37, 99, 235, 255],
+            (NativeDemoScene::Bunny, true) => [22, 163, 74, 255],
+            (NativeDemoScene::Text, true) => [245, 158, 11, 255],
+            (_, false) => [30, 41, 59, 255],
+        };
+        let label = match scene {
+            NativeDemoScene::Rectangles => 'R',
+            NativeDemoScene::Bunny => 'B',
+            NativeDemoScene::Text => 'T',
+        };
+        fill_rect_rgba(
+            buffer,
+            state.window_width,
+            left + 8,
+            10,
+            tab_width.saturating_sub(16),
+            DEMO_MENU_HEIGHT - 18,
+            fill,
+        );
+        draw_tab_border(
+            buffer,
+            state.window_width,
+            left + 8,
+            10,
+            tab_width.saturating_sub(16),
+            DEMO_MENU_HEIGHT - 18,
+            active,
+        );
+        draw_tab_letter(
+            buffer,
+            state.window_width,
+            left + tab_width / 2,
+            DEMO_MENU_HEIGHT / 2 + 2,
+            label,
+            active,
+        );
+    }
+}
+
+fn draw_tab_border(
+    buffer: &mut [u8],
+    width: usize,
+    x: usize,
+    y: usize,
+    rect_width: usize,
+    rect_height: usize,
+    active: bool,
+) {
+    let border = if active {
+        [226, 232, 240, 255]
+    } else {
+        [71, 85, 105, 255]
+    };
+    draw_rect_outline(buffer, width, x, y, rect_width, rect_height, border);
+}
+
+fn draw_tab_letter(
+    buffer: &mut [u8],
+    width: usize,
+    center_x: usize,
+    center_y: usize,
+    label: char,
+    active: bool,
+) {
+    let color = if active {
+        [248, 250, 252, 255]
+    } else {
+        [148, 163, 184, 255]
+    };
+    let scale = 4;
+    let letter_width = 5 * scale;
+    let letter_height = 7 * scale;
+    let start_x = center_x.saturating_sub(letter_width / 2);
+    let start_y = center_y.saturating_sub(letter_height / 2);
+    draw_demo_letter(buffer, width, start_x, start_y, scale, label, color);
+}
+
+fn draw_demo_letter(
+    buffer: &mut [u8],
+    width: usize,
+    x: usize,
+    y: usize,
+    scale: usize,
+    label: char,
+    color: [u8; 4],
+) {
+    let stroke = scale.max(2);
+    match label {
+        'R' => {
+            draw_rect_rgba(buffer, width, x, y, stroke, 7 * scale, color);
+            draw_rect_rgba(buffer, width, x, y, 5 * scale, stroke, color);
+            draw_rect_rgba(buffer, width, x, y + 3 * scale, 5 * scale, stroke, color);
+            draw_rect_rgba(
+                buffer,
+                width,
+                x + 4 * scale,
+                y + stroke,
+                stroke,
+                2 * scale,
+                color,
+            );
+            draw_line_rgba(
+                buffer,
+                width,
+                x + stroke,
+                y + 3 * scale,
+                x + 5 * scale,
+                y + 7 * scale,
+                color,
+            );
+        }
+        'B' => {
+            draw_rect_rgba(buffer, width, x, y, stroke, 7 * scale, color);
+            draw_rect_rgba(buffer, width, x, y, 4 * scale, stroke, color);
+            draw_rect_rgba(buffer, width, x, y + 3 * scale, 4 * scale, stroke, color);
+            draw_rect_rgba(buffer, width, x, y + 6 * scale, 4 * scale, stroke, color);
+            draw_rect_rgba(
+                buffer,
+                width,
+                x + 4 * scale - stroke,
+                y + stroke,
+                stroke,
+                2 * scale,
+                color,
+            );
+            draw_rect_rgba(
+                buffer,
+                width,
+                x + 4 * scale - stroke,
+                y + 4 * scale,
+                stroke,
+                2 * scale,
+                color,
+            );
+        }
+        'T' => {
+            draw_rect_rgba(buffer, width, x, y, 5 * scale, stroke, color);
+            draw_rect_rgba(buffer, width, x + 2 * scale, y, stroke, 7 * scale, color);
+        }
+        _ => {}
+    }
+}
+
+fn draw_rect_outline(
+    buffer: &mut [u8],
+    width: usize,
+    x: usize,
+    y: usize,
+    rect_width: usize,
+    rect_height: usize,
+    color: [u8; 4],
+) {
+    if rect_width == 0 || rect_height == 0 {
+        return;
+    }
+    draw_rect_rgba(buffer, width, x, y, rect_width, 1, color);
+    draw_rect_rgba(
+        buffer,
+        width,
+        x,
+        y + rect_height.saturating_sub(1),
+        rect_width,
+        1,
+        color,
+    );
+    draw_rect_rgba(buffer, width, x, y, 1, rect_height, color);
+    draw_rect_rgba(
+        buffer,
+        width,
+        x + rect_width.saturating_sub(1),
+        y,
+        1,
+        rect_height,
+        color,
+    );
+}
+
+fn draw_line_rgba(
+    buffer: &mut [u8],
+    width: usize,
+    x0: usize,
+    y0: usize,
+    x1: usize,
+    y1: usize,
+    color: [u8; 4],
+) {
+    let (Ok(mut x0), Ok(mut y0), Ok(x1), Ok(y1)) = (
+        i32::try_from(x0),
+        i32::try_from(y0),
+        i32::try_from(x1),
+        i32::try_from(y1),
+    ) else {
+        return;
+    };
+    let dx = (x1 - x0).abs();
+    let sx = if x0 < x1 { 1 } else { -1 };
+    let dy = -(y1 - y0).abs();
+    let sy = if y0 < y1 { 1 } else { -1 };
+    let mut error = dx + dy;
+
+    loop {
+        if let (Ok(px), Ok(py)) = (usize::try_from(x0), usize::try_from(y0)) {
+            set_rgba_pixel(buffer, width, px, py, color);
+        }
+
+        if x0 == x1 && y0 == y1 {
+            break;
+        }
+
+        let twice_error = 2 * error;
+        if twice_error >= dy {
+            error += dy;
+            x0 += sx;
+        }
+        if twice_error <= dx {
+            error += dx;
+            y0 += sy;
+        }
+    }
+}
+
+fn draw_rect_rgba(
+    buffer: &mut [u8],
+    width: usize,
+    x: usize,
+    y: usize,
+    rect_width: usize,
+    rect_height: usize,
+    color: [u8; 4],
+) {
+    for row in y..y.saturating_add(rect_height) {
+        for col in x..x.saturating_add(rect_width) {
+            set_rgba_pixel(buffer, width, col, row, color);
+        }
+    }
+}
+
+fn fill_rgba(buffer: &mut [u8], color: [u8; 4]) {
+    for pixel in buffer.chunks_exact_mut(4) {
+        pixel.copy_from_slice(&color);
+    }
+}
+
+fn fill_rect_rgba(
+    buffer: &mut [u8],
+    width: usize,
+    x: usize,
+    y: usize,
+    rect_width: usize,
+    rect_height: usize,
+    color: [u8; 4],
+) {
+    for row in y..y.saturating_add(rect_height) {
+        for col in x..x.saturating_add(rect_width) {
+            set_rgba_pixel(buffer, width, col, row, color);
+        }
+    }
+}
+
+fn blit_rgba_image(
+    buffer: &mut [u8],
+    width: usize,
+    x: usize,
+    y: usize,
+    image: &NativeDemoSceneImage,
+) {
+    blit_rgba_slice(buffer, width, x, y, image.width, image.height, &image.rgba);
+}
+
+fn blit_rgba_slice(
+    buffer: &mut [u8],
+    width: usize,
+    x: usize,
+    y: usize,
+    image_width: usize,
+    image_height: usize,
+    rgba: &[u8],
+) {
+    let Some(row_stride) = width.checked_mul(4) else {
+        return;
+    };
+    if row_stride == 0 || buffer.len() % row_stride != 0 {
+        return;
+    }
+    let buffer_height = buffer.len() / row_stride;
+    let start_x = x.min(width);
+    let start_y = y.min(buffer_height);
+    let end_x = x.saturating_add(image_width).min(width);
+    let end_y = y.saturating_add(image_height).min(buffer_height);
+
+    for row in start_y..end_y {
+        let source_row = row - y;
+        for col in start_x..end_x {
+            let source_col = col - x;
+            let source_index = ((source_row * image_width) + source_col) * 4;
+            let source = [
+                rgba[source_index],
+                rgba[source_index + 1],
+                rgba[source_index + 2],
+                rgba[source_index + 3],
+            ];
+            blend_rgba_pixel(buffer, width, col, row, source);
+        }
+    }
+}
+
+fn blend_rgba_pixel(buffer: &mut [u8], width: usize, x: usize, y: usize, source: [u8; 4]) {
+    let Some(index) = rgba_pixel_index(width, x, y) else {
+        return;
+    };
+    let destination = &mut buffer[index..index + 4];
+    let source_alpha = u16::from(source[3]);
+    if source_alpha == 0 {
+        return;
+    }
+    if source_alpha == 255 {
+        destination.copy_from_slice(&source);
+        return;
+    }
+
+    let inverse_alpha = 255_u16 - source_alpha;
+    destination[0] = ((u16::from(source[0]) * source_alpha
+        + u16::from(destination[0]) * inverse_alpha)
+        / 255) as u8;
+    destination[1] = ((u16::from(source[1]) * source_alpha
+        + u16::from(destination[1]) * inverse_alpha)
+        / 255) as u8;
+    destination[2] = ((u16::from(source[2]) * source_alpha
+        + u16::from(destination[2]) * inverse_alpha)
+        / 255) as u8;
+    destination[3] = 255;
+}
+
+fn set_rgba_pixel(buffer: &mut [u8], width: usize, x: usize, y: usize, color: [u8; 4]) {
+    let Some(index) = rgba_pixel_index(width, x, y) else {
+        return;
+    };
+    buffer[index..index + 4].copy_from_slice(&color);
+}
+
+fn rgba_pixel_index(width: usize, x: usize, y: usize) -> Option<usize> {
+    y.checked_mul(width)?.checked_add(x)?.checked_mul(4)
+}
+
+fn rgba_to_minifb_buffer(rgba: &[u8], buffer: &mut [u32]) -> Result<(), NativeWindowError> {
+    if rgba.len() != buffer.len() * 4 {
+        return Err(NativeWindowError::buffer_size());
+    }
+
+    for (index, pixel) in rgba.chunks_exact(4).enumerate() {
+        let red = u32::from(pixel[0]);
+        let green = u32::from(pixel[1]);
+        let blue = u32::from(pixel[2]);
+        buffer[index] = (red << 16) | (green << 8) | blue;
+    }
+
+    Ok(())
 }
 
 fn window_title(loaded: &LoadedFixture) -> String {
@@ -3237,6 +3889,29 @@ mod tests {
             PathBuf::from("fixtures/render-everywhere/assets/stanford-bunny")
         );
         Ok(())
+    }
+
+    #[test]
+    fn parses_demo_mode_arguments() -> Result<(), NativeAppError> {
+        let args = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--demo"),
+        ])?;
+
+        assert_eq!(args.mode, NativeMode::Demo);
+        assert_eq!(args.frame_index, 0);
+        assert_eq!(args.fixture_dir, PathBuf::new());
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_unknown_flag_like_single_argument() {
+        let result = NativeArgs::parse([
+            OsString::from("native-render-everywhere"),
+            OsString::from("--dem"),
+        ]);
+
+        assert!(result.is_err());
     }
 
     #[test]

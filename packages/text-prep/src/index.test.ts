@@ -13,8 +13,10 @@ import {
   TEXT_PREP_INPUT_VERSION,
   TEXT_PREP_SHAPING_FINGERPRINT_PROFILE,
   UTF8_SOURCE_ENCODING,
+  measureFontLineBox,
   prepareTextPrepArtifacts,
   prepareTextPrepGenerationPlan,
+  readTtfMetrics,
   sha256Utf8,
   validateTextPrepInput,
 } from './index.js';
@@ -739,5 +741,66 @@ describe('runTextPrepCli', () => {
     expect(exitCode).toBe(1);
     expect(stdout).toHaveLength(0);
     expect(stderr.join('')).toContain('GEORDI_TEXT_PREP_IO_ERROR');
+  });
+});
+
+describe('readTtfMetrics', () => {
+  function latoFontBytes(): Uint8Array {
+    const fontUrl = new URL(
+      '../../../fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf',
+      import.meta.url,
+    );
+    return new Uint8Array(readFileSync(fontUrl).buffer);
+  }
+
+  it('reads stable unitsPerEm, ascender, and descender from Lato Regular', () => {
+    const metrics = readTtfMetrics(latoFontBytes());
+
+    expect(metrics.unitsPerEm).toBe(2000);
+    expect(metrics.ascender).toBe(1974);
+    expect(metrics.descender).toBe(-426);
+  });
+
+  it('throws TtfParseError for a truncated file', () => {
+    expect(() => readTtfMetrics(new Uint8Array([0, 1, 0, 0]))).toThrow('TTF');
+  });
+});
+
+describe('measureFontLineBox', () => {
+  it('produces stable fixed-26.6 line box for Lato Regular at 48px/em', () => {
+    const metrics = readTtfMetrics(
+      new Uint8Array(
+        readFileSync(
+          new URL(
+            '../../../fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf',
+            import.meta.url,
+          ),
+        ).buffer,
+      ),
+    );
+    const totalAdvance = 11550;
+    const lineBox = measureFontLineBox(metrics, 48, totalAdvance);
+
+    expect(lineBox.id).toBe('line-0');
+    expect(lineBox.x).toBe(0);
+    expect(lineBox.y).toBe(0);
+    expect(lineBox.width).toBe(totalAdvance);
+    expect(lineBox.baselineY).toBeGreaterThan(0);
+    expect(lineBox.height).toBeGreaterThan(lineBox.baselineY);
+  });
+
+  it('accepts a custom line box id', () => {
+    const metrics = { ascender: 800, descender: -200, unitsPerEm: 1000 };
+    const lineBox = measureFontLineBox(metrics, 16, 500, 'line-1');
+
+    expect(lineBox.id).toBe('line-1');
+  });
+
+  it('produces deterministic results for the same inputs', () => {
+    const metrics = { ascender: 1974, descender: -426, unitsPerEm: 2000 };
+    const first = measureFontLineBox(metrics, 48, 11550);
+    const second = measureFontLineBox(metrics, 48, 11550);
+
+    expect(first).toEqual(second);
   });
 });

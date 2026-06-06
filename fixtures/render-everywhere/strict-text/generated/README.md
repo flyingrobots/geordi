@@ -37,5 +37,4 @@ Current nonclaims:
 - no generated strict text receipt yet;
 - no generated output bundle manifest yet;
 - no text shaping engine;
-- no line-box measurement engine;
 - no font fallback, wrapping, bidi, complex script, or variable-axis support.

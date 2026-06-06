@@ -1722,6 +1722,33 @@ The text-prep unit suite loads this committed fixture from disk and requires
 S091 does not implement measured line-box generation. S092 owns the first generated line-box
 measurement rule.
 
+### S092 Measured Line-Box Generation
+
+`@flyingrobots/geordi-text-prep` now exports two font-metric utilities:
+
+- `readTtfMetrics(bytes: Uint8Array): TtfFontMetrics` — parses the TTF `head` table for
+  `unitsPerEm` and the `hhea` table for `ascender` and `descender` without external font-parsing
+  library dependencies. Throws `TtfParseError` for truncated files, missing required tables, or
+  a zero `unitsPerEm`.
+- `measureFontLineBox(metrics, pxPerEm, totalAdvanceFixed, lineBoxId?)` — converts those metrics
+  into a `RenderFixtureStrictTextLineBox` in `geordi-fixed-26.6/1` units:
+  - `baselineY = round(ascender × pxPerEm / unitsPerEm × 64)`
+  - `height = round((ascender − descender) × pxPerEm / unitsPerEm × 64)`
+  - `width = totalAdvanceFixed`
+  - `x = 0`, `y = 0`
+
+Two policy-name constants mark the measured geometry path:
+
+- `FONT_ASCENT_DESCENT_BASELINE_POLICY = 'font-ascent-descent/1'`
+- `SINGLE_LINE_FONT_BOUNDS_LINE_BOX_POLICY = 'single-line-font-bounds/1'`
+
+For Lato Regular at `pxPerEm = 48` the stable pinned values are
+`unitsPerEm = 2000`, `ascender = 1974`, `descender = -426`.
+
+The existing generated fixture retains its precomputed `baselinePolicy` and `lineBoxPolicy`; the
+measurement engine is an exported utility for future use and does not retroactively alter committed
+artifacts.
+
 ## Backlog And Design Index Alignment
 
 This plan is the active execution source for the P0 backlog item named `Define the strict
