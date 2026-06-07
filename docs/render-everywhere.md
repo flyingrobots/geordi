@@ -26,9 +26,11 @@ one canonical Stanford bunny mesh asset
 It also includes the first strict text proof outside `geordi-ir/1`:
 
 ```text
-one strict positioned glyph-run fixture
--> one content-addressed font pack
--> one fixture-local outline evidence pack
+text-prep input (source text, font intent, prepared glyph runs, line boxes)
+-> geordi-text-prep prepare
+-> generated strict text fixture + generation plan
+-> content-addressed font pack
+-> fixture-local outline evidence pack
 -> browser Canvas path rendering
 -> native Rust software outline rendering
 -> metadata, probe-policy, and no-platform-text-API gates
@@ -162,6 +164,19 @@ fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json
 fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json
 fixtures/render-everywhere/assets/fonts/font-pack.geordi.json
 ```
+
+The generated text-prep artifacts live under:
+
+```text
+fixtures/render-everywhere/strict-text/generated/
+  geordi.text-prep.input.geordi.json    (text-prep source input)
+  text-prep.generation-plan.geordi.json (deterministic audit data; not renderer input)
+  geordi.strict-text.geordi.json        (generated geordi-strict-text-fixture/1)
+```
+
+The generation plan is deterministic: `geordi-text-prep compare` regenerates both files in memory
+and fails if the committed bytes differ. The generated strict fixture validates through the same
+strict text contract as the manually authored canonical fixtures.
 
 The browser `Text` panel and native `--strict-text-smoke` mode currently agree on:
 
@@ -538,6 +553,15 @@ Run the strict text render-everywhere gate:
 pnpm test:render-everywhere:strict-text
 ```
 
+Run the strict text generated artifact drift gate:
+
+```bash
+pnpm test:render-everywhere:strict-text-generated
+```
+
+This gate runs `geordi-text-prep compare` against the committed generated directory and fails if
+regenerating the plan or strict fixture from the pinned input produces different bytes.
+
 ## Where This Goes Next
 
 The constrained compiler is now wired into the smoke path:
@@ -555,13 +579,15 @@ The browser and native interactive demo commands still load the checked-in artif
 `pnpm test:render-everywhere:gpvue` gate is the command path that proves compile-then-render across
 both runtimes.
 
-The bunny mesh milestone is complete for its stated claim boundary. The active render-everywhere
-checkpoint is strict text/font evidence:
+The bunny mesh milestone is complete for its stated claim boundary. The strict text milestone is
+also complete for its stated claim boundary — browser and native harnesses agree on metadata and
+coarse probes for the canonical `GEORDI` fixture, and the text-prep pipeline produces a
+deterministic generated strict text fixture from pinned prepared input.
+
+The next checkpoint is CI gate coverage for strict text validation, browser smoke, and native smoke:
 
 ```text
-one content-addressed font pack
--> one deliberately tiny fixed string
--> browser text harness
--> native Rust text harness
--> explicit shaping, fallback, measurement, and claim boundaries
+pnpm test:render-everywhere:strict-text          → metadata equality + coarse probes
+pnpm test:render-everywhere:strict-text-generated → text-prep regeneration drift gate
+CI: fixture validation → browser smoke → native smoke → final drift audit
 ```

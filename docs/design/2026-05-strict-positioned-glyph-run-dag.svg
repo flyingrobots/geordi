@@ -1346,28 +1346,28 @@
 <!-- S095 -->
 <g id="node98" class="node">
 <title>S095</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M1190.88,-412C1190.88,-412 1075.12,-412 1075.12,-412 1069.12,-412 1063.12,-406 1063.12,-400 1063.12,-400 1063.12,-388 1063.12,-388 1063.12,-382 1069.12,-376 1075.12,-376 1075.12,-376 1190.88,-376 1190.88,-376 1196.88,-376 1202.88,-382 1202.88,-388 1202.88,-388 1202.88,-400 1202.88,-400 1202.88,-406 1196.88,-412 1190.88,-412"/>
-<text xml:space="preserve" text-anchor="middle" x="1133" y="-395.75" font-family="Helvetica,sans-Serif" font-size="10.00">S095</text>
-<text xml:space="preserve" text-anchor="middle" x="1133" y="-384.5" font-family="Helvetica,sans-Serif" font-size="10.00">Render&#45;everywhere text docs</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M1190.88,-412C1190.88,-412 1075.12,-412 1075.12,-412 1069.12,-412 1063.12,-406 1063.12,-400 1063.12,-400 1063.12,-388 1063.12,-388 1063.12,-382 1069.12,-376 1075.12,-376 1075.12,-376 1190.88,-376 1190.88,-376 1196.88,-376 1202.88,-382 1202.88,-388 1202.88,-388 1202.88,-400 1202.88,-400 1202.88,-406 1196.88,-412 1190.88,-412"/>
+<text xml:space="preserve" text-anchor="middle" x="1133" y="-395.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S095</text>
+<text xml:space="preserve" text-anchor="middle" x="1133" y="-384.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">Render&#45;everywhere text docs</text>
 </g>
 <!-- S094&#45;&gt;S095 -->
 <g id="edge103" class="edge">
 <title>S094&#45;&gt;S095</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-446.61C1133,-438.87 1133,-429.73 1133,-421.3"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-421.33 1133,-415.33 1130.9,-421.33 1135.1,-421.33"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-446.61C1133,-438.67 1133,-429.25 1133,-420.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-420.84 1133,-414.84 1130.9,-420.84 1135.1,-420.84"/>
 </g>
 <!-- S096 -->
 <g id="node99" class="node">
 <title>S096</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M1196.51,-340C1196.51,-340 1069.49,-340 1069.49,-340 1063.49,-340 1057.49,-334 1057.49,-328 1057.49,-328 1057.49,-316 1057.49,-316 1057.49,-310 1063.49,-304 1069.49,-304 1069.49,-304 1196.51,-304 1196.51,-304 1202.51,-304 1208.51,-310 1208.51,-316 1208.51,-316 1208.51,-328 1208.51,-328 1208.51,-334 1202.51,-340 1196.51,-340"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M1196.51,-340C1196.51,-340 1069.49,-340 1069.49,-340 1063.49,-340 1057.49,-334 1057.49,-328 1057.49,-328 1057.49,-316 1057.49,-316 1057.49,-310 1063.49,-304 1069.49,-304 1069.49,-304 1196.51,-304 1196.51,-304 1202.51,-304 1208.51,-310 1208.51,-316 1208.51,-316 1208.51,-328 1208.51,-328 1208.51,-334 1202.51,-340 1196.51,-340"/>
 <text xml:space="preserve" text-anchor="middle" x="1133" y="-323.75" font-family="Helvetica,sans-Serif" font-size="10.00">S096</text>
 <text xml:space="preserve" text-anchor="middle" x="1133" y="-312.5" font-family="Helvetica,sans-Serif" font-size="10.00">README strict text status gate</text>
 </g>
 <!-- S095&#45;&gt;S096 -->
 <g id="edge104" class="edge">
 <title>S095&#45;&gt;S096</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-374.24C1133,-366.63 1133,-357.7 1133,-349.45"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-349.63 1133,-343.63 1130.9,-349.63 1135.1,-349.63"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-374.61C1133,-366.87 1133,-357.73 1133,-349.3"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-349.33 1133,-343.33 1130.9,-349.33 1135.1,-349.33"/>
 </g>
 <!-- S097 -->
 <g id="node100" class="node">

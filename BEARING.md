@@ -755,7 +755,20 @@ Next OPEN node after these doc updates: `S094`, end-to-end text pipeline docs.
 - updated "current claims" list that names browser/native strict text rendering, parity,
   and text-prep artifacts.
 
-Next OPEN node after this section: `S095`, render-everywhere text docs.
+Next OPEN node after this section: `S096`, README strict text status gate.
+
+## S095 Render-Everywhere Text Docs
+
+`docs/render-everywhere.md` now documents the complete strict text pipeline and its proof boundary:
+
+- updated intro flow showing text-prep input → `geordi-text-prep prepare` → generated strict
+  fixture → renderer path;
+- generated artifact directory listing for `fixtures/render-everywhere/strict-text/generated/`;
+- `pnpm test:render-everywhere:strict-text-generated` drift gate in the "Useful Gates" section;
+- updated "Where This Goes Next" confirming the strict text milestone is complete and naming CI gate
+  coverage as the next checkpoint.
+
+Next OPEN node after this update: `S096`, README strict text status gate.
 
 ## DAG Operating Rule
 
@@ -774,7 +787,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S095**.
+Current OPEN node: **S096**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1816,7 +1829,7 @@ Current OPEN node: **S095**.
 
 ### S095: Render-everywhere text docs
 
-- [ ] **S095: Render-everywhere text docs** (OPEN)
+- [x] **S095: Render-everywhere text docs** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with render-everywhere text docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Render-everywhere text docs.
@@ -1827,7 +1840,7 @@ Current OPEN node: **S095**.
 
 ### S096: README strict text status gate
 
-- [ ] **S096: README strict text status gate** (BLOCKED)
+- [ ] **S096: README strict text status gate** (OPEN)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with readme strict text status gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: README strict text status gate.
