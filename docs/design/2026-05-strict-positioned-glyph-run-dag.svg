@@ -1333,28 +1333,28 @@
 <!-- S094 -->
 <g id="node97" class="node">
 <title>S094</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M1190.13,-484C1190.13,-484 1075.87,-484 1075.87,-484 1069.87,-484 1063.87,-478 1063.87,-472 1063.87,-472 1063.87,-460 1063.87,-460 1063.87,-454 1069.87,-448 1075.87,-448 1075.87,-448 1190.13,-448 1190.13,-448 1196.13,-448 1202.13,-454 1202.13,-460 1202.13,-460 1202.13,-472 1202.13,-472 1202.13,-478 1196.13,-484 1190.13,-484"/>
-<text xml:space="preserve" text-anchor="middle" x="1133" y="-467.75" font-family="Helvetica,sans-Serif" font-size="10.00">S094</text>
-<text xml:space="preserve" text-anchor="middle" x="1133" y="-456.5" font-family="Helvetica,sans-Serif" font-size="10.00">End&#45;to&#45;end text pipeline docs</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M1190.13,-484C1190.13,-484 1075.87,-484 1075.87,-484 1069.87,-484 1063.87,-478 1063.87,-472 1063.87,-472 1063.87,-460 1063.87,-460 1063.87,-454 1069.87,-448 1075.87,-448 1075.87,-448 1190.13,-448 1190.13,-448 1196.13,-448 1202.13,-454 1202.13,-460 1202.13,-460 1202.13,-472 1202.13,-472 1202.13,-478 1196.13,-484 1190.13,-484"/>
+<text xml:space="preserve" text-anchor="middle" x="1133" y="-467.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S094</text>
+<text xml:space="preserve" text-anchor="middle" x="1133" y="-456.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">End&#45;to&#45;end text pipeline docs</text>
 </g>
 <!-- S093&#45;&gt;S094 -->
 <g id="edge102" class="edge">
 <title>S093&#45;&gt;S094</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-518.61C1133,-510.87 1133,-501.73 1133,-493.3"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-493.33 1133,-487.33 1130.9,-493.33 1135.1,-493.33"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-518.61C1133,-510.67 1133,-501.25 1133,-492.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-492.84 1133,-486.84 1130.9,-492.84 1135.1,-492.84"/>
 </g>
 <!-- S095 -->
 <g id="node98" class="node">
 <title>S095</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M1190.88,-412C1190.88,-412 1075.12,-412 1075.12,-412 1069.12,-412 1063.12,-406 1063.12,-400 1063.12,-400 1063.12,-388 1063.12,-388 1063.12,-382 1069.12,-376 1075.12,-376 1075.12,-376 1190.88,-376 1190.88,-376 1196.88,-376 1202.88,-382 1202.88,-388 1202.88,-388 1202.88,-400 1202.88,-400 1202.88,-406 1196.88,-412 1190.88,-412"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M1190.88,-412C1190.88,-412 1075.12,-412 1075.12,-412 1069.12,-412 1063.12,-406 1063.12,-400 1063.12,-400 1063.12,-388 1063.12,-388 1063.12,-382 1069.12,-376 1075.12,-376 1075.12,-376 1190.88,-376 1190.88,-376 1196.88,-376 1202.88,-382 1202.88,-388 1202.88,-388 1202.88,-400 1202.88,-400 1202.88,-406 1196.88,-412 1190.88,-412"/>
 <text xml:space="preserve" text-anchor="middle" x="1133" y="-395.75" font-family="Helvetica,sans-Serif" font-size="10.00">S095</text>
 <text xml:space="preserve" text-anchor="middle" x="1133" y="-384.5" font-family="Helvetica,sans-Serif" font-size="10.00">Render&#45;everywhere text docs</text>
 </g>
 <!-- S094&#45;&gt;S095 -->
 <g id="edge103" class="edge">
 <title>S094&#45;&gt;S095</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-446.24C1133,-438.63 1133,-429.7 1133,-421.45"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-421.63 1133,-415.63 1130.9,-421.63 1135.1,-421.63"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-446.61C1133,-438.87 1133,-429.73 1133,-421.3"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-421.33 1133,-415.33 1130.9,-421.33 1135.1,-421.33"/>
 </g>
 <!-- S096 -->
 <g id="node99" class="node">

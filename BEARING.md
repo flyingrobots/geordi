@@ -744,6 +744,19 @@ Next OPEN node after this engine: `S093`, raw runtime text noncompliance docs.
 
 Next OPEN node after these doc updates: `S094`, end-to-end text pipeline docs.
 
+## S094 End-to-End Text Pipeline Docs
+
+`docs/end-to-end.md` now has a "Strict Text Preparation Pipeline" section that documents:
+
+- the full source → text-prep → strict fixture → browser/native renderer pipeline;
+- a table of what is allowed and forbidden at each stage;
+- `geordi-text-prep compare` as the regeneration drift gate;
+- `readTtfMetrics` and `measureFontLineBox` as available utilities for the preparation pipeline;
+- updated "current claims" list that names browser/native strict text rendering, parity,
+  and text-prep artifacts.
+
+Next OPEN node after this section: `S095`, render-everywhere text docs.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -761,7 +774,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S094**.
+Current OPEN node: **S095**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1792,7 +1805,7 @@ Current OPEN node: **S094**.
 
 ### S094: End-to-end text pipeline docs
 
-- [ ] **S094: End-to-end text pipeline docs** (OPEN)
+- [x] **S094: End-to-end text pipeline docs** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with end-to-end text pipeline docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: End-to-end text pipeline docs.
@@ -1803,7 +1816,7 @@ Current OPEN node: **S094**.
 
 ### S095: Render-everywhere text docs
 
-- [ ] **S095: Render-everywhere text docs** (BLOCKED)
+- [ ] **S095: Render-everywhere text docs** (OPEN)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with render-everywhere text docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Render-everywhere text docs.

@@ -1637,6 +1637,44 @@ hash, a declared mesh profile, parsed numeric data, bounds, camera assumptions, 
 assumptions, and fixed-rate playback metadata. Every one of those facts crosses a boundary, and each
 boundary either validates or fails loudly.
 
+## Strict Text Preparation Pipeline
+
+The strict text proof uses a compiler/tooling boundary to keep source strings and shaping outside
+the renderer. The preparation pipeline is:
+
+```text
+geordi.text-prep.input.geordi.json
+  (source text hash, content-addressed font, shaping fingerprint,
+   geometry policy, prepared glyph runs and line boxes)
+
+  ↓  geordi-text-prep prepare
+
+text-prep.generation-plan.geordi.json    (deterministic audit data; not renderer input)
+geordi.strict-text.geordi.json           (generated geordi-strict-text-fixture/1)
+
+  ↓  browser/native harness validate and render
+
+geordi.outline-evidence.geordi.json      (fixture-local outlinePaths evidence)
+geordi.probe-policy.geordi.json          (probe sample points and bounds policy)
+```
+
+Key constraints at each stage:
+
+| Stage | What is allowed | What is forbidden |
+| --- | --- | --- |
+| text-prep input | source text hash, repo-relative font path/hash, fingerprint path/hash, explicit glyph-run data | host font lookup, fallback chains, multiline, bidi, complex script, variable axes |
+| generation plan | source hash, font identity, shaping fingerprint reference, geometry policy | source text strings, renderer names, `rendered=true`, wall-clock timestamps |
+| strict fixture | positioned glyph runs, explicit line boxes, font-pack path, semantic text as nonauthoritative metadata | runtime shaping, host metrics, fallback, bidi, wrapping |
+| renderers | validate, load committed evidence, draw outline paths | call platform text APIs, re-shape, call `fillText`/`measureText`/`FontFace` |
+
+The `geordi-text-prep compare` command gates regeneration drift — the committed generation plan and
+strict fixture must match byte-for-byte what `geordi-text-prep prepare` would produce today. This
+ensures the text-prep pipeline is deterministic and auditable.
+
+Font metric reading (`readTtfMetrics`) and line-box measurement (`measureFontLineBox`) are available
+in `@flyingrobots/geordi-text-prep` for future use by the preparation pipeline. They derive
+`geordi-fixed-26.6/1` line boxes from TTF `head`/`hhea` font metrics without external dependencies.
+
 ## Current Limitations
 
 The current repo does not yet claim:
@@ -1670,6 +1708,13 @@ The current repo does claim:
 - comparable bunny frame reports for sampled frames
 - nonblank smoke coverage for static and nonzero bunny frames
 - loud failure for unsupported runtime requirements
+- browser Canvas rendering of strict positioned glyph-run outline evidence without platform text APIs
+- native Rust software rendering of the same outline evidence
+- browser and native metadata parity for the canonical strict text fixture
+- browser and native coarse pixel probes for the strict text fixture
+- deterministic `text-prep.generation-plan.geordi.json` and generated `geordi-strict-text-fixture/1`
+  from pinned prepared glyph-run/line-box input
+- TTF font metric reading and line-box measurement from `head`/`hhea` font tables
 
 ## Target End State
 
