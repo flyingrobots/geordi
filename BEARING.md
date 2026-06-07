@@ -784,6 +784,20 @@ The README and `docs/STATUS.md` now reflect the completed state of the strict te
 
 Next OPEN node after this gate: `S097`, CI text fixture validation gate.
 
+## S097 CI Text Fixture Validation Gate
+
+`.github/workflows/ci.yml` now has a dedicated "Verify strict text fixture validation gate" step:
+
+~~~bash
+pnpm test:render-everywhere:strict-text-generated
+~~~
+
+This step runs `geordi-text-prep compare` against the committed generated directory; CI fails if
+regenerating the generation plan or strict fixture from the pinned input produces different bytes.
+The fixture validation tests themselves are already covered by the `pnpm test` step.
+
+Next OPEN node after this gate: `S098`, CI browser text smoke gate.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -801,7 +815,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S097**.
+Current OPEN node: **S098**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1865,7 +1879,7 @@ Current OPEN node: **S097**.
 
 ### S097: CI text fixture validation gate
 
-- [ ] **S097: CI text fixture validation gate** (OPEN)
+- [x] **S097: CI text fixture validation gate** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with ci text fixture validation gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: CI text fixture validation gate.
@@ -1876,7 +1890,7 @@ Current OPEN node: **S097**.
 
 ### S098: CI browser text smoke gate
 
-- [ ] **S098: CI browser text smoke gate** (BLOCKED)
+- [ ] **S098: CI browser text smoke gate** (OPEN)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with ci browser text smoke gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: CI browser text smoke gate.
