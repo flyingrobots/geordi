@@ -17,11 +17,12 @@ ladder:
 1. Rectangle render-everywhere proof: complete.
 2. Stanford bunny mesh proof: complete for shared asset identity and coarse browser/native rendering
    smoke, not pixel-identical 3D rasterization.
-3. Strict positioned glyph-run text: active.
+3. Strict positioned glyph-run text: proof complete; CI gate coverage (S097–S100) remaining.
 
-The current active slice is tracked in [`../BEARING.md`](../BEARING.md). At the time of this refresh,
-the lowest active open node is `S092`, measured line-box generation, after the committed
-variable-axis text-prep fixture became part of the rejection corpus.
+The current active slice is tracked in [`../BEARING.md`](../BEARING.md). The strict text proof
+boundary is met — browser and native harnesses agree on metadata and coarse probes, the text-prep
+CLI generates a byte-stable strict fixture from pinned input, and docs are aligned. The remaining
+slices are CI fixture validation, browser smoke, native smoke, and final drift audit.
 
 ## Completed Capabilities
 

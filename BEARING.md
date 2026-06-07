@@ -770,6 +770,20 @@ Next OPEN node after this section: `S096`, README strict text status gate.
 
 Next OPEN node after this update: `S096`, README strict text status gate.
 
+## S096 README Strict Text Status Gate
+
+The README and `docs/STATUS.md` now reflect the completed state of the strict text milestone:
+
+- `README.md` moves the strict text proof from "Active proof layer" to "Completed proof layers",
+  naming the text-prep deterministic generation claim alongside the browser/native proof claim;
+  the "Active work" section names only the remaining CI gate slices (S097–S100) and the
+  provisional DTO mirror.
+- `docs/STATUS.md` changes the strict positioned glyph-run text item from "active" to "proof
+  complete; CI gate coverage remaining" and updates the stale S092 active-node reference to
+  describe the current standing.
+
+Next OPEN node after this gate: `S097`, CI text fixture validation gate.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -787,7 +801,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S096**.
+Current OPEN node: **S097**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1840,7 +1854,7 @@ Current OPEN node: **S096**.
 
 ### S096: README strict text status gate
 
-- [ ] **S096: README strict text status gate** (OPEN)
+- [x] **S096: README strict text status gate** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with readme strict text status gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: README strict text status gate.
@@ -1851,7 +1865,7 @@ Current OPEN node: **S096**.
 
 ### S097: CI text fixture validation gate
 
-- [ ] **S097: CI text fixture validation gate** (BLOCKED)
+- [ ] **S097: CI text fixture validation gate** (OPEN)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with ci text fixture validation gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: CI text fixture validation gate.

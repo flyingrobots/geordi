@@ -144,8 +144,8 @@ digraph StrictPositionedGlyphRunPlan {
     S093 [label="S093\nRaw runtime text noncompliance docs", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S094 [label="S094\nEnd-to-end text pipeline docs", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S095 [label="S095\nRender-everywhere text docs", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S096 [label="S096\nREADME strict text status gate", color="#16a34a", penwidth=4];
-    S097 [label="S097\nCI text fixture validation gate", color="#dc2626", penwidth=4];
+    S096 [label="S096\nREADME strict text status gate", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
+    S097 [label="S097\nCI text fixture validation gate", color="#16a34a", penwidth=4];
     S098 [label="S098\nCI browser text smoke gate", color="#dc2626", penwidth=4];
     S099 [label="S099\nCI native text smoke gate", color="#dc2626", penwidth=4];
     S100 [label="S100\nFinal drift and claim audit", color="#dc2626", penwidth=4];

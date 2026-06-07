@@ -29,18 +29,17 @@ Completed proof layers:
   metadata. It is intentionally not a pixel-identical 3D rasterization claim.
 - The compiler core, GraphQL SDL adapter, GPVue fixture compiler path, render fixture contracts,
   WebGL package scaffold, and Rust native harnesses are present and covered by repo gates.
+- The strict text proof (`geordi-strict-positioned-glyph-run/1`) loads one checked-in
+  `geordi-strict-text-fixture/1`, verifies a content-addressed font pack and fixture-local
+  `outlinePaths` evidence, draws glyphs without platform text APIs, and compares browser/native
+  metadata and coarse pixel probes. The `geordi-text-prep` CLI produces a deterministic generated
+  strict text fixture from pinned prepared glyph-run input, with a byte-stable generation plan.
+  Shaping remains a text-prep compiler boundary; runtime renderers consume prepared artifacts only.
 
-Active proof layer:
+Active work:
 
-- Strict text is being built fixture-first as `geordi-strict-positioned-glyph-run/1`.
-- The work currently proves content-addressed font assets, strict text manifests, positioned glyph
-  evidence, browser/native validation, browser/native outline rendering, metadata equality, coarse
-  probes, and nonblank-bounds containment before any broad text rendering claim is made.
-- Future shaping is a text-prep concern, not a compliant runtime renderer behavior. The planned
-  boundary is pinned preparation that emits strict artifacts with fingerprinted inputs and outputs.
-  `@flyingrobots/geordi-text-prep` now validates pinned prep inputs, writes a deterministic
-  generation plan, and lowers explicitly prepared glyph-run/line-box data into the first generated
-  strict text fixture.
+- CI gate coverage for strict text: fixture validation gate, browser smoke gate, native smoke gate,
+  and final drift/claim audit (S097–S100).
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
   Wesley/common-type generation.
 
