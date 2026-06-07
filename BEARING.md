@@ -830,6 +830,47 @@ text APIs.
 
 Next OPEN node after this gate: `S100`, final drift and claim audit.
 
+## S100 Final Drift And Claim Audit
+
+The 100-slice strict positioned glyph-run DAG is complete. Full repo gate passes clean:
+
+- `pnpm typecheck`, `pnpm lint`, `pnpm test`: all pass.
+- `pnpm test:docs`, `pnpm test:package-names`, `pnpm test:repo-sludge`, `pnpm test:placeholders`,
+  `pnpm test:exports`: all pass.
+- `cargo fmt --check`, `cargo test --workspace`, `cargo clippy --workspace --all-targets -- -D warnings`: all pass (30 pre-existing clippy violations in `native-render-everywhere` bunny.rs and main.rs were fixed as part of this audit).
+
+### Current Claims
+
+- `geordi-strict-positioned-glyph-run/1` is proven: browser and native harnesses load the canonical
+  `GEORDI` strict text fixture, verify a content-addressed font pack and fixture-local `outlinePaths`
+  evidence, render glyphs via Canvas/software path geometry without platform text APIs, and compare
+  metadata plus coarse pixel probes.
+- `geordi-text-prep` emits a deterministic `text-prep.generation-plan.geordi.json` and generated
+  `geordi-strict-text-fixture/1` from pinned prepared glyph-run/line-box input; the byte-stable
+  output is gated by `pnpm test:render-everywhere:strict-text-generated` in CI.
+- CI covers: TypeScript lint/typecheck/test, Rust fmt/test/clippy, fixture validation drift gate,
+  browser render-everywhere and strict text Playwright gate, native strict text smoke gate.
+- Rectangle `geordi-ir/1` render-everywhere proof and Stanford bunny mesh proof remain complete
+  within their stated claim boundaries.
+
+### Current Nonclaims
+
+- no compliant general text rendering;
+- no CSS text or platform-native text path;
+- no host font fallback;
+- no runtime shaping in strict mode;
+- no runtime kerning, ligature substitution, glyph substitution, wrapping, or fallback;
+- no multiline, bidi, complex-script, or variable font axis support;
+- no full antialiasing parity between browser and native rasterizers;
+- no `geordi-ir/1` text-node graduation yet;
+- no production WebGPU/Metal/Vulkan renderers.
+
+### Next
+
+The milestone is complete. The next credibility milestone would be a `geordi-ir/1` text-node
+graduation, or a production shaping pipeline with real `geordi-text-prep-shaping-fingerprint/1`
+provenance. No OPEN nodes remain in this DAG.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -847,7 +888,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S100**.
+Current OPEN node: **none** (DAG complete).
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1944,7 +1985,7 @@ Current OPEN node: **S100**.
 
 ### S100: Final drift and claim audit
 
-- [ ] **S100: Final drift and claim audit** (OPEN)
+- [x] **S100: Final drift and claim audit** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with final drift and claim audit documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Final drift and claim audit.

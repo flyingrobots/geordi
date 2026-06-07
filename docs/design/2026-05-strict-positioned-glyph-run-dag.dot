@@ -148,7 +148,7 @@ digraph StrictPositionedGlyphRunPlan {
     S097 [label="S097\nCI text fixture validation gate", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S098 [label="S098\nCI browser text smoke gate", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
     S099 [label="S099\nCI native text smoke gate", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
-    S100 [label="S100\nFinal drift and claim audit", color="#16a34a", penwidth=4];
+    S100 [label="S100\nFinal drift and claim audit", color="#94a3b8", penwidth=3, style="rounded,filled,dashed", fontcolor="#64748b"];
   }
 
   S001 -> S002;

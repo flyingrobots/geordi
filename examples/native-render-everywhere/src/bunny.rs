@@ -500,16 +500,19 @@ pub struct LoadedBunnyFixture {
 
 impl LoadedBunnyFixture {
     /// Bunny frame image width in pixels.
-    pub fn image_width(&self) -> usize {
+    #[must_use]
+    pub const fn image_width(&self) -> usize {
         self.image.width
     }
 
     /// Bunny frame image height in pixels.
-    pub fn image_height(&self) -> usize {
+    #[must_use]
+    pub const fn image_height(&self) -> usize {
         self.image.height
     }
 
     /// Bunny frame RGBA8 bytes in row-major order.
+    #[must_use]
     pub fn image_rgba(&self) -> &[u8] {
         &self.image.rgba
     }
@@ -523,6 +526,11 @@ pub struct BunnyWindowRuntime {
 
 impl BunnyWindowRuntime {
     /// Load the bunny fixture once and keep the mesh and style in memory for frame updates.
+    ///
+    /// # Errors
+    ///
+    /// Returns `NativeBunnyError` if the asset directory, manifest, font pack, or PLY file cannot
+    /// be read or parsed.
     pub fn load(asset_dir: &Path) -> Result<Self, NativeBunnyError> {
         Ok(Self {
             loaded: load_bunny_fixture(asset_dir, 0)?,
@@ -530,11 +538,13 @@ impl BunnyWindowRuntime {
     }
 
     /// Bunny playback sample rate in frames per second.
-    pub fn sample_rate(&self) -> u64 {
+    #[must_use]
+    pub const fn sample_rate(&self) -> u64 {
         self.loaded.fixture.playback.sample_rate
     }
 
     /// Render a specific frame of the bunny animation.
+    #[must_use]
     pub fn render_frame(&self, frame_index: u64) -> BunnyWindowFrame {
         let report = create_bunny_frame_report(
             frame_index,
@@ -567,26 +577,31 @@ pub struct BunnyWindowFrame {
 
 impl BunnyWindowFrame {
     /// Bunny frame image width in pixels.
-    pub fn image_width(&self) -> usize {
+    #[must_use]
+    pub const fn image_width(&self) -> usize {
         self.image.width
     }
 
     /// Bunny frame image height in pixels.
-    pub fn image_height(&self) -> usize {
+    #[must_use]
+    pub const fn image_height(&self) -> usize {
         self.image.height
     }
 
     /// Bunny frame RGBA8 bytes in row-major order.
+    #[must_use]
     pub fn image_rgba(&self) -> &[u8] {
         &self.image.rgba
     }
 
     /// Bunny frame index.
-    pub fn frame_index(&self) -> u64 {
+    #[must_use]
+    pub const fn frame_index(&self) -> u64 {
         self.report.frame_index
     }
 
     /// Bunny fixture id.
+    #[must_use]
     pub fn fixture_id(&self) -> &str {
         &self.fixture_id
     }

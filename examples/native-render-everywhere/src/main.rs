@@ -2890,6 +2890,12 @@ fn poll_demo_scene_change(
     None
 }
 
+#[expect(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "pixel hit-testing; window dimensions are bounded by screen size, well within f32 precision"
+)]
 fn demo_scene_from_pointer(
     mouse_x: f32,
     mouse_y: f32,
@@ -2907,11 +2913,11 @@ fn demo_scene_from_pointer(
     NativeDemoScene::ALL.get(index).copied()
 }
 
-fn next_demo_scene(scene: NativeDemoScene) -> NativeDemoScene {
+const fn next_demo_scene(scene: NativeDemoScene) -> NativeDemoScene {
     NativeDemoScene::ALL[(scene.index() + 1) % NativeDemoScene::ALL.len()]
 }
 
-fn previous_demo_scene(scene: NativeDemoScene) -> NativeDemoScene {
+const fn previous_demo_scene(scene: NativeDemoScene) -> NativeDemoScene {
     NativeDemoScene::ALL
         [(scene.index() + NativeDemoScene::ALL.len() - 1) % NativeDemoScene::ALL.len()]
 }
@@ -2964,7 +2970,7 @@ fn compose_demo_window(
             );
         }
         NativeDemoScene::Bunny => {
-            let frame = bunny_frame.expect("bunny frame should be rendered for the bunny scene");
+            let Some(frame) = bunny_frame else { return };
             let content_x = scene_center_x.saturating_sub(frame.image_width() / 2);
             let content_y = scene_center_y.saturating_sub(frame.image_height() / 2);
             blit_rgba_slice(
@@ -3293,7 +3299,7 @@ fn blit_rgba_slice(
     let Some(row_stride) = width.checked_mul(4) else {
         return;
     };
-    if row_stride == 0 || buffer.len() % row_stride != 0 {
+    if row_stride == 0 || !buffer.len().is_multiple_of(row_stride) {
         return;
     }
     let buffer_height = buffer.len() / row_stride;
@@ -3333,15 +3339,21 @@ fn blend_rgba_pixel(buffer: &mut [u8], width: usize, x: usize, y: usize, source:
     }
 
     let inverse_alpha = 255_u16 - source_alpha;
-    destination[0] = ((u16::from(source[0]) * source_alpha
-        + u16::from(destination[0]) * inverse_alpha)
-        / 255) as u8;
-    destination[1] = ((u16::from(source[1]) * source_alpha
-        + u16::from(destination[1]) * inverse_alpha)
-        / 255) as u8;
-    destination[2] = ((u16::from(source[2]) * source_alpha
-        + u16::from(destination[2]) * inverse_alpha)
-        / 255) as u8;
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "result is always ≤ 255: max u8 * max u8 / 255 = 255"
+    )]
+    {
+        destination[0] = ((u16::from(source[0]) * source_alpha
+            + u16::from(destination[0]) * inverse_alpha)
+            / 255) as u8;
+        destination[1] = ((u16::from(source[1]) * source_alpha
+            + u16::from(destination[1]) * inverse_alpha)
+            / 255) as u8;
+        destination[2] = ((u16::from(source[2]) * source_alpha
+            + u16::from(destination[2]) * inverse_alpha)
+            / 255) as u8;
+    }
     destination[3] = 255;
 }
 
