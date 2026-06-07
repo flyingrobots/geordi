@@ -1385,28 +1385,28 @@
 <!-- S098 -->
 <g id="node101" class="node">
 <title>S098</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M1187.51,-196C1187.51,-196 1078.49,-196 1078.49,-196 1072.49,-196 1066.49,-190 1066.49,-184 1066.49,-184 1066.49,-172 1066.49,-172 1066.49,-166 1072.49,-160 1078.49,-160 1078.49,-160 1187.51,-160 1187.51,-160 1193.51,-160 1199.51,-166 1199.51,-172 1199.51,-172 1199.51,-184 1199.51,-184 1199.51,-190 1193.51,-196 1187.51,-196"/>
-<text xml:space="preserve" text-anchor="middle" x="1133" y="-179.75" font-family="Helvetica,sans-Serif" font-size="10.00">S098</text>
-<text xml:space="preserve" text-anchor="middle" x="1133" y="-168.5" font-family="Helvetica,sans-Serif" font-size="10.00">CI browser text smoke gate</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M1187.51,-196C1187.51,-196 1078.49,-196 1078.49,-196 1072.49,-196 1066.49,-190 1066.49,-184 1066.49,-184 1066.49,-172 1066.49,-172 1066.49,-166 1072.49,-160 1078.49,-160 1078.49,-160 1187.51,-160 1187.51,-160 1193.51,-160 1199.51,-166 1199.51,-172 1199.51,-172 1199.51,-184 1199.51,-184 1199.51,-190 1193.51,-196 1187.51,-196"/>
+<text xml:space="preserve" text-anchor="middle" x="1133" y="-179.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S098</text>
+<text xml:space="preserve" text-anchor="middle" x="1133" y="-168.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">CI browser text smoke gate</text>
 </g>
 <!-- S097&#45;&gt;S098 -->
 <g id="edge106" class="edge">
 <title>S097&#45;&gt;S098</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-230.61C1133,-222.87 1133,-213.73 1133,-205.3"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-205.33 1133,-199.33 1130.9,-205.33 1135.1,-205.33"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-230.61C1133,-222.67 1133,-213.25 1133,-204.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-204.84 1133,-198.84 1130.9,-204.84 1135.1,-204.84"/>
 </g>
 <!-- S099 -->
 <g id="node102" class="node">
 <title>S099</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M1183.38,-124C1183.38,-124 1082.62,-124 1082.62,-124 1076.62,-124 1070.62,-118 1070.62,-112 1070.62,-112 1070.62,-100 1070.62,-100 1070.62,-94 1076.62,-88 1082.62,-88 1082.62,-88 1183.38,-88 1183.38,-88 1189.38,-88 1195.38,-94 1195.38,-100 1195.38,-100 1195.38,-112 1195.38,-112 1195.38,-118 1189.38,-124 1183.38,-124"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M1183.38,-124C1183.38,-124 1082.62,-124 1082.62,-124 1076.62,-124 1070.62,-118 1070.62,-112 1070.62,-112 1070.62,-100 1070.62,-100 1070.62,-94 1076.62,-88 1082.62,-88 1082.62,-88 1183.38,-88 1183.38,-88 1189.38,-88 1195.38,-94 1195.38,-100 1195.38,-100 1195.38,-112 1195.38,-112 1195.38,-118 1189.38,-124 1183.38,-124"/>
 <text xml:space="preserve" text-anchor="middle" x="1133" y="-107.75" font-family="Helvetica,sans-Serif" font-size="10.00">S099</text>
 <text xml:space="preserve" text-anchor="middle" x="1133" y="-96.5" font-family="Helvetica,sans-Serif" font-size="10.00">CI native text smoke gate</text>
 </g>
 <!-- S098&#45;&gt;S099 -->
 <g id="edge107" class="edge">
 <title>S098&#45;&gt;S099</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-158.24C1133,-150.63 1133,-141.7 1133,-133.45"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-133.63 1133,-127.63 1130.9,-133.63 1135.1,-133.63"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-158.61C1133,-150.87 1133,-141.73 1133,-133.3"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-133.33 1133,-127.33 1130.9,-133.33 1135.1,-133.33"/>
 </g>
 <!-- S100 -->
 <g id="node103" class="node">

@@ -66,5 +66,5 @@ jobs:
       - name: Verify strict text fixture validation gate
         run: pnpm test:render-everywhere:strict-text-generated
 
-      - name: Verify browser render-everywhere gate
+      - name: Verify browser render-everywhere and strict text smoke gates
         run: pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser

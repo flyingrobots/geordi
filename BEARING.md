@@ -798,6 +798,22 @@ The fixture validation tests themselves are already covered by the `pnpm test` s
 
 Next OPEN node after this gate: `S098`, CI browser text smoke gate.
 
+## S098 CI Browser Text Smoke Gate
+
+The "Verify browser render-everywhere and strict text smoke gates" CI step now covers the browser
+strict text smoke explicitly. The step runs:
+
+~~~bash
+pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser
+~~~
+
+The Playwright gate switches to the `Text` panel, samples strict text probe points, checks nonblank
+bounds, and verifies zero Canvas text API calls (`fillText`, `strokeText`, `measureText`,
+`FontFace`). This is the same command that was previously named "Verify browser render-everywhere
+gate" — the rename makes the strict text coverage intentional and documented.
+
+Next OPEN node after this gate: `S099`, CI native text smoke gate.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -815,7 +831,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S098**.
+Current OPEN node: **S099**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1890,7 +1906,7 @@ Current OPEN node: **S098**.
 
 ### S098: CI browser text smoke gate
 
-- [ ] **S098: CI browser text smoke gate** (OPEN)
+- [x] **S098: CI browser text smoke gate** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with ci browser text smoke gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: CI browser text smoke gate.
@@ -1901,7 +1917,7 @@ Current OPEN node: **S098**.
 
 ### S099: CI native text smoke gate
 
-- [ ] **S099: CI native text smoke gate** (BLOCKED)
+- [ ] **S099: CI native text smoke gate** (OPEN)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with ci native text smoke gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: CI native text smoke gate.
