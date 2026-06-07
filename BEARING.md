@@ -814,6 +814,22 @@ gate" — the rename makes the strict text coverage intentional and documented.
 
 Next OPEN node after this gate: `S099`, CI native text smoke gate.
 
+## S099 CI Native Text Smoke Gate
+
+`.github/workflows/ci.yml` now has a dedicated "Verify native strict text smoke gate" step:
+
+~~~bash
+cargo run -p native-render-everywhere -- --strict-text-smoke \
+  fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+~~~
+
+This step validates the strict text fixture shape, font-pack hashes, font references, outline
+evidence, glyph coverage, line-box containment, fill-only paint scope, nonblank bounds, and
+fixture-local probe-policy samples in the native Rust path, without opening a window or calling OS
+text APIs.
+
+Next OPEN node after this gate: `S100`, final drift and claim audit.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -831,7 +847,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S099**.
+Current OPEN node: **S100**.
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -1917,7 +1933,7 @@ Current OPEN node: **S099**.
 
 ### S099: CI native text smoke gate
 
-- [ ] **S099: CI native text smoke gate** (OPEN)
+- [x] **S099: CI native text smoke gate** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with ci native text smoke gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: CI native text smoke gate.
@@ -1928,7 +1944,7 @@ Current OPEN node: **S099**.
 
 ### S100: Final drift and claim audit
 
-- [ ] **S100: Final drift and claim audit** (BLOCKED)
+- [ ] **S100: Final drift and claim audit** (OPEN)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with final drift and claim audit documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Final drift and claim audit.

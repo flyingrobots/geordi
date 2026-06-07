@@ -68,3 +68,6 @@ jobs:
 
       - name: Verify browser render-everywhere and strict text smoke gates
         run: pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser
+
+      - name: Verify native strict text smoke gate
+        run: cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json

@@ -1398,28 +1398,28 @@
 <!-- S099 -->
 <g id="node102" class="node">
 <title>S099</title>
-<path fill="white" stroke="#16a34a" stroke-width="4" d="M1183.38,-124C1183.38,-124 1082.62,-124 1082.62,-124 1076.62,-124 1070.62,-118 1070.62,-112 1070.62,-112 1070.62,-100 1070.62,-100 1070.62,-94 1076.62,-88 1082.62,-88 1082.62,-88 1183.38,-88 1183.38,-88 1189.38,-88 1195.38,-94 1195.38,-100 1195.38,-100 1195.38,-112 1195.38,-112 1195.38,-118 1189.38,-124 1183.38,-124"/>
-<text xml:space="preserve" text-anchor="middle" x="1133" y="-107.75" font-family="Helvetica,sans-Serif" font-size="10.00">S099</text>
-<text xml:space="preserve" text-anchor="middle" x="1133" y="-96.5" font-family="Helvetica,sans-Serif" font-size="10.00">CI native text smoke gate</text>
+<path fill="white" stroke="#94a3b8" stroke-width="3" stroke-dasharray="5,2" d="M1183.38,-124C1183.38,-124 1082.62,-124 1082.62,-124 1076.62,-124 1070.62,-118 1070.62,-112 1070.62,-112 1070.62,-100 1070.62,-100 1070.62,-94 1076.62,-88 1082.62,-88 1082.62,-88 1183.38,-88 1183.38,-88 1189.38,-88 1195.38,-94 1195.38,-100 1195.38,-100 1195.38,-112 1195.38,-112 1195.38,-118 1189.38,-124 1183.38,-124"/>
+<text xml:space="preserve" text-anchor="middle" x="1133" y="-107.75" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">S099</text>
+<text xml:space="preserve" text-anchor="middle" x="1133" y="-96.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#64748b">CI native text smoke gate</text>
 </g>
 <!-- S098&#45;&gt;S099 -->
 <g id="edge107" class="edge">
 <title>S098&#45;&gt;S099</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-158.61C1133,-150.87 1133,-141.73 1133,-133.3"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-133.33 1133,-127.33 1130.9,-133.33 1135.1,-133.33"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-158.61C1133,-150.67 1133,-141.25 1133,-132.64"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-132.84 1133,-126.84 1130.9,-132.84 1135.1,-132.84"/>
 </g>
 <!-- S100 -->
 <g id="node103" class="node">
 <title>S100</title>
-<path fill="white" stroke="#dc2626" stroke-width="4" d="M1181.51,-52C1181.51,-52 1084.49,-52 1084.49,-52 1078.49,-52 1072.49,-46 1072.49,-40 1072.49,-40 1072.49,-28 1072.49,-28 1072.49,-22 1078.49,-16 1084.49,-16 1084.49,-16 1181.51,-16 1181.51,-16 1187.51,-16 1193.51,-22 1193.51,-28 1193.51,-28 1193.51,-40 1193.51,-40 1193.51,-46 1187.51,-52 1181.51,-52"/>
+<path fill="white" stroke="#16a34a" stroke-width="4" d="M1181.51,-52C1181.51,-52 1084.49,-52 1084.49,-52 1078.49,-52 1072.49,-46 1072.49,-40 1072.49,-40 1072.49,-28 1072.49,-28 1072.49,-22 1078.49,-16 1084.49,-16 1084.49,-16 1181.51,-16 1181.51,-16 1187.51,-16 1193.51,-22 1193.51,-28 1193.51,-28 1193.51,-40 1193.51,-40 1193.51,-46 1187.51,-52 1181.51,-52"/>
 <text xml:space="preserve" text-anchor="middle" x="1133" y="-35.75" font-family="Helvetica,sans-Serif" font-size="10.00">S100</text>
 <text xml:space="preserve" text-anchor="middle" x="1133" y="-24.5" font-family="Helvetica,sans-Serif" font-size="10.00">Final drift and claim audit</text>
 </g>
 <!-- S099&#45;&gt;S100 -->
 <g id="edge108" class="edge">
 <title>S099&#45;&gt;S100</title>
-<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-86.24C1133,-78.63 1133,-69.7 1133,-61.45"/>
-<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-61.63 1133,-55.63 1130.9,-61.63 1135.1,-61.63"/>
+<path fill="none" stroke="#64748b" stroke-width="1.2" d="M1133,-86.61C1133,-78.87 1133,-69.73 1133,-61.3"/>
+<polygon fill="#64748b" stroke="#64748b" stroke-width="1.2" points="1135.1,-61.33 1133,-55.33 1130.9,-61.33 1135.1,-61.33"/>
 </g>
 </g>
 </svg>
