@@ -7,6 +7,7 @@ import { canonicalJsonPort, type JsonValue } from '@flyingrobots/geordi-core';
 
 import {
   assertRenderFixtureStrictTextFixtureReceipt,
+  assertRenderFixtureStrictTextFontReferences,
   parseRenderFixtureFontPackManifest,
   parseRenderFixtureStrictTextFixtureManifest,
   RENDER_FIXTURE_HASH_ALGORITHM_SHA256,
@@ -130,7 +131,10 @@ export function createRenderFixtureStrictTextFixtureReceipt(
   const fixtureSource = decodeUtf8(fixtureBytes);
   const manifest = parseRenderFixtureStrictTextFixtureManifest(fixtureSource);
   const fontPackBytes = readFixtureLocalBytes(input.repositoryRoot, manifest.fontPackPath);
-  parseRenderFixtureFontPackManifest(decodeUtf8(fontPackBytes));
+  const fontPack = parseRenderFixtureFontPackManifest(decodeUtf8(fontPackBytes));
+
+  assertRenderFixtureStrictTextFontReferences({ fontPack, manifest });
+  assertRenderFixtureFontPackHashes(fontPack, input.repositoryRoot);
 
   const receipt: RenderFixtureStrictTextFixtureReceipt = {
     fixtureHash: renderFixtureSha256FromBytes(fixtureBytes),
