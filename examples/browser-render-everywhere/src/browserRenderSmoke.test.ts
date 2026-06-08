@@ -295,6 +295,7 @@ function nativeStrictTextMetadata(): NativeStrictTextMetadataCliOutput {
     {
       cwd: fileURLToPath(new URL('../../..', import.meta.url)),
       encoding: 'utf8',
+      timeout: 120_000,
     },
   );
 
