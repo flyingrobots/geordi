@@ -750,7 +750,8 @@ describe('readTtfMetrics', () => {
       '../../../fixtures/render-everywhere/assets/fonts/lato/Lato-Regular.ttf',
       import.meta.url,
     );
-    return new Uint8Array(readFileSync(fontUrl).buffer);
+    const buf = readFileSync(fontUrl);
+    return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
   }
 
   it('reads stable unitsPerEm, ascender, and descender from Lato Regular', () => {
