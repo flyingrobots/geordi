@@ -17,6 +17,8 @@
     "test:package-names": "node scripts/check-package-name-scope.mjs",
     "test:placeholders": "node scripts/check-test-placeholders.mjs",
     "test:render-everywhere:bunny": "pnpm --filter @flyingrobots/geordi-render-fixture test && pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test && cargo test -p native-render-everywhere && cargo clippy -p native-render-everywhere --all-targets -- -D warnings && cargo run -p native-render-everywhere -- --bunny-check fixtures/render-everywhere/assets/stanford-bunny && cargo run -p native-render-everywhere -- --bunny-smoke fixtures/render-everywhere/assets/stanford-bunny && cargo run -p native-render-everywhere -- --bunny-smoke --frame 15 fixtures/render-everywhere/assets/stanford-bunny && cargo run -p native-render-everywhere -- --bunny-smoke --frame 60 fixtures/render-everywhere/assets/stanford-bunny",
+    "test:render-everywhere:strict-text": "pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test && pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere typecheck && pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere lint && pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser && cargo test -p native-render-everywhere && cargo clippy -p native-render-everywhere --all-targets -- -D warnings && cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json",
+    "test:render-everywhere:strict-text-generated": "pnpm --filter @flyingrobots/geordi-text-prep build && node packages/text-prep/dist/cli.js compare --input fixtures/render-everywhere/strict-text/generated/geordi.text-prep.input.geordi.json --expected fixtures/render-everywhere/strict-text/generated",
     "test:render-everywhere:gpvue": "pnpm --filter @flyingrobots/geordi-core build && pnpm --filter @flyingrobots/geordi-render-fixture build && pnpm --filter @flyingrobots/geordi-gpvue build && node --experimental-strip-types scripts/render-everywhere-gpvue-smoke.ts",
     "test:repo-sludge": "node scripts/check-repo-sludge.mjs",
     "test:coverage": "turbo run test:coverage",
@@ -42,10 +44,5 @@
     "turbo": "^2.9.14",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
-  },
-  "pnpm": {
-    "overrides": {
-      "esbuild": ">=0.25.0"
-    }
   }
 }

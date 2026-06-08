@@ -498,6 +498,115 @@ pub struct LoadedBunnyFixture {
     style: BunnyRenderStyle,
 }
 
+impl LoadedBunnyFixture {
+    /// Bunny frame image width in pixels.
+    #[must_use]
+    pub const fn image_width(&self) -> usize {
+        self.image.width
+    }
+
+    /// Bunny frame image height in pixels.
+    #[must_use]
+    pub const fn image_height(&self) -> usize {
+        self.image.height
+    }
+
+    /// Bunny frame RGBA8 bytes in row-major order.
+    #[must_use]
+    pub fn image_rgba(&self) -> &[u8] {
+        &self.image.rgba
+    }
+}
+
+/// Reusable bunny animation runtime for presentation windows.
+#[derive(Debug)]
+pub struct BunnyWindowRuntime {
+    loaded: LoadedBunnyFixture,
+}
+
+impl BunnyWindowRuntime {
+    /// Load the bunny fixture once and keep the mesh and style in memory for frame updates.
+    ///
+    /// # Errors
+    ///
+    /// Returns `NativeBunnyError` if the asset directory, manifest, font pack, or PLY file cannot
+    /// be read or parsed.
+    pub fn load(asset_dir: &Path) -> Result<Self, NativeBunnyError> {
+        Ok(Self {
+            loaded: load_bunny_fixture(asset_dir, 0)?,
+        })
+    }
+
+    /// Bunny playback sample rate in frames per second.
+    #[must_use]
+    pub const fn sample_rate(&self) -> u64 {
+        self.loaded.fixture.playback.sample_rate
+    }
+
+    /// Render a specific frame of the bunny animation.
+    #[must_use]
+    pub fn render_frame(&self, frame_index: u64) -> BunnyWindowFrame {
+        let report = create_bunny_frame_report(
+            frame_index,
+            &self.loaded.report.asset_hash,
+            &self.loaded.mesh,
+            &self.loaded.fixture,
+        );
+        let image = render_bunny_wireframe(
+            &self.loaded.mesh,
+            &self.loaded.fixture,
+            self.loaded.style,
+            report.angle_radians,
+        );
+
+        BunnyWindowFrame {
+            fixture_id: self.loaded.fixture.id.clone(),
+            image,
+            report,
+        }
+    }
+}
+
+/// A single rendered bunny animation frame.
+#[derive(Debug)]
+pub struct BunnyWindowFrame {
+    fixture_id: String,
+    image: BunnyImage,
+    report: BunnyFrameReport,
+}
+
+impl BunnyWindowFrame {
+    /// Bunny frame image width in pixels.
+    #[must_use]
+    pub const fn image_width(&self) -> usize {
+        self.image.width
+    }
+
+    /// Bunny frame image height in pixels.
+    #[must_use]
+    pub const fn image_height(&self) -> usize {
+        self.image.height
+    }
+
+    /// Bunny frame RGBA8 bytes in row-major order.
+    #[must_use]
+    pub fn image_rgba(&self) -> &[u8] {
+        &self.image.rgba
+    }
+
+    /// Bunny frame index.
+    #[must_use]
+    pub const fn frame_index(&self) -> u64 {
+        self.report.frame_index
+    }
+
+    /// Bunny fixture id.
+    #[must_use]
+    pub fn fixture_id(&self) -> &str {
+        &self.fixture_id
+    }
+}
+
 #[derive(Debug, Eq, PartialEq)]
 struct BunnyImage {
     height: usize,
@@ -705,36 +814,31 @@ pub fn run_bunny_smoke(
 /// Returns `NativeBunnyError` when loading, rendering, buffer conversion, or window presentation
 /// fails.
 pub fn open_bunny_window(asset_dir: &Path) -> Result<(), NativeBunnyError> {
-    let loaded = load_bunny_fixture(asset_dir, 0)?;
+    let runtime = BunnyWindowRuntime::load(asset_dir)?;
+    let first_frame = runtime.render_frame(0);
     let mut window = Window::new(
-        &bunny_window_title(&loaded),
-        loaded.image.width,
-        loaded.image.height,
+        &bunny_window_title(&first_frame),
+        first_frame.image_width(),
+        first_frame.image_height(),
         WindowOptions::default(),
     )
     .map_err(NativeBunnyWindowError::window)?;
+    window.set_target_fps(60);
     let start = Instant::now();
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         let frame_index = bunny_frame_index_from_elapsed_ms(
             start.elapsed().as_millis(),
-            loaded.fixture.playback.sample_rate,
+            runtime.loaded.fixture.playback.sample_rate,
         );
-        let report = create_bunny_frame_report(
-            frame_index,
-            &loaded.report.asset_hash,
-            &loaded.mesh,
-            &loaded.fixture,
-        );
-        let image = render_bunny_wireframe(
-            &loaded.mesh,
-            &loaded.fixture,
-            loaded.style,
-            report.angle_radians,
-        );
-        let buffer = minifb_buffer(&image)?;
+        let frame = runtime.render_frame(frame_index);
+        let buffer = minifb_buffer_from_rgba(
+            frame.image_rgba(),
+            frame.image_width(),
+            frame.image_height(),
+        )?;
         window
-            .update_with_buffer(&buffer, image.width, image.height)
+            .update_with_buffer(&buffer, frame.image_width(), frame.image_height())
             .map_err(NativeBunnyWindowError::window)?;
     }
 
@@ -955,15 +1059,18 @@ fn render_bunny_wireframe(
     image
 }
 
-fn minifb_buffer(image: &BunnyImage) -> Result<Vec<u32>, NativeBunnyWindowError> {
+fn minifb_buffer_from_rgba(
+    rgba: &[u8],
+    width: usize,
+    height: usize,
+) -> Result<Vec<u32>, NativeBunnyWindowError> {
     let mut buffer = Vec::with_capacity(
-        image
-            .width
-            .checked_mul(image.height)
+        width
+            .checked_mul(height)
             .ok_or_else(NativeBunnyWindowError::buffer_size)?,
     );
 
-    for rgba in image.rgba.chunks_exact(4) {
+    for rgba in rgba.chunks_exact(4) {
         let red = u32::from(rgba[0]);
         let green = u32::from(rgba[1]);
         let blue = u32::from(rgba[2]);
@@ -977,10 +1084,11 @@ fn minifb_buffer(image: &BunnyImage) -> Result<Vec<u32>, NativeBunnyWindowError>
     Ok(buffer)
 }
 
-fn bunny_window_title(loaded: &LoadedBunnyFixture) -> String {
+fn bunny_window_title(frame: &BunnyWindowFrame) -> String {
     format!(
         "Geordi Native - {BUNNY_RENDERER_NAME} - {} - frame {}",
-        loaded.fixture.id, loaded.report.frame_index
+        frame.fixture_id(),
+        frame.frame_index()
     )
 }
 
@@ -1010,14 +1118,7 @@ fn draw_projected_edge(
     draw_line(image, color, x0, y0, x1, y1);
 }
 
-fn draw_line(
-    image: &mut BunnyImage,
-    color: [u8; 4],
-    mut x0: i32,
-    mut y0: i32,
-    x1: i32,
-    y1: i32,
-) {
+fn draw_line(image: &mut BunnyImage, color: [u8; 4], mut x0: i32, mut y0: i32, x1: i32, y1: i32) {
     let delta_x = (x1 - x0).abs();
     let step_x = if x0 < x1 { 1 } else { -1 };
     let delta_y = -(y1 - y0).abs();
@@ -1125,11 +1226,7 @@ fn normalize_vector3(vector: [f64; 3]) -> [f64; 3] {
 }
 
 fn subtract_vector3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
-    [
-        left[0] - right[0],
-        left[1] - right[1],
-        left[2] - right[2],
-    ]
+    [left[0] - right[0], left[1] - right[1], left[2] - right[2]]
 }
 
 fn dot_vector3(left: [f64; 3], right: [f64; 3]) -> f64 {
@@ -1168,15 +1265,15 @@ fn bunny_render_style(
     fixture: &BunnyMeshFixtureManifest,
 ) -> Result<BunnyRenderStyle, NativeBunnyManifestValidationError> {
     Ok(BunnyRenderStyle {
-        background: hex_color_rgba(&fixture.material.background_color, "$.material.backgroundColor")?,
+        background: hex_color_rgba(
+            &fixture.material.background_color,
+            "$.material.backgroundColor",
+        )?,
         material: hex_color_rgba(&fixture.material.color, "$.material.color")?,
     })
 }
 
-fn hex_color_rgba(
-    value: &str,
-    path: &str,
-) -> Result<[u8; 4], NativeBunnyManifestValidationError> {
+fn hex_color_rgba(value: &str, path: &str) -> Result<[u8; 4], NativeBunnyManifestValidationError> {
     if !is_hex_color(value) {
         return Err(NativeBunnyManifestValidationError::new(vec![
             NativeBunnyManifestValidationIssue::new(path, "Color must be lowercase #rrggbb"),
@@ -1287,7 +1384,12 @@ fn validate_mesh_projection(
         "Projection vertical FOV",
         issues,
     );
-    validate_positive_finite(projection.near, "$.projection.near", "Projection near", issues);
+    validate_positive_finite(
+        projection.near,
+        "$.projection.near",
+        "Projection near",
+        issues,
+    );
     validate_positive_finite(projection.far, "$.projection.far", "Projection far", issues);
     if projection.near.is_finite()
         && projection.far.is_finite()
@@ -1328,7 +1430,12 @@ fn validate_mesh_material(
         "Material kind",
         issues,
     );
-    validate_hex_color(&material.color, "$.material.color", "Material color", issues);
+    validate_hex_color(
+        &material.color,
+        "$.material.color",
+        "Material color",
+        issues,
+    );
     validate_hex_color(
         &material.background_color,
         "$.material.backgroundColor",
@@ -1527,9 +1634,7 @@ fn has_url_scheme(value: &str) -> bool {
         return false;
     };
     first.is_ascii_alphabetic()
-        && bytes.all(|byte| {
-            byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'.' | b'-')
-        })
+        && bytes.all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'.' | b'-'))
 }
 
 fn has_windows_drive_prefix(value: &str) -> bool {
@@ -1545,7 +1650,11 @@ fn validate_vector3(
 ) {
     for value in vector {
         if !value.is_finite() {
-            push_issue(issues, path, &format!("{label} must contain finite numbers"));
+            push_issue(
+                issues,
+                path,
+                &format!("{label} must contain finite numbers"),
+            );
             return;
         }
     }
@@ -1558,7 +1667,11 @@ fn validate_positive_finite(
     issues: &mut Vec<NativeBunnyManifestValidationIssue>,
 ) {
     if !value.is_finite() || value <= 0.0 {
-        push_issue(issues, path, &format!("{label} must be positive and finite"));
+        push_issue(
+            issues,
+            path,
+            &format!("{label} must be positive and finite"),
+        );
     }
 }
 
@@ -1710,7 +1823,9 @@ mod tests {
 
     #[test]
     fn fixture_local_paths_reject_url_schemes() {
-        assert!(!is_fixture_local_relative_path("https://example.invalid/bunny.mesh.json"));
+        assert!(!is_fixture_local_relative_path(
+            "https://example.invalid/bunny.mesh.json"
+        ));
         assert!(!is_fixture_local_relative_path("file://bunny.mesh.json"));
         assert!(is_fixture_local_relative_path("bunny.mesh.json"));
     }

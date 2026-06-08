@@ -1,15 +1,18 @@
 import type { BrowserHarnessStatus } from './harnessModel.js';
 
-export type BrowserHarnessMode = 'rectangles' | 'bunny';
+export type BrowserHarnessMode = 'rectangles' | 'bunny' | 'text';
 
 export interface BrowserHarnessShellMount {
   readonly bunnyCanvasSlot: HTMLElement;
   readonly bunnyReport: HTMLPreElement;
   readonly rectangleCanvasSlot: HTMLElement;
+  readonly textCanvasSlot: HTMLElement;
+  readonly textReport: HTMLPreElement;
 }
 
 export interface BrowserHarnessShellOptions {
   readonly bunnyRendererName: string;
+  readonly textRendererName: string;
 }
 
 export class BrowserHarnessMountError extends Error {
@@ -33,14 +36,20 @@ interface BunnyPanelMount extends DemoPanelMount {
   readonly report: HTMLPreElement;
 }
 
+interface TextPanelMount extends DemoPanelMount {
+  readonly report: HTMLPreElement;
+}
+
 interface ModeButtonSet {
   readonly bunny: HTMLButtonElement;
   readonly rectangles: HTMLButtonElement;
+  readonly text: HTMLButtonElement;
 }
 
 interface DemoPanelSet {
   readonly bunny: HTMLElement;
   readonly rectangles: HTMLElement;
+  readonly text: HTMLElement;
 }
 
 interface HeadingMount {
@@ -56,6 +65,7 @@ interface ModeSwitch {
 interface RendererNameSet {
   readonly bunny: string;
   readonly rectangles: string;
+  readonly text: string;
 }
 
 export function mountBrowserHarnessShell(
@@ -92,6 +102,18 @@ export function mountBunnyCanvas(
   return report;
 }
 
+export function mountStrictTextCanvas(
+  slot: HTMLElement,
+  canvas: HTMLCanvasElement,
+  report: HTMLPreElement,
+  reportText: string,
+): HTMLPreElement {
+  canvas.setAttribute('data-geordi-strict-text-canvas', 'true');
+  report.textContent = reportText;
+  slot.replaceChildren(canvas);
+  return report;
+}
+
 export function mountBrowserHarnessFailure(root: HTMLElement | null): void {
   if (root === null) {
     return;
@@ -114,13 +136,16 @@ function createShell(
   const heading = createHeading(status);
   const rectanglePanel = createRectanglePanel(status);
   const bunnyPanel = createBunnyPanel();
+  const textPanel = createTextPanel();
   const panels: DemoPanelSet = {
     bunny: bunnyPanel.panel,
     rectangles: rectanglePanel.panel,
+    text: textPanel.panel,
   };
   const rendererNames: RendererNameSet = {
     bunny: options.bunnyRendererName,
     rectangles: status.rendererName,
+    text: options.textRendererName,
   };
 
   modeSwitch.buttons.rectangles.addEventListener('click', () => {
@@ -129,14 +154,25 @@ function createShell(
   modeSwitch.buttons.bunny.addEventListener('click', () => {
     setActiveMode('bunny', modeSwitch.buttons, panels, heading.marker, rendererNames);
   });
+  modeSwitch.buttons.text.addEventListener('click', () => {
+    setActiveMode('text', modeSwitch.buttons, panels, heading.marker, rendererNames);
+  });
   setActiveMode('bunny', modeSwitch.buttons, panels, heading.marker, rendererNames);
 
-  shell.append(heading.element, modeSwitch.element, rectanglePanel.panel, bunnyPanel.panel);
+  shell.append(
+    heading.element,
+    modeSwitch.element,
+    rectanglePanel.panel,
+    bunnyPanel.panel,
+    textPanel.panel,
+  );
   return {
     mount: {
       bunnyCanvasSlot: bunnyPanel.canvasSlot,
       bunnyReport: bunnyPanel.report,
       rectangleCanvasSlot: rectanglePanel.canvasSlot,
+      textCanvasSlot: textPanel.canvasSlot,
+      textReport: textPanel.report,
     },
     shell,
   };
@@ -182,8 +218,9 @@ function createModeSwitch(): ModeSwitch {
   const buttons: ModeButtonSet = {
     bunny: createModeButton('bunny', 'Bunny'),
     rectangles: createModeButton('rectangles', 'Rectangles'),
+    text: createModeButton('text', 'Text'),
   };
-  element.append(buttons.rectangles, buttons.bunny);
+  element.append(buttons.rectangles, buttons.bunny, buttons.text);
   return { buttons, element };
 }
 
@@ -220,6 +257,20 @@ function createBunnyPanel(): BunnyPanelMount {
   return { canvasSlot, panel, report };
 }
 
+function createTextPanel(): TextPanelMount {
+  const panel = createDemoPanel('text', 'Strict text fixture');
+  const metadata = createMetadataPanel('Text metadata');
+  const report = document.createElement('pre');
+  const canvasSlot = createViewportSlot();
+
+  report.className = 'text-report';
+  report.setAttribute('data-geordi-strict-text-report', 'true');
+
+  metadata.append(report);
+  panel.append(metadata, canvasSlot);
+  return { canvasSlot, panel, report };
+}
+
 function createDemoPanel(mode: BrowserHarnessMode, label: string): HTMLElement {
   const panel = document.createElement('section');
   panel.className = 'demo-panel';
@@ -246,13 +297,17 @@ function setActiveMode(
   marker: HTMLElement,
   rendererNames: RendererNameSet,
 ): void {
+  const bunnyActive = mode === 'bunny';
   const rectanglesActive = mode === 'rectangles';
+  const textActive = mode === 'text';
 
   buttons.rectangles.setAttribute('aria-pressed', String(rectanglesActive));
-  buttons.bunny.setAttribute('aria-pressed', String(!rectanglesActive));
+  buttons.bunny.setAttribute('aria-pressed', String(bunnyActive));
+  buttons.text.setAttribute('aria-pressed', String(textActive));
   panels.rectangles.hidden = !rectanglesActive;
-  panels.bunny.hidden = rectanglesActive;
-  marker.textContent = rectanglesActive ? rendererNames.rectangles : rendererNames.bunny;
+  panels.bunny.hidden = !bunnyActive;
+  panels.text.hidden = !textActive;
+  marker.textContent = rendererNames[mode];
 }
 
 function appendStatus(grid: HTMLElement, label: string, value: string): void {

@@ -106,6 +106,44 @@ dangerous to duplicate.
 Strict positioned glyph-run text currently avoids runtime shaping. It should not introduce a shaping
 WASM dependency until the milestone explicitly adds shaping as a supported claim.
 
+## S076 Strict Text Shaping Decision
+
+The strict text milestone now has a shaping implementation decision:
+
+- compliant browser and native renderers do not shape strings;
+- compliant renderers consume prepared positioned glyph runs, line boxes, font packs, evidence
+  packs, and receipts;
+- current fixtures remain `shapingProfile: "precomputed-fixture/1"` until a Geordi-owned generator
+  exists;
+- the next shaping implementation boundary is a pinned text-prep CLI, preferably backed by a
+  Rust-native shaping core;
+- TypeScript remains native for authoring helpers, fixture loading, browser integration, docs
+  tooling, and simple validation;
+- WASM may expose a hard shaping/font/glyph kernel later, but it is optional and must not become the
+  default TypeScript validation path merely to inspect JSON-shaped artifacts.
+
+This decision intentionally separates engine selection from compliance. A future spike may compare
+candidate shaping engines, but no generated shaped fixture is strict-compliant until its engine,
+version, configuration, font inputs, source inputs, and outputs are fingerprinted and reproducible.
+
+The boundary is:
+
+~~~text
+source text + font pack + shaping config
+  -> pinned text-prep CLI
+  -> generated strict text fixture + glyph evidence + receipt
+  -> browser/native runtimes validate and render prepared evidence
+~~~
+
+The boundary is not:
+
+~~~text
+source string
+  -> browser/native runtime
+  -> host shaping/font fallback/metrics
+  -> pixels
+~~~
+
 ## What Must Not Happen
 
 Do not make this the default fixture validation path:
@@ -313,7 +351,8 @@ promotes the kernel to required runtime behavior.
 ## Current Strict Text Interpretation
 
 The current strict text TypeScript and Rust DTOs are provisional. The S039 font-reference validator
-is acceptable because it is simple, structural, and protected by paired TypeScript and Rust tests.
+and S040 line-box geometry validator are acceptable because they are simple, structural, and
+protected by paired TypeScript and Rust tests.
 
 It is not a precedent for long-term hand-authored DTO mirroring.
 

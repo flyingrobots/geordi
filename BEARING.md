@@ -1,10 +1,12 @@
 # Geordi Bearing
 
 **Date**: 2026-05-25
-**Branch baseline**: <code>main</code> at <code>78c4636</code>
+**Branch baseline**: <code>main</code> at <code>69073ed</code>
 **Active milestone**: Strict Positioned Glyph-Run Text
 **Active profile under design**: <code>geordi-strict-positioned-glyph-run/1</code>
 **Active design doc**: [docs/design/2026-05-strict-positioned-glyph-run-plan.md](./docs/design/2026-05-strict-positioned-glyph-run-plan.md)
+**Remaining slice PRD/test plan**:
+[docs/design/2026-05-strict-text-remaining-slices-prd-test-plan.md](./docs/design/2026-05-strict-text-remaining-slices-prd-test-plan.md)
 **Active DAG SVG**: [docs/design/2026-05-strict-positioned-glyph-run-dag.svg](./docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 **Drift correction**: shared TypeScript/Rust contract DTOs must be generated from a Wesley common
 schema; see
@@ -98,6 +100,777 @@ not text rendering:
 - Next OPEN node after this checkpoint: `S031`, because `S039` remains blocked until glyph-run
   validation slices complete.
 
+## S050 Glyph-Run Checkpoint
+
+The glyph-run arc is complete when S050 is checked off. Its result is a validated strict text
+fixture boundary, not text rendering:
+
+- Current claim: strict text has committed `geordi-strict-text-fixture/1` fixtures for `GEORDI` and
+  `text 0123`.
+- Current claim: TypeScript and Rust parse and validate strict text fixture shape, text profile,
+  feature requirements, fixed 26.6 coordinates, font-local glyph ids, advances, offsets, line boxes,
+  semantic-text nonauthority, and font-pack references.
+- Current claim: canonical JSON normalization is pinned for committed strict text fixtures.
+- Current claim: `geordi-strict-text-fixture-receipt/1` records fixture, font-pack, glyph-run,
+  line-box, semantic-text, position-encoding, text-profile, and shaping-profile provenance hashes.
+- Current claim: TypeScript and Rust build matching canonical strict text fixture receipts for both
+  committed valid fixtures.
+- Current claim: the committed unsupported runtime-shaping fixture is rejected by TypeScript, Rust,
+  browser harness preflight, and native harness preflight before drawing.
+- Current nonclaim: Geordi still does not provide strict text glyph evidence packs, outline command
+  validation, browser strict text rendering, native strict text rendering, text pixel probes, text
+  parity reports, or `geordi-ir/1` text-node integration.
+- Current nonclaim: platform text APIs, host font lookup, runtime shaping, fallback, wrapping, bidi,
+  complex scripts, variable font axes, and broad text support remain unsupported.
+- Next OPEN node after this checkpoint: `S051`, rendering evidence strategy decision.
+
+## S051 Rendering Evidence Strategy
+
+The first strict text rendering proof uses fixture-local `outlinePaths` glyph evidence. Renderers
+consume explicit fixed 26.6 outline commands and validated glyph positions; they do not parse fonts,
+shape text, query platform metrics, use host fallback, call browser text APIs, or require a WASM font
+kernel for this milestone.
+
+The first visible proof is fill-only monochrome outline geometry with exact metadata parity and
+scoped visual probes. It does not claim full text antialiasing pixel identity, reusable glyph-cache
+semantics, bitmap/SDF atlases, shared rasterization, or broad text paint support.
+
+Next OPEN node after this decision: `S053`, outline evidence fixture data.
+
+## S052 Outline Evidence Pack Schema
+
+The first strict text outline evidence pack schema is
+`fixtures/render-everywhere/strict-text/outline-evidence-pack.schema.md`. It defines
+`geordi-glyph-evidence-pack/1`, `outlinePaths`, fixture-local path/hash linkage, glyph-origin fixed
+26.6 command coordinates, nonzero solid-fill geometry, font identity binding, command vocabulary,
+and stable diagnostic codes for the TypeScript and Rust parser slices.
+
+The schema did not make strict text renderable by itself; S053 adds committed data, while parser and
+renderer support remain separate slices.
+
+## S053 Outline Evidence Fixture Data
+
+The canonical strict text fixtures now have fixture-local outline evidence packs:
+
+- `fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json`
+- `fixtures/render-everywhere/strict-text/text-0123.outline-evidence.geordi.json`
+
+The packs contain simple TrueType outline paths from the committed Lato Regular bytes, scaled to
+the fixture's 48px fixed 26.6 coordinate system. Each referenced `fontId + glyphId` pair has one
+evidence entry; the space glyph uses `draws: false` with empty commands and zero-area bounds.
+
+The data did not make strict text renderable by itself; S054 adds the TypeScript parser, while Rust
+parser and renderer support remain separate slices.
+
+## S054 TypeScript Outline Evidence Parser
+
+`@flyingrobots/geordi-render-fixture` now exports TypeScript DTOs, constants, parse/assert/is
+helpers, and `validateRenderFixtureStrictTextOutlineEvidencePack` for
+`geordi-glyph-evidence-pack/1`. The parser validates the outline evidence pack shape, first-profile
+metadata, font identity shape, glyph entries, bounds, paint, and command field shape with stable
+`GEORDI_TEXT_EVIDENCE_*` diagnostic codes.
+
+The TypeScript parser is not a renderer and does not resolve fixture glyph coverage against a font
+pack yet. S055 adds the Rust parser while renderer support remains separate.
+
+## S055 Rust Outline Evidence Parser
+
+`geordi-ir` now exports Rust DTOs, parse/load helpers, and
+`validate_geordi_strict_text_outline_evidence_pack` for the same
+`geordi-glyph-evidence-pack/1` `outlinePaths` shape. The Rust validator mirrors the TypeScript
+first-profile checks and reports stable `GEORDI_TEXT_EVIDENCE_*` diagnostic code strings for invalid
+metadata, font identity shape, glyph entries, bounds, paint, and command field shape.
+
+The Rust parser is not a native text renderer and does not resolve fixture glyph coverage against a
+font pack yet. Current nonclaims remain: no browser or native strict text renderer, no platform text
+API compliance path, and no general text support.
+
+## S056 Outline Command Validation
+
+TypeScript and Rust outline evidence validators now enforce exact first-profile command field shape
+and contour state. Drawing glyphs must open contours with `moveTo`, use segment commands only inside
+an open contour, close every contour with `closePath`, and avoid command fields that are not allowed
+for the command `op`. The shared failure fixture is
+`fixtures/render-everywhere/strict-text/failures/bad-outline-command.outline-evidence.geordi.json`.
+
+This still does not render text. Current nonclaims remain: no browser or native strict text renderer,
+no platform text API compliance path, no glyph evidence coverage/linkage enforcement, and no general
+text support.
+
+## S057 Browser Outline Glyph Renderer
+
+The browser harness now has a strict text outline renderer in
+`examples/browser-render-everywhere/src/strictTextRender.ts`. It consumes parsed strict text fixture
+DTOs plus parsed outline evidence DTOs, converts fixed 26.6 glyph-origin commands into Canvas path
+calls, fills the path with the evidence `solidFill` paint, and reports renderer metadata. Tests prove
+the renderer uses path APIs and does not call Canvas text APIs.
+
+S058 adds the browser fixture loading mode; native renderer, coverage/linkage enforcement, platform
+text API compliance, and general text support remain separate concerns.
+
+## S058 Browser Text Fixture Mode
+
+The browser harness now exposes `renderBrowserStrictTextFixture`, a fixture mode that fetches a
+strict text fixture URL plus an outline evidence pack URL, parses both through the shared DTO
+validators, rejects invalid evidence before drawing, and routes valid inputs through the browser
+outline renderer. `strictTextAssets.ts` now names the canonical `GEORDI` fixture/evidence asset pair.
+
+This is still not mounted in the browser UI. Current nonclaims remain: no browser text metadata
+disclosure UI, no native strict text renderer, no glyph evidence coverage/linkage enforcement, no
+platform text API compliance path, and no general text support.
+
+## S059 Browser Text Metadata Disclosure
+
+The browser harness now mounts a dedicated `Text` panel beside `Rectangles` and `Bunny`. Startup
+loads the canonical strict text fixture, the canonical outline evidence pack, and the referenced
+font-pack manifest; validates font references before drawing; renders the strict text canvas through
+outline path geometry; and fills a collapsed `Text metadata` disclosure.
+
+The metadata report exposes renderer name, fixture id/hash, font-pack path/hash, glyph-run hash,
+line-box hash, evidence pack id/kind/hash, text profile, position encoding, glyph counts, command
+count, and semantic-text fields. The semantic text report explicitly states
+`semanticTextAffectsPixels=false` and labels semantic text as non-rendering metadata whose strings
+do not determine pixels.
+
+S060 adds visible text smoke assertions. Current nonclaims remain: no native strict text renderer,
+no cross-runtime metadata equality gate, no platform text API compliance path, and no general text
+support.
+
+## S060 Browser Visible Text Smoke
+
+The Playwright browser gate now switches to the `Text` panel, verifies exactly one strict text canvas
+is visible, samples the full canvas, proves it has non-background pixels, records the nonblank pixel
+bounds, and asserts those bounds stay within the declared canvas. The page installs browser-side
+spies before app startup for `CanvasRenderingContext2D.fillText`, `strokeText`, `measureText`, and
+`FontFace`; any call fails through `BrowserGateStrictTextSmokeError` with the recorded call list.
+
+This is a coarse smoke only. S066 owns stable text probe policy and sample points, S069 owns
+cross-runtime nonblank bounds policy, and S065 owns browser/native metadata equality. Current
+nonclaims remain: no native strict text renderer, no browser/native parity claim, no platform text
+API compliance path, and no general text support.
+
+## S061 Native Outline Glyph Renderer
+
+The Rust renderer crate now exposes `render_strict_text_outline_glyphs_to_image`, a native software
+path that validates a strict text fixture and an outline evidence pack before drawing into the
+existing `RenderedImage` RGBA8 buffer. The renderer converts fixed 26.6 glyph-origin outline
+commands into flattened line segments, fills them with the evidence `solidFill` paint using nonzero
+winding, and returns deterministic metadata for renderer name, fixture id, evidence id/kind, text
+profile, glyph count, drawn glyph count, and consumed command count.
+
+This is an API-level native proof, not the CLI mode or parity report. S062 owns native fixture CLI
+mode, S063 owns native text metadata report expansion, S067 owns native coarse pixel probes, and S065
+owns browser/native metadata equality. Current nonclaims remain: no full text antialiasing parity,
+no platform text API compliance path, no host font lookup, and no general text support.
+
+## S062 Native Text Fixture CLI Mode
+
+The native render-everywhere harness now has a strict text offscreen mode:
+
+~~~bash
+cargo run -p native-render-everywhere -- --strict-text-smoke \
+  fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+~~~
+
+The mode resolves strict text fixture paths inside `fixtures/render-everywhere/strict-text`, derives
+the matching `.outline-evidence.geordi.json` pack by convention unless `--evidence` is supplied,
+loads and validates the strict text fixture, font pack, font hashes, font references, and outline
+evidence, renders through the Rust outline renderer, and prints a minimal summary without opening a
+window. Escaping fixture paths and invalid outline evidence fail through custom native errors.
+
+S063 owns the expanded metadata report needed for browser/native equality. S064 owns native visible
+text smoke assertions. Current nonclaims remain: no full text antialiasing parity, no `geordi-ir/1`
+text-node graduation, no platform text API compliance path, no host font lookup, and no general text
+support.
+
+## S063 Native Text Metadata Report
+
+The native strict text smoke summary now emits the browser-aligned metadata fields: fixture hash,
+font-pack path/hash, glyph-run hash, line-box hash, evidence pack id/kind/hash, text profile,
+position encoding, renderer name, glyph counts, command count, and semantic text fields with
+`semanticTextAffectsPixels=false` and the non-rendering semantic text role.
+
+The native report reuses the Rust strict text receipt builder for fixture, font-pack, glyph-run, and
+line-box hashes, and hashes the exact outline evidence bytes separately. This creates the metadata
+surface S065 will compare against the browser report; it still does not claim visual parity.
+
+S064 owns native visible text smoke assertions. Current nonclaims remain: no full text antialiasing
+parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no host font
+lookup, and no general text support.
+
+## S064 Native Visible Text Smoke
+
+The native strict text smoke mode now fails unless the rendered offscreen buffer contains nonblank
+text pixels. The smoke report records deterministic nonblank pixel count and coarse bounds for the
+canonical `GEORDI` outline proof:
+
+~~~text
+nonblankPixels=2092
+nonblankBounds=2,13..175,47
+smoke=passed
+~~~
+
+The blank-output negative test mutates a valid outline evidence pack to non-drawing glyphs, renders
+through the public strict text renderer, and verifies `NativeStrictTextSmokeError` rather than a
+successful smoke claim.
+
+S065 owns browser/native metadata equality. S067 owns stable native coarse probes, and S069 owns the
+later cross-runtime nonblank bounds policy. Current nonclaims remain: no full text antialiasing
+parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no host font
+lookup, and no general text support.
+
+## S065 Browser/Native Metadata Equality
+
+The browser Vitest harness now compares the browser strict text metadata report against the native
+`--strict-text-smoke` CLI output for the canonical `GEORDI` fixture. The equality check covers
+fixture id/hash, font-pack path/hash, glyph-run hash, line-box hash, evidence pack id/kind/hash,
+text profile, position encoding, glyph counts, command count, and semantic text nonauthority fields.
+
+Renderer names remain intentionally runtime-specific (`browser-canvas-outline-glyphs` versus
+`rust-software-outline-glyphs`), and native nonblank smoke fields remain native smoke metadata. The
+new root gate is:
+
+~~~bash
+pnpm test:render-everywhere:strict-text
+~~~
+
+S066 and S067 own browser/native coarse pixel probes. Current nonclaims remain: no full text
+antialiasing parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no
+host font lookup, and no general text support.
+
+## S066 Browser Coarse Pixel Probes
+
+The Playwright browser text gate now samples explicit strict text probe points in the visible
+`Text` canvas. The first browser probe set covers transparent background points and stable interior
+fill points across the `GEORDI` glyphs. Fill probes require exact `[17, 24, 39, 255]`; transparent
+probes require alpha `0`.
+
+Probe failures throw `BrowserGateStrictTextProbeError` with fixture id, probe id, coordinates,
+expected class, and actual RGBA. These probes are deliberately coarse browser evidence only; they do
+not claim antialiasing parity with native.
+
+S067 owns native coarse probes for the same proof family. Current nonclaims remain: no full text
+antialiasing parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no
+host font lookup, and no general text support.
+
+## S070 Missing Glyph Evidence Failure
+
+Strict text rendering now rejects validly-shaped outline evidence that does not cover every
+positioned glyph in the strict text fixture. The shared diagnostic code is
+`GEORDI_TEXT_EVIDENCE_MISSING_GLYPH`, and the failure is exercised across TypeScript contract tests,
+browser direct rendering, browser fixture mode, Rust IR validation, the Rust renderer, and native
+`--strict-text-smoke`.
+
+The failure fixture is:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/missing-glyph-evidence.outline-evidence.geordi.json
+~~~
+
+This closes the silent-skip risk for omitted glyph evidence. Current nonclaims remain: no full text
+antialiasing parity, no `geordi-ir/1` text-node graduation, no platform text API compliance path, no
+host font lookup, and no general text support.
+
+## S071 Glyph Id Not Found Failure
+
+Fixture-local strict text evidence now rejects extra glyph entries that are not referenced by the
+fixture's positioned glyph runs. The shared diagnostic code is
+`GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH`, and the failure is covered in TypeScript contract tests,
+browser direct rendering, browser fixture mode, Rust IR validation, the Rust renderer, and native
+`--strict-text-smoke`.
+
+The failure fixture is:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/unknown-glyph-evidence.outline-evidence.geordi.json
+~~~
+
+This preserves the current fixture-local minimal-pack contract. A future reusable evidence-pack
+profile may allow extra glyph evidence only after it states that behavior explicitly.
+
+## S072 Bad Line Box Failure
+
+Strict text evidence now rejects drawing outline bounds that escape the glyph run's declared line
+box after applying positioned glyph origins. The shared diagnostic code is
+`GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX`, and the failure is covered in TypeScript contract tests,
+browser direct rendering, browser fixture mode, Rust IR validation, the Rust renderer, and native
+`--strict-text-smoke`.
+
+The failure fixture is:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/bad-line-box.strict-text.geordi.json
+~~~
+
+This keeps line boxes as explicit render contract data. Overflow remains unsupported unless a future
+strict text profile names it directly.
+
+## S073 Unsupported Text Fill/Stroke Failure
+
+The first strict text rendering proof remains fill-only. Unsupported text paint now has committed
+failure fixtures for both evidence-level paint (`paint.kind: "stroke"`) and fixture-level text paint
+feature requests (`text.stroke`). TypeScript contract tests, browser fixture mode, Rust IR
+validation, the Rust renderer, and native `--strict-text-smoke` reject those paths before drawing.
+
+The failure fixtures are:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/unsupported-paint.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/failures/unsupported-text-paint.strict-text.geordi.json
+~~~
+
+Current nonclaims remain: no text stroke, gradients, opacity effects, multi-paint text, platform
+text APIs, host font lookup, runtime shaping, or general text support.
+
+## S074 Browser Text Demo Docs
+
+The browser render-everywhere docs now describe the `Text` panel as a strict positioned glyph-run
+proof, not as general text support. The documented path names the exact fixture, outline evidence,
+probe policy, and font-pack assets consumed by the browser harness; the validation sequence before
+drawing; the Canvas path-only rendering route; the expected metadata fields; and the browser gate's
+text API spies for `fillText`, `strokeText`, `measureText`, and `FontFace`.
+
+The higher-level render-everywhere and end-to-end docs now distinguish the strict text browser proof
+from the rectangle `geordi-ir/1` proof and the bunny mesh sanity proof. Current nonclaims remain:
+no CSS text, no platform-native text path, no host font fallback, no runtime shaping, no wrapping,
+no bidi or complex scripts, no variable font axes, no full antialiasing parity, and no broad
+`geordi-ir/1` `shape.text` support.
+
+## S075 Native Text Demo Docs
+
+The native render-everywhere docs now describe `--strict-text-smoke` as the Rust proof for
+`geordi-strict-positioned-glyph-run/1`, not as OS text support. The documented path names the exact
+strict text fixture, outline evidence, probe policy, and font-pack assets; explains fixture path
+resolution and evidence override behavior; records the browser-aligned metadata fields; and lists
+the hard failure families for escaping paths, unsupported features, missing or unknown evidence,
+line-box escape, unsupported paint, blank output, probe mismatch, and nonblank-bounds escape.
+
+The high-level README, render-everywhere guide, end-to-end guide, status signpost, and vision
+signpost now describe strict text as a browser/native prepared-artifact proof with metadata and
+coarse probes. Current nonclaims remain: no OS text APIs, no host font fallback, no runtime shaping,
+no wrapping, no bidi or complex scripts, no variable font axes, no native strict text window mode,
+no full antialiasing parity, and no broad `geordi-ir/1` `shape.text` support.
+
+## S076 Shaping Implementation Decision
+
+Shaping remains outside the compliant browser/native renderer path. The selected future boundary is
+a pinned text-prep CLI that emits prepared strict text fixtures, line boxes, glyph evidence, and
+receipts. TypeScript stays native for authoring helpers, browser/Node integration, fixture loading,
+docs tooling, and simple validation; the shaping core should be Rust-native when implemented because
+shaping is hard algorithmic behavior that should not be hand-mirrored across runtimes.
+
+The decision keeps current fixtures on `shapingProfile: "precomputed-fixture/1"` until a Geordi-owned
+generator exists. WASM is allowed only as an optional later exposure of a hard shaping/font/glyph
+kernel after native text-prep, fingerprints, conformance fixtures, and generated outputs are stable.
+Browser Canvas shaping, DOM/CSS text shaping, native OS text APIs, host font fallback, runtime
+shaping, mandatory WASM validation, and unfingerprinted prep scripts are rejected compliance paths.
+
+## S077 Shaping Profile Fingerprint Law
+
+Generated strict text cannot claim Geordi-owned shaping provenance unless it carries a complete
+`geordi-text-prep-shaping-fingerprint/1` record. The fingerprint must canonicalize profile identity,
+generator identity, shaper identity, font identity, source identity, shaping inputs, geometry policy,
+and output hashes. Required fields include the font pack hash, font file hash, face index, shaper
+name/version/build/config hashes, script, language, direction, OpenType features, normalization
+profile, variation axes, source text hash, glyph-run hash, line-box hash, glyph evidence hash, and
+fixture hash.
+
+The law also defines future stable diagnostic identities for missing fingerprints, unsupported
+fingerprint profiles, missing required fields, malformed or mismatched hashes, unstable inputs, and
+output mismatches. S077 does not implement a shaping engine, generator, or compliant shaped output;
+it only defines the provenance contract later slices must satisfy.
+
+## S078 Shaping Spike Outside Compliance Path
+
+Any shaping experiment before the text-prep boundary is explicitly noncompliant. The spike profile is
+`geordi-text-shaping-spike-noncompliant/1`, and spike outputs must declare
+`compliance: "noncompliant-spike/1"` plus `mayFeedStrictRenderer: false`. Spike output must not use
+the `*.strict-text.geordi.json` fixture family, populate compliant receipt shaping fields, replace
+canonical fixtures, enter browser/native strict smoke gates, resolve host fonts, or hide fallback,
+multiline, bidi, complex-script, or variable-axis behavior.
+
+The law defines future diagnostics for spike artifacts that are supplied as strict fixtures, missing
+noncompliance labels, or attempt host font lookup. S078 adds no spike code; it makes future spike
+work safe by preventing exploratory shaping output from becoming an accidental renderer claim.
+
+## S079 Compiler Text Preparation Boundary
+
+Text preparation is a compiler/tooling boundary, not a renderer feature. The new
+`geordi-text-prep-boundary/1` law allows source strings, font intent, language/script metadata, and
+authoring conveniences to enter a text-prep tool, but browser/native renderers may receive only
+prepared strict artifacts: positioned glyph runs, line boxes, font identity, glyph evidence,
+fingerprint data, and receipts.
+
+The boundary assigns source normalization, content-addressed font resolution, shaping, glyph-run
+generation, deterministic line-box generation, evidence linkage, receipt provenance, and
+explainability to text prep. Renderers own validation and evidence drawing only. Future diagnostics
+cover host font lookup, fallback requirements, unsupported multiline, bidi/complex scripts,
+variable axes, and missing shaping fingerprints.
+
+## S080 Generated Shaped Output Schema
+
+`fixtures/render-everywhere/strict-text/generated-shaped-output.schema.md` now defines
+`geordi-text-prep-generated-output/1`, the future text-prep output bundle manifest. The schema binds
+source hash, font identity, shaping fingerprint, generated strict fixture, glyph evidence pack,
+receipt, and canonical glyph-run/line-box/fixture hashes into one reviewable unit.
+
+The manifest is audit/comparison data, not a renderer input by itself. It must not contain renderer
+names, `rendered=true`, `smoke=passed`, host font families, platform metrics, absolute paths,
+wall-clock timestamps, or spike artifacts. S081 introduced the first command surface and
+deterministic prep plan, S082 owns the first generated artifact, and S083 owns drift comparison.
+
+## S081 Glyph-Run Generation CLI
+
+`@flyingrobots/geordi-text-prep` now exposes the first pinned text-prep CLI surface:
+
+~~~bash
+geordi-text-prep prepare --input text-prep.input.geordi.json --output fixtures/render-everywhere/strict-text/generated
+~~~
+
+The command validates `geordi-text-prep-input/1` JSON and writes
+`text-prep.generation-plan.geordi.json` as deterministic audit data. The plan records source hash,
+content-addressed font identity, shaping fingerprint identity, first-profile geometry policy, and
+output intent. It omits pixel-authoritative source text and declares `mayFeedStrictRenderer: false`
+because generated strict fixtures, evidence packs, receipts, and generated output manifests remain
+future slices.
+
+The validator rejects host font lookup, fallback chains, multiline source, bidi or non-Latin
+first-profile shaping, variable axes, non-repository-relative font/fingerprint paths, missing
+shaping fingerprints, and source hash or normalization drift with stable `GEORDI_TEXT_PREP_*`
+diagnostics.
+
+Next OPEN node after this CLI: `S082`, generated fixture artifact.
+
+## S082 Generated Fixture Artifact
+
+The first generated strict text fixture artifacts now live under:
+
+~~~text
+fixtures/render-everywhere/strict-text/generated/
+  README.md
+  geordi.text-prep.input.geordi.json
+  text-prep.generation-plan.geordi.json
+  geordi.strict-text.geordi.json
+~~~
+
+`geordi-text-prep prepare` lowers pinned `preparedFixture.glyphRuns` and
+`preparedFixture.lineBoxes` into a canonical `geordi-strict-text-fixture/1` file when
+`output.strictTextFixtureFile` is present. The generated fixture uses
+`render-everywhere:strict-text:generated-geordi`, keeps source text as nonauthoritative semantic
+metadata, and validates through the existing strict text fixture contract.
+
+This is not a real shaping-engine claim. The fixture is generated from explicit prepared glyph-run
+and line-box input. Generated evidence, receipts, bundle manifests, and regeneration comparison
+remain future slices.
+
+Next OPEN node after this artifact: `S083`, generated artifact comparison.
+
+## S083 Generated Artifact Comparison
+
+Generated strict text artifacts now have a byte-for-byte regeneration gate:
+
+~~~bash
+pnpm test:render-everywhere:strict-text-generated
+~~~
+
+The gate runs `geordi-text-prep compare` against
+`fixtures/render-everywhere/strict-text/generated/geordi.text-prep.input.geordi.json` and the
+committed generated directory. The command regenerates the plan and strict fixture in memory, reads
+the expected committed files, and fails with `GEORDI_TEXT_PREP_COMPARE_DRIFT` or
+`GEORDI_TEXT_PREP_COMPARE_MISSING_ARTIFACT` when the committed bytes no longer match.
+
+Next OPEN node after this comparison: `S084`, receipt shaping profile field.
+
+## S084 Receipt Shaping Profile Field
+
+Strict text fixture receipts now accept only these shaping profiles:
+
+- `precomputed-fixture/1`;
+- `geordi-text-prep-shaping-fingerprint/1`.
+
+When a receipt uses the fingerprinted text-prep profile, `shapingFingerprintHash` is required and
+must be a `sha256:` hash. When it uses `precomputed-fixture/1`, `shapingFingerprintHash` must be
+absent. TypeScript validators and the Node receipt builder enforce the profile/hash coupling; Rust
+receipt structs now carry optional `shaping_fingerprint_hash` and preserve `None` for existing
+precomputed fixture receipts.
+
+Next OPEN node after this receipt field: `S085`, receipt glyph-run checksum field.
+
+## S085 Receipt Glyph-Run Checksum Field
+
+The strict text receipt `glyphRunHash` field is now tested against the generated fixture path in
+both TypeScript and Rust. The generated `GEORDI` fixture's canonical `glyphRuns` fragment hashes to:
+
+~~~text
+sha256:7b7551d5d6698fa00854b98aa15eef22436974163e60861d5454b725a4d2f472
+~~~
+
+This proves the checksum is tied to positioned glyph-run evidence, not fixture id, source text, or
+receipt metadata. S086 owns the matching line-box checksum hardening.
+
+Next OPEN node after this checksum field: `S086`, receipt line-box checksum field.
+
+## S086 Receipt Line-Box Checksum Field
+
+The strict text receipt `lineBoxHash` field is now tested against the generated fixture path in both
+TypeScript and Rust. The generated `GEORDI` fixture's canonical `lineBoxes` fragment hashes to:
+
+~~~text
+sha256:6d0b4e63bd04bd33e7213240a173f86fb478f23fa4cd505514c0b8af425f1e10
+~~~
+
+This proves generated fixture receipts pin line metrics and containment bounds separately from
+glyph-run evidence. Source text, fixture id, and receipt metadata are not part of the line-box
+checksum.
+
+Next OPEN node after this checksum field: `S087`, no-fallback validator.
+
+## S087 No-Fallback Validator
+
+Text-prep input now requires `shaping.fallbackPolicy: "no-fallback/1"` and the generation plan
+carries that policy forward for audit. Fallback-chain keys are rejected by presence under `font` or
+`shaping`, including empty arrays:
+
+~~~text
+fallbackFonts
+fallbackFontIds
+fallbackChain
+~~~
+
+The generated text-prep input and generation plan were regenerated with the explicit no-fallback
+policy. The generated strict text fixture bytes remain unchanged.
+
+Next OPEN node after this validator: `S088`, fallback-chain rejection fixture.
+
+## S088 Fallback-Chain Rejection Fixture
+
+The committed text-prep failure fixture now lives at:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/fallback-chain.text-prep.input.geordi.json
+~~~
+
+It preserves the generated `GEORDI` source, font identity, geometry, and prepared fixture data while
+adding a fallback font id, fallback chain, and `fallbackPolicy: "font-fallback-chain/1"`. The
+text-prep test suite reads this fixture from disk and requires `GEORDI_TEXT_PREP_FALLBACK_REQUIRED`
+on the fallback-chain paths.
+
+Next OPEN node after this failure fixture: `S089`, multiline rejection fixture.
+
+## S089 Multiline Rejection Fixture
+
+The committed multiline text-prep failure fixture now lives at:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/multiline.text-prep.input.geordi.json
+~~~
+
+It pins the normalized UTF-8 source `GEORDI\nTEXT` and otherwise keeps first-profile font, geometry,
+no-fallback shaping, and prepared fixture data valid. The text-prep test suite reads this fixture
+from disk and requires `GEORDI_TEXT_PREP_UNSUPPORTED_MULTILINE` at `$.source.sourceText`.
+
+Next OPEN node after this failure fixture: `S090`, bidi and complex-script rejection fixtures.
+
+## S090 Bidi And Complex-Script Rejection Fixtures
+
+The committed bidi and complex-script text-prep failure fixtures now live at:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/bidi-rtl.text-prep.input.geordi.json
+fixtures/render-everywhere/strict-text/failures/complex-script.text-prep.input.geordi.json
+~~~
+
+`bidi-rtl` isolates `shaping.direction: "rtl"` on Latin source text.
+`complex-script` isolates `shaping.script: "Arab"` with Arabic language metadata and escaped Arabic
+source text. The text-prep test suite reads both fixtures from disk and requires
+`GEORDI_TEXT_PREP_UNSUPPORTED_BIDI` on the relevant shaping path.
+
+Next OPEN node after these failure fixtures: `S091`, variable-font-axis rejection fixture.
+
+## S091 Variable-Font-Axis Rejection Fixture
+
+The committed variable-axis text-prep failure fixture now lives at:
+
+~~~text
+fixtures/render-everywhere/strict-text/failures/variable-axis.text-prep.input.geordi.json
+~~~
+
+It isolates `variationAxes: ["wght=700"]` while keeping first-profile Latin source, no-fallback
+shaping, font identity, and geometry valid. The text-prep test suite reads it from disk and requires
+`GEORDI_TEXT_PREP_UNSUPPORTED_VARIABLE_AXES` at `$.shaping.variationAxes`.
+
+Next OPEN node after this failure fixture: `S092`, measured line-box generation.
+
+## S092 Measured Line-Box Generation
+
+`@flyingrobots/geordi-text-prep` now exports `readTtfMetrics` and `measureFontLineBox`:
+
+- `readTtfMetrics(bytes: Uint8Array)` parses the `head` and `hhea` tables of a TTF font file and
+  returns `{ ascender, descender, unitsPerEm }` without font-parsing library dependencies.
+- `measureFontLineBox(metrics, pxPerEm, totalAdvanceFixed, lineBoxId?)` converts those metrics into a
+  `RenderFixtureStrictTextLineBox` with baseline and height derived from font metrics rather than
+  precomputed literals.
+
+Two policy constants name the new measurement approach:
+
+- `FONT_ASCENT_DESCENT_BASELINE_POLICY = 'font-ascent-descent/1'`
+- `SINGLE_LINE_FONT_BOUNDS_LINE_BOX_POLICY = 'single-line-font-bounds/1'`
+
+For Lato Regular at `pxPerEm = 48` (geordi-fixed-26.6/1, scale 64):
+
+- `unitsPerEm = 2000`
+- `ascender = 1974` → `baselineY = round(1974 * 48/2000 * 64) = 3036`
+- `descender = -426` → `height = round((1974 + 426) * 48/2000 * 64) = 3686`
+
+The existing generated fixture retains its precomputed `lineBoxPolicy` and `baselinePolicy`; the
+measurement engine does not retroactively alter committed artifacts.
+
+Next OPEN node after this engine: `S093`, raw runtime text noncompliance docs.
+
+## S093 Raw Runtime Text Noncompliance Docs
+
+`docs/end-to-end.md` now contains an explicit noncompliance note for `text.raw-runtime-shaping`:
+
+- `text.raw-runtime-shaping` is the current compiler-emitted baseline placeholder — it marks text
+  that relies on platform-native shaping, host font metrics, and host line breaking at runtime.
+- It is retained in `GEORDI_BASELINE_FEATURES` until the compiler can lower text to deterministic
+  strict glyph runs; it will not be removed before that capability exists.
+- A scene that requires `text.raw-runtime-shaping` is not compliant with
+  `geordi-strict-positioned-glyph-run/1`.
+- The strict text milestone proof does not go through `geordi-ir/1` text nodes; it uses a
+  separate fixture and evidence model.
+
+`docs/STATUS.md` now names `text.raw-runtime-shaping` explicitly in the nonclaims section.
+
+Next OPEN node after these doc updates: `S094`, end-to-end text pipeline docs.
+
+## S094 End-to-End Text Pipeline Docs
+
+`docs/end-to-end.md` now has a "Strict Text Preparation Pipeline" section that documents:
+
+- the full source → text-prep → strict fixture → browser/native renderer pipeline;
+- a table of what is allowed and forbidden at each stage;
+- `geordi-text-prep compare` as the regeneration drift gate;
+- `readTtfMetrics` and `measureFontLineBox` as available utilities for the preparation pipeline;
+- updated "current claims" list that names browser/native strict text rendering, parity,
+  and text-prep artifacts.
+
+Next OPEN node after this section: `S096`, README strict text status gate.
+
+## S095 Render-Everywhere Text Docs
+
+`docs/render-everywhere.md` now documents the complete strict text pipeline and its proof boundary:
+
+- updated intro flow showing text-prep input → `geordi-text-prep prepare` → generated strict
+  fixture → renderer path;
+- generated artifact directory listing for `fixtures/render-everywhere/strict-text/generated/`;
+- `pnpm test:render-everywhere:strict-text-generated` drift gate in the "Useful Gates" section;
+- updated "Where This Goes Next" confirming the strict text milestone is complete and naming CI gate
+  coverage as the next checkpoint.
+
+Next OPEN node after this update: `S096`, README strict text status gate.
+
+## S096 README Strict Text Status Gate
+
+The README and `docs/STATUS.md` now reflect the completed state of the strict text milestone:
+
+- `README.md` moves the strict text proof from "Active proof layer" to "Completed proof layers",
+  naming the text-prep deterministic generation claim alongside the browser/native proof claim;
+  the "Active work" section names only the remaining CI gate slices (S097–S100) and the
+  provisional DTO mirror.
+- `docs/STATUS.md` changes the strict positioned glyph-run text item from "active" to "proof
+  complete; CI gate coverage remaining" and updates the stale S092 active-node reference to
+  describe the current standing.
+
+Next OPEN node after this gate: `S097`, CI text fixture validation gate.
+
+## S097 CI Text Fixture Validation Gate
+
+`.github/workflows/ci.yml` now has a dedicated "Verify strict text fixture validation gate" step:
+
+~~~bash
+pnpm test:render-everywhere:strict-text-generated
+~~~
+
+This step runs `geordi-text-prep compare` against the committed generated directory; CI fails if
+regenerating the generation plan or strict fixture from the pinned input produces different bytes.
+The fixture validation tests themselves are already covered by the `pnpm test` step.
+
+Next OPEN node after this gate: `S098`, CI browser text smoke gate.
+
+## S098 CI Browser Text Smoke Gate
+
+The "Verify browser render-everywhere and strict text smoke gates" CI step now covers the browser
+strict text smoke explicitly. The step runs:
+
+~~~bash
+pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browser
+~~~
+
+The Playwright gate switches to the `Text` panel, samples strict text probe points, checks nonblank
+bounds, and verifies zero Canvas text API calls (`fillText`, `strokeText`, `measureText`,
+`FontFace`). This is the same command that was previously named "Verify browser render-everywhere
+gate" — the rename makes the strict text coverage intentional and documented.
+
+Next OPEN node after this gate: `S099`, CI native text smoke gate.
+
+## S099 CI Native Text Smoke Gate
+
+`.github/workflows/ci.yml` now has a dedicated "Verify native strict text smoke gate" step:
+
+~~~bash
+cargo run -p native-render-everywhere -- --strict-text-smoke \
+  fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+~~~
+
+This step validates the strict text fixture shape, font-pack hashes, font references, outline
+evidence, glyph coverage, line-box containment, fill-only paint scope, nonblank bounds, and
+fixture-local probe-policy samples in the native Rust path, without opening a window or calling OS
+text APIs.
+
+Next OPEN node after this gate: `S100`, final drift and claim audit.
+
+## S100 Final Drift And Claim Audit
+
+The 100-slice strict positioned glyph-run DAG is complete. Full repo gate passes clean:
+
+- `pnpm typecheck`, `pnpm lint`, `pnpm test`: all pass.
+- `pnpm test:docs`, `pnpm test:package-names`, `pnpm test:repo-sludge`, `pnpm test:placeholders`,
+  `pnpm test:exports`: all pass.
+- `cargo fmt --check`, `cargo test --workspace`, `cargo clippy --workspace --all-targets -- -D warnings`: all pass (30 pre-existing clippy violations in `native-render-everywhere` bunny.rs and main.rs were fixed as part of this audit).
+
+### Current Claims
+
+- `geordi-strict-positioned-glyph-run/1` is proven: browser and native harnesses load the canonical
+  `GEORDI` strict text fixture, verify a content-addressed font pack and fixture-local `outlinePaths`
+  evidence, render glyphs via Canvas/software path geometry without platform text APIs, and compare
+  metadata plus coarse pixel probes.
+- `geordi-text-prep` emits a deterministic `text-prep.generation-plan.geordi.json` and generated
+  `geordi-strict-text-fixture/1` from pinned prepared glyph-run/line-box input; the byte-stable
+  output is gated by `pnpm test:render-everywhere:strict-text-generated` in CI.
+- CI covers: TypeScript lint/typecheck/test, Rust fmt/test/clippy, fixture validation drift gate,
+  browser render-everywhere and strict text Playwright gate, native strict text smoke gate.
+- Rectangle `geordi-ir/1` render-everywhere proof and Stanford bunny mesh proof remain complete
+  within their stated claim boundaries.
+
+### Current Nonclaims
+
+- no compliant general text rendering;
+- no CSS text or platform-native text path;
+- no host font fallback;
+- no runtime shaping in strict mode;
+- no runtime kerning, ligature substitution, glyph substitution, wrapping, or fallback;
+- no multiline, bidi, complex-script, or variable font axis support;
+- no full antialiasing parity between browser and native rasterizers;
+- no `geordi-ir/1` text-node graduation yet;
+- no production WebGPU/Metal/Vulkan renderers.
+
+### Next
+
+The milestone is complete. The next credibility milestone would be a `geordi-ir/1` text-node
+graduation, or a production shaping pipeline with real `geordi-text-prep-shaping-fingerprint/1`
+provenance. No OPEN nodes remain in this DAG.
+
 ## DAG Operating Rule
 
 To choose the next slice:
@@ -115,7 +888,7 @@ dot -Tsvg docs/design/2026-05-strict-positioned-glyph-run-dag.dot \
   -o docs/design/2026-05-strict-positioned-glyph-run-dag.svg
 ~~~
 
-Current OPEN node: **S040**.
+Current OPEN node: **none** (DAG complete).
 
 ![Strict positioned glyph-run DAG](docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
 
@@ -552,7 +1325,7 @@ Current OPEN node: **S040**.
 
 ### S040: Line box validation
 
-- [ ] **S040: Line box validation** (OPEN)
+- [x] **S040: Line box validation** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with line box validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Line box validation.
@@ -563,7 +1336,7 @@ Current OPEN node: **S040**.
 
 ### S041: Canonical strict text fixture A
 
-- [ ] **S041: Canonical strict text fixture A** (BLOCKED)
+- [x] **S041: Canonical strict text fixture A** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with canonical strict text fixture a documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Canonical strict text fixture A.
@@ -574,7 +1347,7 @@ Current OPEN node: **S040**.
 
 ### S042: Canonical strict text fixture B
 
-- [ ] **S042: Canonical strict text fixture B** (BLOCKED)
+- [x] **S042: Canonical strict text fixture B** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with canonical strict text fixture b documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Canonical strict text fixture B.
@@ -585,7 +1358,7 @@ Current OPEN node: **S040**.
 
 ### S043: Canonical JSON normalization test
 
-- [ ] **S043: Canonical JSON normalization test** (BLOCKED)
+- [x] **S043: Canonical JSON normalization test** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with canonical json normalization test documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Canonical JSON normalization test.
@@ -596,7 +1369,7 @@ Current OPEN node: **S040**.
 
 ### S044: Text fixture receipt design
 
-- [ ] **S044: Text fixture receipt design** (BLOCKED)
+- [x] **S044: Text fixture receipt design** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with text fixture receipt design documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Text fixture receipt design.
@@ -607,7 +1380,7 @@ Current OPEN node: **S040**.
 
 ### S045: TypeScript text fixture receipt
 
-- [ ] **S045: TypeScript text fixture receipt** (BLOCKED)
+- [x] **S045: TypeScript text fixture receipt** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with typescript text fixture receipt documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: TypeScript text fixture receipt.
@@ -618,7 +1391,7 @@ Current OPEN node: **S040**.
 
 ### S046: Rust text fixture receipt/report
 
-- [ ] **S046: Rust text fixture receipt/report** (BLOCKED)
+- [x] **S046: Rust text fixture receipt/report** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with rust text fixture receipt/report documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Rust text fixture receipt/report.
@@ -629,7 +1402,7 @@ Current OPEN node: **S040**.
 
 ### S047: Unsupported strict text fixture
 
-- [ ] **S047: Unsupported strict text fixture** (BLOCKED)
+- [x] **S047: Unsupported strict text fixture** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with unsupported strict text fixture documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Unsupported strict text fixture.
@@ -640,7 +1413,7 @@ Current OPEN node: **S040**.
 
 ### S048: Browser strict text rejection
 
-- [ ] **S048: Browser strict text rejection** (BLOCKED)
+- [x] **S048: Browser strict text rejection** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with browser strict text rejection documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Browser strict text rejection.
@@ -651,7 +1424,7 @@ Current OPEN node: **S040**.
 
 ### S049: Native strict text rejection
 
-- [ ] **S049: Native strict text rejection** (BLOCKED)
+- [x] **S049: Native strict text rejection** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with native strict text rejection documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Native strict text rejection.
@@ -662,7 +1435,7 @@ Current OPEN node: **S040**.
 
 ### S050: Glyph-run checkpoint gate
 
-- [ ] **S050: Glyph-run checkpoint gate** (BLOCKED)
+- [x] **S050: Glyph-run checkpoint gate** (COMPLETE)
 - **User Stories**: As a compiler/runtime boundary owner, I need positioned glyph evidence to be validated before rendering so strings never determine pixels in strict mode.
 - **Acceptance Criteria**: The slice lands with glyph-run checkpoint gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: All positioned glyph-run data must be schema-validated, finite, font-local, and detached from source strings as pixel authority. Slice-specific requirement: Glyph-run checkpoint gate.
@@ -673,7 +1446,7 @@ Current OPEN node: **S040**.
 
 ### S051: Rendering evidence strategy decision
 
-- [ ] **S051: Rendering evidence strategy decision** (BLOCKED)
+- [x] **S051: Rendering evidence strategy decision** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with rendering evidence strategy decision documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Rendering evidence strategy decision.
@@ -684,7 +1457,7 @@ Current OPEN node: **S040**.
 
 ### S052: Outline evidence pack schema
 
-- [ ] **S052: Outline evidence pack schema** (BLOCKED)
+- [x] **S052: Outline evidence pack schema** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with outline evidence pack schema documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Outline evidence pack schema.
@@ -695,7 +1468,7 @@ Current OPEN node: **S040**.
 
 ### S053: Outline evidence fixture data
 
-- [ ] **S053: Outline evidence fixture data** (BLOCKED)
+- [x] **S053: Outline evidence fixture data** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with outline evidence fixture data documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Outline evidence fixture data.
@@ -706,7 +1479,7 @@ Current OPEN node: **S040**.
 
 ### S054: TypeScript outline evidence parser
 
-- [ ] **S054: TypeScript outline evidence parser** (BLOCKED)
+- [x] **S054: TypeScript outline evidence parser** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with typescript outline evidence parser documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: TypeScript outline evidence parser.
@@ -717,7 +1490,7 @@ Current OPEN node: **S040**.
 
 ### S055: Rust outline evidence parser
 
-- [ ] **S055: Rust outline evidence parser** (BLOCKED)
+- [x] **S055: Rust outline evidence parser** (COMPLETE)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with rust outline evidence parser documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Rust outline evidence parser.
@@ -728,7 +1501,7 @@ Current OPEN node: **S040**.
 
 ### S056: Outline command validation
 
-- [ ] **S056: Outline command validation** (BLOCKED)
+- [x] **S056: Outline command validation** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with outline command validation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Outline command validation.
@@ -739,7 +1512,7 @@ Current OPEN node: **S040**.
 
 ### S057: Browser outline glyph renderer
 
-- [ ] **S057: Browser outline glyph renderer** (BLOCKED)
+- [x] **S057: Browser outline glyph renderer** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser outline glyph renderer documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser outline glyph renderer.
@@ -750,7 +1523,7 @@ Current OPEN node: **S040**.
 
 ### S058: Browser text fixture mode
 
-- [ ] **S058: Browser text fixture mode** (BLOCKED)
+- [x] **S058: Browser text fixture mode** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser text fixture mode documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser text fixture mode.
@@ -761,7 +1534,7 @@ Current OPEN node: **S040**.
 
 ### S059: Browser text metadata disclosure
 
-- [ ] **S059: Browser text metadata disclosure** (BLOCKED)
+- [x] **S059: Browser text metadata disclosure** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser text metadata disclosure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser text metadata disclosure.
@@ -772,7 +1545,7 @@ Current OPEN node: **S040**.
 
 ### S060: Browser visible text smoke
 
-- [ ] **S060: Browser visible text smoke** (BLOCKED)
+- [x] **S060: Browser visible text smoke** (COMPLETE)
 - **User Stories**: As a browser demo user, I need strict text to render from evidence without platform text APIs so browser output demonstrates the Geordi contract.
 - **Acceptance Criteria**: The slice lands with browser visible text smoke documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Browser rendering must consume positioned glyph evidence and never call platform text APIs in the strict path. Slice-specific requirement: Browser visible text smoke.
@@ -783,7 +1556,7 @@ Current OPEN node: **S040**.
 
 ### S061: Native outline glyph renderer
 
-- [ ] **S061: Native outline glyph renderer** (BLOCKED)
+- [x] **S061: Native outline glyph renderer** (COMPLETE)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native outline glyph renderer documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native outline glyph renderer.
@@ -794,7 +1567,7 @@ Current OPEN node: **S040**.
 
 ### S062: Native text fixture CLI mode
 
-- [ ] **S062: Native text fixture CLI mode** (BLOCKED)
+- [x] **S062: Native text fixture CLI mode** (COMPLETE)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native text fixture cli mode documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native text fixture CLI mode.
@@ -805,7 +1578,7 @@ Current OPEN node: **S040**.
 
 ### S063: Native text metadata report
 
-- [ ] **S063: Native text metadata report** (BLOCKED)
+- [x] **S063: Native text metadata report** (COMPLETE)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native text metadata report documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native text metadata report.
@@ -816,7 +1589,7 @@ Current OPEN node: **S040**.
 
 ### S064: Native visible text smoke
 
-- [ ] **S064: Native visible text smoke** (BLOCKED)
+- [x] **S064: Native visible text smoke** (COMPLETE)
 - **User Stories**: As a native runtime user, I need the Rust path to consume the same evidence and report the same metadata so native is an independent proof.
 - **Acceptance Criteria**: The slice lands with native visible text smoke documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Native rendering must consume the same fixture/evidence model and use custom error types for every failure. Slice-specific requirement: Native visible text smoke.
@@ -827,7 +1600,7 @@ Current OPEN node: **S040**.
 
 ### S065: Browser/native metadata equality
 
-- [ ] **S065: Browser/native metadata equality** (BLOCKED)
+- [x] **S065: Browser/native metadata equality** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with browser/native metadata equality documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Browser/native metadata equality.
@@ -838,7 +1611,7 @@ Current OPEN node: **S040**.
 
 ### S066: Browser coarse pixel probes
 
-- [ ] **S066: Browser coarse pixel probes** (BLOCKED)
+- [x] **S066: Browser coarse pixel probes** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with browser coarse pixel probes documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Browser coarse pixel probes.
@@ -849,7 +1622,7 @@ Current OPEN node: **S040**.
 
 ### S067: Native coarse pixel probes
 
-- [ ] **S067: Native coarse pixel probes** (BLOCKED)
+- [x] **S067: Native coarse pixel probes** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with native coarse pixel probes documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Native coarse pixel probes.
@@ -860,7 +1633,7 @@ Current OPEN node: **S040**.
 
 ### S068: Stable text probe policy
 
-- [ ] **S068: Stable text probe policy** (BLOCKED)
+- [x] **S068: Stable text probe policy** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with stable text probe policy documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Stable text probe policy.
@@ -871,7 +1644,7 @@ Current OPEN node: **S040**.
 
 ### S069: Nonblank text bounds check
 
-- [ ] **S069: Nonblank text bounds check** (BLOCKED)
+- [x] **S069: Nonblank text bounds check** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with nonblank text bounds check documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Nonblank text bounds check.
@@ -882,7 +1655,7 @@ Current OPEN node: **S040**.
 
 ### S070: Missing glyph evidence failure
 
-- [ ] **S070: Missing glyph evidence failure** (BLOCKED)
+- [x] **S070: Missing glyph evidence failure** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with missing glyph evidence failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Missing glyph evidence failure.
@@ -893,7 +1666,7 @@ Current OPEN node: **S040**.
 
 ### S071: Glyph id not found failure
 
-- [ ] **S071: Glyph id not found failure** (BLOCKED)
+- [x] **S071: Glyph id not found failure** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with glyph id not found failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Glyph id not found failure.
@@ -904,7 +1677,7 @@ Current OPEN node: **S040**.
 
 ### S072: Bad line box failure
 
-- [ ] **S072: Bad line box failure** (BLOCKED)
+- [x] **S072: Bad line box failure** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with bad line box failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Bad line box failure.
@@ -915,7 +1688,7 @@ Current OPEN node: **S040**.
 
 ### S073: Unsupported text fill/stroke failure
 
-- [ ] **S073: Unsupported text fill/stroke failure** (BLOCKED)
+- [x] **S073: Unsupported text fill/stroke failure** (COMPLETE)
 - **User Stories**: As a release reviewer, I need exact metadata equality and modest visual probes so the claim boundary is measurable and honest.
 - **Acceptance Criteria**: The slice lands with unsupported text fill/stroke failure documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Parity checks must compare metadata exactly and visual probes modestly without overclaiming antialiasing identity. Slice-specific requirement: Unsupported text fill/stroke failure.
@@ -926,7 +1699,7 @@ Current OPEN node: **S040**.
 
 ### S074: Browser text demo docs
 
-- [ ] **S074: Browser text demo docs** (BLOCKED)
+- [x] **S074: Browser text demo docs** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with browser text demo docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Browser text demo docs.
@@ -937,7 +1710,7 @@ Current OPEN node: **S040**.
 
 ### S075: Native text demo docs
 
-- [ ] **S075: Native text demo docs** (BLOCKED)
+- [x] **S075: Native text demo docs** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with native text demo docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Native text demo docs.
@@ -948,7 +1721,7 @@ Current OPEN node: **S040**.
 
 ### S076: Shaping implementation decision
 
-- [ ] **S076: Shaping implementation decision** (BLOCKED)
+- [x] **S076: Shaping implementation decision** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with shaping implementation decision documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Shaping implementation decision.
@@ -959,7 +1732,7 @@ Current OPEN node: **S040**.
 
 ### S077: Shaping profile fingerprint law
 
-- [ ] **S077: Shaping profile fingerprint law** (BLOCKED)
+- [x] **S077: Shaping profile fingerprint law** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with shaping profile fingerprint law documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Shaping profile fingerprint law.
@@ -970,7 +1743,7 @@ Current OPEN node: **S040**.
 
 ### S078: Shaping spike outside compliance path
 
-- [ ] **S078: Shaping spike outside compliance path** (BLOCKED)
+- [x] **S078: Shaping spike outside compliance path** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with shaping spike outside compliance path documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Shaping spike outside compliance path.
@@ -981,7 +1754,7 @@ Current OPEN node: **S040**.
 
 ### S079: Compiler text preparation boundary
 
-- [ ] **S079: Compiler text preparation boundary** (BLOCKED)
+- [x] **S079: Compiler text preparation boundary** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with compiler text preparation boundary documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Compiler text preparation boundary.
@@ -992,7 +1765,7 @@ Current OPEN node: **S040**.
 
 ### S080: Generated shaped output schema
 
-- [ ] **S080: Generated shaped output schema** (BLOCKED)
+- [x] **S080: Generated shaped output schema** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with generated shaped output schema documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Generated shaped output schema.
@@ -1003,7 +1776,7 @@ Current OPEN node: **S040**.
 
 ### S081: Glyph-run generation CLI
 
-- [ ] **S081: Glyph-run generation CLI** (BLOCKED)
+- [x] **S081: Glyph-run generation CLI** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with glyph-run generation cli documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Glyph-run generation CLI.
@@ -1014,7 +1787,7 @@ Current OPEN node: **S040**.
 
 ### S082: Generated fixture artifact
 
-- [ ] **S082: Generated fixture artifact** (BLOCKED)
+- [x] **S082: Generated fixture artifact** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with generated fixture artifact documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Generated fixture artifact.
@@ -1025,7 +1798,7 @@ Current OPEN node: **S040**.
 
 ### S083: Generated artifact comparison
 
-- [ ] **S083: Generated artifact comparison** (BLOCKED)
+- [x] **S083: Generated artifact comparison** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with generated artifact comparison documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Generated artifact comparison.
@@ -1036,7 +1809,7 @@ Current OPEN node: **S040**.
 
 ### S084: Receipt shaping profile field
 
-- [ ] **S084: Receipt shaping profile field** (BLOCKED)
+- [x] **S084: Receipt shaping profile field** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with receipt shaping profile field documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Receipt shaping profile field.
@@ -1047,7 +1820,7 @@ Current OPEN node: **S040**.
 
 ### S085: Receipt glyph-run checksum field
 
-- [ ] **S085: Receipt glyph-run checksum field** (BLOCKED)
+- [x] **S085: Receipt glyph-run checksum field** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with receipt glyph-run checksum field documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Receipt glyph-run checksum field.
@@ -1058,7 +1831,7 @@ Current OPEN node: **S040**.
 
 ### S086: Receipt line-box checksum field
 
-- [ ] **S086: Receipt line-box checksum field** (BLOCKED)
+- [x] **S086: Receipt line-box checksum field** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with receipt line-box checksum field documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Receipt line-box checksum field.
@@ -1069,7 +1842,7 @@ Current OPEN node: **S040**.
 
 ### S087: No-fallback validator
 
-- [ ] **S087: No-fallback validator** (BLOCKED)
+- [x] **S087: No-fallback validator** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with no-fallback validator documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: No-fallback validator.
@@ -1080,7 +1853,7 @@ Current OPEN node: **S040**.
 
 ### S088: Fallback-chain rejection fixture
 
-- [ ] **S088: Fallback-chain rejection fixture** (BLOCKED)
+- [x] **S088: Fallback-chain rejection fixture** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with fallback-chain rejection fixture documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Fallback-chain rejection fixture.
@@ -1091,7 +1864,7 @@ Current OPEN node: **S040**.
 
 ### S089: Multiline rejection fixture
 
-- [ ] **S089: Multiline rejection fixture** (BLOCKED)
+- [x] **S089: Multiline rejection fixture** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with multiline rejection fixture documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Multiline rejection fixture.
@@ -1102,7 +1875,7 @@ Current OPEN node: **S040**.
 
 ### S090: Bidi and complex-script rejection fixtures
 
-- [ ] **S090: Bidi and complex-script rejection fixtures** (BLOCKED)
+- [x] **S090: Bidi and complex-script rejection fixtures** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with bidi and complex-script rejection fixtures documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Bidi and complex-script rejection fixtures.
@@ -1113,7 +1886,7 @@ Current OPEN node: **S040**.
 
 ### S091: Variable-font-axis rejection fixture
 
-- [ ] **S091: Variable-font-axis rejection fixture** (BLOCKED)
+- [x] **S091: Variable-font-axis rejection fixture** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with variable-font-axis rejection fixture documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Variable-font-axis rejection fixture.
@@ -1124,7 +1897,7 @@ Current OPEN node: **S040**.
 
 ### S092: Measured line-box generation
 
-- [ ] **S092: Measured line-box generation** (BLOCKED)
+- [x] **S092: Measured line-box generation** (COMPLETE)
 - **User Stories**: As a compiler author, I need shaping to enter only after receivers are strict so generated text artifacts are explainable and reproducible.
 - **Acceptance Criteria**: The slice lands with measured line-box generation documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Shaping must be introduced only after receivers are strict, and every shaper input/output must be fingerprinted. Slice-specific requirement: Measured line-box generation.
@@ -1135,7 +1908,7 @@ Current OPEN node: **S040**.
 
 ### S093: Raw runtime text noncompliance docs
 
-- [ ] **S093: Raw runtime text noncompliance docs** (BLOCKED)
+- [x] **S093: Raw runtime text noncompliance docs** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with raw runtime text noncompliance docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Raw runtime text noncompliance docs.
@@ -1146,7 +1919,7 @@ Current OPEN node: **S040**.
 
 ### S094: End-to-end text pipeline docs
 
-- [ ] **S094: End-to-end text pipeline docs** (BLOCKED)
+- [x] **S094: End-to-end text pipeline docs** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with end-to-end text pipeline docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: End-to-end text pipeline docs.
@@ -1157,7 +1930,7 @@ Current OPEN node: **S040**.
 
 ### S095: Render-everywhere text docs
 
-- [ ] **S095: Render-everywhere text docs** (BLOCKED)
+- [x] **S095: Render-everywhere text docs** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with render-everywhere text docs documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Render-everywhere text docs.
@@ -1168,7 +1941,7 @@ Current OPEN node: **S040**.
 
 ### S096: README strict text status gate
 
-- [ ] **S096: README strict text status gate** (BLOCKED)
+- [x] **S096: README strict text status gate** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with readme strict text status gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: README strict text status gate.
@@ -1179,7 +1952,7 @@ Current OPEN node: **S040**.
 
 ### S097: CI text fixture validation gate
 
-- [ ] **S097: CI text fixture validation gate** (BLOCKED)
+- [x] **S097: CI text fixture validation gate** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with ci text fixture validation gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: CI text fixture validation gate.
@@ -1190,7 +1963,7 @@ Current OPEN node: **S040**.
 
 ### S098: CI browser text smoke gate
 
-- [ ] **S098: CI browser text smoke gate** (BLOCKED)
+- [x] **S098: CI browser text smoke gate** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with ci browser text smoke gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: CI browser text smoke gate.
@@ -1201,7 +1974,7 @@ Current OPEN node: **S040**.
 
 ### S099: CI native text smoke gate
 
-- [ ] **S099: CI native text smoke gate** (BLOCKED)
+- [x] **S099: CI native text smoke gate** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with ci native text smoke gate documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: CI native text smoke gate.
@@ -1212,7 +1985,7 @@ Current OPEN node: **S040**.
 
 ### S100: Final drift and claim audit
 
-- [ ] **S100: Final drift and claim audit** (BLOCKED)
+- [x] **S100: Final drift and claim audit** (COMPLETE)
 - **User Stories**: As a contributor, I need the public docs, DAG, and gates to agree so the next slice can be chosen mechanically.
 - **Acceptance Criteria**: The slice lands with final drift and claim audit documented or implemented, custom failure vocabulary where applicable, and no broadened text-support claim. A checkpoint note states current claims, nonclaims, and next OPEN nodes.
 - **Requirements**: Public docs must advertise only completed claims and preserve explicit nonclaims for unsupported typography. Slice-specific requirement: Final drift and claim audit.

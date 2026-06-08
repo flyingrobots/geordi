@@ -1,0 +1,45 @@
+{
+  "features": [
+    "text.positionedGlyphRuns",
+    "text.fontPack",
+    "text.lineBoxes",
+    "text.stroke"
+  ],
+  "fixtureVersion": "geordi-strict-text-fixture/1",
+  "fontPackPath": "fixtures/render-everywhere/assets/fonts/font-pack.geordi.json",
+  "glyphRuns": [
+    {
+      "fontId": "lato-regular",
+      "glyphs": [
+        {
+          "advance": 2244,
+          "glyphId": 14,
+          "x": 0,
+          "xOffset": 0,
+          "y": 3072,
+          "yOffset": 0
+        }
+      ],
+      "id": "run-0",
+      "lineBoxId": "line-0"
+    }
+  ],
+  "id": "render-everywhere:strict-text:geordi:unsupported-text-paint",
+  "lineBoxes": [
+    {
+      "baselineY": 3072,
+      "height": 4096,
+      "id": "line-0",
+      "width": 12288,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "positionEncoding": "geordi-fixed-26.6/1",
+  "semanticText": {
+    "affectsPixels": false,
+    "language": "en",
+    "source": "GEORDI"
+  },
+  "textProfile": "geordi-strict-positioned-glyph-run/1"
+}

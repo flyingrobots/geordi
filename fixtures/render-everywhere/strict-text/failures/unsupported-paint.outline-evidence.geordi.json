@@ -1,0 +1,35 @@
+{
+  "coordinateSpace": "glyph-origin-fixed-26.6/1",
+  "evidenceKind": "outlinePaths",
+  "evidencePackVersion": "geordi-glyph-evidence-pack/1",
+  "faceIndex": 0,
+  "fontId": "lato-regular",
+  "fontSha256": "sha256:d636e4683231f931eda222d588e944d082bfd3bdba02f928bee461c0f185b251",
+  "glyphs": [
+    {
+      "bounds": {
+        "height": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "commands": [],
+      "draws": false,
+      "glyphId": 14
+    }
+  ],
+  "id": "render-everywhere:strict-text:geordi:unsupported-paint",
+  "paint": {
+    "kind": "stroke",
+    "rgba": [
+      17,
+      24,
+      39,
+      255
+    ]
+  },
+  "positionEncoding": "geordi-fixed-26.6/1",
+  "shapingProfile": "precomputed-fixture/1",
+  "textProfile": "geordi-strict-positioned-glyph-run/1",
+  "windingRule": "nonzero"
+}

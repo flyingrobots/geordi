@@ -29,12 +29,15 @@ Completed proof layers:
   metadata. It is intentionally not a pixel-identical 3D rasterization claim.
 - The compiler core, GraphQL SDL adapter, GPVue fixture compiler path, render fixture contracts,
   WebGL package scaffold, and Rust native harnesses are present and covered by repo gates.
+- The strict text proof (`geordi-strict-positioned-glyph-run/1`) loads one checked-in
+  `geordi-strict-text-fixture/1`, verifies a content-addressed font pack and fixture-local
+  `outlinePaths` evidence, draws glyphs without platform text APIs, and compares browser/native
+  metadata and coarse pixel probes. The `geordi-text-prep` CLI produces a deterministic generated
+  strict text fixture from pinned prepared glyph-run input, with a byte-stable generation plan.
+  Shaping remains a text-prep compiler boundary; runtime renderers consume prepared artifacts only.
 
-Active proof layer:
+Active work:
 
-- Strict text is being built fixture-first as `geordi-strict-positioned-glyph-run/1`.
-- The work currently proves content-addressed font assets, strict text manifests, positioned glyph
-  evidence, validation, and cross-runtime agreement before any broad text rendering claim is made.
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
   Wesley/common-type generation.
 
@@ -132,6 +135,7 @@ geordi/
     gpvue/             # @flyingrobots/geordi-gpvue - constrained GPVue fixture compiler
     render-fixture/    # @flyingrobots/geordi-render-fixture - shared fixture contracts
     runtime-webgl/     # @flyingrobots/geordi-runtime-webgl - browser runtime package
+    text-prep/         # @flyingrobots/geordi-text-prep - pinned strict text prep CLI
     wesley-generator/  # @flyingrobots/geordi-wesley-generator - Wesley integration
 
   crates/
@@ -189,6 +193,8 @@ Run the render-everywhere smoke paths:
 ```bash
 pnpm test:render-everywhere:gpvue
 pnpm test:render-everywhere:bunny
+pnpm test:render-everywhere:strict-text
+pnpm test:render-everywhere:strict-text-generated
 ```
 
 ## Compiler Usage

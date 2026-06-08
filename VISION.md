@@ -78,7 +78,7 @@ Geordi grows by claims, not by wishful API surface.
 | --- | --- | --- |
 | Rectangle render-everywhere | Complete | One `geordi-ir/1` artifact renders through browser and native harnesses with exact rectangle pixel probes. |
 | Stanford bunny mesh | Complete | One content-addressed PLY asset and descriptor load in browser and native harnesses with shared identity and sampled-frame metadata. |
-| Strict positioned glyph-run text | Active | Text proof starts from positioned glyph evidence and content-addressed font assets, outside core IR until validated. |
+| Strict positioned glyph-run text | Complete | Text proof uses positioned glyph evidence and content-addressed font assets outside core IR, with browser/native validation and coarse proof gates. 100-slice DAG complete; fixture, receipt, and CI gates finalized. |
 | Generated common contracts | Required drift correction | Shared serialized DTOs move from handwritten mirrors to Wesley/common-type generation. |
 | Font/glyph/raster hard kernels | Future | Rust/WASM is introduced only where deterministic algorithmic reuse justifies the package cost. |
 
@@ -117,7 +117,11 @@ The active text milestone is `geordi-strict-positioned-glyph-run/1`:
 Strict mode does not allow host font fallback, platform text APIs, runtime shaping, runtime kerning,
 ligature substitution, wrapping, bidi handling, complex-script support, or variable font axes.
 
-Those may become future features only behind explicit profiles and proof gates.
+Shaping may become a future preparation feature only behind a pinned text-prep boundary with
+fingerprinted inputs and outputs. It must not become runtime shaping inside compliant renderers.
+
+Those unsupported runtime behaviors may become future features only behind explicit profiles and
+proof gates.
 
 ## Quality Bar
 

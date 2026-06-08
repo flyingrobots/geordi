@@ -32,6 +32,31 @@ fixtures/render-everywhere/assets/stanford-bunny
 The bunny path validates the checked-in mesh manifest, parses the checked-in PLY bytes, computes
 fixed-rate playback frames, and draws the mesh as a rotating Canvas 2D wireframe.
 
+The browser startup path also preflights the committed unsupported strict text fixture:
+
+```text
+fixtures/render-everywhere/strict-text/failures/unsupported-runtime-shaping.strict-text.geordi.json
+```
+
+That preflight uses the shared TypeScript strict text validator and must reject the fixture before
+any browser drawing path treats it as compliant.
+
+The same page now loads the canonical strict positioned glyph-run fixture and its first outline
+evidence pack:
+
+```text
+fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json
+```
+
+The text path validates the strict text fixture, validates the referenced font-pack manifest, rejects
+unresolved font references, validates the outline evidence pack, and draws glyph outlines into a
+Canvas 2D path. Its metadata disclosure shows fixture, font-pack, glyph-run, line-box, evidence,
+profile, position-encoding, renderer, and semantic-text non-rendering fields. It does not use
+semantic strings, platform text APIs, host fonts, fallback, wrapping, or runtime shaping to produce
+pixels.
+
 ## Commands
 
 Run the interactive browser harness:
@@ -53,10 +78,77 @@ pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test:browse
 ```
 
 The Playwright gate compiles `source.gpvue` and routes the page's `fixture.json` and
-`scene.geordi.json` requests to the emitted manifest and scene artifact. When
+`scene.geordi.json` requests to the emitted manifest and scene artifact. It also switches to the
+strict `Text` panel, samples the strict text canvas using the fixture-local probe policy, verifies
+the rendered nonblank bounds stay inside the evidence-derived allowed bounds, and fails if the
+browser calls Canvas text APIs or `FontFace` while producing the strict text proof. When
 `GEORDI_RENDER_EVERYWHERE_COMPILED_MANIFEST` and `GEORDI_RENDER_EVERYWHERE_COMPILED_SCENE` are set,
 the gate uses those files instead; this is how the root render-everywhere smoke shares one temporary
 fixture directory with the native Rust harness.
+
+## Strict Text Browser Demo
+
+The `Text` panel is the browser proof for `geordi-strict-positioned-glyph-run/1`. It is not part of
+`geordi-ir/1` yet. It loads this fixture-local bundle:
+
+```text
+fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
+fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json
+fixtures/render-everywhere/strict-text/geordi.probe-policy.geordi.json
+fixtures/render-everywhere/assets/fonts/font-pack.geordi.json
+```
+
+Startup validates the strict text fixture, font-pack bytes, font references, outline evidence
+shape, outline command state, fixture-to-evidence glyph coverage, line-box containment, and fill-only
+paint scope before drawing. Valid input renders through Canvas path commands from committed
+`outlinePaths` evidence:
+
+```text
+moveTo / lineTo / quadTo / cubicTo / closePath -> CanvasPath -> fill
+```
+
+The browser demo must not call:
+
+- `CanvasRenderingContext2D.fillText`;
+- `CanvasRenderingContext2D.strokeText`;
+- `CanvasRenderingContext2D.measureText`;
+- `FontFace`;
+- host font lookup or fallback APIs.
+
+Expected `Text metadata` fields include:
+
+| Field | Expected value or source |
+| --- | --- |
+| Renderer | `browser-canvas-outline-glyphs` |
+| Fixture id | `render-everywhere:strict-text:geordi` |
+| Text profile | `geordi-strict-positioned-glyph-run/1` |
+| Position encoding | `geordi-fixed-26.6/1` |
+| Evidence kind | `outlinePaths` |
+| Glyph count | `6` |
+| Draw glyph count | `6` |
+| Semantic text | `semanticTextAffectsPixels=false` |
+
+The browser gate checks visibility, exact metadata fields, named probe-policy samples, nonblank
+bounds containment, and browser text API spies. It treats these as hard failures:
+
+| Failure family | Diagnostic surface |
+| --- | --- |
+| Missing glyph evidence | `GEORDI_TEXT_EVIDENCE_MISSING_GLYPH` |
+| Unreferenced glyph evidence | `GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH` |
+| Outline outside line box | `GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX` |
+| Unsupported evidence paint | `GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT` |
+| Unsupported fixture text paint | strict text feature rejection before drawing |
+| Canvas text or font API call | `BrowserGateStrictTextSmokeError` with recorded calls |
+
+Current browser text nonclaims:
+
+- no CSS text;
+- no platform-native text rendering;
+- no host font fallback;
+- no runtime shaping, kerning, ligatures, glyph substitution, wrapping, bidi, or complex scripts;
+- no variable font axes;
+- no full antialiasing parity with native;
+- no broad `shape.text` support inside `geordi-ir/1`.
 
 Run typecheck, lint, and build:
 
@@ -75,7 +167,7 @@ deterministic.
 The page should show:
 
 - `Geordi Render Everywhere`
-- a `Rectangles` / `Bunny` scene switcher
+- a `Rectangles` / `Bunny` / `Text` scene switcher
 - the `Bunny` scene selected by default
 - the Stanford bunny drawn as a rotating wireframe mesh in the visible canvas
 - a collapsed `Bunny metadata` disclosure containing the wireframe renderer name, frame report,
@@ -85,6 +177,10 @@ The page should show:
 - rectangle metadata including `browser-canvas`, `render-everywhere:hello-panel`, the fixture
   artifact hash, `geordi-ir/1`, `geordi-finite-binary64/1`, and
   `geordi/core/1, layout.resolved, shape.rect, paint.solid`
+- the strict positioned glyph-run text canvas after switching to `Text`
+- a collapsed `Text metadata` disclosure containing `browser-canvas-outline-glyphs`, fixture hash,
+  font-pack hash, glyph-run hash, line-box hash, evidence hash, `geordi-fixed-26.6/1`,
+  `geordi-strict-positioned-glyph-run/1`, and `semanticTextAffectsPixels=false`
 
 ## Boundaries
 
@@ -100,7 +196,10 @@ The current browser implementation renders through Canvas 2D. The package remain
 `@flyingrobots/geordi-runtime-webgl` because the runtime package will grow into the WebGL path, but
 this demo should not claim shader parity yet.
 
-Text is intentionally excluded from this first deterministic browser/native proof.
+General text rendering is intentionally excluded from this deterministic browser/native proof. The
+browser harness has one strict positioned glyph-run text mode that consumes committed outline
+evidence and exposes metadata. Unsupported raw/runtime-shaped strict text fixture requirements still
+fail before drawing.
 
 The bunny mesh path does not extend the pixel-identical rectangle proof. It proves shared asset
 identity, parsed mesh metadata, deterministic sampled-frame metadata, and coarse nonblank drawing in

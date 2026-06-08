@@ -1,0 +1,109 @@
+{
+  "allowedNonblankBounds": {
+    "maxX": 176,
+    "maxY": 48,
+    "minX": 2,
+    "minY": 13
+  },
+  "antiAliasEdgePolicy": "edge-probes-are-non-stable-and-must-not-block",
+  "boundsSource": "fixture-glyph-origins-plus-outline-evidence-bounds-floor-ceil-inclusive/1",
+  "canvas": {
+    "height": 64,
+    "width": 192
+  },
+  "evidencePackId": "render-everywhere:strict-text:geordi:outline-evidence",
+  "evidencePackPath": "fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json",
+  "fillRgba": [
+    17,
+    24,
+    39,
+    255
+  ],
+  "fixtureId": "render-everywhere:strict-text:geordi",
+  "fixturePath": "fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json",
+  "id": "render-everywhere:strict-text:geordi:probe-policy",
+  "nonclaim": "Coarse visibility smoke only. This policy does not claim full antialiasing identity, pixel-identical rasterization, shaping support, or general text rendering.",
+  "probePolicyVersion": "geordi-strict-text-probe-policy/1",
+  "probes": [
+    {
+      "coordinateSource": "Manual sample above the canonical GEORDI outline evidence and outside the observed nonblank text bounds.",
+      "expectation": "transparent",
+      "id": "text-background-top",
+      "purpose": "Prove the text canvas keeps transparent background above the glyph evidence.",
+      "stability": "background-outside-glyph-bounds",
+      "tolerance": "alpha-zero",
+      "x": 100,
+      "y": 5
+    },
+    {
+      "coordinateSource": "Manual sample from the canonical GEORDI outline evidence interior, away from the observed contour edge.",
+      "expectation": "fill",
+      "id": "text-g-fill-top",
+      "purpose": "Prove an interior G fill pixel is present near the top of the glyph run.",
+      "stability": "interior-fill-away-from-edge",
+      "tolerance": "exact-fill-rgba",
+      "x": 12,
+      "y": 15
+    },
+    {
+      "coordinateSource": "Manual sample from the canonical GEORDI outline evidence interior, away from the observed contour edge.",
+      "expectation": "fill",
+      "id": "text-e-fill-mid",
+      "purpose": "Prove an interior E fill pixel is present in the middle row.",
+      "stability": "interior-fill-away-from-edge",
+      "tolerance": "exact-fill-rgba",
+      "x": 40,
+      "y": 30
+    },
+    {
+      "coordinateSource": "Manual sample from the canonical GEORDI outline evidence interior, away from the observed contour edge.",
+      "expectation": "fill",
+      "id": "text-o-fill-mid",
+      "purpose": "Prove an interior O fill pixel is present on the stroke, not in the counter.",
+      "stability": "interior-fill-away-from-edge",
+      "tolerance": "exact-fill-rgba",
+      "x": 68,
+      "y": 30
+    },
+    {
+      "coordinateSource": "Manual sample from the canonical GEORDI outline evidence interior, away from the observed contour edge.",
+      "expectation": "fill",
+      "id": "text-r-fill-mid",
+      "purpose": "Prove an interior R fill pixel is present in the middle row.",
+      "stability": "interior-fill-away-from-edge",
+      "tolerance": "exact-fill-rgba",
+      "x": 108,
+      "y": 30
+    },
+    {
+      "coordinateSource": "Manual sample from the canonical GEORDI outline evidence interior, away from the observed contour edge.",
+      "expectation": "fill",
+      "id": "text-d-fill-mid",
+      "purpose": "Prove an interior D fill pixel is present in the middle row.",
+      "stability": "interior-fill-away-from-edge",
+      "tolerance": "exact-fill-rgba",
+      "x": 136,
+      "y": 30
+    },
+    {
+      "coordinateSource": "Manual sample from the canonical GEORDI outline evidence interior, away from the observed contour edge.",
+      "expectation": "fill",
+      "id": "text-i-fill-mid",
+      "purpose": "Prove an interior I fill pixel is present in the middle row.",
+      "stability": "interior-fill-away-from-edge",
+      "tolerance": "exact-fill-rgba",
+      "x": 172,
+      "y": 30
+    },
+    {
+      "coordinateSource": "Manual sample below the canonical GEORDI outline evidence and outside the observed nonblank text bounds.",
+      "expectation": "transparent",
+      "id": "text-background-bottom",
+      "purpose": "Prove the text canvas keeps transparent background below the glyph evidence.",
+      "stability": "background-outside-glyph-bounds",
+      "tolerance": "alpha-zero",
+      "x": 180,
+      "y": 55
+    }
+  ]
+}

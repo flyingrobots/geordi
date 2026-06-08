@@ -4,8 +4,15 @@ import {
   mountBrowserHarnessFailure,
   mountBrowserHarnessShell,
   mountRenderedFixtureCanvas,
+  mountStrictTextCanvas,
 } from './domShell.js';
-import { createBrowserFetchText, renderBrowserFixture } from './browserRenderSmoke.js';
+import {
+  createBrowserFetchText,
+  rejectBrowserStrictTextFixture,
+  renderBrowserFixture,
+  renderBrowserStrictTextFixture,
+  type BrowserStrictTextMetadataReport,
+} from './browserRenderSmoke.js';
 import { STANFORD_BUNNY_ASSETS } from './bunnyAssets.js';
 import {
   BUNNY_BROWSER_RENDERER_NAME,
@@ -16,6 +23,10 @@ import {
 } from './bunnyRender.js';
 import { HELLO_PANEL_FIXTURE_ASSETS } from './fixtureAssets.js';
 import { createBrowserHarnessStatus } from './harnessModel.js';
+import {
+  GEORDI_STRICT_TEXT_RENDER_ASSETS,
+  UNSUPPORTED_RUNTIME_SHAPING_STRICT_TEXT_ASSETS,
+} from './strictTextAssets.js';
 
 async function startBrowserHarness(): Promise<void> {
   const root = document.querySelector<HTMLElement>('#app');
@@ -24,12 +35,27 @@ async function startBrowserHarness(): Promise<void> {
     assets: HELLO_PANEL_FIXTURE_ASSETS,
     fetchText,
   });
+  await rejectBrowserStrictTextFixture({
+    assets: UNSUPPORTED_RUNTIME_SHAPING_STRICT_TEXT_ASSETS,
+    fetchText,
+  });
+  const text = await renderBrowserStrictTextFixture({
+    assets: GEORDI_STRICT_TEXT_RENDER_ASSETS,
+    fetchText,
+  });
   const bunny = await renderBunnyFixtureFrame(STANFORD_BUNNY_ASSETS, 0, fetchText);
 
   const shell = mountBrowserHarnessShell(root, createBrowserHarnessStatus(result.manifest, result.ir), {
     bunnyRendererName: BUNNY_BROWSER_RENDERER_NAME,
+    textRendererName: text.metadata.rendererName,
   });
   mountRenderedFixtureCanvas(shell.rectangleCanvasSlot, result.canvas);
+  mountStrictTextCanvas(
+    shell.textCanvasSlot,
+    text.canvas,
+    shell.textReport,
+    strictTextReportText(text.metadata),
+  );
   const bunnyReport = mountBunnyCanvas(
     shell.bunnyCanvasSlot,
     bunny.canvas,
@@ -51,6 +77,30 @@ function bunnyReportText(report: Awaited<ReturnType<typeof renderBunnyFixtureFra
     `vertices=${report.vertexCount}`,
     `faces=${report.faceCount}`,
     `assetHash=${report.assetHash}`,
+  ].join(' ');
+}
+
+function strictTextReportText(report: BrowserStrictTextMetadataReport): string {
+  return [
+    report.rendererName,
+    `fixtureId=${report.fixtureId}`,
+    `fixtureHash=${report.fixtureHash}`,
+    `fontPackPath=${report.fontPackPath}`,
+    `fontPackHash=${report.fontPackHash}`,
+    `glyphRunHash=${report.glyphRunHash}`,
+    `lineBoxHash=${report.lineBoxHash}`,
+    `evidencePackId=${report.evidencePackId}`,
+    `evidenceKind=${report.evidenceKind}`,
+    `evidenceHash=${report.evidenceHash}`,
+    `textProfile=${report.textProfile}`,
+    `positionEncoding=${report.positionEncoding}`,
+    `glyphCount=${report.glyphCount}`,
+    `drawGlyphCount=${report.drawGlyphCount}`,
+    `commandCount=${report.commandCount}`,
+    `semanticTextSource=${report.semanticTextSource}`,
+    `semanticTextLanguage=${report.semanticTextLanguage}`,
+    `semanticTextAffectsPixels=${report.semanticTextAffectsPixels}`,
+    `semanticTextRole=${report.semanticTextRole}`,
   ].join(' ');
 }
 
