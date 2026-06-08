@@ -12,6 +12,7 @@ use geordi_ir::{
     load_geordi_font_pack_manifest, load_geordi_ir, load_geordi_strict_text_fixture_manifest,
     load_geordi_strict_text_outline_evidence_pack, validate_geordi_font_pack_hashes,
     validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
+    validate_geordi_strict_text_evidence_font_identity,
     validate_geordi_strict_text_font_references,
 };
 use geordi_renderer::{
@@ -1430,6 +1431,7 @@ fn load_strict_text_fixture(
         None => derive_strict_text_outline_evidence_path(&fixture_path)?,
     };
     let evidence = load_geordi_strict_text_outline_evidence_pack(&evidence_path)?;
+    validate_geordi_strict_text_evidence_font_identity(&evidence, &font_pack)?;
     let evidence_bounds = strict_text_evidence_pixel_bounds(&fixture, &evidence);
     let result = render_strict_text_outline_glyphs_to_image(&fixture, &evidence)?;
     let metadata =
@@ -1930,10 +1932,10 @@ fn assert_strict_text_visible(
 
     for y in 0..image.height() {
         for x in 0..image.width() {
-            let [red, green, blue, alpha] = image
+            let [_, _, _, alpha] = image
                 .pixel_at(x, y)
                 .ok_or_else(|| NativeStrictTextSmokeError::pixel_read(x, y))?;
-            if alpha > 0 && (red > 0 || green > 0 || blue > 0) {
+            if alpha > 0 {
                 count += 1;
                 min_x = min_x.min(x);
                 min_y = min_y.min(y);

@@ -567,11 +567,11 @@ fn max_line_box_bottom(
 }
 
 fn fixed_to_canvas_dimension(value: i64) -> Result<usize, GeordiStrictTextRenderError> {
-    if value < 0 || value % FIXED_26_6_SCALE != 0 {
+    if value < 0 {
         return Err(GeordiStrictTextRenderError::coordinate());
     }
 
-    usize::try_from(value / FIXED_26_6_SCALE)
+    usize::try_from((value + FIXED_26_6_SCALE - 1) / FIXED_26_6_SCALE)
         .map_err(|_error| GeordiStrictTextRenderError::buffer_size())
 }
 

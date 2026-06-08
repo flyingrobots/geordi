@@ -1660,6 +1660,52 @@ pub fn validate_geordi_strict_text_font_references(
     }
 }
 
+/// Validate that the outline evidence pack targets the correct font face from the font pack.
+///
+/// # Errors
+///
+/// Returns `GeordiStrictTextFixtureValidationError` when the evidence `fontId`,
+/// `fontSha256`, or `faceIndex` does not match the declared face in the font pack.
+pub fn validate_geordi_strict_text_evidence_font_identity(
+    evidence: &GeordiStrictTextOutlineEvidencePack,
+    font_pack: &GeordiFontPackManifest,
+) -> Result<(), GeordiStrictTextFixtureValidationError> {
+    let mut issues = Vec::new();
+
+    let face = font_pack.fonts.iter().find(|font| font.id == evidence.font_id);
+
+    let Some(face) = face else {
+        push_strict_text_issue(
+            &mut issues,
+            "$.fontId",
+            "Strict text outline evidence font id must reference an existing font pack font",
+        );
+        return Err(GeordiStrictTextFixtureValidationError::new(issues));
+    };
+
+    if face.sha256 != evidence.font_sha256 {
+        push_strict_text_issue(
+            &mut issues,
+            "$.fontSha256",
+            "Strict text outline evidence font sha256 must match the font pack face sha256",
+        );
+    }
+
+    if i64::from(face.face_index) != evidence.face_index {
+        push_strict_text_issue(
+            &mut issues,
+            "$.faceIndex",
+            "Strict text outline evidence face index must match the font pack face index",
+        );
+    }
+
+    if issues.is_empty() {
+        Ok(())
+    } else {
+        Err(GeordiStrictTextFixtureValidationError::new(issues))
+    }
+}
+
 /// Validate typed strict text outline evidence semantics beyond JSON shape.
 ///
 /// # Errors
@@ -2585,6 +2631,10 @@ fn validate_strict_text_line_boxes<'a>(
     issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
 ) -> Vec<&'a str> {
     let mut line_box_ids = Vec::<&str>::new();
+    if manifest.line_boxes.is_empty() {
+        push_strict_text_issue(issues, "$.lineBoxes", "Strict text line boxes must not be empty");
+        return line_box_ids;
+    }
     for (line_box_index, line_box) in manifest.line_boxes.iter().enumerate() {
         let line_box_path = format!("$.lineBoxes[{line_box_index}]");
         if line_box.id.is_empty() {
@@ -2692,6 +2742,10 @@ fn validate_strict_text_glyphs(
     issues: &mut Vec<GeordiStrictTextFixtureValidationIssue>,
 ) {
     let mut run_ids = Vec::<&str>::new();
+    if manifest.glyph_runs.is_empty() {
+        push_strict_text_issue(issues, "$.glyphRuns", "Strict text glyph runs must not be empty");
+        return;
+    }
     for (run_index, run) in manifest.glyph_runs.iter().enumerate() {
         let run_path = format!("$.glyphRuns[{run_index}]");
         if run.id.is_empty() {

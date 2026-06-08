@@ -1069,6 +1069,18 @@ function validateGeneratedStrictTextFixture(
     return;
   }
 
+  for (const [index, run] of strictTextFixture.glyphRuns.entries()) {
+    if (run.fontId !== input.font.fontId) {
+      diagnostics.push(
+        diagnostic(
+          'GEORDI_TEXT_PREP_BAD_INPUT',
+          `$.preparedFixture.glyphRuns[${index}].fontId`,
+          `Prepared glyph run font id must match the pinned font id.`,
+        ),
+      );
+    }
+  }
+
   const validation = validateRenderFixtureStrictTextFixtureManifest(strictTextFixture);
   for (const issue of validation.issues) {
     diagnostics.push(
