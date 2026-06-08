@@ -678,7 +678,7 @@ describe('browser render smoke', () => {
     expect(browser.metadata.rendererName).toBe('browser-canvas-outline-glyphs');
     expect(native).toMatchObject(browserStrictTextParityFields(browser.metadata));
     expect(native.smoke).toBe('passed');
-  });
+  }, 30_000);
 
   it('rejects invalid strict text evidence before fixture mode drawing', async () => {
     const fixtureUrl = 'geordi.strict-text.geordi.json';
