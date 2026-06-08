@@ -136,7 +136,7 @@ bounds containment, and browser text API spies. It treats these as hard failures
 | Missing glyph evidence | `GEORDI_TEXT_EVIDENCE_MISSING_GLYPH` |
 | Unreferenced glyph evidence | `GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH` |
 | Outline outside line box | `GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX` |
-| Unsupported evidence paint | `GEORDI_TEXT_EVIDENCE_BAD_PAINT` |
+| Unsupported evidence paint | `GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT` |
 | Unsupported fixture text paint | strict text feature rejection before drawing |
 | Canvas text or font API call | `BrowserGateStrictTextSmokeError` with recorded calls |
 

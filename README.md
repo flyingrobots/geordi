@@ -38,8 +38,6 @@ Completed proof layers:
 
 Active work:
 
-- CI gate coverage for strict text: fixture validation gate, browser smoke gate, native smoke gate,
-  and final drift/claim audit (S097–S100).
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
   Wesley/common-type generation.
 

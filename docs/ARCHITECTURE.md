@@ -59,7 +59,8 @@ are generated from a common source; WASM is introduced only for hard determinist
 
 **Key principle**: Tooling may validate pinned source/font/shaping intent, but renderers still
 consume prepared strict artifacts only. This package is not a WASM wrapper and does not claim
-runtime text shaping, font parsing, evidence generation, receipt generation, or comparison yet.
+runtime text shaping, font parsing, or evidence generation. It does ship comparison (drift-gate
+via `geordi-text-prep compare`) and receipt generation as part of the strict text proof layer.
 
 ## Compilation Pipeline
 

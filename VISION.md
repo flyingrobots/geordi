@@ -78,7 +78,7 @@ Geordi grows by claims, not by wishful API surface.
 | --- | --- | --- |
 | Rectangle render-everywhere | Complete | One `geordi-ir/1` artifact renders through browser and native harnesses with exact rectangle pixel probes. |
 | Stanford bunny mesh | Complete | One content-addressed PLY asset and descriptor load in browser and native harnesses with shared identity and sampled-frame metadata. |
-| Strict positioned glyph-run text | Active | Text proof uses positioned glyph evidence and content-addressed font assets outside core IR, with browser/native validation and coarse proof gates. |
+| Strict positioned glyph-run text | Complete | Text proof uses positioned glyph evidence and content-addressed font assets outside core IR, with browser/native validation and coarse proof gates. 100-slice DAG complete; fixture, receipt, and CI gates finalized. |
 | Generated common contracts | Required drift correction | Shared serialized DTOs move from handwritten mirrors to Wesley/common-type generation. |
 | Font/glyph/raster hard kernels | Future | Rust/WASM is introduced only where deterministic algorithmic reuse justifies the package cost. |
 

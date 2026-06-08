@@ -118,7 +118,7 @@ cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-eve
 Run strict text mode with an explicit outline evidence override:
 
 ```bash
-cargo run -p native-render-everywhere -- --strict-text-smoke --evidence geordi.outline-evidence.geordi.json geordi.strict-text.geordi.json
+cargo run -p native-render-everywhere -- --strict-text-smoke --evidence fixtures/render-everywhere/strict-text/geordi.outline-evidence.geordi.json fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
 ```
 
 Run tests and lints:
@@ -178,7 +178,7 @@ The strict text smoke path treats these as hard failures before reporting succes
 | Missing glyph evidence | `GEORDI_TEXT_EVIDENCE_MISSING_GLYPH` |
 | Unreferenced glyph evidence | `GEORDI_TEXT_EVIDENCE_UNKNOWN_GLYPH` |
 | Outline outside line box | `GEORDI_TEXT_EVIDENCE_OUTSIDE_LINE_BOX` |
-| Unsupported evidence paint | `GEORDI_TEXT_EVIDENCE_BAD_PAINT` |
+| Unsupported evidence paint | `GEORDI_TEXT_EVIDENCE_UNSUPPORTED_PAINT` |
 | Blank rendered output | `NativeStrictTextSmokeError` |
 | Probe mismatch | `NativeStrictTextProbeError` |
 | Nonblank pixels outside allowed bounds | native strict text bounds error |

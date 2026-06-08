@@ -236,7 +236,7 @@ they must not weaken these.
 | BROWSER-TEXT-SMOKE | S057-S060, S066 | Happy path | Browser text mode available. | Run browser text smoke. | Nonblank bounded text and stable probes pass. | Playwright |
 | BROWSER-INVALID-EVIDENCE | S057-S060, S070-S073 | Negative | Fixture has missing evidence or unsupported paint. | Load browser text mode. | Custom failure before drawing. | Browser unit tests |
 | NATIVE-NO-TEXT-API | S061-S064 | Contract | Native strict text fixture is valid. | Run native text smoke. | Native renderer uses evidence path only; no OS text/shaper path is introduced. | Rust tests and code review |
-| NATIVE-TEXT-SMOKE | S061-S064, S067 | Happy path | Native text CLI mode exists. | Run offscreen native text smoke. | Nonblank bounded text and stable probes pass. | `cargo run -p native-render-everywhere -- --text-smoke ...` |
+| NATIVE-TEXT-SMOKE | S061-S064, S067 | Happy path | Native text CLI mode exists. | Run offscreen native text smoke. | Nonblank bounded text and stable probes pass. | `cargo run -p native-render-everywhere -- --strict-text-smoke ...` |
 | NATIVE-INVALID-EVIDENCE | S061-S064, S070-S073 | Negative | Fixture has missing evidence or unsupported paint. | Run native text mode. | Custom failure before rendering success. | Rust tests |
 | METADATA-PARITY | S065 | Happy path | Browser and native reports exist for same fixture. | Compare reports. | Required metadata fields match exactly. | Parity script/test |
 | METADATA-MISMATCH | S065 | Negative | One report has altered hash/count/bounds. | Run parity comparison. | Fails before pixel/probe checks. | Parity test |
