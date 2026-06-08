@@ -1436,9 +1436,17 @@ export function validateRenderFixtureStrictTextEvidenceCoverage(
 export function validateRenderFixtureStrictTextEvidenceLineBoxes(
   input: RenderFixtureStrictTextEvidenceLineBoxValidationInput,
 ): RenderFixtureStrictTextEvidenceLineBoxValidationResult {
+  const coverage = validateRenderFixtureStrictTextEvidenceCoverage(input);
+  if (!coverage.ok) {
+    return coverage;
+  }
+
   const issues: RenderFixtureStrictTextOutlineEvidencePackIssue[] = [];
   const evidenceGlyphs = new Map(
-    input.evidence.glyphs.map((glyph, index) => [glyph.glyphId, { glyph, index }]),
+    input.evidence.glyphs.map((glyph, index) => [
+      `${input.evidence.fontId}:${glyph.glyphId}`,
+      { glyph, index },
+    ]),
   );
   const lineBoxes = new Map(input.fixture.lineBoxes.map((lineBox) => [lineBox.id, lineBox]));
 
@@ -1449,7 +1457,7 @@ export function validateRenderFixtureStrictTextEvidenceLineBoxes(
     }
 
     for (const glyph of run.glyphs) {
-      const evidenceGlyph = evidenceGlyphs.get(glyph.glyphId);
+      const evidenceGlyph = evidenceGlyphs.get(`${run.fontId}:${glyph.glyphId}`);
       if (!evidenceGlyph?.glyph.draws) {
         continue;
       }
