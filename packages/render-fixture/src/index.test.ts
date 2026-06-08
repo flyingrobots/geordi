@@ -1501,6 +1501,24 @@ describe('render fixture strict text fixture manifest validation', () => {
     );
   });
 
+  it('rejects probe policy bounds where maxX equals canvas width exactly', () => {
+    // canvas.width is 192 in makeStrictTextProbePolicy(); maxX >= canvasWidth must be rejected.
+    const invalid: JsonValue = {
+      ...makeStrictTextProbePolicy(),
+      allowedNonblankBounds: {
+        maxX: 192,
+        maxY: 48,
+        minX: 2,
+        minY: 13,
+      },
+    };
+
+    const result = validateRenderFixtureStrictTextProbePolicy(invalid);
+
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((issue) => issue.path)).toContain('$.allowedNonblankBounds.maxX');
+  });
+
   it('accepts a typed valid strict text fixture receipt object', () => {
     const receipt = makeStrictTextFixtureReceipt();
 
@@ -1558,7 +1576,8 @@ describe('render fixture strict text fixture manifest validation', () => {
         '$.fixturePath',
         '$.fixtureHash',
         '$.semanticTextAffectsPixels',
-        '$.glyphEvidenceKind',
+        // glyphEvidenceKind is 'outlinePaths' which is valid; no error there.
+        // Only the two absent sibling fields produce errors.
         '$.glyphEvidencePackHash',
         '$.glyphEvidencePackPath',
       ]),

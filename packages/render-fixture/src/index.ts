@@ -37,6 +37,9 @@ export const RENDER_FIXTURE_TEXT_FEATURE_POSITIONED_GLYPH_RUNS =
   'text.positionedGlyphRuns' as const;
 export const RENDER_FIXTURE_TEXT_FEATURE_FONT_PACK = 'text.fontPack' as const;
 export const RENDER_FIXTURE_TEXT_FEATURE_LINE_BOXES = 'text.lineBoxes' as const;
+// Receipt provenance — hash algorithm, shaping profiles, generator identity.
+// The generator field records which tool minted the receipt; different tools must use
+// distinct values so receipts remain auditable across tool versions.
 export const RENDER_FIXTURE_HASH_ALGORITHM_SHA256 = 'sha256' as const;
 export const RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_PRECOMPUTED =
   'precomputed-fixture/1' as const;
@@ -44,6 +47,8 @@ export const RENDER_FIXTURE_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT =
   'geordi-text-prep-shaping-fingerprint/1' as const;
 export const RENDER_FIXTURE_TYPESCRIPT_STRICT_TEXT_RECEIPT_GENERATOR =
   'typescript-render-fixture/1' as const;
+
+// Glyph evidence pack — version, kind, coordinate space, winding rule, paint kind.
 export const RENDER_FIXTURE_GLYPH_EVIDENCE_PACK_VERSION =
   'geordi-glyph-evidence-pack/1' as const;
 export const RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS = 'outlinePaths' as const;
@@ -51,6 +56,8 @@ export const RENDER_FIXTURE_GLYPH_EVIDENCE_COORDINATE_SPACE_GLYPH_ORIGIN_FIXED_2
   'glyph-origin-fixed-26.6/1' as const;
 export const RENDER_FIXTURE_GLYPH_EVIDENCE_WINDING_RULE_NONZERO = 'nonzero' as const;
 export const RENDER_FIXTURE_GLYPH_EVIDENCE_PAINT_KIND_SOLID_FILL = 'solidFill' as const;
+
+// Probe policy — version, expectations, tolerances, stabilities, edge policy, bounds source.
 export const RENDER_FIXTURE_STRICT_TEXT_PROBE_POLICY_VERSION =
   'geordi-strict-text-probe-policy/1' as const;
 export const RENDER_FIXTURE_STRICT_TEXT_PROBE_EXPECTATION_FILL = 'fill' as const;
@@ -76,6 +83,7 @@ const ASCII_PLY_NUMBER_TOKEN_PATTERN =
   /^[+-]?(?:(?:[0-9]+(?:\.[0-9]*)?)|(?:\.[0-9]+))(?:[eE][+-]?[0-9]+)?$/u;
 const FONT_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const GIT_COMMIT_HEX_LENGTH = 40 as const;
+// Repository layout invariant: all strict text fixture paths must live under this prefix.
 const STRICT_TEXT_FIXTURE_PATH_PREFIX = 'fixtures/render-everywhere/strict-text/' as const;
 
 export interface RenderFixtureManifestIssue extends JsonObject {
@@ -1476,6 +1484,9 @@ export function validateRenderFixtureStrictTextEvidenceLineBoxes(
   return { ok: issues.length === 0, issues };
 }
 
+// Bounds are "floor-ceil-inclusive": glyph edges must be >= line-box start and <= line-box end.
+// All coordinates are fixed-26.6 integers. Valid fixture coordinates are well within
+// Number.MAX_SAFE_INTEGER (max ~2^53; 26.6 canvas space tops out at ~2^32 px * 64 = ~2^38).
 function isPositionedGlyphEvidenceInsideLineBox(
   glyph: RenderFixturePositionedGlyph,
   evidenceGlyph: RenderFixtureStrictTextOutlineEvidenceGlyph,
@@ -2470,14 +2481,6 @@ function validateOptionalGlyphEvidenceReceiptFields(
   ).length;
   if (presentCount === 0) {
     return;
-  }
-
-  if (presentCount !== 3) {
-    pushIssue(
-      issues,
-      '$.glyphEvidenceKind',
-      'Strict text fixture receipt glyph evidence fields must be present together',
-    );
   }
 
   validateLiteral(

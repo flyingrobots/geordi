@@ -62,6 +62,10 @@ pub const GEORDI_STRICT_TEXT_SHAPING_PROFILE_TEXT_PREP_FINGERPRINT: &str =
     "geordi-text-prep-shaping-fingerprint/1";
 
 /// Generator identity recorded by the Rust strict text fixture receipt builder.
+///
+/// The `generatedBy` field records which tool minted the receipt. Different tools must use
+/// distinct values so receipts remain auditable across tool versions. The TypeScript counterpart
+/// uses `"typescript-render-fixture/1"` — the divergence is intentional.
 pub const GEORDI_RUST_STRICT_TEXT_RECEIPT_GENERATOR: &str = "rust-geordi-ir/1";
 
 /// Current supported strict text glyph evidence pack version.

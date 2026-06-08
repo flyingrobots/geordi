@@ -804,4 +804,37 @@ describe('measureFontLineBox', () => {
 
     expect(first).toEqual(second);
   });
+
+  it('produces integer fixed-26.6 output for a small unitsPerEm font', () => {
+    // scale = (16 / 500) * 64 = 2.048; values are rounded via Math.round
+    const metrics = { ascender: 400, descender: -100, unitsPerEm: 500 };
+    const lineBox = measureFontLineBox(metrics, 16, 0);
+
+    expect(Number.isInteger(lineBox.baselineY)).toBe(true);
+    expect(Number.isInteger(lineBox.height)).toBe(true);
+    expect(lineBox.baselineY).toBeGreaterThan(0);
+    expect(lineBox.height).toBeGreaterThan(lineBox.baselineY);
+  });
+
+  it('produces integer fixed-26.6 output for a large unitsPerEm font', () => {
+    // scale = (48 / 16000) * 64 = 0.192; values are rounded via Math.round
+    const metrics = { ascender: 14336, descender: -2048, unitsPerEm: 16000 };
+    const lineBox = measureFontLineBox(metrics, 48, 0);
+
+    expect(Number.isInteger(lineBox.baselineY)).toBe(true);
+    expect(Number.isInteger(lineBox.height)).toBe(true);
+    expect(lineBox.baselineY).toBeGreaterThan(0);
+    expect(lineBox.height).toBeGreaterThan(lineBox.baselineY);
+  });
+
+  it('produces consistent rounding for fractional scale factors', () => {
+    // pxPerEm=33 with unitsPerEm=1000 → scale = 33/1000 * 64 = 2.112 (non-integer)
+    const metrics = { ascender: 800, descender: -200, unitsPerEm: 1000 };
+    const lineBox = measureFontLineBox(metrics, 33, 0);
+
+    // 800 * 2.112 = 1689.6 → Math.round → 1690
+    expect(lineBox.baselineY).toBe(1690);
+    // (800 + 200) * 2.112 = 2112.0 → 2112
+    expect(lineBox.height).toBe(2112);
+  });
 });

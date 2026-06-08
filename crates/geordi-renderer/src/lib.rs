@@ -1335,6 +1335,22 @@ mod tests {
             .join(path)
     }
 
+    #[test]
+    fn fixed_to_canvas_dimension_converts_correctly() {
+        assert_eq!(super::fixed_to_canvas_dimension(0).unwrap(), 0);
+        // 63 sub-pixel units → ceil(63/64) = 1 pixel
+        assert_eq!(super::fixed_to_canvas_dimension(63).unwrap(), 1);
+        // Exactly one pixel worth of sub-pixel units → 1 pixel (no spurious extra pixel)
+        assert_eq!(super::fixed_to_canvas_dimension(64).unwrap(), 1);
+        // One unit past a full pixel → ceil to 2
+        assert_eq!(super::fixed_to_canvas_dimension(65).unwrap(), 2);
+    }
+
+    #[test]
+    fn fixed_to_canvas_dimension_rejects_negative() {
+        assert!(super::fixed_to_canvas_dimension(-1).is_err());
+    }
+
     fn nonblank_pixel_count(image: &super::RenderedImage) -> usize {
         let mut count = 0;
         for y in 0..image.height() {
