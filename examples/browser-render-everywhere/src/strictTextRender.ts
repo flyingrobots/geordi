@@ -47,8 +47,8 @@ export function renderStrictTextOutlineGlyphsToCanvas(
   assertRenderFixtureStrictTextEvidenceLineBoxes({ evidence, fixture });
 
   const canvas = document.createElement('canvas');
-  canvas.width = fixedToCanvasPixels(maxLineBoxRight(fixture));
-  canvas.height = fixedToCanvasPixels(maxLineBoxBottom(fixture));
+  canvas.width = Math.ceil(fixedToCanvasPixels(maxLineBoxRight(fixture)));
+  canvas.height = Math.ceil(fixedToCanvasPixels(maxLineBoxBottom(fixture)));
   canvas.setAttribute('data-geordi-strict-text-canvas', 'true');
   const context = canvas.getContext('2d');
   if (context === null) {
