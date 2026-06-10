@@ -3,7 +3,8 @@
 **Status**: Proposed
 **Date**: 2026-06-10
 **Companion Bijou design**:
-`/Users/james/git/bijou/docs/design/DX-043-portable-bijou-blocks-and-multi-endpoint-ir.md`
+`docs/design/DX-043-portable-bijou-blocks-and-multi-endpoint-ir.md` in the
+Bijou repository.
 
 This document records the Geordi-side implications of Bijou blocks and
 components becoming a portable UI source-of-truth that can render through many
