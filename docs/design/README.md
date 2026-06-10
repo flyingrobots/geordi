@@ -36,6 +36,9 @@ hand-maintained separately in TypeScript and Rust.
 [`2026-05-typescript-rust-wasm-boundary.md`](./2026-05-typescript-rust-wasm-boundary.md) defines
 the matching runtime boundary: TypeScript stays native at the edges, Rust stays native at the
 rendering core, contracts are generated, and WASM is reserved for hard deterministic kernels.
+[`2026-06-bunny-geordi-interop.md`](./2026-06-bunny-geordi-interop.md) defines Bunny as Geordi's
+neutral graphics substrate while preserving Geordi ownership of IR, strict text, renderers, and
+receipts.
 
 Use the DAG, not list order alone, to choose the next slice. A node is OPEN when all of its
 dependencies are complete. After each slice, update the checklist state, update the DOT node status,
