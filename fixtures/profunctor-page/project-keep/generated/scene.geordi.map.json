@@ -319,8 +319,36 @@
       "tokenBindings": []
     }
   ],
+  "inputCapabilities": [
+    "headings",
+    "landmarks",
+    "native-links",
+    "semantic-html"
+  ],
   "irVersion": "geordi-ir/1",
   "pageId": "page:project.keep",
+  "residuals": [
+    {
+      "capability": "headings",
+      "code": "headings-unsupported",
+      "reason": "The structural target does not claim headings."
+    },
+    {
+      "capability": "landmarks",
+      "code": "landmarks-unsupported",
+      "reason": "The structural target does not claim landmarks."
+    },
+    {
+      "capability": "native-links",
+      "code": "native-links-unsupported",
+      "reason": "The structural target does not claim native-links."
+    },
+    {
+      "capability": "semantic-html",
+      "code": "semantic-html-unsupported",
+      "reason": "The structural target does not claim semantic-html."
+    }
+  ],
   "route": "/projects/keep/",
   "targetProfile": "geordi-profunctor-page-structural/1",
   "tokenTable": [

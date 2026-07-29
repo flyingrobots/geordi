@@ -241,8 +241,10 @@ function buildTargetMap(
         tokenBindings: tokenBindingsFor(pageNode),
       };
     }),
+    inputCapabilities: [...parsed.capabilityRequirements],
     irVersion: GEORDI_IR_VERSION,
     pageId: parsed.pageId,
+    residuals: capabilityResiduals(parsed.capabilityRequirements),
     route: parsed.route,
     targetProfile: PROFUNCTOR_PAGE_TARGET_PROFILE,
     tokenTable: parsed.tokenRefs.map((reference) => ({
@@ -270,6 +272,7 @@ function buildReceipt(
       page: parsed.pageHash,
       sourceMap: parsed.sourceMapHash,
     },
+    inputCapabilities: [...parsed.capabilityRequirements],
     inputNodeCount: parsed.nodes.length,
     irVersion: GEORDI_IR_VERSION,
     numericProfile: GEORDI_NUMERIC_PROFILE,
@@ -318,12 +321,18 @@ function residualsFor(node: ParsedPageNode): readonly JsonObject[] {
       code: 'general-text-unsupported',
       reason: 'The structural target emits no Geordi Text nodes.',
     },
-    ...node.requiredCapabilities.map((capability) => ({
-      capability,
-      code: `${capability}-unsupported`,
-      reason: `The structural target does not claim ${capability}.`,
-    })),
+    ...capabilityResiduals(node.requiredCapabilities),
   ];
+}
+
+function capabilityResiduals(
+  capabilities: readonly string[],
+): readonly JsonObject[] {
+  return capabilities.map((capability) => ({
+    capability,
+    code: `${capability}-unsupported`,
+    reason: `The structural target does not claim ${capability}.`,
+  }));
 }
 
 function actionsFor(node: ParsedPageNode): readonly TargetAction[] {

@@ -34,6 +34,14 @@ export function parseProfunctorPageArtifacts(
 
   const pageId = requireString(page, 'pageId', '$page.pageId');
   const route = requireString(page, 'route', '$page.route');
+  const capabilityRequirements = requireStringArray(
+    property(page, 'capabilityRequirements'),
+    '$page.capabilityRequirements',
+  );
+  assertUniqueStrings(
+    capabilityRequirements,
+    '$page.capabilityRequirements',
+  );
   const compositionRef = requireString(
     page,
     'compositionRef',
@@ -92,6 +100,7 @@ export function parseProfunctorPageArtifacts(
     buildManifest,
     buildManifestClaims,
     buildManifestHash: hashSource(input.buildManifest.source),
+    capabilityRequirements,
     compositionRef,
     dependencyDigests,
     entityRef,

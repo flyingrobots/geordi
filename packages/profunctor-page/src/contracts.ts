@@ -64,6 +64,7 @@ export interface ParsedProfunctorPage {
   readonly buildManifest: JsonObject;
   readonly buildManifestClaims: readonly string[];
   readonly buildManifestHash: string;
+  readonly capabilityRequirements: readonly string[];
   readonly compositionRef: string;
   readonly dependencyDigests: readonly string[];
   readonly entityRef: string;

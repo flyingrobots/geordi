@@ -3,6 +3,12 @@
   "compositionRef": "composition:project-page@0",
   "entityRef": "entity:project.keep",
   "hashAlgorithm": "sha256",
+  "inputCapabilities": [
+    "headings",
+    "landmarks",
+    "native-links",
+    "semantic-html"
+  ],
   "inputHashes": {
     "buildManifest": "sha256:975efc9c701cbd7a6981787150748b76d1e53fd83cd424128667bc8014687ab7",
     "page": "sha256:12b90184b4e238bc6bd7db944af8651900b830ea76ba775ab7c7ee20be051e73",
@@ -13,7 +19,7 @@
   "numericProfile": "geordi-finite-binary64/1",
   "outputHashes": {
     "ir": "sha256:bbe36f02a8bc0901df102af95ef117c03b388ec9bf114ee66b2cf82049dcf209",
-    "map": "sha256:eb8027dc17d32166738e55651cc2102e0eb5de9eba333fb25010dabbd7c87f48",
+    "map": "sha256:c94aa6f55bd3ebdb41801d41cbb40301e5da9af8a49630029478c4951d17312f",
     "preview": "sha256:c5051bff121e51780320353d4d08b9c4e16ca7bb18b14c78e6cdfbbe45176e4a"
   },
   "outputRenderNodeCount": 5,

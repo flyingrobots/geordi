@@ -232,6 +232,22 @@ describe('lowerProfunctorPageArtifacts', () => {
     const tokens = objectArray(map.tokenTable, '$map.tokenTable');
 
     expect(map.version).toBe('geordi-profunctor-page-map/1');
+    expect(map.inputCapabilities).toEqual([
+      'headings',
+      'landmarks',
+      'native-links',
+      'semantic-html',
+    ]);
+    expect(
+      objectArray(map.residuals, '$map.residuals').map(
+        (residual) => residual.capability,
+      ),
+    ).toEqual([
+      'headings',
+      'landmarks',
+      'native-links',
+      'semantic-html',
+    ]);
     expect(entries).toHaveLength(5);
     expect(new Set(entries.map((entry) => entry.renderNodeId)).size).toBe(5);
     expect(
@@ -291,6 +307,12 @@ describe('lowerProfunctorPageArtifacts', () => {
       'resolved-rectangle-geometry',
       'semantic-node-to-render-node-identity',
       'structural-preview',
+    ]);
+    expect(receipt.inputCapabilities).toEqual([
+      'headings',
+      'landmarks',
+      'native-links',
+      'semantic-html',
     ]);
     expect(receipt.inputHashes).toEqual({
       buildManifest: sha256(input.buildManifest.source),
