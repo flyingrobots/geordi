@@ -188,6 +188,10 @@ function parsePageNodes(value: JsonValue | undefined): readonly ParsedPageNode[]
       property(node, 'requiredCapabilities'),
       `${path}.requiredCapabilities`,
     );
+    assertUniqueStrings(
+      requiredCapabilities,
+      `${path}.requiredCapabilities`,
+    );
     const slots = parseSlots(property(node, 'slots'), `${path}.slots`);
     const sourceBindings = requireStringRecord(
       property(node, 'sourceBindings') ?? {},

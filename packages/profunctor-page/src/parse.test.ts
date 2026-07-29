@@ -484,4 +484,26 @@ describe('parseProfunctorPageArtifacts', () => {
       'GEORDI_PAGE_INPUT_REFERENCE_INVALID',
     );
   });
+
+  it('rejects duplicate node capability requirements', () => {
+    const input = alignPageDigest(
+      replaceJson(fixtureInput(), 'page', (page) => {
+        const node = pageNode(page, 1);
+        node.requiredCapabilities = [
+          ...mutableArray(
+            node.requiredCapabilities,
+            '$page.nodes[1].requiredCapabilities',
+          ),
+          'headings',
+        ];
+      }),
+    );
+
+    expectDiagnostic(
+      () => {
+        parseProfunctorPageArtifacts(input);
+      },
+      'GEORDI_PAGE_INPUT_REFERENCE_INVALID',
+    );
+  });
 });
