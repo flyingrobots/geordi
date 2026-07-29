@@ -84,6 +84,18 @@ const checks = [
     ],
   },
   {
+    packageName: '@flyingrobots/geordi-profunctor-page',
+    packageDir: 'packages/profunctor-page',
+    exports: [
+      'PROFUNCTOR_PAGE_TARGET_PROFILE',
+      'PROFUNCTOR_PAGE_VERSION',
+      'ProfunctorPageTargetError',
+      'lowerProfunctorPageArtifacts',
+      'parseProfunctorPageArtifacts',
+      'validateProfunctorPageTargetIr',
+    ],
+  },
+  {
     packageName: '@flyingrobots/geordi-text-prep',
     packageDir: 'packages/text-prep',
     exports: [
