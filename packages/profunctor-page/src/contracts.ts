@@ -111,8 +111,9 @@ export class ProfunctorPageTargetError extends Error {
     code: ProfunctorPageDiagnosticCode,
     path: string,
     detail: string,
+    cause?: Error,
   ) {
-    super('Profunctor Page target validation failed');
+    super('Profunctor Page target validation failed', { cause });
     this.name = new.target.name;
     this.code = code;
     this.path = path;

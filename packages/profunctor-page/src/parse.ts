@@ -121,11 +121,12 @@ function parseArtifact(
   let parsed: JsonValue;
   try {
     parsed = canonicalJsonPort.parse(artifact.source);
-  } catch {
+  } catch (cause) {
     fail(
       'GEORDI_PAGE_INPUT_JSON_INVALID',
       artifact.filename,
       'Artifact must be valid canonical JSON.',
+      cause instanceof Error ? cause : undefined,
     );
   }
 
@@ -740,6 +741,7 @@ function fail(
   code: ProfunctorPageDiagnosticCode,
   path: string,
   detail: string,
+  cause?: Error,
 ): never {
-  throw new ProfunctorPageTargetError(code, path, detail);
+  throw new ProfunctorPageTargetError(code, path, detail, cause);
 }

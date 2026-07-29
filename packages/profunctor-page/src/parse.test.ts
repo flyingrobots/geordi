@@ -160,15 +160,20 @@ describe('parseProfunctorPageArtifacts', () => {
 
   it('rejects malformed JSON with a stable diagnostic', () => {
     const input = fixtureInput();
-    expectDiagnostic(
-      () => {
-        parseProfunctorPageArtifacts({
-          ...input,
-          page: { ...input.page, source: '{' },
-        });
-      },
-      'GEORDI_PAGE_INPUT_JSON_INVALID',
-    );
+    try {
+      parseProfunctorPageArtifacts({
+        ...input,
+        page: { ...input.page, source: '{' },
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ProfunctorPageTargetError);
+      expect((error as ProfunctorPageTargetError).code).toBe(
+        'GEORDI_PAGE_INPUT_JSON_INVALID',
+      );
+      expect((error as ProfunctorPageTargetError).cause).toBeInstanceOf(Error);
+      return;
+    }
+    throw new ExpectedDiagnosticError('GEORDI_PAGE_INPUT_JSON_INVALID');
   });
 
   it('rejects an unsupported artifact version', () => {
