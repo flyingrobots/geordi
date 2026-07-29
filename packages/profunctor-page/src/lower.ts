@@ -216,6 +216,7 @@ function buildTargetMap(
               code: 'hidden-page-node',
               reason: 'The source page marks this node hidden.',
             },
+            ...capabilityResiduals(pageNode.requiredCapabilities),
           ],
           sources: sourcesFor(parsed, pageNode),
           templateNodeId: pageNode.templateNodeId,

@@ -355,6 +355,20 @@ describe('lowerProfunctorPageArtifacts', () => {
     expect(result.artifacts.preview.content).toContain(
       'semantic.surface-tint · 2 action(s)',
     );
+    const map = object(
+      canonicalJsonPort.parse(result.artifacts.map.content),
+      '$map',
+    );
+    const rootEntry = objectArray(map.entries, '$map.entries').find(
+      (entry) =>
+        entry.pageNodeId === 'page-node:project.keep#project-page.root',
+    );
+    expect(
+      objectArray(
+        object(rootEntry, '$map.entries[root]').residuals,
+        '$map.entries[root].residuals',
+      ).map((residual) => residual.capability),
+    ).toEqual(['visibility', 'landmarks', 'semantic-html']);
   });
 
   it('rejects invalid emitted IR through a stable target diagnostic', () => {
