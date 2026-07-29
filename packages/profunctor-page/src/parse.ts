@@ -297,6 +297,7 @@ function validatePageGraph(input: PageGraphInput): void {
   validateNodeReferences(input.landmarks, '$page.landmarks', nodesById);
   validateNodeReferences(input.outline, '$page.outline', nodesById);
   validateTokens(input.nodes, input.tokenRefs);
+  validateUniqueVisibleBlockDefinitions(input.nodes);
 }
 
 function uniqueNodeMap(
@@ -314,6 +315,25 @@ function uniqueNodeMap(
     nodesById.set(node.pageNodeId, node);
   }
   return nodesById;
+}
+
+function validateUniqueVisibleBlockDefinitions(
+  nodes: readonly ParsedPageNode[],
+): void {
+  const visibleDefinitions = new Set<string>();
+  for (const [index, node] of nodes.entries()) {
+    if (node.hidden) {
+      continue;
+    }
+    if (visibleDefinitions.has(node.blockDefinitionId)) {
+      fail(
+        'GEORDI_PAGE_INPUT_REFERENCE_INVALID',
+        `$page.nodes[${index}].blockDefinitionId`,
+        `Visible block definition ${node.blockDefinitionId} is duplicated.`,
+      );
+    }
+    visibleDefinitions.add(node.blockDefinitionId);
+  }
 }
 
 function validateExactNodeOrder(

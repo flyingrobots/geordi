@@ -409,6 +409,21 @@ describe('parseProfunctorPageArtifacts', () => {
     );
   });
 
+  it('rejects duplicate visible block definitions with fixed geometry', () => {
+    const input = alignPageDigest(
+      replaceJson(fixtureInput(), 'page', (page) => {
+        pageNode(page, 2).blockDefinitionId = 'block:project-hero';
+      }),
+    );
+
+    expectDiagnostic(
+      () => {
+        parseProfunctorPageArtifacts(input);
+      },
+      'GEORDI_PAGE_INPUT_REFERENCE_INVALID',
+    );
+  });
+
   it('permits an unsupported hidden block without inventing geometry', () => {
     const input = alignPageDigest(
       replaceJson(fixtureInput(), 'page', (page) => {
