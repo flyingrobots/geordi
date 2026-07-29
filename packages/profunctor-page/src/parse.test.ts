@@ -100,7 +100,10 @@ function expectDiagnostic(
   throw new ExpectedDiagnosticError(code);
 }
 
-function requireTestObject(value: JsonValue, path: string): JsonObject {
+function requireTestObject(
+  value: JsonValue | undefined,
+  path: string,
+): JsonObject {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new TestFixtureShapeError(path, 'object');
   }

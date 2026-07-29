@@ -51,7 +51,7 @@ function fixtureArtifact(filename: string): {
   };
 }
 
-function object(value: JsonValue, path: string): JsonObject {
+function object(value: JsonValue | undefined, path: string): JsonObject {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new TestArtifactShapeError(path);
   }
@@ -71,7 +71,7 @@ function mutableObject(
   value: JsonValue | undefined,
   path: string,
 ): MutableJsonObject {
-  return object(value as JsonValue, path);
+  return object(value, path);
 }
 
 function mutablePageNode(
