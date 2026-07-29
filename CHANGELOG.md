@@ -13,6 +13,8 @@
   `geordi-profunctor-page-structural/1` target for the canonical Keep
   `profunctor-page/0` specimen, emitting deterministic rectangle IR, target
   mapping evidence, a byte-binding receipt, and a diagnostic SVG witness.
+  Generated proof writes stage and validate the complete output inventory,
+  serialize concurrent writers, and restore prior evidence if commit fails.
 - **`@flyingrobots/geordi-core`**: Add core-owned `geordi-ir/1` constants, current `GeordiIr` types,
   and structural validation for scenes, nodes, bindings, animations, keyframes, and finite
   numeric fields.
@@ -113,7 +115,9 @@
 - **Profunctor Page target**: Pin the three upstream conformance artifacts by
   exact SHA-256 identity, verify all four generated outputs, and cover
   malformed, unsupported, stale, duplicate, dangling, ambiguous, missing, and
-  invalid-output failure paths with stable diagnostic codes.
+  invalid-output failure paths with stable diagnostic codes. Preserve
+  canonical-JSON parser failures as error causes, reject XML-invalid preview
+  labels, and cover both directions of token-reference drift.
 - **CI**: Install Chromium for Playwright and run the browser render-everywhere Playwright gate on
   pull requests and pushes to `main`.
 - **`@flyingrobots/geordi-core`**: add `geordi-ir/1` validation coverage for valid IR, version

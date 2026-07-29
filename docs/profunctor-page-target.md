@@ -50,7 +50,9 @@ action, and residual evidence. The receipt binds the exact input and output
 bytes and records `upstreamClaimsInherited: false`.
 
 The SVG labels are host SVG text used only for inspection. They are not Geordi
-`Text` nodes and do not establish a general-text claim.
+`Text` nodes and do not establish a general-text claim. Labels containing
+characters forbidden by XML 1.0 fail with `GEORDI_PAGE_OUTPUT_INVALID` instead
+of producing an unreadable SVG.
 
 ## Reproduce the checked proof
 
@@ -65,6 +67,10 @@ Expected output:
 ```text
 Wrote 4 Profunctor Page target proof artifacts.
 ```
+
+The write command stages and validates the complete inventory in a sibling
+directory. Concurrent writers are serialized. A failed commit restores the
+previous generated directory, so readers never receive a mixed artifact family.
 
 Verify the committed inventory, exact bytes, and package tests:
 
@@ -104,7 +110,8 @@ const result = lowerProfunctorPageArtifacts({
 
 The function either returns all four artifacts or throws
 `ProfunctorPageTargetError`. The error's `code` is the stable contract; `path`
-and `detail` are diagnostic context.
+and `detail` are diagnostic context. Invalid canonical JSON also retains the
+underlying parser error as `cause`.
 
 ## Diagnostics
 
@@ -117,7 +124,7 @@ and `detail` are diagnostic context.
 | `GEORDI_PAGE_INPUT_REFERENCE_INVALID` | A node, slot, reading-order, token, or other reference is invalid. |
 | `GEORDI_PAGE_INPUT_SOURCE_AMBIGUOUS` | Source evidence is missing, duplicated, mismatched, or unowned. |
 | `GEORDI_PAGE_BLOCK_UNSUPPORTED` | A visible block has no target geometry. |
-| `GEORDI_PAGE_OUTPUT_INVALID` | Emitted IR violates the core Geordi contract. |
+| `GEORDI_PAGE_OUTPUT_INVALID` | Emitted IR or the diagnostic SVG violates its target contract. |
 
 ## Claims and limits
 
