@@ -1,8 +1,8 @@
 # Geordi Status
 
-**Date**: 2026-05-25
+**Date**: 2026-07-28
 **Version**: `0.1.0-dev`
-**Active milestone**: Strict Positioned Glyph-Run Text
+**Active milestone**: Portable Page Target Proof
 **Current operating map**: [`../BEARING.md`](../BEARING.md)
 
 This document is a stable status signpost. It intentionally avoids fixed package test counts because
@@ -17,12 +17,16 @@ ladder:
 1. Rectangle render-everywhere proof: complete.
 2. Stanford bunny mesh proof: complete for shared asset identity and coarse browser/native rendering
    smoke, not pixel-identical 3D rasterization.
-3. Strict positioned glyph-run text: proof complete; CI gate coverage (S097–S100) remaining.
+3. Strict positioned glyph-run text: proof complete, including CI coverage.
+4. Portable Profunctor Page target: implementation and narrow evidence
+   complete; full repository verification and review active.
 
-The current active slice is tracked in [`../BEARING.md`](../BEARING.md). The strict text proof
-boundary is met — browser and native harnesses agree on metadata and coarse probes, the text-prep
-CLI generates a byte-stable strict fixture from pinned input, and docs are aligned. The remaining
-slices are CI fixture validation, browser smoke, native smoke, and final drift audit.
+The current active slice is tracked in [`../BEARING.md`](../BEARING.md). The
+portable page proof consumes the canonical Keep `profunctor-page/0` fixture
+without taking authority over its content or publication semantics. It emits
+structural target evidence and explicit residuals; it does not claim public
+prose rendering, accessibility behavior, native links, semantic HTML, or
+general text.
 
 ## Completed Capabilities
 
@@ -46,21 +50,24 @@ slices are CI fixture validation, browser smoke, native smoke, and final drift a
 | Strict text parity | Browser and native strict text reports now compare exact fixture/font/glyph-run/line-box/evidence/profile/count/semantic metadata before any pixel parity claim, and both runtimes guard the canonical text proof with the same fixture-local fill/transparent probe policy and evidence-derived allowed nonblank bounds. |
 | Text-prep tooling | `@flyingrobots/geordi-text-prep` provides `geordi-text-prep prepare`, validates pinned `geordi-text-prep-input/1` JSON, rejects host font lookup/fallback/multiline/bidi/variable-axis/source-drift inputs with stable diagnostics, writes deterministic `text-prep.generation-plan.geordi.json` audit data, and emits the first generated `geordi-strict-text-fixture/1` from prepared glyph-run/line-box input. |
 | Line-box measurement | `readTtfMetrics` parses TTF `head`/`hhea` tables for `unitsPerEm`, `ascender`, and `descender` without external dependencies. `measureFontLineBox` converts those metrics into a `geordi-fixed-26.6/1` line box. `FONT_ASCENT_DESCENT_BASELINE_POLICY` and `SINGLE_LINE_FONT_BOUNDS_LINE_BOX_POLICY` name the measurement approach. |
+| Profunctor Page target | `@flyingrobots/geordi-profunctor-page` validates the canonical Keep artifact family and emits deterministic resolved-rectangle IR, a target map, a byte-binding receipt, and a structural SVG witness with explicit residuals and nonclaims. |
 
 ## Active Work
 
-The active milestone is not "general text support." It is a strict positioned glyph-run proof.
+The active milestone is a structural page target proof, not general page or
+text support.
 
 Current rules:
 
-- strict text starts outside `geordi-ir/1`;
-- text evidence uses content-addressed font assets;
-- glyph runs are explicit positioned evidence;
-- source strings are semantic/debug metadata only in strict mode;
-- host font lookup, CSS text, platform text APIs, runtime shaping, fallback, wrapping, bidi, and
-  variable font axes are not compliant paths;
-- strict text graduates into core IR only after validation, browser rendering, native rendering,
-  parity metadata, and failure fixtures prove the contract.
+- the website remains page and prose authority;
+- Geordi owns target geometry, render identities, mappings, receipts, and
+  structural preview evidence;
+- upstream HTML claims are not inherited;
+- every visible semantic node receives one unique structural render node;
+- unsupported semantic capabilities become explicit residuals;
+- the proof uses no CSS text, platform text, host font lookup, or runtime
+  shaping; and
+- `geordi-ir/1` and its numeric profile remain unchanged.
 
 ## Active Architecture Corrections
 

@@ -1,13 +1,14 @@
 # Geordi Bearing
 
-**Date**: 2026-05-25
-**Branch baseline**: <code>main</code> at <code>69073ed</code>
-**Active milestone**: Strict Positioned Glyph-Run Text
-**Active profile under design**: <code>geordi-strict-positioned-glyph-run/1</code>
-**Active design doc**: [docs/design/2026-05-strict-positioned-glyph-run-plan.md](./docs/design/2026-05-strict-positioned-glyph-run-plan.md)
-**Remaining slice PRD/test plan**:
-[docs/design/2026-05-strict-text-remaining-slices-prd-test-plan.md](./docs/design/2026-05-strict-text-remaining-slices-prd-test-plan.md)
-**Active DAG SVG**: [docs/design/2026-05-strict-positioned-glyph-run-dag.svg](./docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
+**Date**: 2026-07-28
+**Branch baseline**: <code>main</code> at <code>3d1a59f</code>
+**Active branch**: <code>cycle/profunctor-page-lowering</code>
+**Active milestone**: Portable Page Target Proof
+**Active target profile**: <code>geordi-profunctor-page-structural/1</code>
+**Active design and test plan**:
+[docs/design/2026-07-profunctor-page-target-proof.md](./docs/design/2026-07-profunctor-page-target-proof.md)
+**Active DAG SVG**:
+[docs/design/2026-07-profunctor-page-target-proof-dag.svg](./docs/design/2026-07-profunctor-page-target-proof-dag.svg)
 **Drift correction**: shared TypeScript/Rust contract DTOs must be generated from a Wesley common
 schema; see
 [docs/design/2026-05-wesley-common-type-generation.md](./docs/design/2026-05-wesley-common-type-generation.md).
@@ -16,13 +17,29 @@ edges; Rust remains native at the renderer and CLI core; WASM is reserved for ha
 kernels. See
 [docs/design/2026-05-typescript-rust-wasm-boundary.md](./docs/design/2026-05-typescript-rust-wasm-boundary.md).
 
-This file is the short-term operating map. Product laws remain in [docs/V0_DESIGN_LAWS.md](./docs/V0_DESIGN_LAWS.md). The active execution plan is the 100-slice strict positioned glyph-run plan below.
+This file is the short-term operating map. Product laws remain in
+[docs/V0_DESIGN_LAWS.md](./docs/V0_DESIGN_LAWS.md). The active execution plan
+is the six-slice portable page target proof. The completed 100-slice strict
+positioned glyph-run plan remains below as historical evidence.
 
 ## Current Position
 
-The rectangle render-everywhere proof and Stanford bunny mesh milestone are complete for their stated claim boundaries. The current exact pixel-probe rendering claim remains rectangle-only. The bunny proof establishes shared mesh identity, parser validation, sampled transform metadata, and visible browser/native rotation, not pixel-identical 3D rasterization.
+The rectangle, Stanford bunny, and strict positioned glyph-run milestones are
+complete for their stated claim boundaries. General text remains unsupported.
+The current cross-repository proof consumes one canonical Profunctor Page
+artifact family and lowers its structural regions into deterministic
+`geordi-ir/1`.
 
-Text remains deferred as a broad feature. The next credibility milestone is not general text support. It is a strict positioned glyph-run proof.
+The website remains the page, composition, publication, prose, and source-map
+authority. Geordi owns only target geometry, render-node identity, target
+mapping evidence, explicit residuals, and the structural preview witness.
+
+GitHub issue
+[#52](https://github.com/flyingrobots/geordi/issues/52) and milestone
+[Portable Page Target Proof](https://github.com/flyingrobots/geordi/milestone/1)
+own live work state. The authoritative upstream specimen is the three-file
+Keep fixture from website source commit
+[`6a411d7`](https://github.com/flyingrobots/profunctor-optics-website/commit/6a411d72c55edb6e4acc3b556d5cf96c303376f5).
 
 The strict text DTOs currently introduced in TypeScript and Rust are provisional until the Wesley
 common-type generator replaces mirrored hand-authored shapes. Validation, custom errors, IO, and
@@ -31,6 +48,50 @@ rendering behavior remain handwritten around generated DTOs.
 The TypeScript package is not intended to become a thin WASM wrapper around Rust for ordinary fixture
 validation. Shared conformance fixtures and stable diagnostic identities must prove cross-runtime
 agreement while simple edge behavior remains native in each host.
+
+## Portable Page Target Proof
+
+The active proof is deliberately structural. It does not make browser prose,
+accessibility, native-link, semantic-HTML, or general-text claims.
+
+The target profile is:
+
+```text
+geordi-profunctor-page-structural/1
+```
+
+The checked-in upstream inputs remain byte-identical conformance fixtures.
+Lowering must:
+
+- verify all three artifact versions and their aligned page identity;
+- verify the build manifest's page-artifact digest before emitting output;
+- preserve page-node, template-node, source-occurrence, token, link, and action
+  facts in inspectable Geordi-owned evidence;
+- map every visible page node to one unique render node;
+- emit explicit residuals for unsupported semantic capabilities;
+- emit deterministic `geordi-ir/1`, target-map, receipt, and SVG witness bytes;
+  and
+- refuse malformed, missing, duplicate, stale, or ambiguous evidence.
+
+The target must not inherit the upstream build manifest's
+`browser-native-flow` or `semantic-document-structure` claims. Those claims
+describe the semantic HTML target. The Geordi receipt makes this
+non-inheritance explicit.
+
+### Active slice order
+
+1. [x] **PTP001 — Law, roadmap, and test plan.**
+2. [x] **PTP002 — Exact upstream fixture and fail-closed intake.**
+3. [x] **PTP003 — Deterministic IR, target map, and receipt.**
+4. [x] **PTP004 — Structural SVG preview witness.**
+5. [x] **PTP005 — Negative evidence and living documentation.**
+6. [ ] **PTP006 — Full gates, review, and merge.**
+
+Each slice follows the dependency order in the active DAG. Mark a slice
+complete only after its acceptance evidence passes and its changes are
+committed. Current OPEN node: **PTP006**.
+
+![Portable page target proof DAG](docs/design/2026-07-profunctor-page-target-proof-dag.svg)
 
 ## Milestone Law
 
@@ -871,7 +932,7 @@ The milestone is complete. The next credibility milestone would be a `geordi-ir/
 graduation, or a production shaping pipeline with real `geordi-text-prep-shaping-fingerprint/1`
 provenance. No OPEN nodes remain in this DAG.
 
-## DAG Operating Rule
+## Completed Strict Text DAG Operating Rule
 
 To choose the next slice:
 

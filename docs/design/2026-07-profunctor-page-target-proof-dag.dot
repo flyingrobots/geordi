@@ -1,0 +1,24 @@
+digraph profunctor_page_target_proof {
+  graph [
+    bgcolor="transparent",
+    fontname="monospace",
+    label="Portable Page Target Proof",
+    labelloc="t",
+    rankdir="LR"
+  ];
+  node [
+    fontname="monospace",
+    shape="box",
+    style="filled"
+  ];
+  edge [fontname="monospace"];
+
+  PTP001 [fillcolor="#7dd3a8", label="PTP001\nLaw + plan\nCOMPLETE"];
+  PTP002 [fillcolor="#7dd3a8", label="PTP002\nFixture intake\nCOMPLETE"];
+  PTP003 [fillcolor="#7dd3a8", label="PTP003\nIR + map + receipt\nCOMPLETE"];
+  PTP004 [fillcolor="#7dd3a8", label="PTP004\nSVG witness\nCOMPLETE"];
+  PTP005 [fillcolor="#7dd3a8", label="PTP005\nNegative matrix + docs\nCOMPLETE"];
+  PTP006 [fillcolor="#f8d66d", label="PTP006\nFull gate + PR\nOPEN"];
+
+  PTP001 -> PTP002 -> PTP003 -> PTP004 -> PTP005 -> PTP006;
+}

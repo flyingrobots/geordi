@@ -10,7 +10,16 @@ semantics, while these documents define implementation slices. The product north
 [`../../VISION.md`](../../VISION.md), and archive candidates are tracked in
 [`../ARCHIVE_CANDIDATES.md`](../ARCHIVE_CANDIDATES.md).
 
-## Active Slice Map: Strict Positioned Glyph-Run Text
+## Active Slice Map: Portable Page Target Proof
+
+The active design is the
+[Profunctor Page target proof](./2026-07-profunctor-page-target-proof.md), with
+its dependency graph in
+[DOT](./2026-07-profunctor-page-target-proof-dag.dot) and
+[SVG](./2026-07-profunctor-page-target-proof-dag.svg). The strict positioned
+glyph-run map below is complete and retained as historical execution evidence.
+
+## Completed Slice Map: Strict Positioned Glyph-Run Text
 
 The executable checklist for this sequence lives in
 [`../../BEARING.md`](../../BEARING.md). The detailed design document is

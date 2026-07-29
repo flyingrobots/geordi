@@ -10,11 +10,42 @@ until the work is resolved.
 
 ---
 
-## P0 Stabilization
+## P0 Active Work And Stabilization
 
 These open items come from the repo audit and the v0 design pass. See
 [`BEARING.md`](./BEARING.md) for the current operating map and
 [`docs/V0_DESIGN_LAWS.md`](./docs/V0_DESIGN_LAWS.md) for the product and runtime-contract rationale.
+
+---
+
+### Lower the Profunctor Page conformance specimen
+
+**Priority**: P0
+**Issue**: [#52](https://github.com/flyingrobots/geordi/issues/52)
+**Milestone**:
+[Portable Page Target Proof](https://github.com/flyingrobots/geordi/milestone/1)
+**Status**: Active. Implementation and narrow evidence are complete; full
+repository verification and review remain. `BEARING.md` owns the six-slice
+execution order and
+[`docs/design/2026-07-profunctor-page-target-proof.md`](./docs/design/2026-07-profunctor-page-target-proof.md)
+owns the accepted contract and test plan.
+
+Consume the canonical Keep `profunctor-page/0` fixture and lower the complete
+semantic page into deterministic structural `geordi-ir/1`. Preserve source and
+semantic identities in target mapping evidence, retain token and action facts,
+and refuse to inherit semantic HTML or general-text claims.
+
+Acceptance criteria:
+
+- the three upstream artifacts remain byte-identical to website commit
+  `6a411d72c55edb6e4acc3b556d5cf96c303376f5`;
+- malformed, missing, stale, duplicate, or ambiguous inputs fail closed;
+- every visible page node maps to one unique Geordi render node;
+- unsupported capabilities are explicit target residuals;
+- deterministic IR, target-map, receipt, and SVG preview evidence are
+  checked; and
+- package, documentation, repository, and render-everywhere gates remain
+  green.
 
 ---
 
@@ -91,10 +122,11 @@ Acceptance criteria:
 **Source**: v0 design laws,
 [`docs/design/2026-05-strict-text-font-profile.md`](./docs/design/2026-05-strict-text-font-profile.md),
 [`docs/design/2026-05-strict-positioned-glyph-run-plan.md`](./docs/design/2026-05-strict-positioned-glyph-run-plan.md)
-**Status**: Active execution plan. `BEARING.md` owns the 100-slice checklist and
+**Status**: Completed. `BEARING.md` retains the 100-slice checklist and
 [`docs/design/2026-05-strict-positioned-glyph-run-dag.svg`](./docs/design/2026-05-strict-positioned-glyph-run-dag.svg)
-owns the dependency graph. The current baseline remains `text.raw-runtime-shaping`; strict text
-features must remain explicit and fail-loud until the compiler can lower text deterministically.
+owns the completed dependency graph. The baseline remains
+`text.raw-runtime-shaping`; strict text features stay explicit and fail-loud
+until the compiler can lower text deterministically.
 
 The current renderer path lets the runtime shape raw text. That is useful for v0 rendering, but it
 cannot support a pixel-identical cross-runtime text claim because font lookup, glyph fallback,
@@ -221,8 +253,9 @@ catches it and converts to a diagnostic but loses the GraphQL source location (`
 from the original `ParseError`. Propagate the location into `Diagnostic.details` so callers can
 report precise SDL error positions to users.
 
-Open GitHub-backed backlog after this reconciliation: #2, #3, and #4 remain active after the
-current PR merges.
+Open GitHub-backed compiler-core backlog after this reconciliation: #2, #3,
+and #4 remain active. Cross-repository target proof #52 is the scheduled P0
+milestone.
 
 ---
 

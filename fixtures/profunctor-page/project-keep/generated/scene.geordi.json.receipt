@@ -1,0 +1,48 @@
+{
+  "comparatorVersion": "geordi-profunctor-page-comparator/1",
+  "compositionRef": "composition:project-page@0",
+  "entityRef": "entity:project.keep",
+  "hashAlgorithm": "sha256",
+  "inputCapabilities": [
+    "headings",
+    "landmarks",
+    "native-links",
+    "semantic-html"
+  ],
+  "inputHashes": {
+    "buildManifest": "sha256:975efc9c701cbd7a6981787150748b76d1e53fd83cd424128667bc8014687ab7",
+    "page": "sha256:12b90184b4e238bc6bd7db944af8651900b830ea76ba775ab7c7ee20be051e73",
+    "sourceMap": "sha256:a40e97f2fd513519092d2a131c0d7107517b92bd7e9cfd5e79df70a65a3fe044"
+  },
+  "inputNodeCount": 5,
+  "irVersion": "geordi-ir/1",
+  "numericProfile": "geordi-finite-binary64/1",
+  "outputHashes": {
+    "ir": "sha256:bbe36f02a8bc0901df102af95ef117c03b388ec9bf114ee66b2cf82049dcf209",
+    "map": "sha256:c94aa6f55bd3ebdb41801d41cbb40301e5da9af8a49630029478c4951d17312f",
+    "preview": "sha256:c5051bff121e51780320353d4d08b9c4e16ca7bb18b14c78e6cdfbbe45176e4a"
+  },
+  "outputRenderNodeCount": 5,
+  "pageId": "page:project.keep",
+  "route": "/projects/keep/",
+  "targetClaims": [
+    "resolved-rectangle-geometry",
+    "semantic-node-to-render-node-identity",
+    "structural-preview"
+  ],
+  "targetNonclaims": [
+    "accessibility-tree",
+    "browser-landmarks",
+    "general-text",
+    "native-link-activation",
+    "semantic-html",
+    "website-pixel-parity"
+  ],
+  "targetProfile": "geordi-profunctor-page-structural/1",
+  "upstreamClaims": [
+    "browser-native-flow",
+    "semantic-document-structure"
+  ],
+  "upstreamClaimsInherited": false,
+  "version": "geordi-profunctor-page-receipt/1"
+}

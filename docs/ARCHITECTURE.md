@@ -62,6 +62,24 @@ consume prepared strict artifacts only. This package is not a WASM wrapper and d
 runtime text shaping, font parsing, or evidence generation. It does ship comparison (drift-gate
 via `geordi-text-prep compare`) and receipt generation as part of the strict text proof layer.
 
+### `@flyingrobots/geordi-profunctor-page`
+
+**Bounded Profunctor Page structural target**
+
+- **Intake** (`src/parse.ts`): validates exact `profunctor-page/0`,
+  `profunctor-page-source-map/0`, and `profunctor-build-manifest/0`
+  relationships
+- **Profile** (`src/profile.ts`): owns supported block geometry, target token
+  values, target claims, and target nonclaims
+- **Lowering** (`src/lower.ts`): emits valid rectangle-only `geordi-ir/1`,
+  target-map, and receipt artifacts
+- **Preview** (`src/preview.ts`): emits a diagnostic SVG from the same target
+  geometry
+
+**Key principle**: The website owns page meaning. Geordi owns only the target
+projection and its evidence. The target fails closed on unsupported visible
+blocks and does not inherit semantic HTML claims.
+
 ## Compilation Pipeline
 
 ```text

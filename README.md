@@ -17,7 +17,7 @@ loudly, and produce behavior that can be proven across runtimes.
 ## Current Status
 
 **Version**: `0.1.0-dev`
-**Active milestone**: Strict Positioned Glyph-Run Text
+**Active milestone**: Portable Page Target Proof
 **Current operating map**: [BEARING.md](BEARING.md)
 
 Completed proof layers:
@@ -35,9 +35,15 @@ Completed proof layers:
   metadata and coarse pixel probes. The `geordi-text-prep` CLI produces a deterministic generated
   strict text fixture from pinned prepared glyph-run input, with a byte-stable generation plan.
   Shaping remains a text-prep compiler boundary; runtime renderers consume prepared artifacts only.
+- The Profunctor Page structural target validates one canonical Keep
+  `profunctor-page/0` artifact family and emits deterministic rectangle IR,
+  mapping evidence, a receipt, and an SVG witness without inheriting semantic
+  HTML or general-text claims.
 
 Active work:
 
+- The portable page target implementation is complete locally and is in its
+  full repository verification and review slice.
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
   Wesley/common-type generation.
 
@@ -59,12 +65,14 @@ Current nonclaims:
 | Product and architecture north star | [VISION.md](VISION.md) |
 | Current slice, checklist, and active DAG | [BEARING.md](BEARING.md) |
 | Current status summary | [docs/STATUS.md](docs/STATUS.md) |
+| Documentation policy and corpus map | [docs/README.md](docs/README.md) |
 | Compiler/package architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Product/runtime laws | [docs/V0_DESIGN_LAWS.md](docs/V0_DESIGN_LAWS.md) |
 | TypeScript/Rust/WASM boundary policy | [docs/design/2026-05-typescript-rust-wasm-boundary.md](docs/design/2026-05-typescript-rust-wasm-boundary.md) |
 | Shared TypeScript/Rust contract generation plan | [docs/design/2026-05-wesley-common-type-generation.md](docs/design/2026-05-wesley-common-type-generation.md) |
 | Active strict text design | [docs/design/2026-05-strict-positioned-glyph-run-plan.md](docs/design/2026-05-strict-positioned-glyph-run-plan.md) |
 | Render-everywhere runnable guide | [docs/render-everywhere.md](docs/render-everywhere.md) |
+| Profunctor Page target reference | [docs/profunctor-page-target.md](docs/profunctor-page-target.md) |
 | Full source-to-runtime walkthrough | [docs/end-to-end.md](docs/end-to-end.md) |
 | Stable compiler error codes | [docs/ERROR_CODES.md](docs/ERROR_CODES.md) |
 | Rust gates | [docs/RUST_GATES.md](docs/RUST_GATES.md) |
@@ -133,6 +141,7 @@ geordi/
     compiler-core/     # @flyingrobots/geordi-compiler-core - compile orchestration
     schema-graphql/    # @flyingrobots/geordi-schema-graphql - GraphQL SDL adapter
     gpvue/             # @flyingrobots/geordi-gpvue - constrained GPVue fixture compiler
+    profunctor-page/   # @flyingrobots/geordi-profunctor-page - structural page target
     render-fixture/    # @flyingrobots/geordi-render-fixture - shared fixture contracts
     runtime-webgl/     # @flyingrobots/geordi-runtime-webgl - browser runtime package
     text-prep/         # @flyingrobots/geordi-text-prep - pinned strict text prep CLI
@@ -148,6 +157,7 @@ geordi/
     native-render-everywhere/
 
   fixtures/
+    profunctor-page/
     render-everywhere/
 
   docs/
@@ -168,6 +178,13 @@ Run the TypeScript workspace gates:
 pnpm typecheck
 pnpm lint
 pnpm test
+```
+
+Generate and verify the portable page target:
+
+```bash
+pnpm generate:profunctor-page-target
+pnpm test:profunctor-page-target
 ```
 
 Run documentation and repository hygiene gates:
