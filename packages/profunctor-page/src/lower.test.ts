@@ -67,6 +67,20 @@ function objectArray(value: JsonValue | undefined, path: string): readonly JsonO
   );
 }
 
+function stringArray(value: JsonValue | undefined, path: string): string[] {
+  if (!Array.isArray(value)) {
+    throw new TestArtifactShapeError(path);
+  }
+  const result: string[] = [];
+  for (const [index, item] of (value as readonly JsonValue[]).entries()) {
+    if (typeof item !== 'string') {
+      throw new TestArtifactShapeError(`${path}[${index}]`);
+    }
+    result.push(item);
+  }
+  return result;
+}
+
 function mutableObject(
   value: JsonValue | undefined,
   path: string,
@@ -117,6 +131,28 @@ function fixtureInputWithPageMutation(
 }
 
 describe('lowerProfunctorPageArtifacts', () => {
+  it('rejects inherited object properties as target token references', () => {
+    const input = fixtureInputWithPageMutation((page) => {
+      const root = mutablePageNode(page, 0);
+      root.tokens = {
+        ...object(root.tokens, '$page.nodes[0].tokens'),
+        surface: 'constructor',
+      };
+      page.tokenRefs = stringArray(page.tokenRefs, '$page.tokenRefs').map(
+        (reference) =>
+          reference === 'semantic.surface' ? 'constructor' : reference,
+      );
+    });
+
+    expect(() => {
+      lowerProfunctorPageArtifacts(input);
+    }).toThrow(
+      expect.objectContaining<Partial<ProfunctorPageTargetError>>({
+        code: 'GEORDI_PAGE_INPUT_REFERENCE_INVALID',
+      }),
+    );
+  });
+
   it('rejects XML 1.0-invalid control characters in preview labels', () => {
     expect(() =>
       renderProfunctorPageStructuralPreview('page\u0000id', '/', []),

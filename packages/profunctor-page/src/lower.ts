@@ -472,7 +472,10 @@ function tokenValue(reference: string): string {
 function isTargetTokenReference(
   value: string | undefined,
 ): value is ProfunctorPageTokenReference {
-  return value !== undefined && value in PROFUNCTOR_PAGE_TOKEN_VALUES;
+  return (
+    value !== undefined &&
+    Object.hasOwn(PROFUNCTOR_PAGE_TOKEN_VALUES, value)
+  );
 }
 
 function optionalActionString(
