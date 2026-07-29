@@ -421,13 +421,28 @@ describe('parseProfunctorPageArtifacts', () => {
     });
   });
 
-  it('rejects a missing required target token role', () => {
+  it('rejects a declared token that no page node binds', () => {
     const input = replaceJson(fixtureInput(), 'page', (page) => {
       const tokens = mutableObject(
         pageNode(page, 0).tokens,
         '$page.nodes[0].tokens',
       );
       delete tokens.surfaceTint;
+    });
+    expectDiagnostic(
+      () => {
+        parseProfunctorPageArtifacts(input);
+      },
+      'GEORDI_PAGE_INPUT_REFERENCE_INVALID',
+    );
+  });
+
+  it('rejects a node token that the page never declares', () => {
+    const input = replaceJson(fixtureInput(), 'page', (page) => {
+      mutableObject(
+        pageNode(page, 0).tokens,
+        '$page.nodes[0].tokens',
+      ).surfaceTint = 'semantic.undeclared';
     });
     expectDiagnostic(
       () => {
