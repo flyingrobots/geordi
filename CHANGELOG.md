@@ -15,6 +15,8 @@
   mapping evidence, a byte-binding receipt, and a diagnostic SVG witness.
   Generated proof writes stage and validate the complete output inventory,
   serialize concurrent writers, and restore prior evidence if commit fails.
+  Target maps and receipts preserve page-wide capability requirements and
+  residuals, while render-node IDs retain the complete page-node identity.
 - **`@flyingrobots/geordi-core`**: Add core-owned `geordi-ir/1` constants, current `GeordiIr` types,
   and structural validation for scenes, nodes, bindings, animations, keyframes, and finite
   numeric fields.
@@ -117,7 +119,9 @@
   malformed, unsupported, stale, duplicate, dangling, ambiguous, missing, and
   invalid-output failure paths with stable diagnostic codes. Preserve
   canonical-JSON parser failures as error causes, reject XML-invalid preview
-  labels, and cover both directions of token-reference drift.
+  labels, reject inherited token keys and duplicate fixed-geometry blocks,
+  cover both directions of token-reference drift, and smoke-test the package's
+  public export path.
 - **CI**: Install Chromium for Playwright and run the browser render-everywhere Playwright gate on
   pull requests and pushes to `main`.
 - **`@flyingrobots/geordi-core`**: add `geordi-ir/1` validation coverage for valid IR, version

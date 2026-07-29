@@ -23,8 +23,10 @@ The lowerer accepts exact UTF-8 source strings for one aligned artifact family:
 Before lowering, it validates JSON shape, exact versions, cross-artifact page
 and route identity, the exact page-byte digest, dependency order, node and slot
 relationships, token references, and source-occurrence ownership. Unsupported
-visible block definitions fail closed. An unsupported hidden block may remain
-in the target map with no render node and an explicit residual.
+visible block definitions, duplicate visible fixed-geometry definitions, and
+token names outside the target profile's own keys fail closed. An unsupported
+hidden block may remain in the target map with no render node and an explicit
+residual.
 
 The current profile supports these block definitions:
 
@@ -46,13 +48,17 @@ One successful lowering returns four UTF-8 artifacts:
 | `scene.geordi.preview.svg` | Structural diagnostic witness |
 
 The target map preserves page-node, template-node, source-occurrence, token,
-action, and residual evidence. The receipt binds the exact input and output
-bytes and records `upstreamClaimsInherited: false`.
+action, page-wide capability, and residual evidence. Render-node IDs retain the
+complete page-node ID, making the mapping injective. The receipt binds the
+exact input and output bytes, repeats the page-wide capability requirements,
+and records `upstreamClaimsInherited: false`.
 
 The SVG labels are host SVG text used only for inspection. They are not Geordi
 `Text` nodes and do not establish a general-text claim. Labels containing
 characters forbidden by XML 1.0 fail with `GEORDI_PAGE_OUTPUT_INVALID` instead
-of producing an unreadable SVG.
+of producing an unreadable SVG. The accessible title derives from the input
+page identity, and root-only formatting is selected by the declared root ID
+rather than array position.
 
 ## Reproduce the checked proof
 

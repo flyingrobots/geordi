@@ -111,6 +111,9 @@ artifacts. Before output:
 9. Reject duplicate or ambiguous source-map identities.
 10. Reject unsupported visible block definitions instead of inventing
     geometry.
+11. Reject duplicate visible block definitions because each supported
+    definition owns one fixed geometry.
+12. Accept token references only when they are own keys of the target profile.
 
 Array order is semantic and remains unchanged. Object keys are serialized
 through the canonical JSON port. Locale-sensitive comparison is forbidden.
@@ -154,7 +157,8 @@ diagnostic SVG and are accompanied by an explicit nonclaim.
 - source occurrence and upstream source evidence when present;
 - token role, token reference, and target profile value;
 - preserved links and actions;
-- input capability requirements; and
+- page-wide and node-level input capability requirements;
+- page-wide and node-level unsupported-capability residuals; and
 - explicit target residuals.
 
 Every visible page node has exactly one map entry and exactly one render node.
@@ -170,6 +174,7 @@ The first specimen contains no hidden nodes.
 - page, composition, entity, route, target profile, IR version, and numeric
   profile identities;
 - input and output node counts;
+- page-wide input capability requirements;
 - supported target claims;
 - explicit target nonclaims;
 - upstream claims and `upstreamClaimsInherited: false`; and
@@ -234,7 +239,9 @@ Error prose is explanatory; the diagnostic code is the contract.
 - dangling root, reading-order, slot, outline, or landmark reference;
 - missing, duplicate, or mismatched source occurrence;
 - unsupported visible block;
-- missing required token role; and
+- duplicate visible fixed-geometry block;
+- missing, undeclared, or inherited target token reference;
+- missing page-wide capability evidence; and
 - invalid emitted IR.
 
 Each negative test asserts a stable diagnostic code and no output.
