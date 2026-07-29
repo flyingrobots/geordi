@@ -120,8 +120,8 @@
   invalid-output failure paths with stable diagnostic codes. Preserve
   canonical-JSON parser failures as error causes, reject XML-invalid preview
   labels, reject inherited token keys and duplicate fixed-geometry blocks,
-  cover both directions of token-reference drift, and smoke-test the package's
-  public export path.
+  reject duplicate node capability requirements, cover both directions of
+  token-reference drift, and smoke-test the package's public export path.
 - **CI**: Install Chromium for Playwright and run the browser render-everywhere Playwright gate on
   pull requests and pushes to `main`.
 - **`@flyingrobots/geordi-core`**: add `geordi-ir/1` validation coverage for valid IR, version

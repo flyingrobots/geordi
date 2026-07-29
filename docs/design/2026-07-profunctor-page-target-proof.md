@@ -114,6 +114,7 @@ artifacts. Before output:
 11. Reject duplicate visible block definitions because each supported
     definition owns one fixed geometry.
 12. Accept token references only when they are own keys of the target profile.
+13. Reject duplicate page-wide or node-level capability requirements.
 
 Array order is semantic and remains unchanged. Object keys are serialized
 through the canonical JSON port. Locale-sensitive comparison is forbidden.

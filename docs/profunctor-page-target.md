@@ -24,9 +24,10 @@ Before lowering, it validates JSON shape, exact versions, cross-artifact page
 and route identity, the exact page-byte digest, dependency order, node and slot
 relationships, token references, and source-occurrence ownership. Unsupported
 visible block definitions, duplicate visible fixed-geometry definitions, and
-token names outside the target profile's own keys fail closed. An unsupported
-hidden block may remain in the target map with no render node and an explicit
-residual.
+token names outside the target profile's own keys fail closed. Capability lists
+must not contain duplicate names. An unsupported hidden block may remain in the
+target map with no render node, a hidden residual, and residuals for its input
+capabilities.
 
 The current profile supports these block definitions:
 
