@@ -81,7 +81,7 @@ non-inheritance explicit.
 ### Active slice order
 
 1. [x] **PTP001 — Law, roadmap, and test plan.**
-2. [ ] **PTP002 — Exact upstream fixture and fail-closed intake.**
+2. [x] **PTP002 — Exact upstream fixture and fail-closed intake.**
 3. [ ] **PTP003 — Deterministic IR, target map, and receipt.**
 4. [ ] **PTP004 — Structural SVG preview witness.**
 5. [ ] **PTP005 — Negative evidence and living documentation.**
@@ -89,7 +89,7 @@ non-inheritance explicit.
 
 Each slice follows the dependency order in the active DAG. Mark a slice
 complete only after its acceptance evidence passes and its changes are
-committed. Current OPEN node: **PTP002**.
+committed. Current OPEN node: **PTP003**.
 
 ![Portable page target proof DAG](docs/design/2026-07-profunctor-page-target-proof-dag.svg)
 
