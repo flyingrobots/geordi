@@ -41,6 +41,13 @@ class ProfunctorPageTargetFixtureModeError extends Error {
   }
 }
 
+class ProfunctorPageTargetFixtureEntryError extends Error {
+  constructor(name) {
+    super(`Generated target entry must be a regular file: ${name}`);
+    this.name = new.target.name;
+  }
+}
+
 async function main() {
   const mode = process.argv[2];
   if (mode !== '--check' && mode !== '--write') {
@@ -130,10 +137,12 @@ async function checkOutputs(outputs) {
 async function outputInventory() {
   try {
     const entries = await readdir(GENERATED_ROOT, { withFileTypes: true });
-    return entries
-      .filter((entry) => entry.isFile())
-      .map((entry) => entry.name)
-      .toSorted();
+    return entries.map((entry) => {
+      if (!entry.isFile()) {
+        throw new ProfunctorPageTargetFixtureEntryError(entry.name);
+      }
+      return entry.name;
+    }).toSorted();
   } catch (error) {
     if (isErrno(error, 'ENOENT')) {
       return [];
