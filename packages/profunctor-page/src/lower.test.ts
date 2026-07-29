@@ -18,6 +18,7 @@ import {
   validateProfunctorPageTargetIr,
   type ProfunctorPageInput,
 } from './index.js';
+import { renderProfunctorPageStructuralPreview } from './preview.js';
 
 const FIXTURE_ROOT = fileURLToPath(
   new URL('../../../fixtures/profunctor-page/project-keep/input/', import.meta.url),
@@ -116,6 +117,17 @@ function fixtureInputWithPageMutation(
 }
 
 describe('lowerProfunctorPageArtifacts', () => {
+  it('rejects XML 1.0-invalid control characters in preview labels', () => {
+    expect(() =>
+      renderProfunctorPageStructuralPreview('page\u0000id', '/', []),
+    ).toThrow(
+      expect.objectContaining({
+        code: 'GEORDI_PAGE_OUTPUT_INVALID',
+        path: '$preview',
+      }),
+    );
+  });
+
   it('emits deterministic Geordi target artifacts', () => {
     const first = lowerProfunctorPageArtifacts(fixtureInput());
     const second = lowerProfunctorPageArtifacts(fixtureInput());

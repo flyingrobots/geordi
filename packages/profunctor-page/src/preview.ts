@@ -1,4 +1,7 @@
-import type { ParsedPageNode } from './contracts.js';
+import {
+  ProfunctorPageTargetError,
+  type ParsedPageNode,
+} from './contracts.js';
 import {
   PROFUNCTOR_PAGE_CANVAS,
   type ProfunctorPageBlockGeometry,
@@ -72,6 +75,25 @@ function renderNode(node: PreviewNode, index: number): string {
 }
 
 function escapeXml(value: string): string {
+  for (const character of value) {
+    const codePoint = character.codePointAt(0);
+    const valid =
+      codePoint === 0x09 ||
+      codePoint === 0x0a ||
+      codePoint === 0x0d ||
+      (codePoint !== undefined &&
+        ((codePoint >= 0x20 && codePoint <= 0xd7ff) ||
+          (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+          (codePoint >= 0x10000 && codePoint <= 0x10ffff)));
+    if (!valid) {
+      throw new ProfunctorPageTargetError(
+        'GEORDI_PAGE_OUTPUT_INVALID',
+        '$preview',
+        'Preview labels must contain only XML 1.0-compatible characters.',
+      );
+    }
+  }
+
   return value
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
