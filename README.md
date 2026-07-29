@@ -17,7 +17,7 @@ loudly, and produce behavior that can be proven across runtimes.
 ## Current Status
 
 **Version**: `0.1.0-dev`
-**Active milestone**: Strict Positioned Glyph-Run Text
+**Active milestone**: Portable Page Target Proof
 **Current operating map**: [BEARING.md](BEARING.md)
 
 Completed proof layers:
@@ -38,6 +38,10 @@ Completed proof layers:
 
 Active work:
 
+- The canonical Keep `profunctor-page/0` conformance specimen is being lowered
+  into deterministic structural `geordi-ir/1`, target mapping evidence, and an
+  SVG witness under
+  [`geordi-profunctor-page-structural/1`](docs/design/2026-07-profunctor-page-target-proof.md).
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
   Wesley/common-type generation.
 
@@ -59,6 +63,7 @@ Current nonclaims:
 | Product and architecture north star | [VISION.md](VISION.md) |
 | Current slice, checklist, and active DAG | [BEARING.md](BEARING.md) |
 | Current status summary | [docs/STATUS.md](docs/STATUS.md) |
+| Documentation policy and corpus map | [docs/README.md](docs/README.md) |
 | Compiler/package architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Product/runtime laws | [docs/V0_DESIGN_LAWS.md](docs/V0_DESIGN_LAWS.md) |
 | TypeScript/Rust/WASM boundary policy | [docs/design/2026-05-typescript-rust-wasm-boundary.md](docs/design/2026-05-typescript-rust-wasm-boundary.md) |
