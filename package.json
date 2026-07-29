@@ -21,7 +21,7 @@
     "test:render-everywhere:strict-text-generated": "pnpm --filter @flyingrobots/geordi-text-prep build && node packages/text-prep/dist/cli.js compare --input fixtures/render-everywhere/strict-text/generated/geordi.text-prep.input.geordi.json --expected fixtures/render-everywhere/strict-text/generated",
     "generate:profunctor-page-target": "pnpm --filter @flyingrobots/geordi-profunctor-page build && node scripts/generate-profunctor-page-target-proof.mjs --write",
     "test:profunctor-page-target": "pnpm test:profunctor-page-target:artifacts && pnpm --filter @flyingrobots/geordi-profunctor-page test",
-    "test:profunctor-page-target:artifacts": "pnpm --filter @flyingrobots/geordi-profunctor-page build && node scripts/generate-profunctor-page-target-proof.mjs --check",
+    "test:profunctor-page-target:artifacts": "node --test scripts/atomic-generated-directory.test.mjs && pnpm --filter @flyingrobots/geordi-profunctor-page build && node scripts/generate-profunctor-page-target-proof.mjs --check",
     "test:render-everywhere:gpvue": "pnpm --filter @flyingrobots/geordi-core build && pnpm --filter @flyingrobots/geordi-render-fixture build && pnpm --filter @flyingrobots/geordi-gpvue build && node --experimental-strip-types scripts/render-everywhere-gpvue-smoke.ts",
     "test:repo-sludge": "node scripts/check-repo-sludge.mjs",
     "test:coverage": "turbo run test:coverage",

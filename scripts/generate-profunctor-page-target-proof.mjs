@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -8,6 +8,7 @@ import {
   PROFUNCTOR_PAGE_TARGET_PREVIEW_PATH,
   PROFUNCTOR_PAGE_TARGET_RECEIPT_PATH,
 } from '../packages/profunctor-page/dist/index.js';
+import { replaceGeneratedDirectory } from './lib/atomic-generated-directory.mjs';
 
 const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURE_ROOT = join(
@@ -88,20 +89,7 @@ async function inputArtifact(filename) {
 }
 
 async function writeOutputs(outputs) {
-  await mkdir(GENERATED_ROOT, { recursive: true });
-  const existing = await outputInventory();
-  for (const filename of existing) {
-    if (!outputs.has(filename)) {
-      await rm(join(GENERATED_ROOT, filename));
-    }
-  }
-
-  for (const [filename, content] of outputs) {
-    const destination = join(GENERATED_ROOT, filename);
-    const temporary = `${destination}.tmp`;
-    await writeFile(temporary, content, 'utf8');
-    await rename(temporary, destination);
-  }
+  await replaceGeneratedDirectory(GENERATED_ROOT, outputs);
 }
 
 async function checkOutputs(outputs) {
