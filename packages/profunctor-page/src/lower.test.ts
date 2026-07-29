@@ -198,11 +198,11 @@ describe('lowerProfunctorPageArtifacts', () => {
       'Rect',
     ]);
     expect(nodes.map((node) => node.id)).toEqual([
-      'geordi-node:project.keep#project-page.root',
-      'geordi-node:project.keep#project-page.hero',
-      'geordi-node:project.keep#project-page.facts',
-      'geordi-node:project.keep#project-page.documentation',
-      'geordi-node:project.keep#project-page.related',
+      'geordi-node:page-node:project.keep#project-page.root',
+      'geordi-node:page-node:project.keep#project-page.hero',
+      'geordi-node:page-node:project.keep#project-page.facts',
+      'geordi-node:page-node:project.keep#project-page.documentation',
+      'geordi-node:page-node:project.keep#project-page.related',
     ]);
   });
 

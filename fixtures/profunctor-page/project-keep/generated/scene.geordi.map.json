@@ -9,7 +9,7 @@
         "semantic-html"
       ],
       "pageNodeId": "page-node:project.keep#project-page.root",
-      "renderNodeId": "geordi-node:project.keep#project-page.root",
+      "renderNodeId": "geordi-node:page-node:project.keep#project-page.root",
       "residuals": [
         {
           "capability": "general-text",
@@ -136,7 +136,7 @@
         "native-links"
       ],
       "pageNodeId": "page-node:project.keep#project-page.hero",
-      "renderNodeId": "geordi-node:project.keep#project-page.hero",
+      "renderNodeId": "geordi-node:page-node:project.keep#project-page.hero",
       "residuals": [
         {
           "capability": "general-text",
@@ -194,7 +194,7 @@
         "headings"
       ],
       "pageNodeId": "page-node:project.keep#project-page.facts",
-      "renderNodeId": "geordi-node:project.keep#project-page.facts",
+      "renderNodeId": "geordi-node:page-node:project.keep#project-page.facts",
       "residuals": [
         {
           "capability": "general-text",
@@ -233,7 +233,7 @@
         "native-links"
       ],
       "pageNodeId": "page-node:project.keep#project-page.documentation",
-      "renderNodeId": "geordi-node:project.keep#project-page.documentation",
+      "renderNodeId": "geordi-node:page-node:project.keep#project-page.documentation",
       "residuals": [
         {
           "capability": "general-text",
@@ -291,7 +291,7 @@
         "native-links"
       ],
       "pageNodeId": "page-node:project.keep#project-page.related",
-      "renderNodeId": "geordi-node:project.keep#project-page.related",
+      "renderNodeId": "geordi-node:page-node:project.keep#project-page.related",
       "residuals": [
         {
           "capability": "general-text",

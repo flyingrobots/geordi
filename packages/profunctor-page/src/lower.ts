@@ -455,7 +455,7 @@ function previewNode(node: TargetNode): PreviewNode {
 }
 
 function renderNodeId(pageNodeId: string): string {
-  return `geordi-node:${pageNodeId.replace(/^page-node:/u, '')}`;
+  return `geordi-node:${pageNodeId}`;
 }
 
 function tokenValue(reference: string): string {
