@@ -18,7 +18,8 @@ ladder:
 2. Stanford bunny mesh proof: complete for shared asset identity and coarse browser/native rendering
    smoke, not pixel-identical 3D rasterization.
 3. Strict positioned glyph-run text: proof complete, including CI coverage.
-4. Portable Profunctor Page target: active structural lowering proof.
+4. Portable Profunctor Page target: implementation and narrow evidence
+   complete; full repository verification and review active.
 
 The current active slice is tracked in [`../BEARING.md`](../BEARING.md). The
 portable page proof consumes the canonical Keep `profunctor-page/0` fixture
@@ -49,6 +50,7 @@ general text.
 | Strict text parity | Browser and native strict text reports now compare exact fixture/font/glyph-run/line-box/evidence/profile/count/semantic metadata before any pixel parity claim, and both runtimes guard the canonical text proof with the same fixture-local fill/transparent probe policy and evidence-derived allowed nonblank bounds. |
 | Text-prep tooling | `@flyingrobots/geordi-text-prep` provides `geordi-text-prep prepare`, validates pinned `geordi-text-prep-input/1` JSON, rejects host font lookup/fallback/multiline/bidi/variable-axis/source-drift inputs with stable diagnostics, writes deterministic `text-prep.generation-plan.geordi.json` audit data, and emits the first generated `geordi-strict-text-fixture/1` from prepared glyph-run/line-box input. |
 | Line-box measurement | `readTtfMetrics` parses TTF `head`/`hhea` tables for `unitsPerEm`, `ascender`, and `descender` without external dependencies. `measureFontLineBox` converts those metrics into a `geordi-fixed-26.6/1` line box. `FONT_ASCENT_DESCENT_BASELINE_POLICY` and `SINGLE_LINE_FONT_BOUNDS_LINE_BOX_POLICY` name the measurement approach. |
+| Profunctor Page target | `@flyingrobots/geordi-profunctor-page` validates the canonical Keep artifact family and emits deterministic resolved-rectangle IR, a target map, a byte-binding receipt, and a structural SVG witness with explicit residuals and nonclaims. |
 
 ## Active Work
 

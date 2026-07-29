@@ -35,13 +35,15 @@ Completed proof layers:
   metadata and coarse pixel probes. The `geordi-text-prep` CLI produces a deterministic generated
   strict text fixture from pinned prepared glyph-run input, with a byte-stable generation plan.
   Shaping remains a text-prep compiler boundary; runtime renderers consume prepared artifacts only.
+- The Profunctor Page structural target validates one canonical Keep
+  `profunctor-page/0` artifact family and emits deterministic rectangle IR,
+  mapping evidence, a receipt, and an SVG witness without inheriting semantic
+  HTML or general-text claims.
 
 Active work:
 
-- The canonical Keep `profunctor-page/0` conformance specimen is being lowered
-  into deterministic structural `geordi-ir/1`, target mapping evidence, and an
-  SVG witness under
-  [`geordi-profunctor-page-structural/1`](docs/design/2026-07-profunctor-page-target-proof.md).
+- The portable page target implementation is complete locally and is in its
+  full repository verification and review slice.
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
   Wesley/common-type generation.
 
@@ -70,6 +72,7 @@ Current nonclaims:
 | Shared TypeScript/Rust contract generation plan | [docs/design/2026-05-wesley-common-type-generation.md](docs/design/2026-05-wesley-common-type-generation.md) |
 | Active strict text design | [docs/design/2026-05-strict-positioned-glyph-run-plan.md](docs/design/2026-05-strict-positioned-glyph-run-plan.md) |
 | Render-everywhere runnable guide | [docs/render-everywhere.md](docs/render-everywhere.md) |
+| Profunctor Page target reference | [docs/profunctor-page-target.md](docs/profunctor-page-target.md) |
 | Full source-to-runtime walkthrough | [docs/end-to-end.md](docs/end-to-end.md) |
 | Stable compiler error codes | [docs/ERROR_CODES.md](docs/ERROR_CODES.md) |
 | Rust gates | [docs/RUST_GATES.md](docs/RUST_GATES.md) |
@@ -138,6 +141,7 @@ geordi/
     compiler-core/     # @flyingrobots/geordi-compiler-core - compile orchestration
     schema-graphql/    # @flyingrobots/geordi-schema-graphql - GraphQL SDL adapter
     gpvue/             # @flyingrobots/geordi-gpvue - constrained GPVue fixture compiler
+    profunctor-page/   # @flyingrobots/geordi-profunctor-page - structural page target
     render-fixture/    # @flyingrobots/geordi-render-fixture - shared fixture contracts
     runtime-webgl/     # @flyingrobots/geordi-runtime-webgl - browser runtime package
     text-prep/         # @flyingrobots/geordi-text-prep - pinned strict text prep CLI
@@ -153,6 +157,7 @@ geordi/
     native-render-everywhere/
 
   fixtures/
+    profunctor-page/
     render-everywhere/
 
   docs/
@@ -173,6 +178,13 @@ Run the TypeScript workspace gates:
 pnpm typecheck
 pnpm lint
 pnpm test
+```
+
+Generate and verify the portable page target:
+
+```bash
+pnpm generate:profunctor-page-target
+pnpm test:profunctor-page-target
 ```
 
 Run documentation and repository hygiene gates:

@@ -15,10 +15,10 @@ digraph profunctor_page_target_proof {
 
   PTP001 [fillcolor="#7dd3a8", label="PTP001\nLaw + plan\nCOMPLETE"];
   PTP002 [fillcolor="#7dd3a8", label="PTP002\nFixture intake\nCOMPLETE"];
-  PTP003 [fillcolor="#f8d66d", label="PTP003\nIR + map + receipt\nOPEN"];
-  PTP004 [fillcolor="#d9dde5", label="PTP004\nSVG witness\nBLOCKED"];
-  PTP005 [fillcolor="#d9dde5", label="PTP005\nNegative matrix + docs\nBLOCKED"];
-  PTP006 [fillcolor="#d9dde5", label="PTP006\nFull gate + PR\nBLOCKED"];
+  PTP003 [fillcolor="#7dd3a8", label="PTP003\nIR + map + receipt\nCOMPLETE"];
+  PTP004 [fillcolor="#7dd3a8", label="PTP004\nSVG witness\nCOMPLETE"];
+  PTP005 [fillcolor="#7dd3a8", label="PTP005\nNegative matrix + docs\nCOMPLETE"];
+  PTP006 [fillcolor="#f8d66d", label="PTP006\nFull gate + PR\nOPEN"];
 
   PTP001 -> PTP002 -> PTP003 -> PTP004 -> PTP005 -> PTP006;
 }

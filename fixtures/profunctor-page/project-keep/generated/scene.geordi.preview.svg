@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1120" viewBox="0 0 1440 1120" role="img" aria-labelledby="title description">
+  <title id="title">Geordi structural preview of the Keep Profunctor Page specimen</title>
+  <desc id="description">page:project.keep at /projects/keep/. Diagnostic rectangle geometry with explicit target nonclaims.</desc>
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .label { font-size: 28px; font-weight: 700; }
+    .identity { font-size: 15px; }
+    .meta { font-size: 14px; }
+    .footer { font-size: 14px; fill: #0b1220; }
+  </style>
+  <g aria-label="Page">
+    <rect x="0" y="0" width="1440" height="1120" fill="#f3f0e7" />
+    <text class="label" x="24" y="38" fill="#0b1220">Page</text>
+    <text class="identity" x="112" y="34" fill="#0b1220">page-node:project.keep#project-page.root · geordi-node:project.keep#project-page.root</text>
+  </g>
+  <g aria-label="Project hero">
+    <rect x="64" y="64" width="1312" height="256" fill="#1d64bd" />
+    <text class="label" x="88" y="106" fill="#ffffff">Project hero</text>
+    <text class="identity" x="88" y="134" fill="#ffffff">page-node:project.keep#project-page.hero</text>
+    <text class="meta" x="88" y="158" fill="#ffffff">geordi-node:project.keep#project-page.hero</text>
+    <text class="meta" x="88" y="180" fill="#ffffff">semantic.surface-tint · 2 action(s)</text>
+  </g>
+  <g aria-label="Project facts">
+    <rect x="64" y="352" width="632" height="320" fill="#f3f0e7" />
+    <text class="label" x="88" y="394" fill="#0b1220">Project facts</text>
+    <text class="identity" x="88" y="422" fill="#0b1220">page-node:project.keep#project-page.facts</text>
+    <text class="meta" x="88" y="446" fill="#0b1220">geordi-node:project.keep#project-page.facts</text>
+    <text class="meta" x="88" y="468" fill="#0b1220">semantic.surface · 0 action(s)</text>
+  </g>
+  <g aria-label="Documentation">
+    <rect x="728" y="352" width="648" height="320" fill="#1d64bd" />
+    <text class="label" x="752" y="394" fill="#ffffff">Documentation</text>
+    <text class="identity" x="752" y="422" fill="#ffffff">page-node:project.keep#project-page.documentation</text>
+    <text class="meta" x="752" y="446" fill="#ffffff">geordi-node:project.keep#project-page.documentation</text>
+    <text class="meta" x="752" y="468" fill="#ffffff">semantic.surface-tint · 1 action(s)</text>
+  </g>
+  <g aria-label="Related projects">
+    <rect x="64" y="704" width="1312" height="352" fill="#10244d" />
+    <text class="label" x="88" y="746" fill="#ffffff">Related projects</text>
+    <text class="identity" x="88" y="774" fill="#ffffff">page-node:project.keep#project-page.related</text>
+    <text class="meta" x="88" y="798" fill="#ffffff">geordi-node:project.keep#project-page.related</text>
+    <text class="meta" x="88" y="820" fill="#ffffff">semantic.inverse-surface-alt · 3 action(s)</text>
+  </g>
+  <g aria-label="Target nonclaims">
+    <text class="footer" x="64" y="1082">Diagnostic SVG labels use host SVG text; no Geordi text claim.</text>
+    <text class="footer" x="64" y="1104">No semantic HTML, native-link, accessibility-tree, or website pixel-parity claim.</text>
+  </g>
+</svg>

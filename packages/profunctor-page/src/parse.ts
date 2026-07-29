@@ -17,14 +17,7 @@ import {
   type ProfunctorPageDiagnosticCode,
   type ProfunctorPageInput,
 } from './contracts.js';
-
-const SUPPORTED_BLOCK_DEFINITIONS = new Set([
-  'block:page',
-  'block:project-documentation',
-  'block:project-facts',
-  'block:project-hero',
-  'block:project-related',
-]);
+import { profunctorPageBlockGeometry } from './profile.js';
 
 export function parseProfunctorPageArtifacts(
   input: ProfunctorPageInput,
@@ -170,7 +163,8 @@ function parsePageNodes(value: JsonValue | undefined): readonly ParsedPageNode[]
       'blockDefinitionId',
       `${path}.blockDefinitionId`,
     );
-    if (!SUPPORTED_BLOCK_DEFINITIONS.has(blockDefinitionId)) {
+    const hidden = requireBoolean(node, 'hidden', `${path}.hidden`);
+    if (!hidden && !profunctorPageBlockGeometry(blockDefinitionId)) {
       fail(
         'GEORDI_PAGE_BLOCK_UNSUPPORTED',
         `${path}.blockDefinitionId`,
@@ -178,7 +172,6 @@ function parsePageNodes(value: JsonValue | undefined): readonly ParsedPageNode[]
       );
     }
 
-    const hidden = requireBoolean(node, 'hidden', `${path}.hidden`);
     const pageNodeId = requireString(node, 'pageNodeId', `${path}.pageNodeId`);
     const props = requireObject(property(node, 'props'), `${path}.props`);
     const requiredCapabilities = requireStringArray(
@@ -386,12 +379,29 @@ function validateSlots(
     }
   }
 
+  const reachable = new Set([rootNodeId]);
+  const queue = [rootNodeId];
+  for (const pageNodeId of queue) {
+    const node = nodesById.get(pageNodeId);
+    if (!node) {
+      continue;
+    }
+    for (const slot of node.slots) {
+      for (const childId of slot.childPageNodeIds) {
+        if (!reachable.has(childId)) {
+          reachable.add(childId);
+          queue.push(childId);
+        }
+      }
+    }
+  }
+
   for (const node of nodes) {
-    if (node.pageNodeId !== rootNodeId && !parentByChild.has(node.pageNodeId)) {
+    if (!reachable.has(node.pageNodeId)) {
       fail(
         'GEORDI_PAGE_INPUT_REFERENCE_INVALID',
         '$page.nodes',
-        `Page node ${node.pageNodeId} is not reachable from a slot.`,
+        `Page node ${node.pageNodeId} is not reachable from the root node.`,
       );
     }
   }

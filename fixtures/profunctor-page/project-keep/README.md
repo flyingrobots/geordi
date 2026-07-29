@@ -12,3 +12,19 @@ fixture at source commit
 
 The website remains the authority for these bytes. Geordi tests refuse stale or
 contradictory copies before lowering.
+
+Generate the Geordi-owned target evidence:
+
+```bash
+pnpm generate:profunctor-page-target
+```
+
+Verify the checked output inventory and exact bytes:
+
+```bash
+pnpm test:profunctor-page-target
+```
+
+The generated directory contains deterministic `geordi-ir/1`, target-map,
+receipt, and structural SVG evidence. The SVG is a diagnostic witness; its host
+SVG labels do not establish a Geordi general-text claim.

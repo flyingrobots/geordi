@@ -1,0 +1,373 @@
+{
+  "entries": [
+    {
+      "actions": [],
+      "blockDefinitionId": "block:page",
+      "hidden": false,
+      "inputCapabilities": [
+        "landmarks",
+        "semantic-html"
+      ],
+      "pageNodeId": "page-node:project.keep#project-page.root",
+      "renderNodeId": "geordi-node:project.keep#project-page.root",
+      "residuals": [
+        {
+          "capability": "general-text",
+          "code": "general-text-unsupported",
+          "reason": "The structural target emits no Geordi Text nodes."
+        },
+        {
+          "capability": "landmarks",
+          "code": "landmarks-unsupported",
+          "reason": "The structural target does not claim landmarks."
+        },
+        {
+          "capability": "semantic-html",
+          "code": "semantic-html-unsupported",
+          "reason": "The structural target does not claim semantic-html."
+        }
+      ],
+      "sources": [
+        {
+          "source": {
+            "parserProfile": null,
+            "path": "src/project-registry.js",
+            "recordDigest": "sha256:6a4ad44886b0c84d044b513c79f8c69850429f5f45086983418012cf22d29aff",
+            "selector": {
+              "exportName": "projectCatalog",
+              "kind": "record",
+              "recordId": "keep"
+            },
+            "sourceDigest": "sha256:b8dda59a2f0506faffd616b993786febd8fb4065642ab602b943a49c4c1e1a98",
+            "spanResidual": {
+              "kind": "unavailable",
+              "reason": "no-declared-parser-profile"
+            }
+          },
+          "sourceOccurrenceId": "source-occurrence:projectCatalog.keep#record",
+          "upstreamResidual": null
+        }
+      ],
+      "structuralPaint": {
+        "role": "surface",
+        "tokenReference": "semantic.surface",
+        "value": "#f3f0e7"
+      },
+      "templateNodeId": "template:project-page.root",
+      "tokenBindings": [
+        {
+          "reference": "semantic.focus",
+          "role": "focus",
+          "targetValue": "#d84b1c"
+        },
+        {
+          "reference": "semantic.interactive",
+          "role": "interactive",
+          "targetValue": "#1259c3"
+        },
+        {
+          "reference": "semantic.inverse-line",
+          "role": "inverseLine",
+          "targetValue": "#87a0c8"
+        },
+        {
+          "reference": "semantic.inverse-surface-alt",
+          "role": "inverseSurfaceAlt",
+          "targetValue": "#10244d"
+        },
+        {
+          "reference": "semantic.inverse-text",
+          "role": "inverseText",
+          "targetValue": "#ffffff"
+        },
+        {
+          "reference": "semantic.inverse-text-muted",
+          "role": "inverseTextMuted",
+          "targetValue": "#c8d8f2"
+        },
+        {
+          "reference": "semantic.line-strong",
+          "role": "lineStrong",
+          "targetValue": "#647084"
+        },
+        {
+          "reference": "semantic.surface",
+          "role": "surface",
+          "targetValue": "#f3f0e7"
+        },
+        {
+          "reference": "semantic.surface-tint",
+          "role": "surfaceTint",
+          "targetValue": "#1d64bd"
+        },
+        {
+          "reference": "semantic.text",
+          "role": "text",
+          "targetValue": "#0b1220"
+        },
+        {
+          "reference": "semantic.text-muted",
+          "role": "textMuted",
+          "targetValue": "#465167"
+        }
+      ]
+    },
+    {
+      "actions": [
+        {
+          "activationResidual": "native-link-activation-unsupported",
+          "href": "https://github.com/flyingrobots/keep#readme",
+          "id": "action:page-node:project.keep#project-page.hero:documentation:https://github.com/flyingrobots/keep#readme",
+          "label": "Documentation",
+          "role": "documentation"
+        },
+        {
+          "activationResidual": "native-link-activation-unsupported",
+          "href": "https://github.com/flyingrobots/keep",
+          "id": "action:page-node:project.keep#project-page.hero:source:https://github.com/flyingrobots/keep",
+          "label": "Source",
+          "role": "source"
+        }
+      ],
+      "blockDefinitionId": "block:project-hero",
+      "hidden": false,
+      "inputCapabilities": [
+        "headings",
+        "native-links"
+      ],
+      "pageNodeId": "page-node:project.keep#project-page.hero",
+      "renderNodeId": "geordi-node:project.keep#project-page.hero",
+      "residuals": [
+        {
+          "capability": "general-text",
+          "code": "general-text-unsupported",
+          "reason": "The structural target emits no Geordi Text nodes."
+        },
+        {
+          "capability": "headings",
+          "code": "headings-unsupported",
+          "reason": "The structural target does not claim headings."
+        },
+        {
+          "capability": "native-links",
+          "code": "native-links-unsupported",
+          "reason": "The structural target does not claim native-links."
+        }
+      ],
+      "sources": [
+        {
+          "source": {
+            "parserProfile": null,
+            "path": "src/project-registry.js",
+            "recordDigest": "sha256:6a4ad44886b0c84d044b513c79f8c69850429f5f45086983418012cf22d29aff",
+            "selector": {
+              "exportName": "projectCatalog",
+              "fieldPath": [
+                "title"
+              ],
+              "kind": "fact",
+              "recordId": "keep"
+            },
+            "sourceDigest": "sha256:b8dda59a2f0506faffd616b993786febd8fb4065642ab602b943a49c4c1e1a98",
+            "spanResidual": {
+              "kind": "unavailable",
+              "reason": "no-declared-parser-profile"
+            }
+          },
+          "sourceOccurrenceId": "source-occurrence:projectCatalog.keep#fact.title",
+          "upstreamResidual": null
+        }
+      ],
+      "structuralPaint": {
+        "role": "surfaceTint",
+        "tokenReference": "semantic.surface-tint",
+        "value": "#1d64bd"
+      },
+      "templateNodeId": "template:project-page.hero",
+      "tokenBindings": []
+    },
+    {
+      "actions": [],
+      "blockDefinitionId": "block:project-facts",
+      "hidden": false,
+      "inputCapabilities": [
+        "headings"
+      ],
+      "pageNodeId": "page-node:project.keep#project-page.facts",
+      "renderNodeId": "geordi-node:project.keep#project-page.facts",
+      "residuals": [
+        {
+          "capability": "general-text",
+          "code": "general-text-unsupported",
+          "reason": "The structural target emits no Geordi Text nodes."
+        },
+        {
+          "capability": "headings",
+          "code": "headings-unsupported",
+          "reason": "The structural target does not claim headings."
+        }
+      ],
+      "sources": [],
+      "structuralPaint": {
+        "role": "surface",
+        "tokenReference": "semantic.surface",
+        "value": "#f3f0e7"
+      },
+      "templateNodeId": "template:project-page.facts",
+      "tokenBindings": []
+    },
+    {
+      "actions": [
+        {
+          "activationResidual": "native-link-activation-unsupported",
+          "href": "https://github.com/flyingrobots/keep#readme",
+          "id": "action:page-node:project.keep#project-page.documentation:documentation:https://github.com/flyingrobots/keep#readme",
+          "label": "Documentation",
+          "role": "documentation"
+        }
+      ],
+      "blockDefinitionId": "block:project-documentation",
+      "hidden": false,
+      "inputCapabilities": [
+        "headings",
+        "native-links"
+      ],
+      "pageNodeId": "page-node:project.keep#project-page.documentation",
+      "renderNodeId": "geordi-node:project.keep#project-page.documentation",
+      "residuals": [
+        {
+          "capability": "general-text",
+          "code": "general-text-unsupported",
+          "reason": "The structural target emits no Geordi Text nodes."
+        },
+        {
+          "capability": "headings",
+          "code": "headings-unsupported",
+          "reason": "The structural target does not claim headings."
+        },
+        {
+          "capability": "native-links",
+          "code": "native-links-unsupported",
+          "reason": "The structural target does not claim native-links."
+        }
+      ],
+      "sources": [],
+      "structuralPaint": {
+        "role": "surfaceTint",
+        "tokenReference": "semantic.surface-tint",
+        "value": "#1d64bd"
+      },
+      "templateNodeId": "template:project-page.documentation",
+      "tokenBindings": []
+    },
+    {
+      "actions": [
+        {
+          "activationResidual": "native-link-activation-unsupported",
+          "href": "/projects/bunny/",
+          "id": "action:page-node:project.keep#project-page.related:related-project:/projects/bunny/",
+          "label": "Bunny",
+          "role": "related-project"
+        },
+        {
+          "activationResidual": "native-link-activation-unsupported",
+          "href": "/projects/geordi/",
+          "id": "action:page-node:project.keep#project-page.related:related-project:/projects/geordi/",
+          "label": "Geordi",
+          "role": "related-project"
+        },
+        {
+          "activationResidual": "native-link-activation-unsupported",
+          "href": "/projects/nine-lives/",
+          "id": "action:page-node:project.keep#project-page.related:related-project:/projects/nine-lives/",
+          "label": "Nine Lives",
+          "role": "related-project"
+        }
+      ],
+      "blockDefinitionId": "block:project-related",
+      "hidden": false,
+      "inputCapabilities": [
+        "headings",
+        "native-links"
+      ],
+      "pageNodeId": "page-node:project.keep#project-page.related",
+      "renderNodeId": "geordi-node:project.keep#project-page.related",
+      "residuals": [
+        {
+          "capability": "general-text",
+          "code": "general-text-unsupported",
+          "reason": "The structural target emits no Geordi Text nodes."
+        },
+        {
+          "capability": "headings",
+          "code": "headings-unsupported",
+          "reason": "The structural target does not claim headings."
+        },
+        {
+          "capability": "native-links",
+          "code": "native-links-unsupported",
+          "reason": "The structural target does not claim native-links."
+        }
+      ],
+      "sources": [],
+      "structuralPaint": {
+        "role": "inverseSurfaceAlt",
+        "tokenReference": "semantic.inverse-surface-alt",
+        "value": "#10244d"
+      },
+      "templateNodeId": "template:project-page.related",
+      "tokenBindings": []
+    }
+  ],
+  "irVersion": "geordi-ir/1",
+  "pageId": "page:project.keep",
+  "route": "/projects/keep/",
+  "targetProfile": "geordi-profunctor-page-structural/1",
+  "tokenTable": [
+    {
+      "reference": "semantic.focus",
+      "value": "#d84b1c"
+    },
+    {
+      "reference": "semantic.interactive",
+      "value": "#1259c3"
+    },
+    {
+      "reference": "semantic.inverse-line",
+      "value": "#87a0c8"
+    },
+    {
+      "reference": "semantic.inverse-surface-alt",
+      "value": "#10244d"
+    },
+    {
+      "reference": "semantic.inverse-text",
+      "value": "#ffffff"
+    },
+    {
+      "reference": "semantic.inverse-text-muted",
+      "value": "#c8d8f2"
+    },
+    {
+      "reference": "semantic.line-strong",
+      "value": "#647084"
+    },
+    {
+      "reference": "semantic.surface",
+      "value": "#f3f0e7"
+    },
+    {
+      "reference": "semantic.surface-tint",
+      "value": "#1d64bd"
+    },
+    {
+      "reference": "semantic.text",
+      "value": "#0b1220"
+    },
+    {
+      "reference": "semantic.text-muted",
+      "value": "#465167"
+    }
+  ],
+  "version": "geordi-profunctor-page-map/1"
+}

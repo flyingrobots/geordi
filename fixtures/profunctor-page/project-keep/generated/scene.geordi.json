@@ -1,0 +1,95 @@
+{
+  "animations": [],
+  "bindings": [],
+  "irVersion": "geordi-ir/1",
+  "nodes": [
+    {
+      "id": "geordi-node:project.keep#project-page.root",
+      "kind": "Rect",
+      "props": {
+        "actionCount": 0,
+        "fill": "#f3f0e7",
+        "height": 1120,
+        "pageNodeId": "page-node:project.keep#project-page.root",
+        "sourceTokenRef": "semantic.surface",
+        "templateNodeId": "template:project-page.root",
+        "width": 1440,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "geordi-node:project.keep#project-page.hero",
+      "kind": "Rect",
+      "props": {
+        "actionCount": 2,
+        "fill": "#1d64bd",
+        "height": 256,
+        "pageNodeId": "page-node:project.keep#project-page.hero",
+        "sourceTokenRef": "semantic.surface-tint",
+        "templateNodeId": "template:project-page.hero",
+        "width": 1312,
+        "x": 64,
+        "y": 64
+      }
+    },
+    {
+      "id": "geordi-node:project.keep#project-page.facts",
+      "kind": "Rect",
+      "props": {
+        "actionCount": 0,
+        "fill": "#f3f0e7",
+        "height": 320,
+        "pageNodeId": "page-node:project.keep#project-page.facts",
+        "sourceTokenRef": "semantic.surface",
+        "templateNodeId": "template:project-page.facts",
+        "width": 632,
+        "x": 64,
+        "y": 352
+      }
+    },
+    {
+      "id": "geordi-node:project.keep#project-page.documentation",
+      "kind": "Rect",
+      "props": {
+        "actionCount": 1,
+        "fill": "#1d64bd",
+        "height": 320,
+        "pageNodeId": "page-node:project.keep#project-page.documentation",
+        "sourceTokenRef": "semantic.surface-tint",
+        "templateNodeId": "template:project-page.documentation",
+        "width": 648,
+        "x": 728,
+        "y": 352
+      }
+    },
+    {
+      "id": "geordi-node:project.keep#project-page.related",
+      "kind": "Rect",
+      "props": {
+        "actionCount": 3,
+        "fill": "#10244d",
+        "height": 352,
+        "pageNodeId": "page-node:project.keep#project-page.related",
+        "sourceTokenRef": "semantic.inverse-surface-alt",
+        "templateNodeId": "template:project-page.related",
+        "width": 1312,
+        "x": 64,
+        "y": 704
+      }
+    }
+  ],
+  "numericProfile": "geordi-finite-binary64/1",
+  "requires": [
+    "geordi/core/1",
+    "layout.resolved",
+    "shape.rect",
+    "paint.solid"
+  ],
+  "scene": {
+    "height": 1120,
+    "id": "geordi-target:page:project.keep",
+    "units": "px",
+    "width": 1440
+  }
+}

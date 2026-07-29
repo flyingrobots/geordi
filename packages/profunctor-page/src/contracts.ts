@@ -4,6 +4,15 @@ export const PROFUNCTOR_PAGE_VERSION = 'profunctor-page/0' as const;
 export const PROFUNCTOR_PAGE_SOURCE_MAP_VERSION = 'profunctor-page-source-map/0' as const;
 export const PROFUNCTOR_BUILD_MANIFEST_VERSION = 'profunctor-build-manifest/0' as const;
 export const PROFUNCTOR_PAGE_TARGET_PROFILE = 'geordi-profunctor-page-structural/1' as const;
+export const PROFUNCTOR_PAGE_TARGET_MAP_VERSION =
+  'geordi-profunctor-page-map/1' as const;
+export const PROFUNCTOR_PAGE_TARGET_RECEIPT_VERSION =
+  'geordi-profunctor-page-receipt/1' as const;
+export const PROFUNCTOR_PAGE_TARGET_IR_PATH = 'scene.geordi.json' as const;
+export const PROFUNCTOR_PAGE_TARGET_MAP_PATH = 'scene.geordi.map.json' as const;
+export const PROFUNCTOR_PAGE_TARGET_PREVIEW_PATH = 'scene.geordi.preview.svg' as const;
+export const PROFUNCTOR_PAGE_TARGET_RECEIPT_PATH =
+  'scene.geordi.json.receipt' as const;
 
 export type ProfunctorPageDiagnosticCode =
   | 'GEORDI_PAGE_INPUT_JSON_INVALID'
@@ -71,6 +80,26 @@ export interface ParsedProfunctorPage {
   readonly sourceMapEntries: readonly ParsedSourceMapEntry[];
   readonly sourceMapHash: string;
   readonly tokenRefs: readonly string[];
+}
+
+export interface ProfunctorPageTargetArtifact {
+  readonly content: string;
+  readonly encoding: 'utf8';
+  readonly mediaType: 'application/json' | 'image/svg+xml';
+  readonly path: string;
+}
+
+export interface ProfunctorPageTargetArtifacts {
+  readonly ir: ProfunctorPageTargetArtifact;
+  readonly map: ProfunctorPageTargetArtifact;
+  readonly preview: ProfunctorPageTargetArtifact;
+  readonly receipt: ProfunctorPageTargetArtifact;
+}
+
+export interface ProfunctorPageTargetResult {
+  readonly artifacts: ProfunctorPageTargetArtifacts;
+  readonly pageId: string;
+  readonly targetProfile: typeof PROFUNCTOR_PAGE_TARGET_PROFILE;
 }
 
 export class ProfunctorPageTargetError extends Error {

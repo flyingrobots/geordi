@@ -24,7 +24,9 @@ These open items come from the repo audit and the v0 design pass. See
 **Issue**: [#52](https://github.com/flyingrobots/geordi/issues/52)
 **Milestone**:
 [Portable Page Target Proof](https://github.com/flyingrobots/geordi/milestone/1)
-**Status**: Active. `BEARING.md` owns the six-slice execution order and
+**Status**: Active. Implementation and narrow evidence are complete; full
+repository verification and review remain. `BEARING.md` owns the six-slice
+execution order and
 [`docs/design/2026-07-profunctor-page-target-proof.md`](./docs/design/2026-07-profunctor-page-target-proof.md)
 owns the accepted contract and test plan.
 

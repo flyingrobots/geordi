@@ -14,6 +14,7 @@ that exists on `main`.
 | Understand compiler and package architecture | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
 | Follow the complete compile-to-render path | [`end-to-end.md`](./end-to-end.md) |
 | Run render-everywhere proofs | [`render-everywhere.md`](./render-everywhere.md) |
+| Lower a Profunctor Page specimen | [`profunctor-page-target.md`](./profunctor-page-target.md) |
 | Look up stable compiler errors | [`ERROR_CODES.md`](./ERROR_CODES.md) |
 | Run Rust verification | [`RUST_GATES.md`](./RUST_GATES.md) |
 | Apply documentation policy | [`DOCUMENTATION_STANDARDS.md`](./DOCUMENTATION_STANDARDS.md) |
