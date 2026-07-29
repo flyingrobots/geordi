@@ -19,10 +19,13 @@ export interface PreviewNode {
 export function renderProfunctorPageStructuralPreview(
   pageId: string,
   route: string,
+  rootPageNodeId: string,
   nodes: readonly PreviewNode[],
 ): string {
   const body = nodes
-    .map((node, index) => renderNode(node, index))
+    .map((node) =>
+      renderNode(node, node.pageNode.pageNodeId === rootPageNodeId),
+    )
     .join('\n');
 
   return [
@@ -47,9 +50,9 @@ export function renderProfunctorPageStructuralPreview(
   ].join('\n');
 }
 
-function renderNode(node: PreviewNode, index: number): string {
+function renderNode(node: PreviewNode, isRoot: boolean): string {
   const { geometry, pageNode } = node;
-  if (index === 0) {
+  if (isRoot) {
     return [
       `  <g aria-label="${escapeXml(geometry.label)}">`,
       `    <rect x="${geometry.x}" y="${geometry.y}" width="${geometry.width}" height="${geometry.height}" fill="${node.fill}" />`,

@@ -84,6 +84,7 @@ export function lowerProfunctorPageArtifacts(
   const preview = renderProfunctorPageStructuralPreview(
     parsed.pageId,
     parsed.route,
+    parsed.rootNodeId,
     targetNodes.map((node) => previewNode(node)),
   );
   const irArtifact = jsonArtifact(PROFUNCTOR_PAGE_TARGET_IR_PATH, ir);

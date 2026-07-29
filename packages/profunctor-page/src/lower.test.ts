@@ -155,7 +155,12 @@ describe('lowerProfunctorPageArtifacts', () => {
 
   it('rejects XML 1.0-invalid control characters in preview labels', () => {
     expect(() =>
-      renderProfunctorPageStructuralPreview('page\u0000id', '/', []),
+      renderProfunctorPageStructuralPreview(
+        'page\u0000id',
+        '/',
+        'page-node:root',
+        [],
+      ),
     ).toThrow(
       expect.objectContaining({
         code: 'GEORDI_PAGE_OUTPUT_INVALID',
@@ -302,6 +307,17 @@ describe('lowerProfunctorPageArtifacts', () => {
     );
     expect(result.artifacts.preview.content).toContain(
       'No semantic HTML, native-link, accessibility-tree, or website pixel-parity claim.',
+    );
+  });
+
+  it('formats the preview root by page identity rather than array position', () => {
+    const input = fixtureInputWithPageMutation((page) => {
+      mutablePageNode(page, 0).hidden = true;
+    });
+    const result = lowerProfunctorPageArtifacts(input);
+
+    expect(result.artifacts.preview.content).toContain(
+      'semantic.surface-tint · 2 action(s)',
     );
   });
 
