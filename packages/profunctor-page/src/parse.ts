@@ -473,7 +473,7 @@ function validateSourceMap(
   }
 
   const nodesById = new Map(nodes.map((node) => [node.pageNodeId, node]));
-  const entryKeys = new Set<string>();
+  const sourceOccurrenceIds = new Set<string>();
   for (const [index, entry] of entries.entries()) {
     const node = nodesById.get(entry.pageNodeId);
     if (node?.templateNodeId !== entry.templateNodeId) {
@@ -483,15 +483,14 @@ function validateSourceMap(
         'Source-map entry does not resolve to its page and template node.',
       );
     }
-    const key = `${entry.pageNodeId}\u0000${entry.sourceOccurrenceId}`;
-    if (entryKeys.has(key)) {
+    if (sourceOccurrenceIds.has(entry.sourceOccurrenceId)) {
       fail(
         'GEORDI_PAGE_INPUT_SOURCE_AMBIGUOUS',
         `$sourceMap.entries[${index}]`,
-        'Source-map page and occurrence identity is duplicated.',
+        'Source-occurrence identity is duplicated.',
       );
     }
-    entryKeys.add(key);
+    sourceOccurrenceIds.add(entry.sourceOccurrenceId);
   }
 
   const consumedEntries = new Set<string>();

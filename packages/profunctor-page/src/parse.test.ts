@@ -348,6 +348,31 @@ describe('parseProfunctorPageArtifacts', () => {
     );
   });
 
+  it('rejects one source occurrence identity reused by different nodes', () => {
+    let input = replaceJson(fixtureInput(), 'page', (page) => {
+      mutableObject(
+        pageNode(page, 1).sourceBindings,
+        '$page.nodes[1].sourceBindings',
+      ).title = 'source-occurrence:projectCatalog.keep#record';
+    });
+    input = replaceJson(input, 'sourceMap', (sourceMap) => {
+      const entries = mutableArray(sourceMap.entries, '$sourceMap.entries');
+      mutableObject(
+        entries[1],
+        '$sourceMap.entries[1]',
+      ).sourceOccurrenceId =
+        'source-occurrence:projectCatalog.keep#record';
+    });
+    input = alignPageDigest(input);
+
+    expectDiagnostic(
+      () => {
+        parseProfunctorPageArtifacts(input);
+      },
+      'GEORDI_PAGE_INPUT_SOURCE_AMBIGUOUS',
+    );
+  });
+
   it('rejects a source occurrence bound to another template node', () => {
     const input = replaceJson(fixtureInput(), 'sourceMap', (sourceMap) => {
       const entries = mutableArray(sourceMap.entries, '$sourceMap.entries');
