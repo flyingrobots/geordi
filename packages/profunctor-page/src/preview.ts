@@ -31,7 +31,7 @@ export function renderProfunctorPageStructuralPreview(
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     `<svg xmlns="http://www.w3.org/2000/svg" width="${PROFUNCTOR_PAGE_CANVAS.width}" height="${PROFUNCTOR_PAGE_CANVAS.height}" viewBox="0 0 ${PROFUNCTOR_PAGE_CANVAS.width} ${PROFUNCTOR_PAGE_CANVAS.height}" role="img" aria-labelledby="title description">`,
-    '  <title id="title">Geordi structural preview of the Keep Profunctor Page specimen</title>',
+    `  <title id="title">Geordi structural preview of ${escapeXml(pageId)}</title>`,
     `  <desc id="description">${escapeXml(pageId)} at ${escapeXml(route)}. Diagnostic rectangle geometry with explicit target nonclaims.</desc>`,
     '  <style>',
     '    text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }',

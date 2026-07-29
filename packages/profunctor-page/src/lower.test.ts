@@ -169,6 +169,20 @@ describe('lowerProfunctorPageArtifacts', () => {
     );
   });
 
+  it('derives the preview title from the input page identity', () => {
+    const preview = renderProfunctorPageStructuralPreview(
+      'page:project.other',
+      '/projects/other/',
+      'page-node:root',
+      [],
+    );
+
+    expect(preview).toContain(
+      '<title id="title">Geordi structural preview of page:project.other</title>',
+    );
+    expect(preview).not.toContain('Keep Profunctor Page specimen');
+  });
+
   it('emits deterministic Geordi target artifacts', () => {
     const first = lowerProfunctorPageArtifacts(fixtureInput());
     const second = lowerProfunctorPageArtifacts(fixtureInput());
