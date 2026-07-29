@@ -108,6 +108,9 @@ export const PROFUNCTOR_PAGE_BLOCK_GEOMETRY = {
 export function profunctorPageBlockGeometry(
   blockDefinitionId: string,
 ): ProfunctorPageBlockGeometry | undefined {
+  if (!Object.hasOwn(PROFUNCTOR_PAGE_BLOCK_GEOMETRY, blockDefinitionId)) {
+    return undefined;
+  }
   const geometryByBlock: Readonly<
     Record<string, ProfunctorPageBlockGeometry | undefined>
   > = PROFUNCTOR_PAGE_BLOCK_GEOMETRY;

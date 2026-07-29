@@ -409,6 +409,21 @@ describe('parseProfunctorPageArtifacts', () => {
     );
   });
 
+  it('rejects inherited object properties as block definitions', () => {
+    const input = alignPageDigest(
+      replaceJson(fixtureInput(), 'page', (page) => {
+        pageNode(page, 1).blockDefinitionId = 'constructor';
+      }),
+    );
+
+    expectDiagnostic(
+      () => {
+        parseProfunctorPageArtifacts(input);
+      },
+      'GEORDI_PAGE_BLOCK_UNSUPPORTED',
+    );
+  });
+
   it('rejects duplicate visible block definitions with fixed geometry', () => {
     const input = alignPageDigest(
       replaceJson(fixtureInput(), 'page', (page) => {
