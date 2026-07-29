@@ -1676,7 +1676,10 @@ pub fn validate_geordi_strict_text_evidence_font_identity(
 ) -> Result<(), GeordiStrictTextFixtureValidationError> {
     let mut issues = Vec::new();
 
-    let face = font_pack.fonts.iter().find(|font| font.id == evidence.font_id);
+    let face = font_pack
+        .fonts
+        .iter()
+        .find(|font| font.id == evidence.font_id);
 
     let Some(face) = face else {
         push_strict_text_issue(
@@ -2636,7 +2639,11 @@ fn validate_strict_text_line_boxes<'a>(
 ) -> Vec<&'a str> {
     let mut line_box_ids = Vec::<&str>::new();
     if manifest.line_boxes.is_empty() {
-        push_strict_text_issue(issues, "$.lineBoxes", "Strict text line boxes must not be empty");
+        push_strict_text_issue(
+            issues,
+            "$.lineBoxes",
+            "Strict text line boxes must not be empty",
+        );
         return line_box_ids;
     }
     for (line_box_index, line_box) in manifest.line_boxes.iter().enumerate() {
@@ -2747,7 +2754,11 @@ fn validate_strict_text_glyphs(
 ) {
     let mut run_ids = Vec::<&str>::new();
     if manifest.glyph_runs.is_empty() {
-        push_strict_text_issue(issues, "$.glyphRuns", "Strict text glyph runs must not be empty");
+        push_strict_text_issue(
+            issues,
+            "$.glyphRuns",
+            "Strict text glyph runs must not be empty",
+        );
         return;
     }
     for (run_index, run) in manifest.glyph_runs.iter().enumerate() {

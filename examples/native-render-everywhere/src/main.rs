@@ -11,9 +11,8 @@ use geordi_ir::{
     create_geordi_strict_text_fixture_receipt, geordi_sha256_from_bytes,
     load_geordi_font_pack_manifest, load_geordi_ir, load_geordi_strict_text_fixture_manifest,
     load_geordi_strict_text_outline_evidence_pack, validate_geordi_font_pack_hashes,
-    validate_geordi_ir, validate_geordi_strict_text_fixture_manifest,
-    validate_geordi_strict_text_evidence_font_identity,
-    validate_geordi_strict_text_font_references,
+    validate_geordi_ir, validate_geordi_strict_text_evidence_font_identity,
+    validate_geordi_strict_text_fixture_manifest, validate_geordi_strict_text_font_references,
 };
 use geordi_renderer::{
     GeordiRenderError, GeordiRuntimeUnsupportedProfileError, GeordiStrictTextOutlineRenderReport,
