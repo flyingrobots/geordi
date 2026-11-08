@@ -1070,7 +1070,7 @@ fn minifb_buffer_from_rgba(
             .ok_or_else(NativeBunnyWindowError::buffer_size)?,
     );
 
-    for rgba in rgba.chunks_exact(4) {
+    for rgba in rgba.as_chunks::<4>().0 {
         let red = u32::from(rgba[0]);
         let green = u32::from(rgba[1]);
         let blue = u32::from(rgba[2]);
@@ -1637,7 +1637,7 @@ fn has_url_scheme(value: &str) -> bool {
         && bytes.all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'.' | b'-'))
 }
 
-fn has_windows_drive_prefix(value: &str) -> bool {
+const fn has_windows_drive_prefix(value: &str) -> bool {
     let bytes = value.as_bytes();
     bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':'
 }
