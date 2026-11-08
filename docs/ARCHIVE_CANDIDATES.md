@@ -21,7 +21,6 @@ These documents should remain first-class signposts:
 | --- | --- |
 | [`../README.md`](../README.md) | Repository entry point. |
 | [`../VISION.md`](../VISION.md) | Product and architecture north star. |
-| [`../BEARING.md`](../BEARING.md) | Current operating map and active checklist. |
 | [`STATUS.md`](./STATUS.md) | Stable status summary. |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Package and compiler architecture overview. |
 | [`V0_DESIGN_LAWS.md`](./V0_DESIGN_LAWS.md) | Product/runtime laws. |
@@ -75,12 +74,10 @@ pack today, so archive them only after the design README and any active docs poi
 
 | Document | Reason |
 | --- | --- |
-| [`BACKLOG.md`](../BACKLOG.md) | Still carries active P0 and follow-up work. It needs pruning, not archival. |
-| [`design/2026-05-glyph-tooling-spike.md`](./design/2026-05-glyph-tooling-spike.md) | Proposed future tooling work, not completed. |
-| [`design/2026-05-wesley-common-type-generation.md`](./design/2026-05-wesley-common-type-generation.md) | Active architecture correction. |
+| [`design/2026-05-glyph-tooling-spike.md`](./design/2026-05-glyph-tooling-spike.md) | Proposed future tooling work, tracked in #71. |
+| [`design/2026-05-wesley-common-type-generation.md`](./design/2026-05-wesley-common-type-generation.md) | Active architecture correction, tracked in #69. |
 | [`design/2026-05-typescript-rust-wasm-boundary.md`](./design/2026-05-typescript-rust-wasm-boundary.md) | Active architecture policy. |
 | [`design/2026-05-strict-positioned-glyph-run-plan.md`](./design/2026-05-strict-positioned-glyph-run-plan.md) | Active milestone design. |
-| [`BEARING.md`](../BEARING.md) | Active operating map. |
 
 ## Archive Preconditions
 

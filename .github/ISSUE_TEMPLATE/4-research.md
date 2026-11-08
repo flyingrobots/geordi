@@ -1,0 +1,54 @@
+---
+name: Research
+about: Use when there is one answerable question and a decision waits on the answer.
+title: ''
+labels: research
+assignees: ''
+---
+
+```yaml
+type: research
+status: open
+area: <package, crate, or path>
+prerequisites: []
+related: []
+source: <where this work came from>
+```
+
+# Research
+
+```text
+<Write the prompt for the agent that does this task, in ASD-STE100.
+Tell the agent which files to read first.
+Tell the agent which result to make, and which criteria the result must satisfy.
+Tell the agent which checks to run before it stops.>
+```
+
+## 1. Background Context
+
+## 2. The Question
+One sentence, answerable.
+## 2b. What decision waits on it
+If nothing does, do not file this.
+## 2c. What would settle it
+The observation, the method, and where the data lives.
+## 2d. Aperture
+What this cannot see, so a negative result is not read as a positive.
+## 2e. Possible answers and what each implies
+Written before looking.
+## 2f. Evidence
+Empty at filing. The value, the command that produced it, the timestamp.
+
+## 3. Prerequisites
+- [ ]
+
+## 4. Scope
+In:
+Out:
+
+## 5. Why now
+## 6. Risks
+## 7. Definition of Done
+An answer under Evidence, or a declared unanswerable-because.
+## 8. Stakeholders
+## 9. Related Issues

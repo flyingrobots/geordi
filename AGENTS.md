@@ -19,22 +19,19 @@ Tell the user what happened and what the available options are.
 Treat Think as a memory and coordination layer, not as the source of repo truth. Anchor strong
 claims back to files, commits, commands, or other inspectable evidence.
 
-## Render-Everywhere Slice Tracking
+## Work Tracking
 
-When `BEARING.md` names an active execution checklist, follow that checklist in order. The latest
-active checklist is the strict positioned glyph-run text plan in `BEARING.md`, backed by
-[`docs/design/2026-05-strict-positioned-glyph-run-dag.dot`](docs/design/2026-05-strict-positioned-glyph-run-dag.dot)
-and
-[`docs/design/2026-05-strict-positioned-glyph-run-dag.svg`](docs/design/2026-05-strict-positioned-glyph-run-dag.svg).
-The latest completed render-everywhere checklist is
-[`docs/design/2026-05-bunny-mesh-slice-plan.md`](docs/design/2026-05-bunny-mesh-slice-plan.md).
+GitHub Issues are the only tracker for planned work, debt, and execution order. Do not create or
+maintain in-repo planning files such as `BEARING.md`, `BACKLOG.md`, slice checklists, or DAG status
+files.
 
-When executing slices:
-
-- Pick an OPEN node from the active DAG, preferably the lowest-numbered OPEN node unless the user
-  explicitly reprioritizes.
-- Keep each slice scoped to its checklist acceptance criteria.
-- Update the checklist from `- [ ]` to `- [x]` only when that slice is actually implemented,
-  verified, and committed.
-- Update the active DAG DOT node status and regenerate the SVG after each completed slice.
-- Keep `BEARING.md` aligned when the active direction or slice order changes materially.
+- File new work with a template from `.github/ISSUE_TEMPLATE/`. Choose the card type that matches
+  what is known: Feature, Bug, Decision, Research, Investigation, Spike, or Task.
+- Write cards in ASD-STE100. Keep the frontmatter block, the type heading, and the LLM prompt block
+  at the top of each card.
+- One executable issue leads to one pull request. Put `Closes #N` in the pull request body.
+- Record prerequisites as GitHub issue dependencies and in the Prerequisites section of the card.
+- When work is done, close the issue through its pull request. Record a decision or finding on the
+  card that owns it.
+- Design records in `docs/design/` explain decisions. They do not track status. The slice plans and
+  DAG files there are historical records.

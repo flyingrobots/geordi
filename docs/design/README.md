@@ -4,15 +4,16 @@
 **Date**: 2026-05-25
 **Baseline**: `main` at `69073ed`, after signpost refresh merge
 
-This directory holds implementation design documents for P0 slice sequences. The design pack is
+This directory holds implementation design records. Work status lives in
+[GitHub Issues](https://github.com/flyingrobots/geordi/issues); the slice maps and DAG files below are historical records. The design pack is
 intentionally separate from [`../V0_DESIGN_LAWS.md`](../V0_DESIGN_LAWS.md): the laws define product
 semantics, while these documents define implementation slices. The product north star lives in
 [`../../VISION.md`](../../VISION.md), and archive candidates are tracked in
 [`../ARCHIVE_CANDIDATES.md`](../ARCHIVE_CANDIDATES.md).
 
-## Active Slice Map: Portable Page Target Proof
+## Completed Slice Map: Portable Page Target Proof
 
-The active design is the
+The completed design (PR #53) is the
 [Profunctor Page target proof](./2026-07-profunctor-page-target-proof.md), with
 its dependency graph in
 [DOT](./2026-07-profunctor-page-target-proof-dag.dot) and
@@ -21,8 +22,8 @@ glyph-run map below is complete and retained as historical execution evidence.
 
 ## Completed Slice Map: Strict Positioned Glyph-Run Text
 
-The executable checklist for this sequence lives in
-[`../../BEARING.md`](../../BEARING.md). The detailed design document is
+The executable checklist for this sequence lived in
+[`BEARING.md` at `f68160f`](https://github.com/flyingrobots/geordi/blob/f68160fcbbada657b2465ae1a42e3fb7403f32ae/BEARING.md). The detailed design document is
 [`2026-05-strict-positioned-glyph-run-plan.md`](./2026-05-strict-positioned-glyph-run-plan.md).
 The remaining-slice PRD and test plan is
 [`2026-05-strict-text-remaining-slices-prd-test-plan.md`](./2026-05-strict-text-remaining-slices-prd-test-plan.md).
@@ -30,18 +31,17 @@ The dependency graph source is
 [`2026-05-strict-positioned-glyph-run-dag.dot`](./2026-05-strict-positioned-glyph-run-dag.dot) and
 the rendered graph is
 [`2026-05-strict-positioned-glyph-run-dag.svg`](./2026-05-strict-positioned-glyph-run-dag.svg).
-The matching P0 backlog item is
-[`Define the strict positioned glyph-run profile`](../../BACKLOG.md#define-the-strict-positioned-glyph-run-profile).
+The matching P0 backlog item was
+[`Define the strict positioned glyph-run profile`](https://github.com/flyingrobots/geordi/blob/f68160fcbbada657b2465ae1a42e3fb7403f32ae/BACKLOG.md#define-the-strict-positioned-glyph-run-profile).
 
 Related planning spike:
 [`2026-05-glyph-tooling-spike.md`](./2026-05-glyph-tooling-spike.md) proposes user-facing glyph
-import, inspection, preview, debugging, and comparison tools. It should run after S041 unless the
-font-pack import CLI is explicitly pulled forward.
+import, inspection, preview, debugging, and comparison tools. GitHub issue #71 tracks it.
 
 Drift correction:
 [`2026-05-wesley-common-type-generation.md`](./2026-05-wesley-common-type-generation.md) requires
 cross-language serialized contract DTOs to be generated from one Wesley common schema rather than
-hand-maintained separately in TypeScript and Rust.
+hand-maintained separately in TypeScript and Rust. GitHub issue #69 tracks it.
 [`2026-05-typescript-rust-wasm-boundary.md`](./2026-05-typescript-rust-wasm-boundary.md) defines
 the matching runtime boundary: TypeScript stays native at the edges, Rust stays native at the
 rendering core, contracts are generated, and WASM is reserved for hard deterministic kernels.

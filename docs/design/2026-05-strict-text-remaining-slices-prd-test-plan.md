@@ -5,7 +5,7 @@
 **Feature/Product Name**: Strict Positioned Glyph-Run Text, Evidence Rendering And Conformance
 **Slice Range**: S052-S100, with S051 as the completed strategy input
 **Parent Plan**: [2026-05-strict-positioned-glyph-run-plan.md](./2026-05-strict-positioned-glyph-run-plan.md)
-**Operating Map**: [../../BEARING.md](../../BEARING.md)
+**Operating Map**: [`BEARING.md` at `f68160f`](https://github.com/flyingrobots/geordi/blob/f68160fcbbada657b2465ae1a42e3fb7403f32ae/BEARING.md)
 
 This document applies the product-management and lead-QA standard to the remaining strict text
 execution slices. It is intentionally specific: every remaining slice must preserve the claim
