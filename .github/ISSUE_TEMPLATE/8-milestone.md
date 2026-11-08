@@ -7,14 +7,14 @@ assignees: ''
 ---
 
 ```yaml
-.dag: issue-dag/1
+.dag: issue-dag/2
 .id: TBD
 .kind: container
 .children: []
 area: <what the milestone covers>
 source: <where this work came from>
 ```
-<!-- After you create the issue, set .id to #<its number>. List member issues in .children in work order, as #N or owner/repo#N. A container never blocks and is never blocked. -->
+<!-- After you create the issue, set .id to flyingrobots/geordi#<its number>. List member issues in .children in work order, as owner/repo#N. A bare #N is not allowed. A container never blocks and is never blocked. -->
 
 # Milestone
 

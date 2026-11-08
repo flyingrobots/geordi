@@ -7,7 +7,7 @@ assignees: ''
 ---
 
 ```yaml
-.dag: issue-dag/1
+.dag: issue-dag/2
 .id: TBD
 .kind: task
 .type: spike
@@ -15,7 +15,7 @@ assignees: ''
 area: <package, crate, or path>
 source: <where this work came from>
 ```
-<!-- After you create the issue, set .id to #<its number>. List blockers in .blocked_by as #N (this repository) or owner/repo#N. Keys that start with . belong to issue-dag/1 (see AGENTS.md, Work Tracking). -->
+<!-- After you create the issue, set .id to flyingrobots/geordi#<its number>. List blockers in .blocked_by as owner/repo#N. A bare #N is not allowed. Keys that start with . belong to issue-dag/2 (see AGENTS.md, Work Tracking). -->
 
 # Spike
 
