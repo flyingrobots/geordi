@@ -424,8 +424,7 @@ This implies source references, layout traces, and diagnostic details should be 
 ## P0 Stabilization Implications
 
 These implementation items were derived from the design laws and repo audit. Current backlog state
-is tracked in [`../BACKLOG.md`](../BACKLOG.md), and current operating order is tracked in
-[`../BEARING.md`](../BEARING.md).
+and operating order are tracked in [GitHub Issues](https://github.com/flyingrobots/geordi/issues).
 
 ### P0: Make Node ESM package exports importable after build
 

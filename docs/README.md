@@ -9,7 +9,7 @@ that exists on `main`.
 | Reader job | Document |
 | --- | --- |
 | Understand the product boundary | [`../VISION.md`](../VISION.md) |
-| Find the active milestone and slice | [`../BEARING.md`](../BEARING.md) |
+| Find open work | [GitHub Issues](https://github.com/flyingrobots/geordi/issues) |
 | Check current capabilities and nonclaims | [`STATUS.md`](./STATUS.md) |
 | Understand compiler and package architecture | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
 | Follow the complete compile-to-render path | [`end-to-end.md`](./end-to-end.md) |

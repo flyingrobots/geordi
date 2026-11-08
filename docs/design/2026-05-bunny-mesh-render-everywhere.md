@@ -2,7 +2,7 @@
 
 **Status**: Draft
 **Date**: 2026-05-24
-**Parent Bearing**: [`../../BEARING.md`](../../BEARING.md)
+**Parent Bearing**: [`BEARING.md` at `f68160f`](https://github.com/flyingrobots/geordi/blob/f68160fcbbada657b2465ae1a42e3fb7403f32ae/BEARING.md)
 
 This document defines the next render-everywhere milestone after the rectangle-only proof. The
 target is a Stanford bunny mesh rendered in both browser and native Rust, rotating at a fixed rate

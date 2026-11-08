@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Process
+
+- Track all planned work in GitHub Issues with typed card templates (Feature, Bug, Decision,
+  Research, Investigation, Spike, and Task) in `.github/ISSUE_TEMPLATE/`. Remove `BEARING.md` and
+  `BACKLOG.md`; their open items moved to issues #63 to #73. Slice plans and DAG files in
+  `docs/design/` remain as historical records.
+
 ### Dependencies
 
 - Migrate `pnpm.overrides` from deprecated `package.json` field to `pnpm-workspace.yaml`; regenerate lockfile with pnpm 10.30.0 to match CI version (resolves `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY` on ubuntu-24.04)

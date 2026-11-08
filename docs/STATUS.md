@@ -1,9 +1,8 @@
 # Geordi Status
 
-**Date**: 2026-07-28
+**Date**: 2026-11-08
 **Version**: `0.1.0-dev`
-**Active milestone**: Portable Page Target Proof
-**Current operating map**: [`../BEARING.md`](../BEARING.md)
+**Work tracking**: [GitHub Issues](https://github.com/flyingrobots/geordi/issues)
 
 This document is a stable status signpost. It intentionally avoids fixed package test counts because
 those drift quickly; use CI, the current PR checks, and the commands in [`../README.md`](../README.md)
@@ -18,11 +17,9 @@ ladder:
 2. Stanford bunny mesh proof: complete for shared asset identity and coarse browser/native rendering
    smoke, not pixel-identical 3D rasterization.
 3. Strict positioned glyph-run text: proof complete, including CI coverage.
-4. Portable Profunctor Page target: implementation and narrow evidence
-   complete; full repository verification and review active.
+4. Portable Profunctor Page target: complete (PR #53).
 
-The current active slice is tracked in [`../BEARING.md`](../BEARING.md). The
-portable page proof consumes the canonical Keep `profunctor-page/0` fixture
+The portable page proof consumes the canonical Keep `profunctor-page/0` fixture
 without taking authority over its content or publication semantics. It emits
 structural target evidence and explicit residuals; it does not claim public
 prose rendering, accessibility behavior, native links, semantic HTML, or
@@ -52,12 +49,12 @@ general text.
 | Line-box measurement | `readTtfMetrics` parses TTF `head`/`hhea` tables for `unitsPerEm`, `ascender`, and `descender` without external dependencies. `measureFontLineBox` converts those metrics into a `geordi-fixed-26.6/1` line box. `FONT_ASCENT_DESCENT_BASELINE_POLICY` and `SINGLE_LINE_FONT_BOUNDS_LINE_BOX_POLICY` name the measurement approach. |
 | Profunctor Page target | `@flyingrobots/geordi-profunctor-page` validates the canonical Keep artifact family and emits deterministic resolved-rectangle IR, a target map, a byte-binding receipt, and a structural SVG witness with explicit residuals and nonclaims. |
 
-## Active Work
+## Portable Page Target Rules
 
-The active milestone is a structural page target proof, not general page or
-text support.
+The portable page target is a structural page target proof, not general page
+or text support. Open work is tracked in GitHub Issues.
 
-Current rules:
+Its rules:
 
 - the website remains page and prose authority;
 - Geordi owns target geometry, render identities, mappings, receipts, and

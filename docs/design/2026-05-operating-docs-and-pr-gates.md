@@ -1,6 +1,7 @@
 # Operating Docs and PR Gates Design
 
-**Status**: Draft
+**Status**: Superseded on 2026-11-08. GitHub Issues now track all work; `BEARING.md` and
+`BACKLOG.md` are removed. See `AGENTS.md`, section "Work Tracking".
 **Date**: 2026-05-23
 **Slices Covered**: 1 and 10
 

@@ -17,8 +17,7 @@ loudly, and produce behavior that can be proven across runtimes.
 ## Current Status
 
 **Version**: `0.1.0-dev`
-**Active milestone**: Portable Page Target Proof
-**Current operating map**: [BEARING.md](BEARING.md)
+**Work tracking**: [GitHub Issues](https://github.com/flyingrobots/geordi/issues)
 
 Completed proof layers:
 
@@ -40,12 +39,10 @@ Completed proof layers:
   mapping evidence, a receipt, and an SVG witness without inheriting semantic
   HTML or general-text claims.
 
-Active work:
+Open work is tracked in [GitHub Issues](https://github.com/flyingrobots/geordi/issues). One known architecture correction:
 
-- The portable page target implementation is complete locally and is in its
-  full repository verification and review slice.
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
-  Wesley/common-type generation.
+  Wesley/common-type generation ([#69](https://github.com/flyingrobots/geordi/issues/69)).
 
 Current nonclaims:
 
@@ -63,7 +60,7 @@ Current nonclaims:
 | Need | Document |
 | --- | --- |
 | Product and architecture north star | [VISION.md](VISION.md) |
-| Current slice, checklist, and active DAG | [BEARING.md](BEARING.md) |
+| Open work and its order | [GitHub Issues](https://github.com/flyingrobots/geordi/issues) |
 | Current status summary | [docs/STATUS.md](docs/STATUS.md) |
 | Documentation policy and corpus map | [docs/README.md](docs/README.md) |
 | Compiler/package architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |

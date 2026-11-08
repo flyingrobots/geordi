@@ -28,8 +28,7 @@ release ledger simultaneously.
 | --- | --- |
 | `README.md` | Public front door, current claims, nonclaims, and deeper routes. |
 | `docs/README.md` | Documentation spine and routing index. |
-| `BEARING.md` | Active milestone, ordered slices, and current execution posture. |
-| `BACKLOG.md` | Repository-owned debt and unscheduled work. |
+| GitHub Issues | Planned work, debt, and execution order, in typed cards from `.github/ISSUE_TEMPLATE/`. |
 | `docs/STATUS.md` | Stable summary of behavior on `main`. |
 | `docs/ARCHITECTURE.md` | Current compiler, artifact, and runtime architecture. |
 | `docs/V0_DESIGN_LAWS.md` | Current product and runtime laws. |
@@ -62,7 +61,7 @@ design MUST identify:
 - versioned artifacts or interfaces;
 - stable requirements;
 - exact positive and negative evidence;
-- dependency-ordered slices; and
+- links to the GitHub issues that execute it; and
 - acceptance and completion conditions.
 
 Planned work is not evidence. Mark it as planned and link its GitHub issue.
@@ -101,8 +100,8 @@ For a meaningful behavior change:
 3. Implement the behavior.
 4. Update the living reference after the behavior exists.
 5. Record actual evidence and remaining nonclaims.
-6. Update `README.md`, `docs/README.md`, `BEARING.md`, `BACKLOG.md`,
-   `docs/STATUS.md`, and `CHANGELOG.md` when their owned posture changes.
+6. Update `README.md`, `docs/README.md`, `docs/STATUS.md`, and `CHANGELOG.md`
+   when their owned posture changes. Close or update the GitHub issue.
 7. Run documentation upkeep before opening the pull request.
 
 Small fixes may scale this down, but current truth, evidence, and nonclaims must
