@@ -30,7 +30,13 @@ files.
 - Write cards in ASD-STE100. Keep the frontmatter block, the type heading, and the LLM prompt block
   at the top of each card.
 - One executable issue leads to one pull request. Put `Closes #N` in the pull request body.
-- Record prerequisites as GitHub issue dependencies and in the Prerequisites section of the card.
+- Each card starts with `issue-dag/1` frontmatter: the first fenced `yaml` block, with `.dag`, `.id`,
+  `.kind`, and (for tasks) `.type` and `.blocked_by`. Keys that start with `.` are the
+  machine-readable contract; other keys are notes. See the `issue-dag` skill's
+  `docs/frontmatter-model.md`.
+- Record prerequisites in `.blocked_by`, as `#N` or `owner/repo#N`. A milestone lists its members in
+  `.children`. GitHub sub-issues and blocked-by links are an optional mirror; the frontmatter wins.
+- Labels are for people. No tool reads them.
 - When work is done, close the issue through its pull request. Record a decision or finding on the
   card that owns it.
 - Design records in `docs/design/` explain decisions. They do not track status. The slice plans and
