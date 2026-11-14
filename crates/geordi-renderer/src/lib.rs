@@ -2,9 +2,10 @@
 
 use geordi_ir::{
     GEORDI_IR_VERSION, GEORDI_NUMERIC_PROFILE, GeordiGlyphRun, GeordiIr, GeordiIrValidationError,
-    GeordiPositionedGlyph, GeordiStrictTextFixtureManifest, GeordiStrictTextFixtureValidationError,
-    GeordiStrictTextOutlineCommand, GeordiStrictTextOutlineEvidenceGlyph,
-    GeordiStrictTextOutlineEvidencePack, GeordiStrictTextOutlineEvidenceValidationError,
+    GeordiPositionedGlyph, GeordiRayTracedScene, GeordiStrictTextFixtureManifest,
+    GeordiStrictTextFixtureValidationError, GeordiStrictTextOutlineCommand,
+    GeordiStrictTextOutlineEvidenceGlyph, GeordiStrictTextOutlineEvidencePack,
+    GeordiStrictTextOutlineEvidenceValidationError, geordi_ray_traced_image_hash,
     validate_geordi_ir, validate_geordi_strict_text_evidence_coverage,
     validate_geordi_strict_text_evidence_line_boxes, validate_geordi_strict_text_fixture_manifest,
     validate_geordi_strict_text_outline_evidence_pack,
@@ -78,6 +79,93 @@ impl Display for GeordiRuntimeUnsupportedProfileError {
 
 impl Error for GeordiRuntimeUnsupportedProfileError {}
 
+/// One `(artifact version, numeric profile)` pair a ray-tracing runtime accepts.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct GeordiRayTracedArtifactProfile {
+    /// Supported scene artifact version, for example `geordi-ray-traced-scene/1`.
+    pub scene_version: &'static str,
+    /// Supported numeric profile, for example `geordi-fixed-q32.32/1`.
+    pub numeric_profile: &'static str,
+}
+
+/// Capability profile a ray-tracing runtime declares for `geordi-ray-traced-scene/1` artifacts.
+///
+/// Geordi ships no ray-tracing runtime; a runtime such as lumen declares its own profile and
+/// calls [`assert_ray_traced_runtime_profile`] before reading the scene body.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct GeordiRayTracedRuntimeProfile {
+    /// Supported `(sceneVersion, numericProfile)` pairs.
+    pub artifacts: &'static [GeordiRayTracedArtifactProfile],
+    /// Supported feature requirements.
+    pub requirements: &'static [&'static str],
+    /// Implemented mesh decode layout identities.
+    pub mesh_layouts: &'static [&'static str],
+    /// Implemented integrator identities.
+    pub integrators: &'static [&'static str],
+    /// Implemented sampler identities.
+    pub samplers: &'static [&'static str],
+    /// Implemented tone curve identities.
+    pub tone_curves: &'static [&'static str],
+    /// Implemented reconstruction filter identities.
+    pub reconstructions: &'static [&'static str],
+    /// Implemented output encoding identities.
+    pub outputs: &'static [&'static str],
+}
+
+/// Custom error returned when a `RenderedImage` cannot be built from width, height and bytes.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct GeordiRenderedImageError {
+    width: usize,
+    height: usize,
+    actual_len: usize,
+    expected_len: Option<usize>,
+}
+
+impl GeordiRenderedImageError {
+    /// Requested width in pixels.
+    #[must_use]
+    pub const fn width(&self) -> usize {
+        self.width
+    }
+
+    /// Requested height in pixels.
+    #[must_use]
+    pub const fn height(&self) -> usize {
+        self.height
+    }
+
+    /// Length of the supplied byte buffer.
+    #[must_use]
+    pub const fn actual_len(&self) -> usize {
+        self.actual_len
+    }
+
+    /// `width * height * 4`, or `None` when that product overflows `usize`.
+    #[must_use]
+    pub const fn expected_len(&self) -> Option<usize> {
+        self.expected_len
+    }
+}
+
+impl Display for GeordiRenderedImageError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        match self.expected_len {
+            Some(expected) => write!(
+                formatter,
+                "RGBA8 image {}x{} needs {expected} bytes, got {}",
+                self.width, self.height, self.actual_len
+            ),
+            None => write!(
+                formatter,
+                "RGBA8 image {}x{} byte length overflows usize",
+                self.width, self.height
+            ),
+        }
+    }
+}
+
+impl Error for GeordiRenderedImageError {}
+
 /// In-memory RGBA8 render output.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RenderedImage {
@@ -100,6 +188,42 @@ impl RenderedImage {
             rgba: vec![0; byte_count],
             width,
         })
+    }
+
+    /// Build an image from RGBA8 bytes in row-major order, top row first.
+    ///
+    /// # Errors
+    ///
+    /// Returns `GeordiRenderedImageError` when `width * height * 4` overflows `usize` or differs
+    /// from `rgba.len()`.
+    pub fn from_rgba8(
+        width: usize,
+        height: usize,
+        rgba: Vec<u8>,
+    ) -> Result<Self, GeordiRenderedImageError> {
+        let expected_len = width
+            .checked_mul(height)
+            .and_then(|pixels| pixels.checked_mul(4));
+        if expected_len != Some(rgba.len()) {
+            return Err(GeordiRenderedImageError {
+                width,
+                height,
+                actual_len: rgba.len(),
+                expected_len,
+            });
+        }
+
+        Ok(Self {
+            height,
+            rgba,
+            width,
+        })
+    }
+
+    /// The `imageHash` receipt value: `sha256:` over the raw RGBA8 bytes.
+    #[must_use]
+    pub fn image_hash(&self) -> String {
+        geordi_ray_traced_image_hash(&self.rgba)
     }
 
     /// Image width in pixels.
@@ -395,6 +519,71 @@ pub fn assert_native_runtime_profile(
 ) -> Result<(), GeordiRuntimeUnsupportedProfileError> {
     assert_profile_version(ir, &GEORDI_NATIVE_RUNTIME_PROFILE)?;
     assert_profile_requirements(ir, &GEORDI_NATIVE_RUNTIME_PROFILE)
+}
+
+/// Assert that a ray-traced scene can run on a ray-tracing runtime profile.
+///
+/// The `(sceneVersion, numericProfile)` pair is checked first, then requirements, mesh layouts
+/// and the render identities. This is capability negotiation only; validate the scene with
+/// `validate_geordi_ray_traced_scene` as well.
+///
+/// # Errors
+///
+/// Returns `GeordiRuntimeUnsupportedProfileError` naming the first value the profile does not
+/// support.
+pub fn assert_ray_traced_runtime_profile(
+    scene: &GeordiRayTracedScene,
+    profile: &GeordiRayTracedRuntimeProfile,
+) -> Result<(), GeordiRuntimeUnsupportedProfileError> {
+    if !profile.artifacts.iter().any(|supported| {
+        supported.scene_version == scene.scene_version
+            && supported.numeric_profile == scene.numeric_profile
+    }) {
+        let supported = profile
+            .artifacts
+            .iter()
+            .map(|pair| format!("{}+{}", pair.scene_version, pair.numeric_profile))
+            .collect::<Vec<_>>()
+            .join(",");
+        return Err(GeordiRuntimeUnsupportedProfileError::new(
+            format!(
+                "sceneVersion={}+numericProfile={}",
+                scene.scene_version, scene.numeric_profile
+            ),
+            format!("artifacts={supported}"),
+        ));
+    }
+    for requirement in &scene.requires {
+        assert_ray_traced_identity("requires", requirement, profile.requirements)?;
+    }
+    for mesh in &scene.meshes {
+        assert_ray_traced_identity("layout", &mesh.layout, profile.mesh_layouts)?;
+    }
+    let render = &scene.render;
+    assert_ray_traced_identity("integrator", &render.integrator, profile.integrators)?;
+    assert_ray_traced_identity("sampler", &render.sampler, profile.samplers)?;
+    assert_ray_traced_identity("toneCurve", &render.tone_curve, profile.tone_curves)?;
+    assert_ray_traced_identity(
+        "reconstruction",
+        &render.reconstruction,
+        profile.reconstructions,
+    )?;
+    assert_ray_traced_identity("output", &render.output, profile.outputs)
+}
+
+fn assert_ray_traced_identity(
+    field: &str,
+    value: &str,
+    supported: &[&str],
+) -> Result<(), GeordiRuntimeUnsupportedProfileError> {
+    if supported.contains(&value) {
+        Ok(())
+    } else {
+        Err(GeordiRuntimeUnsupportedProfileError::new(
+            format!("{field}={value}"),
+            format!("{field}={}", supported.join(",")),
+        ))
+    }
 }
 
 /// Render a validated Geordi IR artifact into deterministic RGBA8 pixels.
@@ -1012,6 +1201,9 @@ fn assert_profile_requirements(
 fn supported_requirements(profile: &GeordiNativeRuntimeProfile) -> String {
     format!("requires={}", profile.supported_requirements.join(","))
 }
+
+#[cfg(test)]
+mod ray_traced_tests;
 
 #[cfg(test)]
 mod tests {
