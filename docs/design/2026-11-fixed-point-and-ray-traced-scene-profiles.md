@@ -789,6 +789,20 @@ The maintainer settled the open questions on 2026-11-13 ([#152](https://github.c
    needs the type without the renderer.
 7. **Cross-architecture gate.** Required before the profile is claimed
    ([B9](#b9-proof-gates-and-non-claims), gate 3).
+8. **Identities are recognized at negotiation, not by the artifact validator.** Settled during the
+   first implementation slice ([#153](https://github.com/flyingrobots/geordi/issues/153)). The
+   validator checks only that a sampler, tone curve, reconstruction, output or integrator identity
+   has the form `name/N`; whether an identity is implemented is a fact about a runtime, so the
+   runtime-profile check rejects one the runtime does not declare
+   ([B5](#b5-the-integrator-identity-and-everything-else-that-affects-pixels),
+   [B8](#b8-validation-and-failure): "where it can see the fact"). Rationale: Bunny has not yet
+   published sampler or tone curve identities, and a validator with a built-in list would make
+   every artifact invalid until Geordi is re-released for each new identity. The reference fixture
+   uses placeholder identities that no runtime implements: it validates and cannot be rendered.
+9. **`-0` is rejected.** [A2](#a2-representation-in-canonical-json) said `-0` is normalized to `0`.
+   The Rust parser reads `-0` as a float, like `-0.0`, and this profile rejects every float, so the
+   implementation rejects `-0` with the same diagnostic. This is the stricter reading and it
+   governs: a canonical artifact has exactly one spelling of zero.
 
 Decisions on the findings in [What exists today](#what-exists-today):
 
