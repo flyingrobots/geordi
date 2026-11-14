@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### CI
+
+- Pin the Rust toolchain to 1.96.0 with `rust-toolchain.toml` and install that toolchain in CI instead of floating `stable`, so new compiler lints no longer fail CI on unchanged code (flyingrobots/geordi#158)
+
 ### Dependencies
 
 - Migrate `pnpm.overrides` from deprecated `package.json` field to `pnpm-workspace.yaml`; regenerate lockfile with pnpm 10.30.0 to match CI version (resolves `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY` on ubuntu-24.04)
