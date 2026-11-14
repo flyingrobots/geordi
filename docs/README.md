@@ -22,7 +22,7 @@ that exists on `main`.
 ## Current design
 
 - [Fixed-point numeric profile and ray-traced scene profile](./design/2026-11-fixed-point-and-ray-traced-scene-profiles.md)
-  (proposed, awaiting decision)
+  (accepted; not yet implemented)
 - [Profunctor Page target proof](./design/2026-07-profunctor-page-target-proof.md)
 - [Portable Bijou UI render endpoints](./design/2026-06-portable-bijou-ui-render-endpoints.md)
 - [TypeScript, Rust, and WASM boundary](./design/2026-05-typescript-rust-wasm-boundary.md)

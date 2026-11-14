@@ -1,24 +1,25 @@
 # Fixed-Point Numeric Profile And Ray-Traced Scene Profile
 
-**Status**: Proposed, awaiting the maintainer's decision
+**Status**: Accepted (maintainer decisions recorded 2026-11-13; see [Decisions](#decisions))
 **Date**: 2026-11-13
 **Issue**: [#152](https://github.com/flyingrobots/geordi/issues/152)
-**Implementation issue**: [#153](https://github.com/flyingrobots/geordi/issues/153) (blocked on
-this decision)
+**Implementation issue**: [#153](https://github.com/flyingrobots/geordi/issues/153)
 **Upstream plan**: [lumen#9](https://github.com/flyingrobots/lumen/issues/9), stage
 [lumen#8](https://github.com/flyingrobots/lumen/issues/8)
 **Bunny revision read**: `origin/main` at `7467148`
 
 ## Reader job
 
-This record lets the maintainer decide two Geordi contracts before any code is written:
+This record states two Geordi contracts, accepted before any code is written:
 
 1. a fixed-point numeric profile, the first alternative to `geordi-finite-binary64/1`; and
 2. a ray-traced 3D scene profile that a deterministic ray tracer consumes.
 
-Each decision states a recommendation, the alternatives, and the evidence that would change it.
-Statements about what exists today cite the file they come from. Anything planned is labelled
-planned and linked to its issue. Nothing in this document is implemented.
+Each decision states the recommendation, the alternatives, and the evidence that would change it.
+The maintainer accepted the recommendations with the amendments recorded in
+[Decisions](#decisions); where the two differ, Decisions governs. Statements about what exists
+today cite the file they come from. Anything planned is labelled planned and linked to its issue.
+Nothing in this document is implemented yet.
 
 ## Terms
 
@@ -58,7 +59,8 @@ planned and linked to its issue. Nothing in this document is implemented.
 | B9 | Shared types | Bunny owns a Q32.32 vector, a Q32.32 affine transform and the pinhole camera record as schema types. Geordi owns the scene artifact, materials, lights, render settings, runtime profile and receipt. Rays never appear in artifacts. |
 | C | First slices | Geordi: Rust-only DTOs, validator, runtime profile type, receipt type and a public `RenderedImage` constructor, with fixtures. Lumen: load the artifact and reproduce the built-in image hash. |
 
-The maintainer's open decisions are collected in [Open questions](#open-questions-for-the-maintainer).
+The maintainer's decisions on these recommendations, including amendments, are in
+[Decisions](#decisions).
 
 ## What exists today
 
@@ -391,9 +393,12 @@ indices, so it fixes both the container and the conversion:
 - Version 1 accepts one layout, `bunny-ply-binary-le-f32/1`: the binary little-endian PLY that
   `bunny-codec`'s `parse_binary_ply` reads, with each `f32` coordinate converted by Bunny's
   `try_from_f32` (round to nearest, ties to even; non-finite input rejected).
-- An ASCII PLY layout waits for [bunny#247](https://github.com/flyingrobots/bunny/issues/247) and
-  must be a different identity: converting decimal text directly to Q32.32 and converting it
-  through `f32` first give different raw values for most inputs.
+- An ASCII PLY layout identity may be added once Bunny can read ASCII PLY
+  ([bunny#247](https://github.com/flyingrobots/bunny/issues/247); Geordi's side is
+  [geordi#155](https://github.com/flyingrobots/geordi/issues/155)). It must be a different
+  identity: converting decimal text directly to Q32.32 and converting it through `f32` first give
+  different raw values for most inputs. Until then the binary-versus-ASCII question stays open in
+  those two issues; version 1 accepts only the binary layout.
 - `counts` and `bounds` are declared so the validator can check the trace domain without reading
   mesh bytes. The runtime recomputes both from the decoded mesh and rejects a mismatch.
 - A mesh coordinate is one local unit. Scale belongs to the instance transform; the layout claims
@@ -425,6 +430,13 @@ to the right and `y` grows downward, with row 0 at the top. Camera-space `+Y` up
 decreasing `y`. Pixels are square: both axes are scaled by `tanHalfFovY / (height / 2)`, so no
 rounded aspect ratio such as `3840 / 2160` enters the computation. This is the explicit viewport
 origin and direction the coordinate law requires.
+
+**Depth range.** Geordi's existing rasterized bunny projection maps depth to `[-1, 1]`
+(`docs/design/2026-05-bunny-projection-law.md`), while Bunny's coordinate law makes `[0, 1]`
+canonical. A ray tracer has no projection matrix and no depth buffer, so this profile is not
+affected. The mismatch will matter when Geordi's rasterized 3D path moves onto Bunny's projection
+builders, and it is resolved there, in
+[geordi#154](https://github.com/flyingrobots/geordi/issues/154).
 
 **Materials (version 1).** `diffuse` only: a Lambertian surface with per-channel linear albedo in
 `[0, 1]`. Every instance names one material.
@@ -505,8 +517,22 @@ from a sample, how a secondary ray avoids hitting the surface it leaves, how ver
 transformed, and in what order shading terms are multiplied. Two runtimes that disagree on any of
 these produce different bytes.
 
-**Recommendation**: the artifact names an integrator identity, `geordi-rt-diffuse-path/1`, and
-Geordi owns a short written definition of it. The definition fixes, at minimum:
+**Decision**: the artifact names an integrator identity, `geordi-rt-diffuse-path/1`, and Geordi
+owns a short written definition of it as a composition of named Bunny functions.
+
+As much of the graphics math as possible lives in Bunny, so each step is as coarse as Bunny can own
+without learning Geordi's nouns. Bunny's `bunny-optics` (planned) owns, as pure functions with
+their own golden vectors: the sampling sequence
+([bunny#221](https://github.com/flyingrobots/bunny/issues/221)), the hemisphere sampling and the
+diffuse shading step ([bunny#160](https://github.com/flyingrobots/bunny/issues/160)), and the
+sample accumulation and tone curve ([bunny#222](https://github.com/flyingrobots/bunny/issues/222)).
+Geordi's identity pins which of those functions are used, in which order, and at which Bunny
+contract versions. Lumen only wires them together; it adds no arithmetic of its own to a step.
+
+If two runtimes disagree, the Bunny function's golden vectors are the reference for a step, and the
+Geordi identity is the reference for the composition.
+
+The definition fixes, at minimum:
 
 - the vertex transform rule (proposed: Bunny's `FixedAffine3::checked_transform_point`, overflow
   rejected);
@@ -519,8 +545,10 @@ Geordi owns a short written definition of it. The definition fixes, at minimum:
 - the self-intersection rule for secondary rays (proposed: exclude the primitive just hit; no
   distance epsilon);
 - the facing rule for two-sided triangles (the shading normal faces the incoming ray);
-- the hemisphere sampling map and Lambertian evaluation (Bunny, planned in bunny#160);
-- the order and rounding of every multiplication in the shading sum;
+- the hemisphere sampling map and the diffuse shading step (Bunny, planned in bunny#160);
+- the sample accumulation and tone curve (Bunny, planned in bunny#222);
+- the order in which the Bunny steps are composed, and any rounding between them that a Bunny
+  function does not already own;
 - which sampler dimensions each decision consumes.
 
 Each step that Bunny owns is cited by function name. Under Bunny's Fidelity Rule an existing public
@@ -557,15 +585,21 @@ The render result is Geordi's `RenderedImage`: RGBA8, row-major, row 0 at the to
 * 4` bytes. Alpha is 255 for every pixel in version 1.
 
 The image hash is `sha256:` followed by the lowercase hex SHA-256 of exactly those RGBA bytes.
-Width, height and format are recorded beside it in the receipt. A plain digest of the raw bytes can
-be reproduced with standard tools from a raw dump.
+Width, height, pixel format and encoding are separate receipt fields, covered by the receipt's own
+hash ([B7](#b7-receipt)). Two images of different shape with the same bytes (for example
+`3840 x 2160` and `2160 x 3840`) have the same image hash; the receipt, not the image hash,
+distinguishes them. A plain digest of the raw bytes can be reproduced with standard tools from a
+raw dump.
 
 PNG files are a lumen output convenience. PNG compression varies by encoder and settings, so a PNG
 hash is not a contract value. A receipt may record it as informational only.
 
 `RenderedImage` cannot be constructed outside `geordi-renderer` today, and lumen must return one
-([lumen#6](https://github.com/flyingrobots/lumen/issues/6)). The first Geordi slice therefore adds a
-public, validating constructor from width, height and RGBA bytes.
+([lumen#6](https://github.com/flyingrobots/lumen/issues/6)). `RenderedImage` stays in
+`geordi-renderer`, and the first Geordi slice adds a public checked constructor from width, height
+and RGBA bytes that rejects any byte length other than `width * height * 4` (and any overflow of
+that product). Moving the type to its own crate is deferred until a second consumer needs it
+without the renderer.
 
 ### B7. Receipt
 
@@ -578,7 +612,11 @@ public, validating constructor from width, height and RGBA bytes.
 - `integrator`, `sampler`, `seed`, `samplesPerPixel`, `maxBounces`, `reconstruction`, `toneCurve`,
   `output`;
 - `runtime`: name, version, and the Bunny revision it was built from;
-- `image`: `width`, `height`, `format: "rgba8"`, `imageHash`.
+- `image`: `width`, `height`, `pixelFormat: "rgba8"`, `encoding` (the `render.output` identity),
+  `imageHash`.
+
+The receipt's own hash is the SHA-256 of its canonical JSON bytes, so it covers the image shape,
+format and encoding together with the image hash.
 
 Two machines show they produced the same image when their receipts agree on every field except
 `runtime` and their `imageHash` values are equal. A difference in any other field means they did
@@ -616,8 +654,9 @@ Geordi may claim `geordi/ray-traced-3d/1` only after these gates pass with recor
    acceptance and diagnostic paths.
 2. **Thread invariance.** Lumen renders the same scene on one thread and on all cores with equal
    image hashes (planned in [lumen#4](https://github.com/flyingrobots/lumen/issues/4)).
-3. **Machine invariance.** Two machines with different CPU architectures (for example
-   `aarch64` and `x86_64`) produce equal image hashes from the same receipt inputs.
+3. **Machine invariance.** Builds on two different CPU architectures (for example `aarch64` and
+   `x86_64`) produce equal image hashes from the same receipt inputs. This gate is required before
+   the profile is claimed; it is the point of the profile.
 4. **Artifact round trip.** Lumen's render of the Geordi artifact for its reference scene equals
    its built-in render of that scene (planned in
    [lumen#6](https://github.com/flyingrobots/lumen/issues/6)).
@@ -687,20 +726,22 @@ a future TypeScript reader converts each safe JSON integer with `BigInt`, which 
 - Gate: the image hash of the artifact render equals the built-in render of the same scene.
 
 This gate needs lumen's built-in reference scene to be made only of what version 1 can express:
-triangle meshes, diffuse materials, one sun and a sky. If lumen#2's scene uses an analytic sphere
-or plane, it cannot round-trip, and either that scene or this profile must change.
+triangle meshes, diffuse materials, one sun and a sky. **Decision**: lumen's built-in reference
+scene is made of triangles only, with no analytic spheres or planes, so that the Geordi artifact
+describes it exactly. This is a requirement on
+[lumen#2](https://github.com/flyingrobots/lumen/issues/2).
 
 ### Issues to file after the decision (not filed)
 
 1. Geordi: write the `geordi-rt-diffuse-path/1` integrator definition as its own design record once
    bunny#138, #221, #222 and #160 merge.
 2. Geordi: add `geordi-fixed-q32.32/1` to `docs/V0_DESIGN_LAWS.md` as an accepted numeric profile.
-3. Geordi: public validating `RenderedImage` constructor and image-hash helper (may fold into #153).
+3. Geordi: public checked `RenderedImage` constructor and image-hash helper (may fold into #153).
 4. Geordi: convert a binary PLY reference mesh and record its hashes as a fixture asset.
 5. Geordi: compiler normalization rule `geordi-round-nearest-even-q32.32/1` with golden vectors.
 6. Bunny: schema types for a Q32.32 vector, a Q32.32 affine transform and the pinhole camera.
 7. Bunny: publish stable identity strings and golden vectors for the sampler and tone curve.
-8. Lumen: make the built-in reference scene triangle-only so the round-trip gate is possible.
+8. Lumen: record the triangle-only reference-scene requirement on lumen#2.
 9. Lumen: cross-architecture image-hash gate in CI.
 10. Geordi: TypeScript reader for the scene artifact, after Wesley common-type generation exists.
 
@@ -718,18 +759,46 @@ The VISION quality bar asks seven questions of every new rendering claim.
 | What browser and native gates prove the behavior? | Native only: the gates in [B9](#b9-proof-gates-and-non-claims). No browser gate in version 1. |
 | What is explicitly not claimed? | The non-claims in [B9](#b9-proof-gates-and-non-claims). |
 
-## Open questions for the maintainer
+## Decisions
 
-1. Accept the raw-integer encoding with the safe-integer range (A2, A3), or require the full `i64`
-   range with decimal-string raw values?
-2. Accept a separate artifact (B1) rather than `geordi-ir/2`?
-3. Accept that the integrator identity is defined by Geordi in terms of named Bunny functions (B5),
-   or should Bunny own the whole integrator definition?
-4. Version 1 limits: `maxBounces` at most 1, one directional light, radiance at most `65536`,
-   `samplesPerPixel` a power of two up to 1024, `tanHalfFovY` in `(0, 4]`. Any to widen or narrow?
-5. Should the image hash be the plain SHA-256 of the RGBA bytes (recommended) or a
-   domain-separated hash that includes width, height and format?
-6. Should `RenderedImage` stay in `geordi-renderer`, or move to a small crate so lumen does not
-   depend on the rectangle renderer?
-7. Is the cross-architecture gate (B9, gate 3) required for the first claim, or may the first
-   claim rest on thread invariance and the round trip?
+The maintainer settled the open questions on 2026-11-13 ([#152](https://github.com/flyingrobots/geordi/issues/152)).
+
+1. **Number encoding.** Raw JSON integers limited to the safe range, `-(2^53 - 1)..=2^53 - 1` raw,
+   as recommended in [A2](#a2-representation-in-canonical-json) and
+   [A3](#a3-scale-range-and-what-a-validator-rejects). Rationale: one canonical form, exact in every
+   JSON parser including JavaScript's, and about 2.1 million units is far beyond the 256-unit trace
+   domain. A later profile version can widen the range if a real scene needs it.
+2. **Artifact form.** A separate artifact, `geordi-ray-traced-scene/1`, not `geordi-ir/2`
+   ([B1](#b1-artifact-form)).
+3. **Integrator.** Geordi's profile names the integrator identity and states it as a composition of
+   named Bunny functions, with the steps as coarse as Bunny can own: `bunny-optics` (planned) owns
+   the sampling sequence, hemisphere sampling, diffuse shading step, accumulation and tone curve as
+   pure functions with their own golden vectors; Geordi's identity pins which functions, in which
+   order, at which Bunny contract versions; lumen only wires them together. When runtimes disagree,
+   Bunny's golden vectors are the reference for a step and the Geordi identity for the composition
+   ([B5](#b5-the-integrator-identity-and-everything-else-that-affects-pixels)).
+4. **Version 1 limits.** Accepted as listed: at most one bounce, at most one directional light and
+   exactly one uniform sky, radiance at most `65536`, samples per pixel a power of two up to 1024,
+   `tanHalfFovY` in `(0, 4]`.
+5. **Image hash.** SHA-256 over the raw RGBA8 bytes, with width, height, pixel format and encoding
+   as separate receipt fields covered by the receipt's own hash. Two images of different shape with
+   the same bytes are distinguished by the receipt, not by the image hash ([B6](#b6-output),
+   [B7](#b7-receipt)).
+6. **`RenderedImage`.** Stays in `geordi-renderer` and gains a public checked constructor whose
+   dimensions must match the byte length. A separate crate is deferred until a second consumer
+   needs the type without the renderer.
+7. **Cross-architecture gate.** Required before the profile is claimed
+   ([B9](#b9-proof-gates-and-non-claims), gate 3).
+
+Decisions on the findings in [What exists today](#what-exists-today):
+
+- Lumen's built-in reference scene is made of triangles only, a requirement on
+  [lumen#2](https://github.com/flyingrobots/lumen/issues/2).
+- The mesh layout question (binary `f32` PLY versus ASCII) stays open in
+  [bunny#247](https://github.com/flyingrobots/bunny/issues/247) and
+  [geordi#155](https://github.com/flyingrobots/geordi/issues/155). Version 1 uses
+  `bunny-ply-binary-le-f32/1`; an ASCII layout identity may be added once Bunny can read it.
+- The depth-range mismatch (`[-1, 1]` in Geordi's rasterized bunny projection, `[0, 1]` in Bunny's
+  coordinate law) does not affect this profile. It is resolved in
+  [geordi#154](https://github.com/flyingrobots/geordi/issues/154), when the rasterized 3D path
+  moves onto Bunny.
