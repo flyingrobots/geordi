@@ -25,7 +25,10 @@ glyph-run map below is complete and retained as historical execution evidence.
 defines the `geordi-fixed-q32.32/1` numeric profile and the `geordi-ray-traced-scene/1` artifact
 that the deterministic ray tracer lumen consumes. The maintainer accepted it on
 [#152](https://github.com/flyingrobots/geordi/issues/152); implementation is tracked in
-[#153](https://github.com/flyingrobots/geordi/issues/153), and nothing in it is implemented yet.
+[#153](https://github.com/flyingrobots/geordi/issues/153). The first Geordi slice (Rust DTOs,
+validator, receipt, runtime profile negotiation and fixtures; no renderer) is described in
+[`../ray-traced-scene-profile.md`](../ray-traced-scene-profile.md). The profile is not claimed:
+its proof gates have not run.
 
 ## Completed Slice Map: Strict Positioned Glyph-Run Text
 

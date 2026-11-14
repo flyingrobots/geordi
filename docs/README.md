@@ -16,13 +16,15 @@ that exists on `main`.
 | Run render-everywhere proofs | [`render-everywhere.md`](./render-everywhere.md) |
 | Lower a Profunctor Page specimen | [`profunctor-page-target.md`](./profunctor-page-target.md) |
 | Look up stable compiler errors | [`ERROR_CODES.md`](./ERROR_CODES.md) |
+| Look up the ray-traced scene artifact, Q32.32 profile and receipt | [`ray-traced-scene-profile.md`](./ray-traced-scene-profile.md) |
 | Run Rust verification | [`RUST_GATES.md`](./RUST_GATES.md) |
 | Apply documentation policy | [`DOCUMENTATION_STANDARDS.md`](./DOCUMENTATION_STANDARDS.md) |
 
 ## Current design
 
 - [Fixed-point numeric profile and ray-traced scene profile](./design/2026-11-fixed-point-and-ray-traced-scene-profiles.md)
-  (accepted; not yet implemented)
+  (accepted; the first Rust slice, without a renderer, is described in
+  [`ray-traced-scene-profile.md`](./ray-traced-scene-profile.md))
 - [Profunctor Page target proof](./design/2026-07-profunctor-page-target-proof.md)
 - [Portable Bijou UI render endpoints](./design/2026-06-portable-bijou-ui-render-endpoints.md)
 - [TypeScript, Rust, and WASM boundary](./design/2026-05-typescript-rust-wasm-boundary.md)

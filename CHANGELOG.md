@@ -13,6 +13,20 @@
 
 ### Features
 
+- **`geordi-ir`** (Rust): Add the `geordi-ray-traced-scene/1` artifact and the
+  `geordi-fixed-q32.32/1` numeric profile (flyingrobots/geordi#153): `GeordiFixedQ32_32`, which
+  deserializes only from JSON integers in `-(2^53 - 1)..=2^53 - 1`; scene, mesh, instance,
+  camera, material, light, film and render-settings DTOs; `parse_geordi_ray_traced_scene` and
+  `validate_geordi_ray_traced_scene` with stable `GEORDI_E_RT_*` diagnostics, including the exact
+  conservative trace-domain check; mesh asset hash verification; canonical scene and receipt JSON
+  and their hashes; the raw-RGBA8 image hash; and the `geordi-ray-traced-render-receipt/1` type,
+  builder, parser and validator. Fixtures live in `fixtures/ray-traced-scene/`. No renderer; the
+  profile is not claimed.
+- **`geordi-renderer`** (Rust): Add `GeordiRayTracedRuntimeProfile` and
+  `assert_ray_traced_runtime_profile` for ray-tracing runtimes, the checked public constructor
+  `RenderedImage::from_rgba8` (rejects a byte length other than `width * height * 4` and overflow of
+  that product), and `RenderedImage::image_hash`. Existing rendering is unchanged.
+
 - **`@flyingrobots/geordi-profunctor-page`**: Add a fail-closed
   `geordi-profunctor-page-structural/1` target for the canonical Keep
   `profunctor-page/0` specimen, emitting deterministic rectangle IR, target
