@@ -44,8 +44,9 @@ count and seed. Those plain integers are not governed by the numeric profile; ea
 range below. The number-token rules above apply to all of them.
 
 Runtimes that compute with these values are expected to use the arithmetic of Bunny's numeric
-constitution (`docs/NUMERIC_CONSTITUTION.md` in flyingrobots/bunny). Geordi's code does not
-depend on Bunny.
+constitution (`docs/NUMERIC_CONSTITUTION.md` in flyingrobots/bunny). The profile's types and
+validator in `geordi-ir` do not depend on Bunny; the only Bunny dependency in the workspace is the
+native demo's camera and projection path (`examples/native-render-everywhere`).
 
 ## Artifact shape
 

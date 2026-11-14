@@ -1058,6 +1058,16 @@ path. It does not load `scene.geordi.json`; it loads `bunny.fixture.json`, follo
 `assetManifestPath` to `bunny.mesh.json`, checks the PLY hash, parses the PLY through
 `geordi-mesh`, computes a deterministic playback frame, and renders an RGBA8 wireframe buffer.
 
+The vertex math is split at one boundary. The playback rotation runs in binary64, because Bunny
+has no axis-angle rotation yet. Each rotated position is then rounded to Q32.32 (nearest raw unit,
+ties to even) and everything after that is a Bunny 0.7.1 function: `FixedMat4::try_look_at` for the
+camera, two `FixedPlane3` planes in view space for the inclusive `[near, far]` depth range,
+`FixedMat4::try_perspective` and a checked divide by `w` for NDC, and
+`Viewport::try_ndc_to_viewport` for pixel coordinates (origin top-left, `y` down). The continuous
+pixel coordinate is converted back to binary64 exactly and snapped to the nearest pixel, as before.
+The camera and projection are built once when the fixture loads; parameters Bunny refuses are
+manifest validation errors.
+
 ```mermaid
 flowchart TD
   AssetDir["fixtures/render-everywhere/assets/stanford-bunny"]
@@ -1067,7 +1077,8 @@ flowchart TD
   Hash["assert_mesh_asset_sha256()"]
   Parse["parse_ascii_ply_triangle_mesh()"]
   Frame["create_bunny_frame_report()<br/>frame -> seconds -> angle"]
-  Render["render_bunny_wireframe()<br/>mesh + angle -> RGBA8"]
+  Projection["bunny_fixed_projection()<br/>Bunny look-at + perspective + viewport"]
+  Render["render_bunny_wireframe()<br/>binary64 rotation -> Q32.32 -> pixels -> RGBA8"]
   Smoke["--bunny-smoke<br/>nonblank smoke"]
   Window["--bunny-window<br/>live minifb presentation"]
 
@@ -1075,6 +1086,7 @@ flowchart TD
   AssetDir --> Ply
   Manifest --> Hash
   Ply --> Hash --> Parse --> Frame --> Render
+  Fixture --> Projection --> Render
   Render --> Smoke
   Render --> Window
 ```
