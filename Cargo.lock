@@ -30,6 +30,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
 
 [[package]]
+name = "bunny-geom"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "570df1bc618c08e8e1dba946b820040d5e5cd31e1ab6c2684d3a344b566b85e6"
+dependencies = [
+ "bunny-linalg",
+ "bunny-num",
+]
+
+[[package]]
+name = "bunny-linalg"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "478102e2307808a4bf34fc2300c7f4157d18813720c2759db473640ad3d7029d"
+dependencies = [
+ "bunny-num",
+]
+
+[[package]]
+name = "bunny-num"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3844293d5ec1c2b8ad4b7e49f883cb1d26d658f2157d203e60bcb1ecc01b342f"
+
+[[package]]
 name = "cc"
 version = "1.2.62"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -298,6 +323,9 @@ dependencies = [
 name = "native-render-everywhere"
 version = "0.1.0"
 dependencies = [
+ "bunny-geom",
+ "bunny-linalg",
+ "bunny-num",
  "geordi-ir",
  "geordi-mesh",
  "geordi-renderer",

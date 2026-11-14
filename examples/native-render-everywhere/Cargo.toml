@@ -12,6 +12,9 @@ version.workspace = true
 workspace = true
 
 [dependencies]
+bunny-geom = "0.7.1"
+bunny-linalg = "0.7.1"
+bunny-num = "0.7.1"
 geordi-ir = { path = "../../crates/geordi-ir" }
 geordi-mesh = { path = "../../crates/geordi-mesh" }
 geordi-renderer = { path = "../../crates/geordi-renderer" }
