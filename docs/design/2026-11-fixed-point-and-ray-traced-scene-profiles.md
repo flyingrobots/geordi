@@ -180,9 +180,12 @@ Reasons for the recommendation:
   already treat JSON as "a debug, review, and interchange envelope", not the authoring surface.
 
 Canonical form: digits only, an optional leading `-`, no leading zeros, no fraction, no exponent,
-and `-0` normalized to `0` as the JSON port already does. In TypeScript, where `JSON.parse` cannot
-see that `1.0` was written instead of `1`, the existing rule that hashes cover canonical
-re-serialized bytes detects the difference.
+and `-0` normalized to `0` as the JSON port already does. Rust enforces this for free, because
+`serde_json` refuses a fraction or exponent for an `i64` field. JavaScript's `JSON.parse` cannot:
+`1.0` and `1` parse to the same value, and re-serializing or hashing afterwards cannot tell which
+was written. A future TypeScript validator must therefore read the raw number tokens with a
+token-preserving parser before converting them. Version 1 has no TypeScript validator (see
+[B10](#b10-shared-types)), so this obligation falls on the later TypeScript reader.
 
 What would change this: a real consumer that needs magnitudes above about two million units in a
 Q32.32 artifact. The answer then is a second profile (for example decimal-string raw values), not a
@@ -362,7 +365,7 @@ annotated in comments for the reader; comments are not valid JSON and the real a
     {
       "kind": "directional",
       "id": "sun",
-      "towardLight": [1717986918, 3435973837, 858993459], // (0.4, 0.8, 0.2), not unit length
+      "towardLight": [2147483648, 4294967296, 1073741824], // (0.5, 1.0, 0.25), max component 1.0
       "radiance": [12884901888, 12884901888, 12884901888] // 3.0
     },
     { "kind": "uniformSky", "id": "sky", "radiance": [1288490189, 1717986918, 2576980378] }
@@ -429,8 +432,12 @@ origin and direction the coordinate law requires.
 **Lights (version 1).**
 
 - `directional`: a light at infinity with no angular size, given by `towardLight` (the direction
-  from a surface to the light, need not be unit length) and per-channel radiance. Shadows are hard.
-  At most one directional light.
+  from a surface to the light) and per-channel radiance. Shadows are hard. At most one directional
+  light. `towardLight` need not be unit length, but its largest component magnitude must be
+  exactly 1.0 (raw `2^32`). That makes it a valid trace direction with no runtime division, and it
+  bounds shadow-ray distances: along the dominant axis a distance `t` moves exactly `t` units, and
+  two points inside the trace domain differ by less than 512 units on any axis, so every occluder
+  lies at a distance below 512. Normalization rescales an authored direction to this form.
 - `uniformSky`: a constant radiance seen by every ray that leaves the scene, including camera rays
   that hit nothing. Exactly one.
 
@@ -505,7 +512,10 @@ Geordi owns a short written definition of it. The definition fixes, at minimum:
   rejected);
 - camera ray generation from pixel and sub-pixel offset (Bunny, planned in bunny#138);
 - closest-hit and shadow queries (Bunny's `closest_hit` and `any_hit` with `TraceRay` and
-  `TraceTriangle`, the primitive order above, shadow rays with `t_max` at the domain limit);
+  `TraceTriangle`, the primitive order above, and shadow rays toward the sun along `towardLight`
+  with `t_max` of 512 units, raw `2^41`, which covers every in-domain occluder as explained in
+  [B2](#b2-scene-content); camera and bounce rays use `t_max` of `i64::MAX` raw, no distance
+  limit);
 - the self-intersection rule for secondary rays (proposed: exclude the primitive just hit; no
   distance epsilon);
 - the facing rule for two-sided triangles (the shading normal faces the incoming ray);
@@ -588,6 +598,8 @@ A runtime, and the Geordi validator where it can see the fact, must reject loudl
 - a triangle index out of range;
 - a scene outside the trace domain ([B3](#b3-the-trace-domain-limit));
 - a degenerate camera or a `tanHalfFovY` outside its domain;
+- a `towardLight` whose largest component magnitude is not exactly 1.0 (this also rejects the
+  zero vector);
 - an albedo outside `[0, 1]`, a radiance outside `[0, 65536]`, more than one directional light, or
   not exactly one sky;
 - a `samplesPerPixel`, `seed`, `maxBounces` or film size outside its domain;
