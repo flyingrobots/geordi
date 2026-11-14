@@ -37,6 +37,38 @@ fixtures/render-everywhere/assets/stanford-bunny
 The bunny path validates the checked-in mesh manifest, parses the checked-in PLY bytes, computes
 fixed-rate playback frames, and draws the mesh as a rotating software wireframe.
 
+## Bunny math in the bunny path
+
+"Bunny" names two things here: the Stanford bunny mesh, and the Bunny crates
+(`bunny-num`, `bunny-linalg`, `bunny-geom`, version 0.7.1 from crates.io) that hold Geordi's
+deterministic Q32.32 math. The mesh path uses the crates as follows.
+
+| Step | Where it runs | Numbers |
+| --- | --- | --- |
+| Playback axis normalization and axis-angle rotation | `bunny.rs` (`rotate_around_axis`) | binary64 |
+| Rotated position to Q32.32 | `bunny/q32_boundary.rs`, nearest raw unit, ties to even | exact rounding |
+| Camera (`view_from_world`) | `FixedMat4::try_look_at` | Q32.32 |
+| Depth range `[near, far]`, both ends kept | `FixedPlane3::classify` in view space | Q32.32 |
+| Perspective and divide by `w` | `FixedMat4::try_perspective`, `checked_div` | Q32.32 |
+| NDC to pixels (origin top-left, `y` down) | `Viewport::try_ndc_to_viewport` | Q32.32 |
+| Snap to a pixel and draw the edge | `bunny.rs` (`rounded_pixel`, `draw_line`) | exact conversion, then binary64 rounding |
+
+The rotation stays in binary64 because Bunny 0.7.1 has no axis-angle rotation. The tangent of half
+the vertical field of view is also computed in binary64 and rounded to Q32.32, because Bunny has
+no tangent; Bunny's perspective builder takes that tangent directly. An edge is skipped when either
+endpoint lies outside the depth range or a checked Q32.32 step overflows, as the binary64 code
+skipped non-finite or out-of-range endpoints.
+
+Evidence that the switch did not change the picture lives in
+`src/bunny/render_fidelity_tests.rs`: the binary64 camera and projection code is retained there as
+the reference, every frame of a full turn draws identical RGBA bytes on both paths, every fixture
+vertex on 60 frames and 32,000 generated camera and point cases stay within a derived per-position
+error bound, and five frames match SHA-256 digests recorded from the binary64 renderer.
+
+Two behaviours differ in cases the fixture does not use: a non-square viewport divides `x` by the
+aspect ratio, as the projection law states, and camera or projection values that Q32.32 cannot
+hold, or that Bunny refuses, are manifest validation errors.
+
 The native harness also has a strict text rejection preflight for committed negative fixtures:
 
 ```text

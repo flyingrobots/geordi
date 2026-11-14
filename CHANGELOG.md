@@ -8,11 +8,27 @@
 
 ### Dependencies
 
+- **`native-render-everywhere`** (Rust): depend on `bunny-num`, `bunny-linalg` and `bunny-geom`
+  `0.7.1` from crates.io, the first Bunny dependency in the workspace (flyingrobots/geordi#154)
 - Migrate `pnpm.overrides` from deprecated `package.json` field to `pnpm-workspace.yaml`; regenerate lockfile with pnpm 10.30.0 to match CI version (resolves `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY` on ubuntu-24.04)
 - Bump `vitest` from `^1.3.0` to `^3.2.4` across all packages; add `esbuild >=0.25.0` override (CVE fix)
 
 ### Features
 
+- **`native-render-everywhere`** (Rust): the native bunny demo's camera, projection, depth-range
+  test and viewport mapping now run on Bunny Q32.32 (`FixedMat4::try_look_at`,
+  `FixedMat4::try_perspective`, `FixedPlane3::classify`, `Viewport::try_ndc_to_viewport`)
+  instead of hand-written binary64 math (flyingrobots/geordi#154). The mesh rotation stays in
+  binary64, because Bunny has no axis-angle rotation yet; each rotated position is rounded to
+  Q32.32, ties to even. Every frame of a full turn draws the same RGBA bytes as before (checked
+  against the retained binary64 code and against digests recorded from it); projected positions
+  move by at most 9e-7 pixels on the fixture. Changes in cases no fixture uses: a non-square
+  viewport now divides `x` by the aspect ratio, as `docs/design/2026-05-bunny-projection-law.md`
+  states (the binary64 code ignored it); camera, projection and viewport values that Q32.32
+  cannot hold, a vertical field of view of pi or more, and an `up` vector that is exactly parallel
+  to the view direction after rounding to Q32.32 are refused as manifest validation errors; a zero
+  `up`, or an `eye` equal to `target`, now reports its own issue without the parallel-up issue
+  that the binary64 cross-product check also raised.
 - **`geordi-ir`** (Rust): Add the `geordi-ray-traced-scene/1` artifact and the
   `geordi-fixed-q32.32/1` numeric profile (flyingrobots/geordi#153): `GeordiFixedQ32_32`, which
   deserializes only from JSON integers in `-(2^53 - 1)..=2^53 - 1`; scene, mesh, instance,
