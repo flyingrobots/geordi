@@ -19,6 +19,13 @@ its dependency graph in
 [SVG](./2026-07-profunctor-page-target-proof-dag.svg). The strict positioned
 glyph-run map below is complete and retained as historical execution evidence.
 
+## Proposed Design: Fixed-Point And Ray-Traced Scene Profiles
+
+[`2026-11-fixed-point-and-ray-traced-scene-profiles.md`](./2026-11-fixed-point-and-ray-traced-scene-profiles.md)
+proposes the `geordi-fixed-q32.32/1` numeric profile and the `geordi-ray-traced-scene/1` artifact
+that the deterministic ray tracer lumen would consume. It awaits the maintainer's decision on
+[#152](https://github.com/flyingrobots/geordi/issues/152); nothing in it is implemented.
+
 ## Completed Slice Map: Strict Positioned Glyph-Run Text
 
 The executable checklist for this sequence lives in
