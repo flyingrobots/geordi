@@ -214,6 +214,11 @@
 
 ### Documentation
 
+- Add the accepted design for a fixed-point numeric profile (`geordi-fixed-q32.32/1`) and a
+  ray-traced 3D scene profile (`geordi-ray-traced-scene/1`) for the lumen ray tracer, with the
+  maintainer's decisions, alternatives and proof gates, in
+  `docs/design/2026-11-fixed-point-and-ray-traced-scene-profiles.md` (#152). Design only; no
+  behavior changes.
 - Add a Wesley common-type generation drift-correction doc requiring shared TypeScript/Rust
   serialized contract DTOs to be generated from one schema rather than hand-maintained in parallel.
 - Add a glyph tooling spike proposal covering market research, import/inspect/preview/debug
