@@ -19,6 +19,19 @@ its dependency graph in
 [SVG](./2026-07-profunctor-page-target-proof-dag.svg). The strict positioned
 glyph-run map below is complete and retained as historical execution evidence.
 
+## Accepted Design: Bijou Surface GPU ABI (`bijou-surface-gpu/1`)
+
+[`2026-11-bijou-surface-gpu-abi.md`](./2026-11-bijou-surface-gpu-abi.md)
+defines the `bijou-surface-gpu/1` endpoint-prepared GPU cell ABI (`rgba32uint` 16-byte cell
+record, width-1 canonical glyph policy boundary, front|back `renderDirtyWords` damage law,
+sRGB-direct color and `cellFromPoint` coordinate laws, `geordi-bijou-gpu-receipt/1` evidence
+taxonomy, and the checked-in procedural glyph table at
+[`../../fixtures/bijou-gpu/procedural-glyphs.json`](../../fixtures/bijou-gpu/procedural-glyphs.json))
+for [#168](https://github.com/flyingrobots/geordi/issues/168). Downstream browser and native GPU
+slices are tracked in [#169](https://github.com/flyingrobots/geordi/issues/169)–[#175](https://github.com/flyingrobots/geordi/issues/175)
+and [#58](https://github.com/flyingrobots/geordi/issues/58). None of those endpoints are claimed as
+implemented yet.
+
 ## Accepted Design: Fixed-Point And Ray-Traced Scene Profiles
 
 [`2026-11-fixed-point-and-ray-traced-scene-profiles.md`](./2026-11-fixed-point-and-ray-traced-scene-profiles.md)

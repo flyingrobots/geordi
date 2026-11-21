@@ -13,7 +13,7 @@
     "dev": "turbo run dev",
     "test": "turbo run test && pnpm test:profunctor-page-target:artifacts",
     "test:exports": "pnpm build && node scripts/smoke-package-exports.mjs",
-    "test:docs": "node scripts/check-doc-hygiene.mjs",
+    "test:docs": "node scripts/check-doc-hygiene.mjs && node --test scripts/bijou-gpu-procedural-glyphs.test.mjs",
     "test:package-names": "node scripts/check-package-name-scope.mjs",
     "test:placeholders": "node scripts/check-test-placeholders.mjs",
     "test:render-everywhere:bunny": "pnpm --filter @flyingrobots/geordi-render-fixture test && pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere test && cargo test -p native-render-everywhere && cargo clippy -p native-render-everywhere --all-targets -- -D warnings && cargo run -p native-render-everywhere -- --bunny-check fixtures/render-everywhere/assets/stanford-bunny && cargo run -p native-render-everywhere -- --bunny-smoke fixtures/render-everywhere/assets/stanford-bunny && cargo run -p native-render-everywhere -- --bunny-smoke --frame 15 fixtures/render-everywhere/assets/stanford-bunny && cargo run -p native-render-everywhere -- --bunny-smoke --frame 60 fixtures/render-everywhere/assets/stanford-bunny",
