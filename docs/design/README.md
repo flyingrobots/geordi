@@ -19,7 +19,7 @@ its dependency graph in
 [SVG](./2026-07-profunctor-page-target-proof-dag.svg). The strict positioned
 glyph-run map below is complete and retained as historical execution evidence.
 
-## Accepted Design: Bijou Surface GPU ABI (`bijou-surface-gpu/1`)
+## Proposed Design: Bijou Surface GPU ABI (`bijou-surface-gpu/1`)
 
 [`2026-11-bijou-surface-gpu-abi.md`](./2026-11-bijou-surface-gpu-abi.md)
 defines the `bijou-surface-gpu/1` endpoint-prepared GPU cell ABI (`rgba32uint` 16-byte cell

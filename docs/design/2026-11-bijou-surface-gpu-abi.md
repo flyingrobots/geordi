@@ -1,6 +1,6 @@
 # Bijou Surface GPU ABI (`bijou-surface-gpu/1`)
 
-**Status**: Accepted (Option A locked by `@flyingrobots` in Approval A on 2026-11-21; awaiting maintainer merge of PR #176)
+**Status**: Proposed (Option A selected by `@flyingrobots` on 2026-11-21; tracked in [#168](https://github.com/flyingrobots/geordi/issues/168))
 **Date**: 2026-11-21
 **Issue**: [#168](https://github.com/flyingrobots/geordi/issues/168)
 **Downstream implementation issues**: [#169](https://github.com/flyingrobots/geordi/issues/169) (conformance kit), [#170](https://github.com/flyingrobots/geordi/issues/170) (canonical WGSL + `naga` GLSL generator), [#171](https://github.com/flyingrobots/geordi/issues/171) (dirty-union packer), [#172](https://github.com/flyingrobots/geordi/issues/172) (`GlyphAtlas`), [#173](https://github.com/flyingrobots/geordi/issues/173) (WebGL2), [#174](https://github.com/flyingrobots/geordi/issues/174) (Canvas 2D), [#175](https://github.com/flyingrobots/geordi/issues/175) (WebGPU), [#58](https://github.com/flyingrobots/geordi/issues/58) (native Rust `wgpu`)
@@ -11,14 +11,14 @@
 
 This record freezes the endpoint-prepared GPU ABI (`bijou-surface-gpu/1`) that lets Geordi present Bijou's canonical `PackedSurface` (`packed-bijou-cells/1` / `bijou-packed-cell-u8x10-le/1`) across browser WebGPU, browser WebGL2, browser Canvas 2D fallback, and native Rust `wgpu` (`#58`) from one single contract and one single procedural glyph data table.
 
-Statements about what exists today cite the file and revision they come from. Nothing in `packages/bijou-gpu/` is implemented yet; this ADR defines the load-bearing ABI before any atlas, packer, shader, or presenter code lands.
+Statements about what exists today cite the file and revision they come from. Planned contracts in Bijou or Geordi are labeled planned and linked to their issues. Nothing in `packages/bijou-gpu/` is implemented yet; this ADR defines the load-bearing ABI before any atlas, packer, shader, or presenter code lands.
 
 ## Ownership boundary
 
 Per [`docs/design/2026-06-portable-bijou-ui-render-endpoints.md`](./2026-06-portable-bijou-ui-render-endpoints.md) and Bijou `RE-510`:
 
-- **Bijou owns** `packed-bijou-cells/1`, `bijou-packed-cell-u8x10-le/1`, width-1 canonical glyph policy, `PackedSurface` semantics, TEA runtime state, and `SurfacePresenter` invocation.
-- **Geordi owns** `bijou-surface-gpu/1` endpoint preparation, `packages/bijou-gpu` (`@flyingrobots/geordi-bijou-gpu`), the procedural glyph data table, `GlyphAtlas`, canonical `bijou-surface.wgsl`, generated GLSL ES 3.00, browser and native GPU presenters, pixel probes, and endpoint receipts.
+- **Bijou owns** `packed-bijou-cells/1`, `bijou-packed-cell-u8x10-le/1`, width-1 canonical glyph policy, `PackedSurface` semantics, TEA runtime state, and the planned `SurfacePresenter` seam ([`bijou#791`](https://github.com/flyingrobots/bijou/issues/791)) and planned `@flyingrobots/bijou-web` host adapters ([`bijou#792`](https://github.com/flyingrobots/bijou/issues/792)).
+- **Geordi owns** `bijou-surface-gpu/1` endpoint preparation, planned `packages/bijou-gpu` (`@flyingrobots/geordi-bijou-gpu`), the procedural glyph data table, `GlyphAtlas`, canonical `bijou-surface.wgsl`, generated GLSL ES 3.00, browser and native GPU presenters, pixel probes, and endpoint receipts.
 
 Geordi may present Bijou cells on the GPU. Geordi must not redefine Bijou cell semantics or invent canonical wide-cell rules.
 
@@ -26,7 +26,7 @@ Geordi may present Bijou cells on the GPU. Geordi must not redefine Bijou cell s
 
 | Option | Summary | Decision |
 | --- | --- | --- |
-| **Option A (Selected)** | **16-byte `rgba32uint` (`vec4<u32>` / `uvec4`) prepared cell texture (`textureLoad`) + procedural Braille, Block/Quadrant, and Box-Drawing driven by one checked-in per-codepoint data table compiled into a static WGSL `const` block + `packages/bijou-gpu`.** | **Accepted.** Single `textureLoad` per fragment, identical data path across WebGPU, WebGL2, and native `wgpu`, zero inter-cell box-drawing seams at any DPR, zero extra GPU texture bindings, and zero changes to Bijou's canonical 10-byte format. |
+| **Option A (Selected)** | **16-byte `rgba32uint` (`vec4<u32>` / `uvec4`) prepared cell texture (`textureLoad`) + procedural Braille, Block/Quadrant, and Box-Drawing driven by one checked-in per-codepoint data table compiled into a static WGSL `const` block + `packages/bijou-gpu`.** | **Selected.** Single `textureLoad` per fragment, identical data path across WebGPU, WebGL2, and native `wgpu`, zero inter-cell box-drawing seams at any DPR, zero extra GPU texture bindings, and zero changes to Bijou's canonical 10-byte format. |
 | **Option B (Rejected)** | Raw 10-byte `rg8ui` texture upload with zero CPU repack. | Rejected. Requires five `texelFetch` reads per pixel plus a per-fragment `charCode -> atlasSlot` indirection table lookup on every pixel. |
 | **Option C (Rejected)** | Per-cell instanced quad vertex buffers (two triangles per cell). | Rejected. Adds vertex-buffer lifecycle complexity and forfeits single fullscreen-triangle screen-space shader composition. |
 | **Option D (Rejected)** | 16-byte `rgba32uint` texture with CPU-rasterized box, block, and Braille glyphs baked into the atlas (Kitty/Ghostty/WezTerm style). | Rejected for v1. Eliminates shader geometry branches and unifies Canvas 2D pixels, but requires building and maintaining a separate deterministic Rust box/block/Braille rasterizer for native `#58`. May be revisited in `bijou-surface-gpu/2` if GPU shader complexity ever outweighs a shared Rust/TS rasterizer. |
@@ -69,22 +69,35 @@ Using `rgba32uint` + `textureLoad` on WebGPU, WebGL2, and native `wgpu` keeps on
 
 | `glyph_kind` | Constant Name | `glyph_payload` (`word0 & 0xFFFFu`) | Shader Behavior |
 | --- | --- | --- | --- |
-| `0` | `GLYPH_KIND_EMPTY` | `0` | No glyph coverage (`0.0`); still paints resolved `bg`, underlines, and strikethrough if set. Used for `CHAR_EMPTY`, `FLAG_EMPTY`, and ASCII space (`U+0020`). |
+| `0` | `GLYPH_KIND_EMPTY` | `0` | No glyph coverage (`0.0`); still paints resolved `bg`, underlines, and strikethrough if set. Used for `CHAR_EMPTY` (live `PackedSurface`), `FLAG_EMPTY`, and ASCII space (`U+0020`, canonical `packed-bijou-cells/1` empty cell). |
 | `1` | `GLYPH_KIND_ATLAS_MONO` | Atlas slot index (`0..65535`) | Sample `GlyphAtlas` at slot `payload`; monochrome coverage = `texel.a`; tint with resolved `fg`. |
 | `2` | `GLYPH_KIND_ATLAS_COLOR` | Atlas slot index (`0..65535`) | Sample `GlyphAtlas` at slot `payload`; premultiplied sRGB RGBA color glyph (do not tint with `fg`). |
 | `3` | `GLYPH_KIND_BRAILLE` | `codePoint - 0x2800` (`0..255`) | Procedural 2×4 Braille dot mask directly from the 8-bit Unicode payload (zero lookup table). |
 | `4` | `GLYPH_KIND_BLOCK` | `codePoint - 0x2580` (`0..31`) | Index into static `BLOCK_GLYPHS[payload]` generated from `fixtures/bijou-gpu/procedural-glyphs.json`. |
 | `5` | `GLYPH_KIND_BOX` | `codePoint - 0x2500` (`0..127`) | Index into static `BOX_GLYPHS[payload]` generated from `fixtures/bijou-gpu/procedural-glyphs.json`. |
 
-### Atlas slot indexing
+### Pixel, cell-local, and atlas coordinates
 
-The `GlyphAtlas` is an `rgba8unorm` 2D texture of `atlasCols * cellPxW` by `atlasRows * cellPxH` physical pixels sampled with nearest-neighbor addressing (`textureLoad` / `GL_NEAREST`). For any slot index `s`:
+For every integer physical output pixel `(px, py)` with `0 <= px < cols * cellPxW` and `0 <= py < rows * cellPxH` (origin `(0, 0)` at top-left, `+X` right, `+Y` down):
+
+```text
+col = floor(px / cellPxW)
+row = floor(py / cellPxH)
+cellLocalPx = (lx, ly) = (px - col * cellPxW, py - row * cellPxH)
+uv = ((lx + 0.5) / cellPxW, (ly + 0.5) / cellPxH)
+```
+
+In fragment shaders:
+- **WebGPU / native `wgpu`**: `@builtin(position).xy` is already at top-left pixel centers `(px + 0.5, py + 0.5)`, so `(px, py) = (u32(floor(pos.x)), u32(floor(pos.y)))`.
+- **WebGL2**: `gl_FragCoord.y` has bottom-left origin, so convert `fragY = float(uCanvasPxH) - gl_FragCoord.y` and compute `(px, py) = (u32(floor(gl_FragCoord.x)), u32(floor(fragY)))`.
+
+The `GlyphAtlas` is an `rgba8unorm` 2D texture of `atlasCols * cellPxW` by `atlasRows * cellPxH` physical pixels sampled with exact integer texel loads (`textureLoad` / `texelFetch` at LOD 0). For any slot index `s`:
 
 ```text
 slotCol = s % atlasCols
-slotRow = s / atlasCols
+slotRow = floor(s / atlasCols)
 atlasOriginPx = (slotCol * cellPxW, slotRow * cellPxH)
-samplePx = atlasOriginPx + cellLocalPx
+samplePx = (atlasOriginPx.x + lx, atlasOriginPx.y + ly)
 ```
 
 Atlas keys are `(grapheme, bold)` because Bijou's `OFF_FLAGS` encodes `FLAG_BOLD` (`bit 0`) and does not have an italic bit in `bijou-packed-cell-u8x10-le/1`.
@@ -95,7 +108,7 @@ Every downstream packer (`#171`), reference oracle (`#169`), and native host (`#
 
 | Vector | Source Cell Description | `word0` | `word1` | `word2` | `word3` |
 | --- | --- | --- | --- | --- | --- |
-| `V0` | Empty cell (`CHAR_EMPTY`, default fg/bg, `FLAG_EMPTY`, opacity `63`) | `0x00000000` | `0x80000000` | `0x3F000000` | `0x00000000` |
+| `V0` | Empty cell (`U+0020` or live `CHAR_EMPTY`, default fg/bg, `FLAG_EMPTY`, opacity `63`) | `0x00000000` | `0x80000000` | `0x3F000000` | `0x00000000` |
 | `V1` | `'A'` at mono atlas slot `7`, `fg=#FF8040`, `bg=#102030`, `BOLD \| UNDERLINE_SOLID`, opacity `63` | `0x00010007` | `0x114080FF` | `0xFF302010` | `0x00000000` |
 | `V2` | Color emoji at color atlas slot `42`, default fg, `bg=#000000`, no flags, opacity `63` | `0x0002002A` | `0x00000000` | `0xBF000000` | `0x00000000` |
 | `V3` | Braille `⣿` (`U+28FF`, mask `0xFF`), `fg=#00FFAA`, default bg, `DIM \| INVERSE`, opacity `32` | `0x000300FF` | `0x0AAAFF00` | `0x60000000` | `0x00000000` |
@@ -110,11 +123,11 @@ Bijou's canonical `packed-bijou-cells/1` validator (`packages/bijou/src/core/pac
 segmentGraphemes(value).length === 1 && graphemeClusterWidth(value) === 1
 ```
 
-for both direct BMP codepoints and `sideTable` entries.
+along with Bijou's control-character, surrogate, unsafe-format, and visible-base checks (`packed-bijou-cells-glyph-policy.ts#L18-L30`, `packed-bijou-cells-validate-glyphs.ts#L76-L88`) for both direct BMP codepoints and `sideTable` entries.
 
 `bijou-surface-gpu/1` strictly obeys this width-1 contract:
 
-- Direct single-cell graphemes (`U+0021..U+EFFF` with width 1) and canonical width-1 `sideTable` graphemes (such as decomposed `e` + combining acute accent `U+0065 U+0301` and private-use `U+F000`, matching Bijou `RE-510`) are supported.
+- Direct single-cell graphemes accepted by `isSafeUnitGlyph` (with `U+0020` lowered to `GLYPH_KIND_EMPTY`) and canonical width-1 `sideTable` graphemes (such as decomposed `e` + combining acute accent `U+0065 U+0301` and private-use `U+F000`, matching Bijou `RE-510`) are supported.
 - **Wide (width-2) graphemes** (such as CJK ideographs or width-2 emoji) are **explicitly rejected** in strict canonical receipt mode with a typed error (`GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH`).
 - Wide-cell continuation rules, left/right glyph splitting, and rightmost-column clipping are **out of scope for `bijou-surface-gpu/1`** and belong to a future Bijou-owned `packed-bijou-cells/2` or separately declared live-surface contract. Geordi must never silently invent canonical wide-cell layout semantics.
 
@@ -135,7 +148,7 @@ Per Bijou's `PackedSurface` contract (`packages/bijou/src/ports/surface-contract
 5. **Retained CPU staging buffer:** Every presenter retains its full `Uint32Array(widthCells * heightCells * 4)` staging buffer so context/device restoration can re-upload the complete frame without waiting for a new application render.
 6. **Synchronous `present()` lifetime:** `present(current, target, ctx)` is synchronous. Callers must consume, pack, or copy every required byte and side-table string before `present()` returns because `bijou-tui`'s `RuntimeFramebuffers.adoptTarget()` immediately swaps/reuses the surface buffers in the `Output` stage.
 
-## 5. Color space, blending, DPR, and `cellFromPoint` coordinate law
+## 5. Color space, blending, decorations, DPR, and `cellFromPoint` coordinate law
 
 ### Color space and swapchain format
 
@@ -150,15 +163,23 @@ Per Bijou's `PackedSurface` contract (`packages/bijou/src/ports/surface-contract
   7. For monochrome or procedural coverage `cov` in `[0, 1]`: `outRgb = mix(baseBg, fg, cov * cellOpacity)`.
   8. For premultiplied color-emoji sample `(emojiRgb, emojiA)` (`GLYPH_KIND_ATLAS_COLOR`): `outRgb = emojiRgb * cellOpacity + baseBg * (1.0 - emojiA * cellOpacity)`.
   9. Underlines and strikethrough evaluate after glyph compositing using `fg` with `cellOpacity` (`outRgb = mix(outRgb, fg, decoCov * cellOpacity)`).
-  10. Final framebuffer alpha is `1.0` (opaque swapchain).
+  10. Final framebuffer alpha is `1.0` (opaque swapchain). In `renderReferenceRgba()`, each output channel `c` is quantized to `uint8` via `floor(clamp(c, 0.0, 1.0) * 255.0 + 0.5)`.
 
-### Underline and strikethrough geometry (normalized cell `uv` in `[0, 1] × [0, 1]`, top-left origin)
+### Underline and strikethrough geometry (integer pixel rows, guaranteed non-vanishing)
 
-- **`UNDERLINE_SOLID` (`0b01 << 4`):** `uv.y >= 0.88 && uv.y < 0.94`.
-- **`UNDERLINE_CURLY` (`0b10 << 4`):** `abs(uv.y - (0.90 + 0.03 * sin(uv.x * 2.0 * PI * 2.0))) < 0.03` (2 full wave cycles per cell so adjacent cells join continuously without phase discontinuities).
-- **`UNDERLINE_DOTDASH` (`0b11 << 4`, `FLAG_DASHED == 0`, dotted):** `uv.y >= 0.88 && uv.y < 0.94 && fract(uv.x * 4.0) < 0.5`.
-- **`UNDERLINE_DOTDASH | FLAG_DASHED` (`dashed`):** `uv.y >= 0.88 && uv.y < 0.94 && fract(uv.x * 2.0) < 0.6`.
-- **`FLAG_STRIKETHROUGH` (`0x04`):** `uv.y >= 0.47 && uv.y < 0.53`.
+To guarantee every decoration lights at least 1 physical pixel at all `cellPxH >= 1` (including 1x DPR `8×16` where fixed `0.06` UV bands vanish) with zero `f64`/`f32` tie divergence, define in pure integer arithmetic (`/` is integer floor division):
+
+```text
+decoPx   = max(1, (cellPxH * 6 + 50) / 100)
+ulY0     = min(cellPxH - decoPx, (cellPxH * 88) / 100)
+strikeY0 = (cellPxH - decoPx) / 2
+```
+
+- **`UNDERLINE_SOLID` (`0b01 << 4`):** `ly >= ulY0 && ly < ulY0 + decoPx`.
+- **`UNDERLINE_DOTDASH` (`0b11 << 4`, `FLAG_DASHED == 0`, dotted):** `ly >= ulY0 && ly < ulY0 + decoPx && ((lx * 8) / cellPxW) % 2 == 0`.
+- **`UNDERLINE_DOTDASH | FLAG_DASHED` (`dashed`):** `ly >= ulY0 && ly < ulY0 + decoPx && ((lx * 10) / cellPxW) % 5 < 3`.
+- **`UNDERLINE_CURLY` (`0b10 << 4`):** `waveY = (cellPxH * 90) / 100.0 + (cellPxH * 0.03) * sin(uv.x * 4.0 * PI)`, `halfT = max(0.55, 0.5 * decoPx)`; lit when `abs((ly + 0.5) - waveY) <= halfT` (since `halfT >= 0.55 > 0.5` px, every column `lx` hits at least one integer row `ly`).
+- **`FLAG_STRIKETHROUGH` (`0x04`):** `ly >= strikeY0 && ly < strikeY0 + decoPx`.
 
 ### Physical pixels, fractional DPR, and letterboxed remainder
 
@@ -167,14 +188,16 @@ Per Bijou's `PackedSurface` contract (`packages/bijou/src/ports/surface-contract
   `cellPxW = Math.max(1, Math.round(cellCssW * dpr))`
   `cellPxH = Math.max(1, Math.round(cellCssH * dpr))`
 - Grid capacity is `cols = Math.floor(canvasPxW / cellPxW)`, `rows = Math.floor(canvasPxH / cellPxH)`.
-- Origin is **top-left `(0, 0)`** (`+X` right, `+Y` down; WebGL2 shaders convert `gl_FragCoord.y` via `fragY = float(uCanvasPxH) - gl_FragCoord.y`).
+- Origin is **top-left `(0, 0)`** (`+X` right, `+Y` down).
 - Any remainder pixels outside `[0, cols * cellPxW) × [0, rows * cellPxH)` bypass `textureLoad` and emit solid `uDefaultBg`.
 
 ### `cellFromPoint(clientX, clientY)` coordinate law
 
-Every presenter and `@flyingrobots/bijou-web` input adapter MUST implement the exact same **0-based** hit-test:
+Every presenter and the planned `@flyingrobots/bijou-web` input adapter ([`bijou#793`](https://github.com/flyingrobots/bijou/issues/793)) MUST implement the exact same **0-based** hit-test:
 
 ```text
+if (cols === 0 || rows === 0 || rect.width <= 0 || rect.height <= 0 || !isFinite(clientX) || !isFinite(clientY))
+  return null
 localCssX = clientX - rect.left
 localCssY = clientY - rect.top
 physX = localCssX * (canvasPxW / rect.width)
@@ -185,7 +208,7 @@ row = clamp(Math.floor(physY / cellPxH), 0, rows - 1)
 
 - Origin is `(0, 0)` at top-left.
 - Cell `[col, row]` covers physical pixels `[col * cellPxW, (col + 1) * cellPxW)` × `[row * cellPxH, (row + 1) * cellPxH)` (start inclusive, end exclusive).
-- Coordinates in the letterboxed remainder or outside the canvas clamp into `[0, cols - 1]` and `[0, rows - 1]`. When `cols === 0 || rows === 0`, return `null`.
+- Coordinates in the letterboxed remainder or outside the canvas clamp into `[0, cols - 1]` and `[0, rows - 1]`.
 
 ## 6. Endpoint receipt schema and evidence taxonomy
 
@@ -206,6 +229,8 @@ Every presenter emits a deterministic JSON receipt with `receiptVersion: "geordi
   "heightCells": 24,
   "cellPx": { "width": 16, "height": 32 },
   "dpr": 2,
+  "defaultFg": "#E6EDF3",
+  "defaultBg": "#0D1117",
   "fontIdentity": "<font-family-and-size-or-bundled-test-font-sha256>",
   "atlasGeneration": 1,
   "atlasStats": { "usedSlots": 42, "capacity": 1024, "monoCount": 41, "colorEmojiCount": 1 },
@@ -213,6 +238,8 @@ Every presenter emits a deterministic JSON receipt with `receiptVersion: "geordi
   "probes": []
 }
 ```
+
+`defaultFg` and `defaultBg` MUST be recorded as canonical 7-character uppercase sRGB hex strings (`#RRGGBB`) matching `uDefaultFg` and `uDefaultBg`, so pixel probes remain reproducible when theme defaults change without cell-byte changes (matching Bijou `RE-510`).
 
 ### Positive-evidence vs. capability-refusal law
 
@@ -234,23 +261,94 @@ The single source of truth for all 416 procedural terminal glyphs is checked in 
 - **Schema**: `bijou-procedural-glyphs/1`
 - **SHA-256**: `7ebc92f74a57ec7744fc7ada20c886d76b4ea96c09b5005efbf0883562d62e46`
 
-### Coverage and compact `u32` encoding
+Both `#169` (TypeScript CPU reference oracle) and `#170` (canonical WGSL shader + `naga` GLSL ES 3.00 generator) MUST implement the exact closed-form rules below so `f64` (TypeScript) and `f32`/`i32` (WGSL/GLSL/Rust) match with zero pixel drift. Integer `/` denotes floor division.
 
-1. **Box-Drawing (`U+2500..U+257F`, 128 entries, 14 bits/entry):**
-   - `bits 0..1` = `left`, `bits 2..3` = `right`, `bits 4..5` = `up`, `bits 6..7` = `down` (`0` none, `1` light, `2` heavy, `3` double).
-   - `bits 8..10` = `dash` (`0` solid, `2` double-dash, `3` triple-dash, `4` quadruple-dash).
-   - `bit 11` = `rounded` (`U+256D..U+2570` quarter-circle arcs).
-   - `bit 12` = `diagSlash` (`/` lower-left to upper-right), `bit 13` = `diagBackslash` (`\` upper-left to lower-right).
-   - Stroke thickness in cell UV: light stroke width `tLight = 1.0 / cellPxW` (horizontal vertical-bar thickness) and `1.0 / cellPxH` (vertical horizontal-bar thickness) scaled to at least `max(1px, round(0.10 * cellPxW))`; heavy = `2 * tLight`; double = two light strokes separated by `tLight` centered on `0.5`. Both `T2.1b`'s CPU reference oracle and `T2.1c`'s WGSL shader implement this exact thickness rule.
-2. **Block Elements (`U+2580..U+259F`, 32 entries, 18 bits/entry):**
-   - `bits 16..17` = `kind` (`0` rect, `1` shade, `2` quadrant).
-   - `kind == 0` (`rect`): `bits 0..3 = x0`, `4..7 = y0`, `8..11 = x1`, `12..15 = y1` in integer eighths `[0..8]`, top-left origin (`uv.x * 8.0 >= x0 && uv.x * 8.0 < x1 && uv.y * 8.0 >= y0 && uv.y * 8.0 < y1`).
-   - `kind == 1` (`shade`): `bits 0..1 = quarter` (`1` = `0.25`, `2` = `0.50`, `3` = `0.75` uniform coverage in `bijou-surface-gpu/1`).
-   - `kind == 2` (`quadrant`): `bits 0..3 = mask` (`bit 0` TL, `bit 1` TR, `bit 2` BL, `bit 3` BR) tested against `(uv.x >= 0.5, uv.y >= 0.5)`.
-3. **Braille Patterns (`U+2800..U+28FF`, 256 entries, 0 table bytes):**
-   - 8-bit dot mask `m = glyph_payload & 0xFFu`.
-   - 2×4 grid (`col` in `0..1`, `row` in `0..3`), dot bit mapping: `(0,0)=bit0`, `(0,1)=bit1`, `(0,2)=bit2`, `(1,0)=bit3`, `(1,1)=bit4`, `(1,2)=bit5`, `(0,3)=bit6`, `(1,3)=bit7`.
-   - Inside each sub-cell `(subU, subV)` in `[0, 1] × [0, 1]`, dot is lit when `subU >= 0.25 && subU < 0.75 && subV >= 0.20 && subV < 0.80` (crisp pixel-aligned dot rect in both CPU oracle and WGSL/GLSL).
+### 7.1 Box-Drawing (`U+2500..U+257F`, 128 entries, 14 bits/entry)
+
+Bit layout per entry in `BOX_GLYPHS[codePoint - 0x2500]`:
+- `bits 0..1` = `L` (`left`), `bits 2..3` = `R` (`right`), `bits 4..5` = `U` (`up`), `bits 6..7` = `D` (`down`), each in `{0=none, 1=light, 2=heavy, 3=double}`.
+- `bits 8..10` = `dash` in `{0=solid, 2=double-dash, 3=triple-dash, 4=quadruple-dash}`.
+- `bit 11` = `rounded` (`1` for `U+256D..U+2570`).
+- `bit 12` = `diagSlash` (`/` lower-left to upper-right), `bit 13` = `diagBackslash` (`\` upper-left to lower-right).
+
+Closed-form geometry at integer cell-local pixel `(lx, ly)` with `W = cellPxW`, `H = cellPxH`:
+
+1. **Integer stroke widths (same pixel thickness in X and Y so corners balance visually):**
+   ```text
+   lightPx = max(1, (W * 10 + 50) / 100)
+   heavyPx = 2 * lightPx
+   dblGap  = max(1, lightPx)
+   vx0(w)  = (W - w) / 2
+   hy0(w)  = (H - w) / 2
+   vxL0    = max(0, vx0(lightPx) - dblGap)
+   vxR0    = min(W - lightPx, vx0(lightPx) + dblGap)
+   hyT0    = max(0, hy0(lightPx) - dblGap)
+   hyB0    = min(H - lightPx, hy0(lightPx) + dblGap)
+   ```
+2. **Diagonals (`diagSlash == 1 || diagBackslash == 1`, `U+2571..U+2573`):**
+   ```text
+   halfT  = max(0.55, 0.5 * float(lightPx))
+   invLen = 1.0 / sqrt(float(W * W + H * H))
+   slashLit     = diagSlash     && abs((float(lx) + 0.5) * float(H) + (float(ly) + 0.5) * float(W) - float(W * H)) * invLen <= halfT
+   backslashLit = diagBackslash && abs((float(lx) + 0.5) * float(H) - (float(ly) + 0.5) * float(W)) * invLen <= halfT
+   ```
+3. **Rounded quarter-ellipse arcs (`rounded == 1`, `U+256D..U+2570`):**
+   ```text
+   cx2   = (R > 0) ? (2 * W) : 0
+   cy2   = (D > 0) ? (2 * H) : 0
+   nx    = float(2 * lx + 1 - cx2) / float(W)
+   ny    = float(2 * ly + 1 - cy2) / float(H)
+   dist  = sqrt(nx * nx + ny * ny)
+   halfR = max(1.10, float(lightPx)) / float(min(W, H))
+   lit   = abs(dist - 1.0) <= halfR
+   ```
+4. **Dashed lines (`dash ∈ {2, 3, 4}`, `U+2504..U+250B`, `U+254C..U+254F`):**
+   - Horizontal (`L > 0 && R > 0`): `w = (L == 2) ? heavyPx : lightPx`; lit iff `ly >= hy0(w) && ly < hy0(w) + w && ((lx * 2 * dash) / W) % 2 == 0`.
+   - Vertical (`U > 0 && D > 0`): `w = (U == 2) ? heavyPx : lightPx`; lit iff `lx >= vx0(w) && lx < vx0(w) + w && ((ly * 2 * dash) / H) % 2 == 0`.
+5. **Solid single, heavy, mixed, and mitered double-line arms and junctions (`dash == 0 && rounded == 0 && !diag`):**
+   ```text
+   vMax = (U == 2 || D == 2) ? heavyPx : lightPx
+   hMax = (L == 2 || R == 2) ? heavyPx : lightPx
+   cx0  = (U == 3 || D == 3) ? vxL0            : vx0(vMax)
+   cx1  = (U == 3 || D == 3) ? (vxR0 + lightPx): (cx0 + vMax)
+   cy0  = (L == 3 || R == 3) ? hyT0            : hy0(hMax)
+   cy1  = (L == 3 || R == 3) ? (hyB0 + lightPx): (cy0 + hMax)
+   ```
+   - Single/heavy arm (`style ∈ {1, 2}`, `w = (style == 2) ? heavyPx : lightPx`):
+     - `L ∈ {1, 2}`: `lx < cx1  && ly >= hy0(w) && ly < hy0(w) + w`
+     - `R ∈ {1, 2}`: `lx >= cx0 && ly >= hy0(w) && ly < hy0(w) + w`
+     - `U ∈ {1, 2}`: `ly < cy1  && lx >= vx0(w) && lx < vx0(w) + w`
+     - `D ∈ {1, 2}`: `ly >= cy0 && lx >= vx0(w) && lx < vx0(w) + w`
+   - Double arm (`style == 3`; outer rail meets outer perpendicular rail, inner rail terminates cleanly at inner perpendicular rail):
+     - `L == 3`: `(ly >= hyT0 && ly < hyT0 + lightPx && lx < (U == 3 ? vxL0 + lightPx : cx1)) || (ly >= hyB0 && ly < hyB0 + lightPx && lx < (D == 3 ? vxL0 + lightPx : cx1))`
+     - `R == 3`: `(ly >= hyT0 && ly < hyT0 + lightPx && lx >= (U == 3 ? vxR0 : cx0)) || (ly >= hyB0 && ly < hyB0 + lightPx && lx >= (D == 3 ? vxR0 : cx0))`
+     - `U == 3`: `(lx >= vxL0 && lx < vxL0 + lightPx && ly < (L == 3 ? hyT0 + lightPx : cy1)) || (lx >= vxR0 && lx < vxR0 + lightPx && ly < (R == 3 ? hyT0 + lightPx : cy1))`
+     - `D == 3`: `(lx >= vxL0 && lx < vxL0 + lightPx && ly >= (L == 3 ? hyB0 : cy0)) || (lx >= vxR0 && lx < vxR0 + lightPx && ly >= (R == 3 ? hyB0 : cy0))`
+
+### 7.2 Block Elements (`U+2580..U+259F`, 32 entries, 18 bits/entry)
+
+Bit layout per entry in `BLOCK_GLYPHS[codePoint - 0x2580]`:
+- `bits 16..17` = `kind` (`0` rect, `1` shade, `2` quadrant).
+- `kind == 0` (`rect`): `x0 = b & 15`, `y0 = (b >> 4) & 15`, `x1 = (b >> 8) & 15`, `y1 = (b >> 12) & 15` in integer eighths `[0..8]`. Pure integer pixel-center test:
+  `lit = (2 * lx + 1) * 4 >= x0 * W && (2 * lx + 1) * 4 < x1 * W && (2 * ly + 1) * 4 >= y0 * H && (2 * ly + 1) * 4 < y1 * H` (coverage `1.0` if lit else `0.0`).
+- `kind == 1` (`shade`): `q = b & 3` (`1` = `0.25`, `2` = `0.50`, `3` = `0.75` uniform coverage across the cell).
+- `kind == 2` (`quadrant`): `mask = b & 15` (`bit 0` TL, `bit 1` TR, `bit 2` BL, `bit 3` BR). Pure integer pixel-center quadrant test:
+  `qx = ((2 * lx + 1) >= W) ? 1 : 0`, `qy = ((2 * ly + 1) >= H) ? 1 : 0`, `lit = ((mask >> (qx + 2 * qy)) & 1) != 0`.
+
+### 7.3 Braille Patterns (`U+2800..U+28FF`, 256 entries, 0 table bytes)
+
+8-bit dot mask `m = glyph_payload & 0xFFu` over a 2×4 grid (`col ∈ {0,1}`, `row ∈ {0,1,2,3}`), bit mapping `(0,0)=0`, `(0,1)=1`, `(0,2)=2`, `(1,0)=3`, `(1,1)=4`, `(1,2)=5`, `(0,3)=6`, `(1,3)=7`. Pure integer sub-cell test (exact pixel-center `[0.25, 0.75) × [0.20, 0.80)`):
+
+```text
+subCol = (lx * 2) / W
+subRow = (ly * 4) / H
+bitIdx = (subRow == 3) ? (6 + subCol) : (subCol * 3 + subRow)
+subX   = lx * 2 - subCol * W
+subY   = ly * 4 - subRow * H
+inDot  = (2 * subX + 1) * 2 >= W && (2 * subX + 1) * 2 < 3 * W
+      && (2 * subY + 1) * 5 >= 2 * H && (2 * subY + 1) * 5 < 8 * H
+lit    = inDot && (((m >> bitIdx) & 1) != 0)
+```
 
 ### Delivery into `bijou-surface.wgsl` (Decision: Generated Checked-In `const` Block)
 
