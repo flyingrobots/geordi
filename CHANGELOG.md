@@ -26,6 +26,18 @@
   `createCanvasGlyphRasterizer()` and `watchGlyphAtlasEnvironment()`, which invalidates on
   `document.fonts.ready`, later font loads, and device pixel ratio changes. No texture upload is
   included.
+- **Bijou GPU shader** (flyingrobots/geordi#170): `packages/bijou-gpu/shaders/bijou-surface.wgsl`
+  is the canonical `bijou-surface-gpu/1` shader: one fullscreen-triangle vertex stage and one
+  pure-`u32` fragment stage that reads the `rgba32uint` cell grid and the `rgba8uint` `GlyphAtlas`
+  with `textureLoad`. It is assembled from the Bunny helpers `bunny-u32-div-round-even/1` and
+  `bunny-u32-ellipse-classify/1`, vendored byte for byte at their pinned digests, and from the
+  procedural glyph table. The new Rust tool `geordi-bijou-shadergen` validates it with exactly
+  `naga 29.0.4`, generates checked-in GLSL ES 3.00 stages and the
+  `geordi-bijou-gpu-shader-manifest/1` implementation manifest (digests and the WGSL-binding-to-GLSL
+  name map), and fails `--check` on any drift. A WebGL2 `RGBA32UI` harness runs a transport canary
+  and the shared Bunny vectors through the translated GLSL and emits
+  `geordi-bijou-gpu-kernel-receipt/1` receipts. Tests diff the executed shader against an Option
+  E4 reference model and against the CPU reference oracle. No presenter is included.
 - **`@flyingrobots/geordi-bijou-gpu`**: dirty-union cell packer for the `bijou-surface-gpu/1` ABI
   (flyingrobots/geordi#171). `packSurfaceDamage(state, current, target, options)` lowers the cells
   named by `current.renderDirtyWords | target.renderDirtyWords` into a retained `Uint32Array`

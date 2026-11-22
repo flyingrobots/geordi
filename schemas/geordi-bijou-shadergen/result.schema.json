@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-bijou-shadergen/result.schema.json",
+  "title": "Run result",
+  "description": "Final line of a successful check or write. Written to stdout.",
+  "x-schema-id": "geordi.bijou_shadergen.result",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "mode",
+    "ok",
+    "artifacts",
+    "nagaVersion"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.bijou_shadergen.result"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "result"
+    },
+    "mode": {
+      "enum": [
+        "check",
+        "write"
+      ]
+    },
+    "ok": {
+      "const": true
+    },
+    "artifacts": {
+      "type": "integer"
+    },
+    "nagaVersion": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

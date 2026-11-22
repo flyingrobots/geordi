@@ -1,0 +1,26 @@
+[package]
+name = "geordi-bijou-shadergen"
+description = "Assembles bijou-surface.wgsl and generates its GLSL ES 3.00 stages and manifest with pinned naga."
+edition.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "geordi-bijou-shadergen"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+# Exact pin: the generated GLSL is checked in byte for byte, so a naga upgrade is a deliberate
+# change that regenerates every artifact and its manifest.
+naga = { version = "=29.0.4", default-features = false, features = ["wgsl-in", "glsl-out"] }
+serde_json = "1.0.150"
+sha2 = "0.10.9"
