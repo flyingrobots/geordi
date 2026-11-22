@@ -143,6 +143,7 @@ WASM-backed only for hard deterministic kernels.
 ```text
 geordi/
   packages/
+    bijou-gpu/         # @flyingrobots/geordi-bijou-gpu - bijou-surface-gpu/1 conformance kit
     core/              # @flyingrobots/geordi-core - IR types, JSON port, feature profile
     compiler-core/     # @flyingrobots/geordi-compiler-core - compile orchestration
     schema-graphql/    # @flyingrobots/geordi-schema-graphql - GraphQL SDL adapter
