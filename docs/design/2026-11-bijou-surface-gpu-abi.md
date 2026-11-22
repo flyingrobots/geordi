@@ -178,7 +178,7 @@ strikeY0 = (cellPxH - decoPx) / 2
 - **`UNDERLINE_SOLID` (`0b01 << 4`):** `ly >= ulY0 && ly < ulY0 + decoPx`.
 - **`UNDERLINE_DOTDASH` (`0b11 << 4`, `FLAG_DASHED == 0`, dotted):** `ly >= ulY0 && ly < ulY0 + decoPx && ((lx * 8) / cellPxW) % 2 == 0`.
 - **`UNDERLINE_DOTDASH | FLAG_DASHED` (`dashed`):** `ly >= ulY0 && ly < ulY0 + decoPx && ((lx * 10) / cellPxW) % 5 < 3`.
-- **`UNDERLINE_CURLY` (`0b10 << 4`):** `waveY = (cellPxH * 90) / 100.0 + (cellPxH * 0.03) * sin(uv.x * 4.0 * PI)`, `halfT = max(0.55, 0.5 * decoPx)`; lit when `abs((ly + 0.5) - waveY) <= halfT` (since `halfT >= 0.55 > 0.5` px, every column `lx` hits at least one integer row `ly`).
+- **`UNDERLINE_CURLY` (`0b10 << 4`):** `waveY = (cellPxH * 90) / 100.0 + (cellPxH * 0.03) * sin(uv.x * 4.0 * PI)`, `halfT = 0.5 * decoPx + 0.0625`; lit when `abs((ly + 0.5) - waveY) <= halfT` (since `0.0625 = 1/16` is exact in both IEEE-754 `f32` and `f64`, `halfT >= 0.5625 > 0.5` px guarantees every column `lx` hits at least one integer row `ly` without exact half-integer boundary ties).
 - **`FLAG_STRIKETHROUGH` (`0x04`):** `ly >= strikeY0 && ly < strikeY0 + decoPx`.
 
 ### Physical pixels, fractional DPR, and letterboxed remainder
@@ -340,13 +340,13 @@ Bit layout per entry in `BLOCK_GLYPHS[codePoint - 0x2580]`:
 8-bit dot mask `m = glyph_payload & 0xFFu` over a 2×4 grid (`col ∈ {0,1}`, `row ∈ {0,1,2,3}`), bit mapping `(0,0)=0`, `(0,1)=1`, `(0,2)=2`, `(1,0)=3`, `(1,1)=4`, `(1,2)=5`, `(0,3)=6`, `(1,3)=7`. Pure integer sub-cell test (exact pixel-center `[0.25, 0.75) × [0.20, 0.80)`):
 
 ```text
-subCol = (lx * 2) / W
-subRow = (ly * 4) / H
+subCol = (2 * lx + 1) / W
+subRow = (4 * ly + 2) / H
 bitIdx = (subRow == 3) ? (6 + subCol) : (subCol * 3 + subRow)
-subX   = lx * 2 - subCol * W
-subY   = ly * 4 - subRow * H
-inDot  = (2 * subX + 1) * 2 >= W && (2 * subX + 1) * 2 < 3 * W
-      && (2 * subY + 1) * 5 >= 2 * H && (2 * subY + 1) * 5 < 8 * H
+subX   = (2 * lx + 1) - subCol * W
+subY   = (4 * ly + 2) - subRow * H
+inDot  = 4 * subX >= W && 4 * subX < 3 * W
+      && 5 * subY >= H && 5 * subY < 4 * H
 lit    = inDot && (((m >> bitIdx) & 1) != 0)
 ```
 

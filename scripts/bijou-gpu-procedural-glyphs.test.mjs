@@ -547,8 +547,8 @@ test('ADR Section 5 & 7 procedural geometry has zero f64/f32 drift and zero vani
       assert.equal(ulY0 >= 0 && ulY0 + decoPx <= H, true, `underline bounds at H=${H}`);
       assert.equal(strikeY0 >= 0 && strikeY0 + decoPx <= H, true, `strikethrough bounds at H=${H}`);
 
-      const halfT64 = Math.max(0.55, 0.5 * decoPx);
-      const halfT32 = Math.fround(Math.max(Math.fround(0.55), Math.fround(0.5 * decoPx)));
+      const halfT64 = 0.5 * decoPx + 0.0625;
+      const halfT32 = Math.fround(Math.fround(0.5 * decoPx) + Math.fround(0.0625));
       for (let lx = 0; lx < W; lx++) {
         let colLit = 0;
         const uvx64 = (lx + 0.5) / W;
@@ -566,6 +566,94 @@ test('ADR Section 5 & 7 procedural geometry has zero f64/f32 drift and zero vani
         }
         assert.equal(colLit > 0, true, `Curly underline dropped column ${lx} at ${W}x${H}`);
       }
+    }
+  }
+
+  // 3. Section 7.2 Block Elements: pure integer matches exact pixel-center uv across sizes
+  for (const [W, H] of sizes) {
+    for (const entry of data.blockElements.entries) {
+      if (entry.kind === 'shade') continue;
+      let lit = 0;
+      for (let ly = 0; ly < H; ly++) {
+        for (let lx = 0; lx < W; lx++) {
+          const u = (lx + 0.5) / W;
+          const v = (ly + 0.5) / H;
+          let intLit;
+          let uvLit;
+          if (entry.kind === 'rect') {
+            const [x0, y0, x1, y1] = entry.rectEighths;
+            intLit =
+              (2 * lx + 1) * 4 >= x0 * W &&
+              (2 * lx + 1) * 4 < x1 * W &&
+              (2 * ly + 1) * 4 >= y0 * H &&
+              (2 * ly + 1) * 4 < y1 * H;
+            uvLit = u * 8 >= x0 && u * 8 < x1 && v * 8 >= y0 && v * 8 < y1;
+          } else {
+            const qx = 2 * lx + 1 >= W ? 1 : 0;
+            const qy = 2 * ly + 1 >= H ? 1 : 0;
+            intLit = ((entry.quadrantMask >> (qx + 2 * qy)) & 1) !== 0;
+            const uqx = u >= 0.5 ? 1 : 0;
+            const uqy = v >= 0.5 ? 1 : 0;
+            uvLit = ((entry.quadrantMask >> (uqx + 2 * uqy)) & 1) !== 0;
+          }
+          assert.equal(intLit, uvLit, `Block ${entry.hex} integer/uv mismatch at ${W}x${H} (${lx},${ly})`);
+          if (intLit) lit++;
+        }
+      }
+      assert.equal(lit > 0, true, `Block ${entry.hex} vanished at ${W}x${H}`);
+    }
+  }
+
+  // 4. Section 7.3 Braille: pure integer matches exact pixel-center [0.25, 0.75) x [0.20, 0.80) across sizes
+  const brailleSizes = [
+    [2, 4],
+    [6, 12],
+    [7, 14],
+    [8, 16],
+    [9, 18],
+    [10, 20],
+    [12, 24],
+    [16, 32],
+    [25, 50],
+  ];
+  for (const [W, H] of brailleSizes) {
+    const dotCounts = new Array(8).fill(0);
+    for (let ly = 0; ly < H; ly++) {
+      for (let lx = 0; lx < W; lx++) {
+        const subCol = Math.floor((2 * lx + 1) / W);
+        const subRow = Math.floor((4 * ly + 2) / H);
+        assert.equal(subCol >= 0 && subCol <= 1, true, `Braille subCol out of range at ${W}x${H}`);
+        assert.equal(subRow >= 0 && subRow <= 3, true, `Braille subRow out of range at ${W}x${H}`);
+        const bitIdx = subRow === 3 ? 6 + subCol : subCol * 3 + subRow;
+        const subX = 2 * lx + 1 - subCol * W;
+        const subY = 4 * ly + 2 - subRow * H;
+        const intLit = 4 * subX >= W && 4 * subX < 3 * W && 5 * subY >= H && 5 * subY < 4 * H;
+
+        // Exact rational pixel-center reference (no IEEE-754 0.2/0.8 rounding artifacts):
+        // u = (2*lx + 1) / (2*W) => 2*u = (2*lx + 1) / W; fracU = subX / W in [1/4, 3/4)
+        // v = (2*ly + 1) / (2*H) => 4*v = (4*ly + 2) / H; fracV = subY / H in [1/5, 4/5)
+        const refCol = Math.floor((2 * lx + 1) / W);
+        const refRow = Math.floor((4 * ly + 2) / H);
+        const refBitIdx = refRow === 3 ? 6 + refCol : refCol * 3 + refRow;
+        const refNumU = 2 * lx + 1 - refCol * W;
+        const refNumV = 4 * ly + 2 - refRow * H;
+        const refLit =
+          refNumU * 4 >= W &&
+          refNumU * 4 < 3 * W &&
+          refNumV * 5 >= H &&
+          refNumV * 5 < 4 * H;
+
+        assert.equal(bitIdx, refBitIdx, `Braille bitIdx mismatch at ${W}x${H} (${lx},${ly})`);
+        assert.equal(intLit, refLit, `Braille pixel-center mismatch at ${W}x${H} (${lx},${ly})`);
+        if (intLit) dotCounts[bitIdx]++;
+      }
+    }
+    for (let dot = 0; dot < 8; dot++) {
+      assert.equal(dotCounts[dot] > 0, true, `Braille dot ${dot} vanished at ${W}x${H}`);
+    }
+    // At even W and H%4==0 (e.g. 8x16, 16x32), all 8 dots must have identical symmetric pixel counts
+    if (W % 2 === 0 && H % 4 === 0) {
+      assert.equal(new Set(dotCounts).size, 1, `Braille dots asymmetric at ${W}x${H}: ${dotCounts.join(',')}`);
     }
   }
 });
