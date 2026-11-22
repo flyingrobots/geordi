@@ -958,6 +958,12 @@ describe('packSurfaceDamage width-1 policy and refusals', () => {
         accumulateSurfaceDamage(state, good, shortDirty);
       })?.path,
     ).toBe('target.renderDirtyWords');
+
+    // A look-alike object is not a packer state.
+    const forged = { staging: new Uint32Array(0), widthCells: 0, heightCells: 0, pendingFullRefresh: null };
+    const forgedError = caught(() => packSurfaceDamage(forged, good, good, { resolveSlot }));
+    expect(forgedError?.code).toBe('GEORDI_E_BIJOU_INVALID_SURFACE');
+    expect(forgedError?.path).toBe('state');
   });
 
   it('recovers from a refused frame with a full refresh of the next one', () => {

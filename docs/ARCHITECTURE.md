@@ -64,7 +64,7 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
 
 ### `@flyingrobots/geordi-bijou-gpu`
 
-**Conformance kit for the `bijou-surface-gpu/1` ABI**
+**Conformance kit and cell packer for the `bijou-surface-gpu/1` ABI**
 
 - **Presenter contract** (`src/presenter.ts`, `src/errors.ts`): `GpuSurfacePresenter`, the
   sync-or-async `GpuSurfacePresenterFactory`, the shared `cellFromPoint` law, and
@@ -76,12 +76,17 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
   rasteriser `renderReferenceRgba`
 - **Receipt validator** (`src/receipt.ts`): `geordi-bijou-gpu-receipt/1`, the evidence taxonomy,
   and `assertBitExactFrameHash`
+- **Dirty-union cell packer** (`src/surface-damage.ts`): `packSurfaceDamage` and
+  `accumulateSurfaceDamage` lower the union damage of two `PackedSurface` buffers into a retained
+  staging buffer and report changed rows; no host API, glyph slots through an injected callback
 - **Test glyph pack** (`src/test-glyph-pack.ts`): explicit 8 x 16 bitmaps, no font
 - **Browser probe harness** (`harness/`, `e2e/`): Playwright + Vite
 
 **Key principle**: Bijou owns cell semantics and Bunny owns the integer primitives. This package
-is the CPU oracle that GPU presenters are compared against; it contains no presenter, shader,
-packer, or atlas. Reference: [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
+is the CPU oracle that GPU presenters are compared against, plus the packer they will share; it
+contains no presenter, shader, or atlas. References:
+[`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md) and
+[`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md).
 
 ### `@flyingrobots/geordi-profunctor-page`
 
