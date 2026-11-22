@@ -221,26 +221,24 @@ strikeY0 = (cellPxH - decoPx) / 2
 - **`UNDERLINE_SOLID` (`0b01 << 4`):** `ly >= ulY0 && ly < ulY0 + decoPx`.
 - **`UNDERLINE_DOTDASH` (`0b11 << 4`, `FLAG_DASHED == 0`, dotted):** `ly >= ulY0 && ly < ulY0 + decoPx && ((lx * 8) / cellPxW) % 2 == 0`.
 - **`UNDERLINE_DOTDASH | FLAG_DASHED` (`dashed`):** `ly >= ulY0 && ly < ulY0 + decoPx && ((lx * 10) / cellPxW) % 5 < 3`.
-- **`UNDERLINE_CURLY` (`0b10 << 4`, 2-cycle pure-integer triangle wave, zero `sin`):**
+- **`UNDERLINE_CURLY` (`0b10 << 4`, 2-cycle pure-`u32` triangle wave, zero `sin`, zero signed intermediates):**
   ```text
   ampPx = (cellPxH >= 3) ? max(1, (cellPxH * 3 + 50) / 100) : 0
   baseY = min(cellPxH - decoPx, (cellPxH * 90) / 100)
   t     = ((2 * lx + 1) * 4) % (4 * cellPxW)
   q     = t / cellPxW
   r     = t % cellPxW
-  off   = (q == 0) ?  divRoundEven(r * ampPx, cellPxW)
-        : (q == 1) ?  divRoundEven((cellPxW - r) * ampPx, cellPxW)
-        : (q == 2) ? -divRoundEven(r * ampPx, cellPxW)
-        :            -divRoundEven((cellPxW - r) * ampPx, cellPxW)
-  cy    = clamp(baseY + off, 0, cellPxH - decoPx)
+  mag   = divRoundEven(((q == 0 || q == 2) ? r : (cellPxW - r)) * ampPx, cellPxW)
+  cy    = (q < 2) ? min(cellPxH - decoPx, baseY + mag) : satSub(baseY, mag)
   lit   = (ly >= cy && ly < cy + decoPx)
   ```
+  *(where `satSub(a, b) = (a > b) ? (a - b) : 0` is unsigned saturating subtraction, so `cy` never underflows `u32`.)*
 - **`FLAG_STRIKETHROUGH` (`0x04`):** `ly >= strikeY0 && ly < strikeY0 + decoPx`.
 
 ### Physical pixels, DPR host ingress, and letterboxed remainder
 
-- Host boundary ingress converts CSS dimensions to bounded integer physical pixels:
-  - `(canvasPxW, canvasPxH)` read from `ResizeObserverEntry.devicePixelContentBoxSize` when available, else `(max(1, round(cssW * dpr)), max(1, round(cssH * dpr)))`.
+- Host boundary ingress MUST reject non-finite or non-positive (`!Number.isFinite(v) || v <= 0`) `cssW`, `cssH`, or `dpr` before converting CSS dimensions to bounded integer physical pixels:
+  - `(canvasPxW, canvasPxH)` read from `ResizeObserverEntry.devicePixelContentBoxSize` when available, else `(max(1, Math.round(cssW * dpr)), max(1, Math.round(cssH * dpr)))` (explicit host-boundary JS half-towards-`+∞` quantization into `u32 >= 1`; core rendering consumes only the resulting integers).
   - `(cellPxW, cellPxH)` snapped and validated into `[1..256] × [1..256]`.
 - Grid capacity is `cols = canvasPxW / cellPxW`, `rows = canvasPxH / cellPxH` (integer floor division).
 - Origin is **top-left `(0, 0)`** (`+X` right, `+Y` down).
@@ -251,7 +249,13 @@ strikeY0 = (cellPxH - decoPx) / 2
 Every presenter and the planned `@flyingrobots/bijou-web` input adapter ([`bijou#793`](https://github.com/flyingrobots/bijou/issues/793)) MUST implement the exact same **0-based** host-boundary hit-test:
 
 ```text
-if (cols === 0 || rows === 0 || rect.width <= 0 || rect.height <= 0 || !isFinite(clientX) || !isFinite(clientY))
+if (
+  cols === 0 || rows === 0 ||
+  !Number.isFinite(rect.left) || !Number.isFinite(rect.top) ||
+  !Number.isFinite(rect.width) || !Number.isFinite(rect.height) ||
+  rect.width <= 0 || rect.height <= 0 ||
+  !Number.isFinite(clientX) || !Number.isFinite(clientY)
+)
   return null
 localCssX = clientX - rect.left
 localCssY = clientY - rect.top
@@ -326,45 +330,50 @@ Bit layout per entry in `BOX_GLYPHS[codePoint - 0x2500]`:
 - `bit 11` = `rounded` (`1` for `U+256D..U+2570`).
 - `bit 12` = `diagSlash` (`/` lower-left to upper-right), `bit 13` = `diagBackslash` (`\` upper-left to lower-right).
 
-Closed-form pure-integer geometry at integer cell-local pixel `(lx, ly)` with `W = cellPxW`, `H = cellPxH`:
+Closed-form pure-`u32` integer geometry at integer cell-local pixel `(lx, ly)` with `W = cellPxW`, `H = cellPxH`, using two unsigned helpers that never underflow `u32`:
 
-1. **Integer stroke widths (same pixel thickness in X and Y so corners balance visually):**
+```text
+satSub(a, b)  = (a > b)  ? (a - b) : 0
+absDiff(a, b) = (a >= b) ? (a - b) : (b - a)
+```
+
+1. **Integer stroke widths (same pixel thickness in X and Y so corners balance visually; `satSub` guarantees zero `u32` underflow for all `1 <= W, H <= 256`):**
    ```text
    lightPx = max(1, (W * 10 + 50) / 100)
    heavyPx = 2 * lightPx
    dblGap  = max(1, lightPx)
-   vx0(w)  = (W - w) / 2
-   hy0(w)  = (H - w) / 2
-   vxL0    = max(0, vx0(lightPx) - dblGap)
-   vxR0    = min(W - lightPx, vx0(lightPx) + dblGap)
-   hyT0    = max(0, hy0(lightPx) - dblGap)
-   hyB0    = min(H - lightPx, hy0(lightPx) + dblGap)
+   vx0(w)  = satSub(W, w) / 2
+   hy0(w)  = satSub(H, w) / 2
+   vxL0    = satSub(vx0(lightPx), dblGap)
+   vxR0    = min(satSub(W, lightPx), vx0(lightPx) + dblGap)
+   hyT0    = satSub(hy0(lightPx), dblGap)
+   hyB0    = min(satSub(H, lightPx), hy0(lightPx) + dblGap)
    ```
-2. **Pure-integer diagonals (`diagSlash == 1 || diagBackslash == 1`, `U+2571..U+2573`):**
-   - Exact squared perpendicular distance check without `sqrt` or floats.
-   - **Proven-infallible `u32` overflow bound for `1 <= W, H <= 256`:** `half2 = max(1, lightPx) <= 26`, `bound = half2 * (W + H) <= 13,312`. Since `W + H > hypot(W, H)`, any pixel with `d > bound` is strictly outside; whenever `d <= bound`, `d * d <= 177,209,344 < 2^32` and `rhs = half2 * half2 * (W * W + H * H) <= 88,604,672 < 2^32`.
+2. **Pure-`u32` diagonals (`diagSlash == 1 || diagBackslash == 1`, `U+2571..U+2573`):**
+   - Exact squared perpendicular distance check without `sqrt`, floats, or signed subtraction.
+   - **Proven-infallible `u32` overflow bound for `1 <= W, H <= 256`:** `half2 = max(1, lightPx) <= 26`, `bound = half2 * (W + H) <= 13,312`, `(2 * lx + 1) * H + (2 * ly + 1) * W <= 261,632 < 2^31`. Since `W + H > hypot(W, H)`, any pixel with `d > bound` is strictly outside; whenever `d <= bound`, `d * d <= 177,209,344 < 2^31 < 2^32` and `rhs = half2 * half2 * (W * W + H * H) <= 88,604,672 < 2^31 < 2^32`.
    ```text
    half2        = max(1, lightPx)
    bound        = half2 * (W + H)
    rhs          = half2 * half2 * (W * W + H * H)
-   dSlash       = abs((2 * lx + 1) * H + (2 * ly + 1) * W - 2 * W * H)
-   dBack        = abs((2 * lx + 1) * H - (2 * ly + 1) * W)
+   dSlash       = absDiff((2 * lx + 1) * H + (2 * ly + 1) * W, 2 * W * H)
+   dBack        = absDiff((2 * lx + 1) * H, (2 * ly + 1) * W)
    slashLit     = diagSlash     && (dSlash <= bound) && (dSlash * dSlash <= rhs)
    backslashLit = diagBackslash && (dBack  <= bound) && (dBack  * dBack  <= rhs)
    ```
-3. **Pure-integer Q12 rounded quarter-ellipse arcs (`rounded == 1`, `U+256D..U+2570`):**
+3. **Pure-`u32` Q12 rounded quarter-ellipse arcs (`rounded == 1`, `U+256D..U+2570`):**
    - Fixed-point scale `Q12 = 4096`.
-   - **Proven-infallible `u32` overflow bound for `1 <= W, H <= 256`:** `dx <= 2 * W - 1`, `dy <= 2 * H - 1` so `nx, ny <= 8,191`, `r2 = nx * nx + ny * ny <= 134,184,962 < 2^32`, and `rOut <= 8,601` so `rOut * rOut <= 73,977,201 < 2^32`.
+   - **Proven-infallible `u32`/`i32` overflow bound for `1 <= W, H <= 256`:** `dx <= 2 * W - 1 <= 511`, `dy <= 2 * H - 1 <= 511`, `dx * 4096 <= 2,093,056 < 2^31`, `nx, ny <= 8,191`, `r2 = nx * nx + ny * ny <= 134,184,962 < 2^31`. Clamping `halfQ` at `8192` keeps `rOut = 4096 + halfQ <= 12,288` so `rOut * rOut <= 150,994,944 < 2^31 < 2^32` (zero overflow even at extreme aspect ratios like `256 × 1`), and is mathematically identical to unbounded `halfQ` because whenever `halfQ >= 8192`, `rIn == 0` and every pixel satisfies `0 <= r2 <= 134,184,962 < 12,288^2`.
    ```text
    cx2   = (R > 0) ? (2 * W) : 0
    cy2   = (D > 0) ? (2 * H) : 0
-   dx    = abs(2 * lx + 1 - cx2)
-   dy    = abs(2 * ly + 1 - cy2)
+   dx    = absDiff(2 * lx + 1, cx2)
+   dy    = absDiff(2 * ly + 1, cy2)
    nx    = (dx * 4096) / W
    ny    = (dy * 4096) / H
    r2    = nx * nx + ny * ny
-   halfQ = (max(11, 10 * lightPx) * 4096) / (10 * min(W, H))
-   rIn   = (halfQ < 4096) ? (4096 - halfQ) : 0
+   halfQ = min(8192, (max(11, 10 * lightPx) * 4096) / (10 * min(W, H)))
+   rIn   = satSub(4096, halfQ)
    rOut  = 4096 + halfQ
    lit   = (r2 >= rIn * rIn) && (r2 <= rOut * rOut)
    ```
