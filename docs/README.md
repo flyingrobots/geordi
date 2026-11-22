@@ -19,6 +19,8 @@ that exists on `main`.
 | Look up the ray-traced scene artifact, Q32.32 profile and receipt | [`ray-traced-scene-profile.md`](./ray-traced-scene-profile.md) |
 | Look up the Bijou GPU presenter contract, fixtures, receipt validator and CPU reference oracle | [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md) |
 | Find the evidence for each Bijou GPU conformance requirement | [`bijou-gpu-conformance-kit-test-plan.md`](./bijou-gpu-conformance-kit-test-plan.md) |
+| Look up the canonical Bijou GPU shader, its GLSL generator, manifest and kernel harness | [`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md) |
+| Find the evidence for each Bijou GPU shader requirement | [`bijou-gpu-shaders-test-plan.md`](./bijou-gpu-shaders-test-plan.md) |
 | Look up the Bijou GPU dirty-union cell packer: damage law, full-refresh triggers, staging buffer and errors | [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md) |
 | Find the evidence for each Bijou GPU packer requirement | [`bijou-gpu-surface-damage-test-plan.md`](./bijou-gpu-surface-damage-test-plan.md) |
 | Run Rust verification | [`RUST_GATES.md`](./RUST_GATES.md) |

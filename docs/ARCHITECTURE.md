@@ -84,9 +84,14 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
 
 **Key principle**: Bijou owns cell semantics and Bunny owns the integer primitives. This package
 is the CPU oracle that GPU presenters are compared against, plus the packer they will share; it
-contains no presenter, shader, or atlas. References:
+contains no presenter or atlas. References:
 [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md) and
 [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md).
+
+Its `shaders/` directory holds the canonical `bijou-surface.wgsl`, the GLSL ES 3.00 stages that
+`crates/geordi-bijou-shadergen` generates from it with pinned `naga`, and their implementation
+manifest. The npm package does not publish that directory. Reference:
+[`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md).
 
 ### `@flyingrobots/geordi-profunctor-page`
 
