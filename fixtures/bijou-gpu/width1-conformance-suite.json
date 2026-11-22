@@ -1,0 +1,691 @@
+{
+  "canvasPxH": 117,
+  "canvasPxW": 67,
+  "cellPx": {
+    "height": 16,
+    "width": 8
+  },
+  "cells": [
+    {
+      "bg": "#102030",
+      "col": 0,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "glyph-ascii-a",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 0
+    },
+    {
+      "bg": "#203040",
+      "col": 1,
+      "empty": false,
+      "fg": null,
+      "grapheme": "é",
+      "id": "glyph-decomposed-e-acute",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 0
+    },
+    {
+      "bg": null,
+      "col": 2,
+      "empty": false,
+      "fg": "#40C0FF",
+      "grapheme": "",
+      "id": "glyph-private-use-f000",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 0
+    },
+    {
+      "bg": null,
+      "col": 3,
+      "empty": true,
+      "fg": null,
+      "grapheme": " ",
+      "id": "glyph-empty",
+      "modifiers": [],
+      "opacity": 0,
+      "row": 0
+    },
+    {
+      "bg": null,
+      "col": 4,
+      "empty": false,
+      "fg": "#00FF00",
+      "grapheme": "A",
+      "id": "color-fg-only",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 0
+    },
+    {
+      "bg": "#800000",
+      "col": 5,
+      "empty": false,
+      "fg": null,
+      "grapheme": " ",
+      "id": "color-bg-only",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 0
+    },
+    {
+      "bg": null,
+      "col": 6,
+      "empty": false,
+      "fg": null,
+      "grapheme": "A",
+      "id": "color-defaults",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 0
+    },
+    {
+      "bg": "#000040",
+      "col": 7,
+      "empty": false,
+      "fg": "#FFFFFF",
+      "grapheme": "♥",
+      "id": "glyph-color-heart",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 0
+    },
+    {
+      "bg": "#102030",
+      "col": 0,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "modifier-bold",
+      "modifiers": [
+        "bold"
+      ],
+      "opacity": 63,
+      "row": 1
+    },
+    {
+      "bg": "#102030",
+      "col": 1,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "modifier-dim",
+      "modifiers": [
+        "dim"
+      ],
+      "opacity": 63,
+      "row": 1
+    },
+    {
+      "bg": "#102030",
+      "col": 2,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "modifier-inverse",
+      "modifiers": [
+        "inverse"
+      ],
+      "opacity": 63,
+      "row": 1
+    },
+    {
+      "bg": "#102030",
+      "col": 3,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "modifier-strikethrough",
+      "modifiers": [
+        "strikethrough"
+      ],
+      "opacity": 63,
+      "row": 1
+    },
+    {
+      "bg": "#102030",
+      "col": 4,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "underline-solid",
+      "modifiers": [
+        "underline"
+      ],
+      "opacity": 63,
+      "row": 1
+    },
+    {
+      "bg": "#102030",
+      "col": 5,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "underline-curly",
+      "modifiers": [
+        "curly-underline"
+      ],
+      "opacity": 63,
+      "row": 1
+    },
+    {
+      "bg": "#102030",
+      "col": 6,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "underline-dotted",
+      "modifiers": [
+        "dotted-underline"
+      ],
+      "opacity": 63,
+      "row": 1
+    },
+    {
+      "bg": "#102030",
+      "col": 7,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "underline-dashed",
+      "modifiers": [
+        "dashed-underline"
+      ],
+      "opacity": 63,
+      "row": 1
+    },
+    {
+      "bg": "#102030",
+      "col": 0,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "opacity-partial",
+      "modifiers": [],
+      "opacity": 32,
+      "row": 2
+    },
+    {
+      "bg": "#102030",
+      "col": 1,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "opacity-zero",
+      "modifiers": [],
+      "opacity": 0,
+      "row": 2
+    },
+    {
+      "bg": "#102030",
+      "col": 2,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "A",
+      "id": "modifier-dim-inverse",
+      "modifiers": [
+        "dim",
+        "inverse"
+      ],
+      "opacity": 63,
+      "row": 2
+    },
+    {
+      "bg": null,
+      "col": 3,
+      "empty": false,
+      "fg": null,
+      "grapheme": "A",
+      "id": "modifier-inverse-defaults",
+      "modifiers": [
+        "inverse"
+      ],
+      "opacity": 63,
+      "row": 2
+    },
+    {
+      "bg": "#102030",
+      "col": 4,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": " ",
+      "id": "strikethrough-on-space",
+      "modifiers": [
+        "strikethrough"
+      ],
+      "opacity": 63,
+      "row": 2
+    },
+    {
+      "bg": "#102030",
+      "col": 5,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": " ",
+      "id": "underline-on-space",
+      "modifiers": [
+        "underline"
+      ],
+      "opacity": 63,
+      "row": 2
+    },
+    {
+      "bg": "#102030",
+      "col": 6,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "é",
+      "id": "modifier-bold-e-acute",
+      "modifiers": [
+        "bold"
+      ],
+      "opacity": 63,
+      "row": 2
+    },
+    {
+      "bg": "#000000",
+      "col": 7,
+      "empty": false,
+      "fg": "#FFFFFF",
+      "grapheme": "█",
+      "id": "opacity-partial-full-block",
+      "modifiers": [],
+      "opacity": 32,
+      "row": 2
+    },
+    {
+      "bg": "#102030",
+      "col": 0,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "─",
+      "id": "box-light-horizontal",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 3
+    },
+    {
+      "bg": "#102030",
+      "col": 1,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "│",
+      "id": "box-light-vertical",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 3
+    },
+    {
+      "bg": "#102030",
+      "col": 2,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "┌",
+      "id": "box-light-down-right",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 3
+    },
+    {
+      "bg": "#102030",
+      "col": 3,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "┼",
+      "id": "box-light-cross",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 3
+    },
+    {
+      "bg": "#102030",
+      "col": 4,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "━",
+      "id": "box-heavy-horizontal",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 3
+    },
+    {
+      "bg": "#102030",
+      "col": 5,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "╋",
+      "id": "box-heavy-cross",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 3
+    },
+    {
+      "bg": "#102030",
+      "col": 6,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "═",
+      "id": "box-double-horizontal",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 3
+    },
+    {
+      "bg": "#102030",
+      "col": 7,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "╬",
+      "id": "box-double-cross",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 3
+    },
+    {
+      "bg": "#102030",
+      "col": 0,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "╭",
+      "id": "box-arc-down-right",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 4
+    },
+    {
+      "bg": "#102030",
+      "col": 1,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "╮",
+      "id": "box-arc-down-left",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 4
+    },
+    {
+      "bg": "#102030",
+      "col": 2,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "╯",
+      "id": "box-arc-up-left",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 4
+    },
+    {
+      "bg": "#102030",
+      "col": 3,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "╰",
+      "id": "box-arc-up-right",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 4
+    },
+    {
+      "bg": "#102030",
+      "col": 4,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "╱",
+      "id": "box-diagonal-slash",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 4
+    },
+    {
+      "bg": "#102030",
+      "col": 5,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "╲",
+      "id": "box-diagonal-backslash",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 4
+    },
+    {
+      "bg": "#102030",
+      "col": 6,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "╳",
+      "id": "box-diagonal-cross",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 4
+    },
+    {
+      "bg": "#102030",
+      "col": 7,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "┄",
+      "id": "box-dash-triple-horizontal",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 4
+    },
+    {
+      "bg": "#102030",
+      "col": 0,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "▀",
+      "id": "block-upper-half",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 5
+    },
+    {
+      "bg": "#102030",
+      "col": 1,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "█",
+      "id": "block-full",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 5
+    },
+    {
+      "bg": "#102030",
+      "col": 2,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "░",
+      "id": "block-shade-light",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 5
+    },
+    {
+      "bg": "#000000",
+      "col": 3,
+      "empty": false,
+      "fg": "#FFFFFF",
+      "grapheme": "▒",
+      "id": "block-shade-medium",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 5
+    },
+    {
+      "bg": "#102030",
+      "col": 4,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "▓",
+      "id": "block-shade-dark",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 5
+    },
+    {
+      "bg": "#102030",
+      "col": 5,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "▚",
+      "id": "block-quadrant-diagonal",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 5
+    },
+    {
+      "bg": "#102030",
+      "col": 6,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "⣿",
+      "id": "braille-all-dots",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 5
+    },
+    {
+      "bg": "#102030",
+      "col": 7,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "⠁",
+      "id": "braille-dot-1",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 5
+    },
+    {
+      "bg": "#102030",
+      "col": 0,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "┊",
+      "id": "box-dash-quadruple-vertical",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 6
+    },
+    {
+      "bg": "#102030",
+      "col": 1,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "╪",
+      "id": "box-mixed-single-double-cross",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 6
+    },
+    {
+      "bg": "#102030",
+      "col": 2,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "┝",
+      "id": "box-mixed-light-heavy-tee",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 6
+    },
+    {
+      "bg": "#102030",
+      "col": 3,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "▌",
+      "id": "block-left-half",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 6
+    },
+    {
+      "bg": "#102030",
+      "col": 4,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "▁",
+      "id": "block-lower-eighth",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 6
+    },
+    {
+      "bg": "#102030",
+      "col": 5,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "▗",
+      "id": "block-quadrant-lower-right",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 6
+    },
+    {
+      "bg": "#102030",
+      "col": 6,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "⡀",
+      "id": "braille-dot-7",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 6
+    },
+    {
+      "bg": "#102030",
+      "col": 7,
+      "empty": false,
+      "fg": "#FF8040",
+      "grapheme": "⢕",
+      "id": "braille-checker",
+      "modifiers": [],
+      "opacity": 63,
+      "row": 6
+    }
+  ],
+  "defaultBg": "#0D1117",
+  "defaultFg": "#E6EDF3",
+  "description": "Canonical width-1 packed-bijou-cells/1 conformance suite: a paint frame, an erase frame, and a width-2 negative. inputReceiptSha256 is the SHA-256 of the frame file bytes; the other digests are CPU reference oracle goldens.",
+  "frames": [
+    {
+      "frameRgbaSha256": "2094e5febfba192401e795e1bb2e6c26bdb20e9b71ffbc51167fd49c2d21367c",
+      "id": "paint",
+      "inputReceiptSha256": "a1b7620c90d5ea02c2d5fe69180dc68c138879e2da656f5d3322b9e7571f7fb3",
+      "path": "width1-paint.packed-bijou-cells.json",
+      "preparedBufferSha256": "277e96bb097114358e1bda28f2a7db483032be5e35a600ef9667951c72cd38e1"
+    },
+    {
+      "frameRgbaSha256": "0261afa324a6e34d840e0ceded789e06def32441d3a8758ef559c7792dc9430d",
+      "id": "erase",
+      "inputReceiptSha256": "38af93a5fa542be69fd3975cb314ce6644324fb8c24e5b66d772a5c46d57f793",
+      "path": "width1-erase.packed-bijou-cells.json",
+      "preparedBufferSha256": "22c675dc71368c17dfc1a10f4c95315025d5aa77f867ec96f0cef0cdd8bfab53"
+    }
+  ],
+  "glyphPack": {
+    "path": "test-glyph-pack.json",
+    "sha256": "ed0d196adef8710778ee93cd6d8e3fbb4006c8b11c10abb8730f9b26f751e791"
+  },
+  "gpuAbiVersion": "bijou-surface-gpu/1",
+  "negatives": [
+    {
+      "expectedErrorCode": "GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH",
+      "id": "width2-direct-cjk",
+      "path": "negative-width2.packed-bijou-cells.json",
+      "sha256": "bc064d43250f65dbb31dc5c14259cb00ee21a84973ab38b438cfaf7a788d71a2"
+    }
+  ],
+  "proceduralTable": {
+    "path": "procedural-glyphs.json",
+    "sha256": "7ebc92f74a57ec7744fc7ada20c886d76b4ea96c09b5005efbf0883562d62e46"
+  },
+  "retainedCellId": "glyph-ascii-a",
+  "suiteVersion": "geordi-bijou-gpu-conformance-suite/1"
+}

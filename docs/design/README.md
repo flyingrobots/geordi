@@ -29,8 +29,10 @@ taxonomy, and the checked-in procedural glyph table at
 [`../../fixtures/bijou-gpu/procedural-glyphs.json`](../../fixtures/bijou-gpu/procedural-glyphs.json))
 for [#168](https://github.com/flyingrobots/geordi/issues/168). Downstream browser and native GPU
 slices are tracked in [#169](https://github.com/flyingrobots/geordi/issues/169)–[#175](https://github.com/flyingrobots/geordi/issues/175)
-and [#58](https://github.com/flyingrobots/geordi/issues/58). None of those endpoints are claimed as
-implemented yet.
+and [#58](https://github.com/flyingrobots/geordi/issues/58). The conformance kit
+([#169](https://github.com/flyingrobots/geordi/issues/169)) exists and is described in
+[`../bijou-gpu-conformance-kit.md`](../bijou-gpu-conformance-kit.md). No GPU presenter, shader,
+packer, or atlas is claimed as implemented yet.
 
 ## Accepted Design: Fixed-Point And Ray-Traced Scene Profiles
 

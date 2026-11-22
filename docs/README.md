@@ -17,6 +17,8 @@ that exists on `main`.
 | Lower a Profunctor Page specimen | [`profunctor-page-target.md`](./profunctor-page-target.md) |
 | Look up stable compiler errors | [`ERROR_CODES.md`](./ERROR_CODES.md) |
 | Look up the ray-traced scene artifact, Q32.32 profile and receipt | [`ray-traced-scene-profile.md`](./ray-traced-scene-profile.md) |
+| Look up the Bijou GPU presenter contract, fixtures, receipt validator and CPU reference oracle | [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md) |
+| Find the evidence for each Bijou GPU conformance requirement | [`bijou-gpu-conformance-kit-test-plan.md`](./bijou-gpu-conformance-kit-test-plan.md) |
 | Run Rust verification | [`RUST_GATES.md`](./RUST_GATES.md) |
 | Apply documentation policy | [`DOCUMENTATION_STANDARDS.md`](./DOCUMENTATION_STANDARDS.md) |
 

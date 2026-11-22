@@ -11,7 +11,7 @@
 
 This record freezes the endpoint-prepared GPU ABI (`bijou-surface-gpu/1`) that lets Geordi present Bijou's canonical `PackedSurface` (`packed-bijou-cells/1` / `bijou-packed-cell-u8x10-le/1`) across browser WebGPU, browser WebGL2, browser Canvas 2D fallback, and native Rust `wgpu` (`#58`) from one single contract, one pure-integer zero-float rendering arithmetic law backed by pinned `flyingrobots/bunny` GPU math primitives, and one single procedural glyph data table.
 
-Statements about what exists today cite the file and revision they come from. Planned contracts in Bijou or Geordi are labeled planned and linked to their issues. Nothing in `packages/bijou-gpu/` is implemented yet; this ADR defines the load-bearing ABI before any atlas, packer, shader, or presenter code lands.
+Statements about what exists today cite the file and revision they come from. Planned contracts in Bijou or Geordi are labeled planned and linked to their issues. `packages/bijou-gpu/` holds the conformance kit ([#169](https://github.com/flyingrobots/geordi/issues/169): presenter contract, fixtures, receipt validator, CPU reference oracle), described in [`../bijou-gpu-conformance-kit.md`](../bijou-gpu-conformance-kit.md). No atlas, packer, shader, or presenter is implemented yet; this ADR defines the load-bearing ABI before that code lands.
 
 ## Ownership boundary
 
@@ -535,7 +535,7 @@ lit    = inX && inY && (((m >> bitIdx) & 1) != 0)
 
 ## Nonclaims
 
-- No GPU presenter, shader, atlas, or native `wgpu` implementation exists in Geordi yet.
+- No GPU presenter, shader, packer, atlas, or native `wgpu` implementation exists in Geordi yet. The CPU reference oracle in `packages/bijou-gpu` is the only renderer of this ABI.
 - No performance figures or frame-time claims are made in this ABI; frame timings must be measured on named hardware and profiles after implementation lands.
 - No wide (width-2) canonical glyph support in `bijou-surface-gpu/1`.
 - No cursor overlay, OSC-8 hyperlink, or window-title side channels in `bijou-surface-gpu/1`.
