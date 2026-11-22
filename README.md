@@ -44,6 +44,11 @@ Active work:
 
 - The portable page target implementation is complete locally and is in its
   full repository verification and review slice.
+- The `geordi-ray-traced-scene/1` contract exists in Rust only: DTOs, the
+  `geordi-fixed-q32.32/1` numeric profile, a validator with stable diagnostics, the render
+  receipt, runtime profile negotiation and fixtures
+  ([reference](docs/ray-traced-scene-profile.md)). Geordi has no ray tracer; the runtime is
+  lumen.
 - The TypeScript/Rust DTO mirror is provisional. Shared serialized contracts must move to
   Wesley/common-type generation.
 
@@ -56,6 +61,7 @@ Current nonclaims:
 - no runtime shaping in strict mode;
 - no runtime kerning, ligature substitution, glyph substitution, wrapping, or fallback;
 - no pixel-identical 3D rasterization claim for the bunny path;
+- no `geordi/ray-traced-3d/1` claim: its proof gates have not run;
 - no required WASM dependency for ordinary TypeScript fixture validation.
 
 ## Start Here
@@ -158,6 +164,7 @@ geordi/
 
   fixtures/
     profunctor-page/
+    ray-traced-scene/
     render-everywhere/
 
   docs/

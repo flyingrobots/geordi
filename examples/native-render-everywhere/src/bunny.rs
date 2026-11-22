@@ -1,5 +1,17 @@
 //! Stanford bunny mesh rendering path for the native render-everywhere harness.
+//!
+//! The mesh is rotated in binary64 (Bunny 0.7.1 has no axis-angle rotation), each rotated
+//! position is rounded to Q32.32, and the camera, projection, depth-range test and viewport
+//! mapping run on the Bunny crates (`fixed_projection`). Pixel snapping and line drawing stay
+//! here.
 
+mod fixed_projection;
+mod q32_boundary;
+#[cfg(test)]
+mod render_fidelity_tests;
+
+use bunny_linalg::FixedVec3;
+use fixed_projection::{FixedProjection, FixedProjectionSpec};
 use geordi_mesh::{
     MeshAssetHashMismatchError, PlyMesh, PlyMeshParseError, assert_mesh_asset_sha256,
     parse_ascii_ply_triangle_mesh,
@@ -494,6 +506,7 @@ pub struct LoadedBunnyFixture {
     fixture: BunnyMeshFixtureManifest,
     image: BunnyImage,
     mesh: PlyMesh,
+    projection: FixedProjection,
     report: BunnyFrameReport,
     style: BunnyRenderStyle,
 }
@@ -555,6 +568,7 @@ impl BunnyWindowRuntime {
         let image = render_bunny_wireframe(
             &self.loaded.mesh,
             &self.loaded.fixture,
+            &self.loaded.projection,
             self.loaded.style,
             report.angle_radians,
         );
@@ -669,32 +683,6 @@ struct BunnyFrameReport {
     vertex_count: usize,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct ProjectedPoint {
-    visible: bool,
-    x: f64,
-    y: f64,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct CameraBasis {
-    eye: [f64; 3],
-    forward: [f64; 3],
-    right: [f64; 3],
-    up: [f64; 3],
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct ProjectionContext {
-    axis: [f64; 3],
-    camera: CameraBasis,
-    far: f64,
-    focal_length: f64,
-    height: f64,
-    near: f64,
-    width: f64,
-}
-
 /// Load and render one native bunny frame.
 ///
 /// # Errors
@@ -708,6 +696,7 @@ pub fn load_bunny_fixture(
     let fixture_path = asset_dir.join(BUNNY_FIXTURE_PATH);
     let fixture = load_bunny_fixture_manifest(&fixture_path)?;
     validate_bunny_fixture_manifest(&fixture)?;
+    let projection = bunny_fixed_projection(&fixture)?;
     let style = bunny_render_style(&fixture)?;
 
     let manifest_path = asset_dir.join(&fixture.asset_manifest_path);
@@ -725,12 +714,13 @@ pub fn load_bunny_fixture(
     validate_bunny_mesh_matches_manifest(&manifest, &mesh)?;
 
     let report = create_bunny_frame_report(frame_index, &asset_hash, &mesh, &fixture);
-    let image = render_bunny_wireframe(&mesh, &fixture, style, report.angle_radians);
+    let image = render_bunny_wireframe(&mesh, &fixture, &projection, style, report.angle_radians);
 
     Ok(LoadedBunnyFixture {
         fixture,
         image,
         mesh,
+        projection,
         report,
         style,
     })
@@ -1037,6 +1027,7 @@ fn bunny_frame_index_from_elapsed_ms(elapsed_ms: u128, sample_rate: u64) -> u64 
 fn render_bunny_wireframe(
     mesh: &PlyMesh,
     fixture: &BunnyMeshFixtureManifest,
+    projection: &FixedProjection,
     style: BunnyRenderStyle,
     angle_radians: f64,
 ) -> BunnyImage {
@@ -1045,12 +1036,20 @@ fn render_bunny_wireframe(
         fixture.projection.viewport.height,
         style.background,
     );
-    let context = projection_context(fixture);
+    let axis = normalize_vector3(fixture.playback.axis);
+    let project = |vertex: usize| {
+        project_mesh_position(
+            mesh.vertices[vertex].position,
+            axis,
+            angle_radians,
+            projection,
+        )
+    };
 
     for face in &mesh.faces {
-        let first = project_position(mesh.vertices[face[0]].position, context, angle_radians);
-        let second = project_position(mesh.vertices[face[1]].position, context, angle_radians);
-        let third = project_position(mesh.vertices[face[2]].position, context, angle_radians);
+        let first = project(face[0]);
+        let second = project(face[1]);
+        let third = project(face[2]);
         draw_projected_edge(&mut image, style.material, first, second);
         draw_projected_edge(&mut image, style.material, second, third);
         draw_projected_edge(&mut image, style.material, third, first);
@@ -1092,26 +1091,27 @@ fn bunny_window_title(frame: &BunnyWindowFrame) -> String {
     )
 }
 
+/// Draws the edge between two continuous viewport positions; `None` marks a point not drawn.
 fn draw_projected_edge(
     image: &mut BunnyImage,
     color: [u8; 4],
-    first: ProjectedPoint,
-    second: ProjectedPoint,
+    first: Option<FixedVec3>,
+    second: Option<FixedVec3>,
 ) {
-    if !first.visible || !second.visible {
+    let (Some(first), Some(second)) = (first, second) else {
         return;
-    }
+    };
 
-    let Some(x0) = rounded_i32(first.x) else {
+    let Some(x0) = rounded_pixel(first.x) else {
         return;
     };
-    let Some(y0) = rounded_i32(first.y) else {
+    let Some(y0) = rounded_pixel(first.y) else {
         return;
     };
-    let Some(x1) = rounded_i32(second.x) else {
+    let Some(x1) = rounded_pixel(second.x) else {
         return;
     };
-    let Some(y1) = rounded_i32(second.y) else {
+    let Some(y1) = rounded_pixel(second.y) else {
         return;
     };
 
@@ -1143,60 +1143,50 @@ fn draw_line(image: &mut BunnyImage, color: [u8; 4], mut x0: i32, mut y0: i32, x
     }
 }
 
-fn project_position(
+/// Rotates a mesh position in binary64, rounds it to Q32.32 and projects it with Bunny.
+///
+/// Returns `None` when the rotated position is outside the Q32.32 range the demo accepts or when
+/// [`FixedProjection::project`] does not draw it.
+fn project_mesh_position(
     position: [f64; 3],
-    context: ProjectionContext,
+    axis: [f64; 3],
     angle_radians: f64,
-) -> ProjectedPoint {
-    let rotated = rotate_around_axis(position, context.axis, angle_radians);
-    let delta = subtract_vector3(rotated, context.camera.eye);
-    let camera_x = dot_vector3(delta, context.camera.right);
-    let camera_y = dot_vector3(delta, context.camera.up);
-    let depth = dot_vector3(delta, context.camera.forward);
-
-    if depth < context.near || depth > context.far {
-        return ProjectedPoint {
-            visible: false,
-            x: 0.0,
-            y: 0.0,
-        };
-    }
-
-    let x_ndc = (context.focal_length * camera_x) / depth;
-    let y_ndc = (context.focal_length * camera_y) / depth;
-
-    ProjectedPoint {
-        visible: true,
-        x: x_ndc.midpoint(1.0) * context.width,
-        y: (-y_ndc).midpoint(1.0) * context.height,
-    }
+    projection: &FixedProjection,
+) -> Option<FixedVec3> {
+    let [x, y, z] = rotate_around_axis(position, axis, angle_radians);
+    let world = FixedVec3::new(
+        q32_boundary::fixed_from_f64(x)?,
+        q32_boundary::fixed_from_f64(y)?,
+        q32_boundary::fixed_from_f64(z)?,
+    );
+    projection.project(world)
 }
 
-fn projection_context(fixture: &BunnyMeshFixtureManifest) -> ProjectionContext {
-    ProjectionContext {
-        axis: normalize_vector3(fixture.playback.axis),
-        camera: camera_basis(&fixture.camera),
+fn bunny_fixed_projection(
+    fixture: &BunnyMeshFixtureManifest,
+) -> Result<FixedProjection, NativeBunnyManifestValidationError> {
+    let spec = FixedProjectionSpec {
+        eye: fixture.camera.eye,
         far: fixture.projection.far,
-        focal_length: 1.0 / (fixture.projection.vertical_fov_radians / 2.0).tan(),
-        height: usize_to_f64(fixture.projection.viewport.height),
+        height: fixture.projection.viewport.height,
         near: fixture.projection.near,
-        width: usize_to_f64(fixture.projection.viewport.width),
-    }
+        target: fixture.camera.target,
+        up: fixture.camera.up,
+        vertical_fov_radians: fixture.projection.vertical_fov_radians,
+        width: fixture.projection.viewport.width,
+    };
+    FixedProjection::try_new(&spec).map_err(|error| {
+        let (path, message) = error.manifest_issue();
+        NativeBunnyManifestValidationError::new(vec![NativeBunnyManifestValidationIssue::new(
+            path, &message,
+        )])
+    })
 }
 
-fn camera_basis(camera: &BunnyMeshCamera) -> CameraBasis {
-    let forward = normalize_vector3(subtract_vector3(camera.target, camera.eye));
-    let right = normalize_vector3(cross_vector3(forward, camera.up));
-    let up = normalize_vector3(cross_vector3(right, forward));
-
-    CameraBasis {
-        eye: camera.eye,
-        forward,
-        right,
-        up,
-    }
-}
-
+/// Rotates a position about a unit axis (Rodrigues' formula) in binary64.
+///
+/// This stays in the demo because Bunny 0.7.1 has no axis-angle rotation or rotation matrix
+/// builder; `FixedAngle` provides sine and cosine but nothing composes them into a rotation.
 fn rotate_around_axis(position: [f64; 3], axis: [f64; 3], angle_radians: f64) -> [f64; 3] {
     let [axis_x, axis_y, axis_z] = axis;
     let [x, y, z] = position;
@@ -1215,6 +1205,7 @@ fn rotate_around_axis(position: [f64; 3], axis: [f64; 3], angle_radians: f64) ->
     ]
 }
 
+/// Normalizes the playback axis in binary64 for [`rotate_around_axis`] and the frame report.
 fn normalize_vector3(vector: [f64; 3]) -> [f64; 3] {
     let length = vector[2]
         .mul_add(
@@ -1225,32 +1216,17 @@ fn normalize_vector3(vector: [f64; 3]) -> [f64; 3] {
     [vector[0] / length, vector[1] / length, vector[2] / length]
 }
 
-fn subtract_vector3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
-    [left[0] - right[0], left[1] - right[1], left[2] - right[2]]
-}
-
-fn dot_vector3(left: [f64; 3], right: [f64; 3]) -> f64 {
-    left[2].mul_add(right[2], left[0].mul_add(right[0], left[1] * right[1]))
-}
-
-fn cross_vector3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
-    [
-        left[1].mul_add(right[2], -(left[2] * right[1])),
-        left[2].mul_add(right[0], -(left[0] * right[2])),
-        left[0].mul_add(right[1], -(left[1] * right[0])),
-    ]
-}
-
-fn usize_to_f64(value: usize) -> f64 {
-    value.to_string().parse::<f64>().unwrap_or(0.0)
-}
-
 const fn vector_bits(vector: [f64; 3]) -> [u64; 3] {
     [
         vector[0].to_bits(),
         vector[1].to_bits(),
         vector[2].to_bits(),
     ]
+}
+
+/// Snaps a continuous viewport coordinate to the nearest pixel index, as the binary64 path did.
+fn rounded_pixel(value: bunny_num::FixedQ32_32) -> Option<i32> {
+    rounded_i32(q32_boundary::fixed_to_f64(value))
 }
 
 fn rounded_i32(value: f64) -> Option<i32> {
@@ -1356,14 +1332,6 @@ fn validate_mesh_camera(
     }
     if is_zero_vector3(camera.up) {
         push_issue(issues, "$.camera.up", "Camera up must be non-zero");
-    }
-    let forward = subtract_vector3(camera.target, camera.eye);
-    if is_zero_vector3(cross_vector3(forward, camera.up)) {
-        push_issue(
-            issues,
-            "$.camera.up",
-            "Camera up must not be parallel to view direction",
-        );
     }
 }
 

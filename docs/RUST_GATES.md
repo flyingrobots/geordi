@@ -3,6 +3,18 @@
 Rust support starts as a native render harness for the render-everywhere milestone. Keep Rust code
 inside the Cargo workspace and inherit workspace lint settings for every crate.
 
+## Pinned toolchain
+
+`rust-toolchain.toml` pins Rust to exactly `1.96.0` (minimal profile, with `clippy` and `rustfmt`).
+CI installs the toolchain that file names, so a new stable release cannot fail the gates on
+unchanged code through newly added lints. The pin matches the dev-container image, which also
+provides only 1.96.0. It satisfies the workspace `rust-version` of 1.93 and edition 2024.
+
+To raise the pin deliberately: change `channel` in `rust-toolchain.toml` in a dedicated change,
+run every gate below at the new version, fix or justify each new finding (do not silence lints
+with `allow` attributes to satisfy a newer compiler), and update the dev-container image to the
+same version in the same step.
+
 Run these gates after adding or changing Rust code:
 
 ```bash
