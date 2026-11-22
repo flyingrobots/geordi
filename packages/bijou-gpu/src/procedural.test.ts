@@ -272,6 +272,15 @@ describe('box drawing, block elements, braille, and decorations at 8x16', () => 
     expect([quarters(0x259a, 0, 0), quarters(0x259a, 7, 0), quarters(0x259a, 0, 15), quarters(0x259a, 7, 15)]).toEqual([4, 0, 0, 4]);
   });
 
+  it('assigns the centre column and row of an odd cell to the right and lower quadrants', () => {
+    const upperLeft = (lx: number, ly: number): number =>
+      blockPixelQuarters(blockEntry(0x2598), lx, ly, 7, 7);
+    expect([upperLeft(2, 2), upperLeft(3, 2), upperLeft(2, 3), upperLeft(3, 3)]).toEqual([4, 0, 0, 0]);
+    const lowerRight = (lx: number, ly: number): number =>
+      blockPixelQuarters(blockEntry(0x2597), lx, ly, 7, 7);
+    expect([lowerRight(2, 2), lowerRight(3, 3), lowerRight(2, 3), lowerRight(6, 6)]).toEqual([0, 4, 0, 4]);
+  });
+
   it('lights braille dots inside each sub-cell and keeps every dot visible at 2x5', () => {
     expect(grid(8, 4, (lx, ly) => braillePixelLit(0xff, lx, ly, 8, 16))).toBe(
       '......../.##..##./.##..##./........',
@@ -306,6 +315,17 @@ describe('box drawing, block elements, braille, and decorations at 8x16', () => 
       '........',
     ]);
     expect(row(0, 14)).toBe('........');
+  });
+
+  it('scales decoration thickness and rows with cell height (10x50)', () => {
+    const litRows = (flags: number): number[] =>
+      Array.from({ length: 50 }, (_unused, ly) => ly).filter((ly) =>
+        decorationPixelLit(flags, 0, ly, 10, 50),
+      );
+    // decoPx = (50 * 6 + 50) / 100 = 3; ulY0 = (50 * 88) / 100 = 44; strikeY0 = (50 - 3) / 2 = 23.
+    expect(litRows(UNDERLINE_SOLID)).toEqual([44, 45, 46]);
+    expect(litRows(FLAG_STRIKETHROUGH)).toEqual([23, 24, 25]);
+    expect(litRows(UNDERLINE_SOLID | FLAG_STRIKETHROUGH)).toEqual([23, 24, 25, 44, 45, 46]);
   });
 
   it('traces the two-cycle curly underline triangle wave at 16x32', () => {

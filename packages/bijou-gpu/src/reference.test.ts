@@ -598,6 +598,27 @@ describe('edges', () => {
     ]);
   });
 
+  it('blends decorations and colour glyphs through opacity, not straight to fg', () => {
+    const frame = renderReferenceRgba(
+      surfaceOf(2, [
+        { code: 0x20, fg: WARM, bg: NAVY, flags: UNDERLINE_SOLID | FLAG_STRIKETHROUGH, opacity: 32 },
+        { code: 0x2665, fg: WARM, bg: NAVY, flags: UNDERLINE_SOLID, opacity: 32 },
+      ]),
+      pack.atlasBitmap,
+      pack.slotMap,
+      table,
+    );
+    // baseBg = lerpU8(defaultBg, bg, 32, 63); decoration = lerpU8(baseBg, fg, 32, 63).
+    expect(readPixel(frame, 0, 0)).toEqual([15, 25, 36, 255]);
+    expect(readPixel(frame, 0, 14)).toEqual([137, 77, 50, 255]);
+    expect(readPixel(frame, 0, 7)).toEqual([137, 77, 50, 255]);
+    // Opaque premultiplied (224, 32, 64, 255) at opacity 32 over baseBg:
+    // divRoundEven(c * 32 * 255 + baseBg * (16065 - 255 * 32), 16065), never tinted by fg.
+    expect(readPixel(frame, 8 + 2, 4)).toEqual([121, 29, 50, 255]);
+    // A decoration over a colour glyph cell still blends toward fg.
+    expect(readPixel(frame, 8, 14)).toEqual([137, 77, 50, 255]);
+  });
+
   it('renders the curly underline wave and decorations at 16x32 and at the 256x256 metric bound', () => {
     const curly = surfaceOf(1, [{ code: 0x20, fg: WARM, bg: NAVY, flags: UNDERLINE_CURLY }]);
     const frame = renderReferenceRgba(curly, blankAtlas(16, 32), NO_SLOTS, table);
