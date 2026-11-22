@@ -115,7 +115,7 @@ describe('unsigned helpers and SHA-256', () => {
   });
 
   it('utf8Bytes agrees with TextEncoder for BMP, astral, and combining text', () => {
-    for (const text of ['A', 'é', '', '\u{1f600}', 'café 漢']) {
+    for (const text of ['A', 'e\u0301', '\uf000', '\u{1f600}', 'caf\u00e9 \u6f22']) {
       expect(Array.from(utf8Bytes(text))).toEqual(Array.from(new TextEncoder().encode(text)));
     }
   });

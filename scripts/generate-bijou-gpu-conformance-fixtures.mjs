@@ -49,9 +49,9 @@ const DEFAULT_BG = '#0D1117';
 const CANVAS_REMAINDER_X = 3;
 const CANVAS_REMAINDER_Y = 5;
 
-const E_ACUTE = 'é';
-const PRIVATE_USE = '';
-const HEART = '♥';
+const E_ACUTE = 'e\u0301';
+const PRIVATE_USE = '\uf000';
+const HEART = '\u2665';
 const WARM = '#FF8040';
 const NAVY = '#102030';
 
@@ -114,43 +114,43 @@ const PAINT_CELLS = [
   cell('strikethrough-on-space', ' ', { fg: WARM, bg: NAVY, modifiers: ['strikethrough'] }),
   cell('underline-on-space', ' ', { fg: WARM, bg: NAVY, modifiers: ['underline'] }),
   cell('modifier-bold-e-acute', E_ACUTE, { fg: WARM, bg: NAVY, modifiers: ['bold'] }),
-  cell('opacity-partial-full-block', '█', { fg: '#FFFFFF', bg: '#000000', opacity: 32 }),
+  cell('opacity-partial-full-block', '\u2588', { fg: '#FFFFFF', bg: '#000000', opacity: 32 }),
   // Row 3: box drawing, straight and junctions.
-  procedural('box-light-horizontal', '─'),
-  procedural('box-light-vertical', '│'),
-  procedural('box-light-down-right', '┌'),
-  procedural('box-light-cross', '┼'),
-  procedural('box-heavy-horizontal', '━'),
-  procedural('box-heavy-cross', '╋'),
-  procedural('box-double-horizontal', '═'),
-  procedural('box-double-cross', '╬'),
+  procedural('box-light-horizontal', '\u2500'),
+  procedural('box-light-vertical', '\u2502'),
+  procedural('box-light-down-right', '\u250c'),
+  procedural('box-light-cross', '\u253c'),
+  procedural('box-heavy-horizontal', '\u2501'),
+  procedural('box-heavy-cross', '\u254b'),
+  procedural('box-double-horizontal', '\u2550'),
+  procedural('box-double-cross', '\u256c'),
   // Row 4: rounded arcs, diagonals, dashes.
-  procedural('box-arc-down-right', '╭'),
-  procedural('box-arc-down-left', '╮'),
-  procedural('box-arc-up-left', '╯'),
-  procedural('box-arc-up-right', '╰'),
-  procedural('box-diagonal-slash', '╱'),
-  procedural('box-diagonal-backslash', '╲'),
-  procedural('box-diagonal-cross', '╳'),
-  procedural('box-dash-triple-horizontal', '┄'),
+  procedural('box-arc-down-right', '\u256d'),
+  procedural('box-arc-down-left', '\u256e'),
+  procedural('box-arc-up-left', '\u256f'),
+  procedural('box-arc-up-right', '\u2570'),
+  procedural('box-diagonal-slash', '\u2571'),
+  procedural('box-diagonal-backslash', '\u2572'),
+  procedural('box-diagonal-cross', '\u2573'),
+  procedural('box-dash-triple-horizontal', '\u2504'),
   // Row 5: block elements and braille.
-  procedural('block-upper-half', '▀'),
-  procedural('block-full', '█'),
-  procedural('block-shade-light', '░'),
-  cell('block-shade-medium', '▒', { fg: '#FFFFFF', bg: '#000000' }),
-  procedural('block-shade-dark', '▓'),
-  procedural('block-quadrant-diagonal', '▚'),
-  procedural('braille-all-dots', '⣿'),
-  procedural('braille-dot-1', '⠁'),
+  procedural('block-upper-half', '\u2580'),
+  procedural('block-full', '\u2588'),
+  procedural('block-shade-light', '\u2591'),
+  cell('block-shade-medium', '\u2592', { fg: '#FFFFFF', bg: '#000000' }),
+  procedural('block-shade-dark', '\u2593'),
+  procedural('block-quadrant-diagonal', '\u259a'),
+  procedural('braille-all-dots', '\u28ff'),
+  procedural('braille-dot-1', '\u2801'),
   // Row 6: more procedural families.
-  procedural('box-dash-quadruple-vertical', '┊'),
-  procedural('box-mixed-single-double-cross', '╪'),
-  procedural('box-mixed-light-heavy-tee', '┝'),
-  procedural('block-left-half', '▌'),
-  procedural('block-lower-eighth', '▁'),
-  procedural('block-quadrant-lower-right', '▗'),
-  procedural('braille-dot-7', '⡀'),
-  procedural('braille-checker', '⢕'),
+  procedural('box-dash-quadruple-vertical', '\u250a'),
+  procedural('box-mixed-single-double-cross', '\u256a'),
+  procedural('box-mixed-light-heavy-tee', '\u251d'),
+  procedural('block-left-half', '\u258c'),
+  procedural('block-lower-eighth', '\u2581'),
+  procedural('block-quadrant-lower-right', '\u2597'),
+  procedural('braille-dot-7', '\u2840'),
+  procedural('braille-checker', '\u2895'),
 ];
 
 // The erase frame keeps exactly this cell and clears every other one.
@@ -315,7 +315,7 @@ function buildFixtures() {
   const negativePath = 'negative-width2.packed-bijou-cells.json';
   const negativeText = formatJson(
     buildReceipt('negative-width2', [
-      cell('wide-cjk-direct', '漢', { fg: WARM, bg: NAVY }),
+      cell('wide-cjk-direct', '\u6f22', { fg: WARM, bg: NAVY }),
       cell('wide-cjk-trailing-space', ' ', { opacity: 0, empty: true }),
     ].concat(Array.from({ length: GRID_COLS - 2 }, (_unused, index) =>
       cell(`padding-${String(index)}`, ' ', { opacity: 0, empty: true }),

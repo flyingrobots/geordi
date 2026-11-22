@@ -91,7 +91,7 @@ const BIJOU_RE_036_RECEIPT: JsonValue = {
     65, 0, 255, 64, 32, 0, 0, 0, 1, 127, 0, 240, 0, 0, 0, 10, 20, 200, 16, 191, 1, 240, 0, 200, 80,
     1, 2, 3, 112, 255, 32, 0, 0, 0, 0, 0, 0, 0, 128, 0,
   ],
-  sideTable: ['é', ''],
+  sideTable: ['e\u0301', '\uf000'],
   scene: {
     sceneVersion: 'ui-scene-ir/1',
     sceneHash: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
@@ -147,8 +147,8 @@ describe('width-1 packed-bijou-cells/1 conformance fixtures', () => {
     expect(suiteCell(suite, 'glyph-ascii-a').grapheme).toBe('A');
     const acute = suiteCell(suite, 'glyph-decomposed-e-acute').grapheme;
     expect(Array.from(acute, (c) => c.codePointAt(0))).toEqual([0x65, 0x301]);
-    expect(suiteCell(suite, 'glyph-private-use-f000').grapheme).toBe('');
-    expect(paint.sideTable).toEqual(['é', '']);
+    expect(suiteCell(suite, 'glyph-private-use-f000').grapheme).toBe('\uf000');
+    expect(paint.sideTable).toEqual(['e\u0301', '\uf000']);
     const empty = suiteCell(suite, 'glyph-empty');
     expect(empty.grapheme).toBe(' ');
     expect(empty.empty).toBe(true);
@@ -189,7 +189,7 @@ describe('width-1 packed-bijou-cells/1 conformance fixtures', () => {
 
   it('accepts the byte-identical Bijou RE-036 canonical receipt', () => {
     const receipt = parsePackedBijouCellsReceipt(BIJOU_RE_036_RECEIPT);
-    expect(receipt.sideTable).toEqual(['é', '']);
+    expect(receipt.sideTable).toEqual(['e\u0301', '\uf000']);
     expect(receipt.bytes).toHaveLength(4 * CELL_STRIDE);
   });
 });
@@ -211,13 +211,13 @@ describe('width-2 graphemes are refused loudly', () => {
 
   it('rejects a width-2 emoji side-table grapheme with a typed validation error', () => {
     const receipt = mutableClone(BIJOU_RE_036_RECEIPT);
-    receipt.sideTable = ['é', '\u{1f600}'];
+    receipt.sideTable = ['e\u0301', '\u{1f600}'];
     expectRejected(receipt, 'GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH', '$.sideTable[1]');
   });
 
   it('rejects an emoji-presentation sequence that widens a narrow base', () => {
     const receipt = mutableClone(BIJOU_RE_036_RECEIPT);
-    receipt.sideTable = ['é', '✂️'];
+    receipt.sideTable = ['e\u0301', '\u2702\ufe0f'];
     expectRejected(receipt, 'GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH', '$.sideTable[1]');
   });
 });
@@ -251,11 +251,11 @@ describe('malformed packed-bijou-cells/1 receipts', () => {
     ['a control character glyph', withBytes((b) => (b[0] = 7)), '$.bytes[0]'],
     ['a direct UTF-16 surrogate', withBytes((b) => ((b[0] = 0), (b[1] = 0xd8))), '$.bytes[0]'],
     ['a dangling side-table index', withBytes((b) => (b[10] = 9)), '$.bytes[10]'],
-    ['an unreferenced side-table glyph', edit((r) => (r.sideTable = ['é', '', ''])), '$.sideTable[2]'],
-    ['a duplicate side-table glyph', edit((r) => (r.sideTable = ['é', 'é'])), '$.sideTable[1]'],
-    ['a directly encodable side-table glyph', edit((r) => (r.sideTable = ['é', 'B'])), '$.sideTable[1]'],
-    ['a two-grapheme side-table entry', edit((r) => (r.sideTable = ['é', 'ab'])), '$.sideTable[1]'],
-    ['a lone combining mark', edit((r) => (r.sideTable = ['́̀', ''])), '$.sideTable[0]'],
+    ['an unreferenced side-table glyph', edit((r) => (r.sideTable = ['e\u0301', '\uf000', '\uf001'])), '$.sideTable[2]'],
+    ['a duplicate side-table glyph', edit((r) => (r.sideTable = ['e\u0301', 'e\u0301'])), '$.sideTable[1]'],
+    ['a directly encodable side-table glyph', edit((r) => (r.sideTable = ['e\u0301', 'B'])), '$.sideTable[1]'],
+    ['a two-grapheme side-table entry', edit((r) => (r.sideTable = ['e\u0301', 'ab'])), '$.sideTable[1]'],
+    ['a lone combining mark', edit((r) => (r.sideTable = ['\u0301\u0300', '\uf000'])), '$.sideTable[0]'],
   ])('rejects %s', (_label, receipt, path) => {
     expectRejected(receipt, invalid, path);
   });

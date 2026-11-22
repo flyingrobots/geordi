@@ -23,9 +23,9 @@ export const TEST_GLYPH_PACK_CELL_PX_H = 16;
 export const TEST_GLYPH_PACK_ATLAS_COLS = 4;
 export const TEST_GLYPH_PACK_ATLAS_ROWS = 2;
 
-export const TEST_GLYPH_DECOMPOSED_E_ACUTE = 'é';
-export const TEST_GLYPH_PRIVATE_USE = '';
-export const TEST_GLYPH_COLOR_HEART = '♥';
+export const TEST_GLYPH_DECOMPOSED_E_ACUTE = 'e\u0301';
+export const TEST_GLYPH_PRIVATE_USE = '\uf000';
+export const TEST_GLYPH_COLOR_HEART = '\u2665';
 
 type Texel = readonly [number, number, number, number];
 
