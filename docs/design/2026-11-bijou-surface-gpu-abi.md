@@ -293,12 +293,23 @@ Every presenter emits a deterministic JSON receipt with `receiptVersion: "geordi
   "fontIdentity": "<font-family-and-size-or-bundled-test-font-sha256>",
   "atlasGeneration": 1,
   "atlasStats": { "usedSlots": 42, "capacity": 1024, "monoCount": 41, "colorEmojiCount": 1 },
+  "frameRgbaSha256": "<64-hex-or-null-when-not-read-back>",
   "probePolicy": "srgb-exact-or-declared-tolerance",
   "probes": []
 }
 ```
 
 `defaultFg` and `defaultBg` MUST be recorded as canonical 7-character uppercase sRGB hex strings (`#RRGGBB`) matching `uDefaultFg` and `uDefaultBg`, so pixel probes remain reproducible when theme defaults change without cell-byte changes (matching Bijou `RE-510`).
+
+### Canonical RGBA8 frame readback and cross-GPU bit-exact hash law
+
+Every backend that reads back rendered pixels MUST produce a **canonical tight top-left row-major RGBA8 byte buffer** of exact length `canvasPxW * canvasPxH * 4` bytes (`offset = (py * canvasPxW + px) * 4`, channels `[R, G, B, 255]`) and hash that exact byte stream into `frameRgbaSha256` (lowercase 64-hex SHA-256; MUST be `null` when `evidenceLevel` is `shader-validated`, `unit-upload`, or `capability-refused`):
+
+- **CPU reference oracle (`#169`):** Writes tight top-left row-major RGBA8 directly and computes `oracle.frameRgbaSha256`.
+- **WebGPU (`#175`) & native Rust `wgpu` (`#58`):** Fragment origin is top-left `(0, 0)`; readback via `copyTextureToBuffer` MUST strip any 256-byte `bytesPerRow` alignment padding before hashing.
+- **WebGL2 (`#173` & `#170`):** GLSL ES 3.00 MUST normalize `py = (canvasPxH - 1u) - uint(gl_FragCoord.y)` so cell addressing matches WebGPU's top-left origin; probe contexts MUST be created with `alpha: false`, `antialias: false`, `premultipliedAlpha: false`, `preserveDrawingBuffer: true`, and `drawingBufferColorSpace: "srgb"`, read back via `gl.readPixels(..., gl.RGBA, gl.UNSIGNED_BYTE, buf)`, and flip rows from bottom-up to top-left before hashing.
+- **Canvas 2D deterministic probe path (`#174`):** Pure-integer `ImageData` compositing over the same deterministic `rgba8uint` atlas hashes the tight top-left `ImageData.data` bytes directly.
+- **Cross-GPU bit-exact parity test requirement:** Given identical `preparedBuffer`, identical integer uniforms, and identical `rgba8uint` `GlyphAtlas` bytes (or procedural-only cells with no atlas), every presenter test suite (`#173` WebGL2, `#174` Canvas 2D deterministic path, `#175` WebGPU, `#58` native Rust `wgpu`) MUST explicitly assert `receipt.frameRgbaSha256 === oracle.frameRgbaSha256` with **zero LSB tolerance**, proving bit-identical cryptographic frame hashes regardless of GPU vendor or OS. *(Normalized `unorm8` swapchain egress round-trips all 256 integer channel values `0..255` with zero error, per the Deterministic Numeric Law above.)*
 
 ### Positive-evidence vs. capability-refusal law
 
