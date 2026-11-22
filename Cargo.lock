@@ -283,6 +283,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "geordi-bijou-wgpu-proof"
+version = "0.1.0"
+dependencies = [
+ "geordi-bijou-shadergen",
+ "serde_json",
+]
+
+[[package]]
 name = "geordi-ir"
 version = "0.1.0"
 dependencies = [
