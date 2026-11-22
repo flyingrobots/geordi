@@ -474,13 +474,13 @@ test('bijou-surface-gpu/1 ADR defines zero-float integer ABI, LE byte order, val
   assert.match(adr, /geordi-bijou-gpu-receipt\/1/);
   assert.match(adr, /fixtures\/bijou-gpu\/procedural-glyphs\.json/);
   assert.doesNotMatch(adr, /awaiting maintainer merge/i);
-  assert.doesNotMatch(adr, /T2\.1[bc]/);
+  assert.doesNotMatch(adr, /\bT2\.1[bc]\b/);
 
   // Zero-float enforcement in core rendering math (Sections 5 & 7 must use pure integer/fixed-point math, no float/sin/sqrt)
   const sec5And7 = adr.split('## 5.')[1] ?? '';
   assert.doesNotMatch(sec5And7, /\bsin\s*\(/, 'Section 5/7 must not use floating-point sin()');
   assert.doesNotMatch(sec5And7, /\bsqrt\s*\(/, 'Section 5/7 must not use floating-point sqrt()');
-  assert.doesNotMatch(sec5And7, /\b(float\s*\(|f32|f64)\b/, 'Section 5/7 must not use float/f32/f64');
+  assert.doesNotMatch(sec5And7, /\bfloat\s*\(|\b(?:f32|f64)\b/, 'Section 5/7 must not use float/f32/f64');
 
   // R-1, R-2, R-4 ADR contract assertions: u32-safe satSub/absDiff, clamped Q12 arc halfQ, and full finite rect/dpr guards
   assert.match(adr, /satSub\s*\(/, 'ADR must define u32-safe satSub() to prevent unsigned underflow');
