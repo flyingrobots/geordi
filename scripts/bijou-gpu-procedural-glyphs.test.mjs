@@ -625,11 +625,13 @@ test('bijou-surface-gpu/1 ADR defines zero-float integer ABI, LE byte order, val
     'ADR must not claim normalized swapchain readback guarantees zero-LSB parity',
   );
 
-  // Content-addressed implementation manifest & Canvas 2D artifact identity
+  // Content-addressed implementation manifest & Canvas 2D artifact identity + physical canvas dimensions
   assert.match(adr, /"bunnyPrimitives":/, 'ADR receipt/manifest must pin Bunny primitive identities');
   assert.match(adr, /"assembledWgslSha256":/, 'ADR receipt/manifest must pin assembled WGSL SHA-256');
   assert.match(adr, /"generatedGlslSha256":/, 'ADR receipt/manifest must pin generated GLSL SHA-256');
   assert.match(adr, /"executedArtifactSha256":/, 'ADR receipt/manifest must pin executedArtifactSha256 (incl. Canvas 2D)');
+  assert.match(adr, /"canvasPxW":/, 'ADR receipt must record physical canvasPxW to distinguish remainder-pixel frames');
+  assert.match(adr, /"canvasPxH":/, 'ADR receipt must record physical canvasPxH to distinguish remainder-pixel frames');
 
   // Verify Markdown link destination in docs/design/README.md actually resolves to ADR_PATH
   const designReadme = readFileSync(DESIGN_README_PATH, 'utf8');
