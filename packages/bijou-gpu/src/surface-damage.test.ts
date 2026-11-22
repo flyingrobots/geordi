@@ -439,6 +439,15 @@ describe('packSurfaceDamage union damage and erasure', () => {
       { minRow: 0, maxRow: 0 },
       { minRow: 12, maxRow: 12 },
     ]);
+
+    // Stray bits that arrive through a coalesced frame bypass the comparison
+    // shortcut, so they must be masked rather than merely compare equal.
+    accumulateSurfaceDamage(state, front, back);
+    const next = new LiveSurface(17, 13).paint(16, 12, { glyph: 'A' }).paint(0, 0, { glyph: 'B' });
+    next.renderDirtyWords.fill(0xffffffff);
+    const coalesced = pack(state, back, next);
+    expect(coalesced.dirtyRowSpans).toEqual([]);
+    expect(coalesced.changedCellCount).toBe(0);
   });
 });
 
@@ -682,19 +691,23 @@ describe('packSurfaceDamage coalesced frames', () => {
     const f0 = new LiveSurface(4, 4).paint(0, 0, { glyph: 'x' });
     const f1 = new LiveSurface(4, 4).paint(1, 1, { glyph: 'x' });
     const f2 = new LiveSurface(4, 4).paint(2, 2, { glyph: 'x' });
-    const f3 = new LiveSurface(4, 4).paint(3, 3, { glyph: 'x' });
+    const f3 = new LiveSurface(4, 4).paint(2, 2, { glyph: 'x' }).paint(3, 3, { glyph: 'x' });
     const state = presented(new LiveSurface(4, 4), f0);
 
     accumulateSurfaceDamage(state, f0, f1);
     accumulateSurfaceDamage(state, f1, f2);
     const result = pack(state, f2, f3);
     expect(firstWordMismatch(result.staging, bruteForce(f3, SLOTS))).toBeNull();
+    // Row 1 was painted and erased again without ever being staged, so only the
+    // erased row 0 and the painted rows 2 and 3 are uploaded.
     expect(result.dirtyRowSpans).toEqual([
       { minRow: 0, maxRow: 0 },
       { minRow: 2, maxRow: 3 },
     ]);
+    expect(result.changedCellCount).toBe(3);
 
-    // Nothing from the skipped frames survives into the next present.
+    // Nothing from the skipped frames survives into the next present: the glyph
+    // at (2, 2) sits on an accumulated bit and is not lowered again.
     let lookups = 0;
     const steady = packSurfaceDamage(state, f3, f3, {
       resolveSlot: (grapheme, flags) => {
@@ -752,16 +765,21 @@ describe('packSurfaceDamage dimension changes', () => {
     const state = presented(new LiveSurface(4, 4), f0);
     accumulateSurfaceDamage(state, f0, f1);
 
-    const resized = new LiveSurface(2, 8).paint(0, 0, { glyph: 'A' });
+    // Cells 5 and 15 are the two bits the 4 x 4 frames accumulated.
+    const steadyFrame = (): LiveSurface =>
+      new LiveSurface(2, 8).paint(1, 2, { glyph: 'A' }).paint(1, 7, { glyph: 'B' });
+    const resized = steadyFrame();
     accumulateSurfaceDamage(state, new LiveSurface(2, 8), resized);
-    const next = new LiveSurface(2, 8).paint(0, 0, { glyph: 'A' });
+    const next = steadyFrame();
     const result = pack(state, resized, next);
     expect(result.fullRefreshReason).toBe('dimension-change');
     expect(firstWordMismatch(result.staging, bruteForce(next, SLOTS))).toBeNull();
 
     // A steady frame after the resize inspects no cell: no bit from the old grid remains.
     let lookups = 0;
-    const steadyTarget = new LiveSurface(2, 8).paint(0, 0, { glyph: 'A' });
+    const steadyTarget = steadyFrame();
+    steadyTarget.renderDirtyWords.fill(0);
+    next.renderDirtyWords.fill(0);
     const steady = packSurfaceDamage(state, next, steadyTarget, {
       resolveSlot: (grapheme, flags) => {
         lookups += 1;
@@ -771,6 +789,22 @@ describe('packSurfaceDamage dimension changes', () => {
     expect(steady.fullRefresh).toBe(false);
     expect(steady.dirtyRowSpans).toEqual([]);
     expect(lookups).toBe(0);
+  });
+
+  it('forces a full refresh when a skipped frame resized the grid and a later one restored it', () => {
+    const f0 = new LiveSurface(4, 4).paint(1, 1, { glyph: 'x' });
+    const state = presented(new LiveSurface(4, 4), f0);
+
+    // The grid becomes 2 x 8 for one frame that is never presented, then 4 x 4 again.
+    accumulateSurfaceDamage(state, new LiveSurface(2, 8), new LiveSurface(2, 8));
+    expect(state.pendingFullRefresh).toBe('dimension-change');
+    const restored = new LiveSurface(4, 4).paint(3, 3, { glyph: 'y' });
+    const result = pack(state, new LiveSurface(4, 4), restored);
+
+    // Neither surface carries a bit for the `x` that is still staged.
+    expect(result.fullRefreshReason).toBe('dimension-change');
+    expect(firstWordMismatch(result.staging, bruteForce(restored, SLOTS))).toBeNull();
+    expect(state.pendingFullRefresh).toBeNull();
   });
 
   it('forces a full refresh when current and target disagree on dimensions', () => {
@@ -963,7 +997,7 @@ describe('packSurfaceDamage module purity', () => {
     );
     const imports = Array.from(source.matchAll(/from '([^']+)'/gu), (match) => match[1]);
     expect(imports.length).toBeGreaterThan(0);
-    expect(imports.every((specifier) => /^\.\/[a-z-]+\.js$/u.test(specifier ?? ''))).toBe(true);
+    expect(imports.every((specifier) => /^\.\/[a-z-]+\.js$/u.test(specifier))).toBe(true);
   });
 });
 
@@ -1018,7 +1052,7 @@ describe('packSurfaceDamage fuzz against the brute-force full-grid packer', () =
   it('produces staging bytes identical to the brute-force packer over 1,000 randomized paint/erase/resize frame pairs', () => {
     const random = mulberry32(0x171);
     const below = (bound: number): number => Math.floor(random() * bound);
-    const pick = <T>(items: readonly T[]): T => items[below(items.length)] as T;
+    const pick = <T>(items: readonly T[]): T => items[below(items.length)];
 
     const atlas = { generation: 1 };
     const slotFor = (grapheme: string, bold: boolean): GlyphSlotRef => {
@@ -1042,7 +1076,8 @@ describe('packSurfaceDamage fuzz against the brute-force full-grid packer', () =
       opacity: random() < 0.7 ? 63 : below(64),
     });
 
-    let [width, height] = DIMENSIONS[0];
+    let width: number = DIMENSIONS[0][0];
+    let height: number = DIMENSIONS[0][1];
     let front = new LiveSurface(width, height);
     let back = new LiveSurface(width, height);
     const state = createSurfaceDamageState();
@@ -1050,13 +1085,19 @@ describe('packSurfaceDamage fuzz against the brute-force full-grid packer', () =
 
     for (let frame = 0; frame < 1000; frame += 1) {
       if (random() < 0.06) {
-        [width, height] = pick(DIMENSIONS);
-        back = new LiveSurface(width, height);
-        // The runtime reallocates both buffers on some resizes and one on others.
-        if (random() < 0.5) {
-          front = new LiveSurface(width, height);
+        const [nextWidth, nextHeight] = pick(DIMENSIONS);
+        const bothBuffers = random() < 0.5;
+        // Picking the current size again is not a resize: replacing the front
+        // buffer then would hand the packer a `current` it never presented.
+        if (nextWidth !== width || nextHeight !== height) {
+          [width, height] = [nextWidth, nextHeight];
+          back = new LiveSurface(width, height);
+          // The runtime reallocates both buffers on some resizes and one on others.
+          if (bothBuffers) {
+            front = new LiveSurface(width, height);
+          }
+          seen.resizes += 1;
         }
-        seen.resizes += 1;
       }
       back.clear();
       // Seed the side table in a random order, so an index names different graphemes per frame.
