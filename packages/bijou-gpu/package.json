@@ -18,10 +18,11 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "vitest run && node ../../scripts/generate-bijou-gpu-conformance-fixtures.mjs --check",
-    "test:coverage": "vitest run --coverage",
     "lint": "eslint . --max-warnings 0",
-    "typecheck": "tsc --noEmit"
+    "test": "vitest run && node ../../scripts/generate-bijou-gpu-conformance-fixtures.mjs --check",
+    "test:browser": "pnpm --filter @flyingrobots/geordi-core build && playwright test",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.harness.json"
   },
   "dependencies": {
     "@flyingrobots/geordi-core": "workspace:*"
