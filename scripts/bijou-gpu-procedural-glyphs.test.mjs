@@ -183,9 +183,36 @@ function divRoundEven(n, d) {
   assert.equal(Number.isInteger(d) && d > 0 && d < 0x100000000, true, `divRoundEven denominator out of u32: ${d}`);
   const q = Math.floor(n / d);
   const r = n % d;
-  const r2 = 2 * r;
-  if (r2 > d || (r2 === d && (q & 1) === 1)) return q + 1;
+  const s = d - r;
+  if (r > s || (r === s && (q & 1) === 1)) return q + 1;
   return q;
+}
+
+function classifyEllipseU32(dx, dy, semiX, semiY) {
+  const MAX_COORD = 46340;
+  for (const [label, v] of [
+    ['dx', dx],
+    ['dy', dy],
+    ['semiX', semiX],
+    ['semiY', semiY],
+  ]) {
+    assert.equal(
+      Number.isInteger(v) && v >= 0 && v <= MAX_COORD,
+      true,
+      `classifyEllipseU32 ${label} out of 0..=${MAX_COORD}: ${v}`,
+    );
+  }
+  if (semiX === 0 || semiY === 0) {
+    return dx === 0 && dy === 0 ? 0 : 1;
+  }
+  const p = BigInt(dx) * BigInt(semiY);
+  const q = BigInt(dy) * BigInt(semiX);
+  const r = BigInt(semiX) * BigInt(semiY);
+  const lhs = p * p + q * q;
+  const rhs = r * r;
+  if (lhs < rhs) return -1;
+  if (lhs === rhs) return 0;
+  return 1;
 }
 
 function lerpU8(a, b, num, den) {
@@ -364,20 +391,47 @@ function evalBoxPixelInt(e, lx, ly, W, H) {
   }
 
   if (e.rounded) {
-    const cx2 = e.right > 0 ? 2 * W : 0;
-    const cy2 = e.down > 0 ? 2 * H : 0;
+    const hasRight = e.right > 0;
+    const hasDown = e.down > 0;
+    const vxStart = vx0(lightPx);
+    const vxEnd = Math.min(W, vxStart + lightPx);
+    const hyStart = hy0(lightPx);
+    const hyEnd = Math.min(H, hyStart + lightPx);
+
+    const edgeX = hasRight ? W - 1 : 0;
+    const edgeY = hasDown ? H - 1 : 0;
+    const xIn = hasRight ? satSub(W, 1) : Math.min(1, W);
+    const yIn = hasDown ? satSub(H, 1) : Math.min(1, H);
+    const cx2 = 2 * xIn;
+    const cy2 = 2 * yIn;
+
+    const aOut = hasRight ? 2 * satSub(xIn, vxStart) : 2 * satSub(vxEnd, xIn);
+    const aIn = hasRight ? 2 * satSub(xIn, vxEnd) : 2 * satSub(vxStart, xIn);
+    const bOut = hasDown ? 2 * satSub(yIn, hyStart) : 2 * satSub(hyEnd, yIn);
+    const bIn = hasDown ? 2 * satSub(yIn, hyEnd) : 2 * satSub(hyStart, yIn);
+    const aMid = Math.floor((aOut + aIn) / 2);
+    const bMid = Math.floor((bOut + bIn) / 2);
+
+    const inStrX = lx >= vxStart && lx < vxEnd;
+    const inStrY = ly >= hyStart && ly < hyEnd;
+
+    if (aOut === 0 || bOut === 0) {
+      const hArm = inStrY && (hasRight ? lx >= vxStart : lx < vxEnd);
+      const vArm = inStrX && (hasDown ? ly >= hyStart : ly < hyEnd);
+      return hArm || vArm;
+    }
+    if (lx === edgeX || ly === edgeY) {
+      return (ly === edgeY && inStrX) || (lx === edgeX && inStrY);
+    }
     const dx = absDiff(2 * lx + 1, cx2);
     const dy = absDiff(2 * ly + 1, cy2);
-    const nx = Math.floor(u32Check(dx * 4096, 'arc dx*4096') / W);
-    const ny = Math.floor(u32Check(dy * 4096, 'arc dy*4096') / H);
-    const r2 = u32Check(nx * nx + ny * ny, 'arc r2');
-    const halfQ = Math.min(
-      8192,
-      Math.floor(u32Check(Math.max(11, 10 * lightPx) * 4096, 'arc halfQ num') / (10 * Math.min(W, H))),
-    );
-    const rIn = satSub(4096, halfQ);
-    const rOut = 4096 + halfQ;
-    return r2 >= u32Check(rIn * rIn, 'arc rIn^2') && r2 <= u32Check(rOut * rOut, 'arc rOut^2');
+    const inBand =
+      classifyEllipseU32(dx, dy, aOut, bOut) <= 0 &&
+      classifyEllipseU32(dx, dy, aIn, bIn) >= 0;
+    const straddle =
+      classifyEllipseU32(dx - 1, dy - 1, aMid, bMid) <= 0 &&
+      classifyEllipseU32(dx + 1, dy + 1, aMid, bMid) >= 0;
+    return inBand || straddle;
   }
 
   if (e.dash > 0) {
@@ -488,14 +542,49 @@ test('bijou-surface-gpu/1 ADR defines zero-float integer ABI, LE byte order, val
   assert.doesNotMatch(sec5And7, /\bsqrt\s*\(/, 'Section 5/7 must not use floating-point sqrt()');
   assert.doesNotMatch(sec5And7, /\bfloat\s*\(|\b(?:f32|f64)\b/, 'Section 5/7 must not use float/f32/f64');
 
-  // R-1, R-2, R-4 ADR contract assertions: u32-safe satSub/absDiff, clamped Q12 arc halfQ, and full finite rect/dpr guards
-  assert.match(adr, /satSub\s*\(/, 'ADR must define u32-safe satSub() to prevent unsigned underflow');
-  assert.match(adr, /absDiff\s*\(/, 'ADR must define u32-safe absDiff() for unsigned differences');
+  // Bunny primitive contracts, overflow-safe divRoundEven, Q32.32 non-equivalence, Option E4,
+  // 4-layer manifest/receipt identity, and CodeRabbit 4655962544 / 4655962551 readback contracts
+  assert.match(adr, /bunny-u32-div-round-even\/1/, 'ADR must adopt bunny-u32-div-round-even/1');
+  assert.match(adr, /bunny-u32-ellipse-classify\/1/, 'ADR must adopt bunny-u32-ellipse-classify/1');
   assert.match(
     adr,
-    /halfQ\s*=\s*min\(\s*8192\s*,/,
-    'ADR Section 7.1 must clamp Q12 arc halfQ at 8192 to prevent rOut*rOut u32 overflow over [1..256]^2',
+    /ed93a26df071da13e8d8514c42a8dcfb5cbc5969d6ab4397d26b147fc5dc2e7f/,
+    'ADR must pin Bunny bunny_u32_div_round_even.wgsl SHA-256',
   );
+  assert.match(
+    adr,
+    /df265cc7233772e33347b04fa1f7a3e71f34566e4aa6af5cf3fecf23e2b044a6/,
+    'ADR must pin Bunny u32_div_round_even_vectors.json SHA-256',
+  );
+  assert.match(
+    adr,
+    /1b11121932031e2f1266087dded59e9c6f921bed7db1e9ed2ba4cf9b9c261e99/,
+    'ADR must pin Bunny bunny_u32_ellipse_classify.wgsl SHA-256',
+  );
+  assert.match(
+    adr,
+    /5f0ec6422de185e2ce7e832a7c1bce7ccde9b6f33e92b399f7c547191ef205e4/,
+    'ADR must pin Bunny u32_ellipse_classify_vectors.json SHA-256',
+  );
+  assert.doesNotMatch(
+    adr,
+    /2\s*\*\s*r\s*>\s*d/,
+    'ADR must replace wrapping 2 * r > d expression with overflow-safe r > d - r / s = d - r comparison',
+  );
+  assert.match(adr, /s\s*=\s*d\s*-\s*r|r\s*>\s*d\s*-\s*r/, 'ADR divRoundEven must use overflow-safe r > d - r comparison');
+  assert.match(adr, /3,000,000,000/, 'ADR must cite the 3,000,000,000 / 4,000,000,000 overflow counterexample');
+  assert.match(adr, /Q32\.32/i, 'ADR must state explicit Q32.32 non-equivalence for bounded u32 GPU kernels');
+
+  assert.match(adr, /satSub\s*\(/, 'ADR must define u32-safe satSub() to prevent unsigned underflow');
+  assert.match(adr, /absDiff\s*\(/, 'ADR must define u32-safe absDiff() for unsigned differences');
+  assert.match(adr, /Option E4/, 'ADR Section 7.1 must adopt approved Option E4 rounded-corner geometry');
+  assert.match(
+    adr,
+    /stroke mask\s*(?:⊆|<=)\s*edge mask\s*(?:⊆|<=)\s*sharp-corner edge mask/,
+    'ADR Section 7.1 must pin the outgoing-edge join sandwich gate',
+  );
+  assert.match(adr, /aOut\s*=/, 'ADR Section 7.1 must specify explicit 4-corner semiaxis equations');
+  assert.match(adr, /straddle\s*=/, 'ADR Section 7.1 must specify Option E4 centerline pixel-square straddle');
   assert.match(
     adr,
     /halfS\s*=\s*\(lightPx\s*==\s*1\)\s*\?\s*11\s*:\s*lightPx/,
@@ -510,6 +599,28 @@ test('bijou-surface-gpu/1 ADR defines zero-float integer ABI, LE byte order, val
     /!Number\.isFinite\(dpr\)|non-finite or non-positive.*dpr/i,
     'ADR DPR ingress must reject non-finite/non-positive dpr',
   );
+
+  // CodeRabbit 4655962544: WebGL2 drawingBufferWidth / drawingBufferHeight validation
+  assert.match(adr, /drawingBufferWidth/, 'ADR must validate gl.drawingBufferWidth against canvasPxW');
+  assert.match(adr, /drawingBufferHeight/, 'ADR must validate gl.drawingBufferHeight against canvasPxH');
+
+  // CodeRabbit 4655962551: exact integer canonical readback separated from normalized swapchain display conversion
+  assert.match(adr, /RGBA8UI/, 'ADR must define WebGL2 RGBA8UI exact integer FBO canonical readback');
+  assert.match(adr, /RGBA_INTEGER/, 'ADR must define WebGL2 gl.RGBA_INTEGER readback format');
+  assert.match(adr, /RGBA32UI/, 'ADR must define WebGL2 RGBA32UI kernel conformance FBO readback');
+  assert.match(adr, /gl\.disable\(gl\.DITHER\)/, 'ADR must disable GL_DITHER on WebGL2 probe contexts');
+  assert.match(adr, /rgba8uint.*offscreen|offscreen.*rgba8uint/i, 'ADR must define WebGPU/wgpu rgba8uint offscreen canonical readback');
+  assert.doesNotMatch(
+    adr,
+    /Normalized `unorm8` swapchain egress round-trips all 256 integer channel values/i,
+    'ADR must not claim normalized swapchain readback guarantees zero-LSB parity',
+  );
+
+  // Content-addressed implementation manifest & Canvas 2D artifact identity
+  assert.match(adr, /"bunnyPrimitives":/, 'ADR receipt/manifest must pin Bunny primitive identities');
+  assert.match(adr, /"assembledWgslSha256":/, 'ADR receipt/manifest must pin assembled WGSL SHA-256');
+  assert.match(adr, /"generatedGlslSha256":/, 'ADR receipt/manifest must pin generated GLSL SHA-256');
+  assert.match(adr, /"executedArtifactSha256":/, 'ADR receipt/manifest must pin executedArtifactSha256 (incl. Canvas 2D)');
 
   // Verify Markdown link destination in docs/design/README.md actually resolves to ADR_PATH
   const designReadme = readFileSync(DESIGN_README_PATH, 'utf8');
@@ -778,36 +889,150 @@ test('zero-float integer geometry passes Box-Drawing, diagonal boundary, Block E
     [256, 1],
   ];
 
-  // 0. Bunny NUMERIC_CONSTITUTION divRoundEven & lerpU8 ties-to-even + max emoji numerator tests
+  // 0. Bunny bunny-u32-div-round-even/1 & lerpU8 ties-to-even + 2*r overflow counterexample
   assert.equal(divRoundEven(1, 4), 0); // < half
   assert.equal(divRoundEven(3, 4), 1); // > half
   assert.equal(divRoundEven(1, 2), 0); // exact half -> even (0)
   assert.equal(divRoundEven(3, 2), 2); // exact half -> even (2)
   assert.equal(divRoundEven(5, 2), 2); // exact half -> even (2)
   assert.equal(divRoundEven(7, 2), 4); // exact half -> even (4)
+  assert.equal(divRoundEven(3_000_000_000, 4_000_000_000), 1); // 2 * r overflows u32; r > d - r returns 1
+  assert.equal(divRoundEven(2_147_483_648, 4_294_967_295), 1); // immediately above half
+  assert.equal(divRoundEven(2_147_483_647, 4_294_967_294), 0); // exact half -> even (0)
+  assert.equal(divRoundEven(4_294_967_295, 2), 2_147_483_648); // odd quotient exact tie -> even
   assert.equal(lerpU8(0, 255, 0, 63), 0);
   assert.equal(lerpU8(0, 255, 63, 63), 255);
   assert.equal(lerpU8(10, 11, 1, 2), 10); // 21/2 -> 10 (even)
   assert.equal(lerpU8(11, 12, 1, 2), 12); // 23/2 -> 12 (even)
   assert.equal(divRoundEven(255 * 63 * 255 + 255 * 16065, 16065), 510); // max premul emoji numerator 8,193,150 < 2^31
 
-  // Exhaustive IEEE-754 f32 swapchain egress round-trip proof (0..255 -> f32(k)/255 -> u8 == k with 0 LSB drift)
-  for (let k = 0; k <= 255; k++) {
-    const f32Norm = Math.fround(Math.fround(k) / Math.fround(255));
-    const recovered = Math.round(f32Norm * 255);
-    assert.equal(recovered, k, `IEEE-754 f32 swapchain egress drifted at u8=${k}`);
-  }
+  // Bunny bunny-u32-ellipse-classify/1 explicit zero-semiaxis traps & exact ties
+  assert.equal(classifyEllipseU32(0, 0, 0, 5), 0); // OnBoundary
+  assert.equal(classifyEllipseU32(0, 1, 0, 5), 1); // Outside (raw polynomial gives 0 == 0!)
+  assert.equal(classifyEllipseU32(1, 0, 5, 0), 1); // Outside (raw polynomial gives 0 == 0!)
+  assert.equal(classifyEllipseU32(3, 4, 5, 5), 0);
+  assert.equal(classifyEllipseU32(27804, 37072, 46340, 46340), 0);
 
-  // 1. Exhaustive [1..256]^2 Q12 arc u32/i32 overflow proof (R-1)
-  for (let W = 1; W <= 256; W++) {
+  // 1. Approved Option E4 rounded-corner geometry: exact bitmaps, join sandwich gate, 8-connectivity, and 2^37 bound
+  const renderGrid = (entry, W, H) => {
+    const rows = [];
+    for (let ly = 0; ly < H; ly++) {
+      let line = '';
+      for (let lx = 0; lx < W; lx++) {
+        line += evalBoxPixelInt(entry, lx, ly, W, H) ? '#' : '.';
+      }
+      rows.push(line);
+    }
+    return rows.join('/');
+  };
+
+  const arcDR = data.boxDrawing.entries[0x256d - 0x2500]; // ╭
+  const arcDL = data.boxDrawing.entries[0x256e - 0x2500]; // ╮
+  const arcUL = data.boxDrawing.entries[0x256f - 0x2500]; // ╯
+  const arcUR = data.boxDrawing.entries[0x2570 - 0x2500]; // ╰
+
+  assert.equal(renderGrid(arcDR, 1, 4), './#/#/#', 'Option E4 1x4 ╭ grid');
+  assert.equal(renderGrid(arcDR, 2, 2), '##/#.', 'Option E4 2x2 ╭ grid');
+  assert.equal(renderGrid(arcDL, 2, 2), '#./#.', 'Option E4 2x2 ╮ grid (W==2 asymmetry)');
+  assert.equal(renderGrid(arcDR, 3, 3), '.../.##/.#.', 'Option E4 3x3 ╭ grid');
+  assert.equal(renderGrid(arcDR, 3, 4), '.../.##/.#./.#.', 'Option E4 3x4 ╭ grid');
+  assert.equal(renderGrid(arcDR, 4, 4), '..../.###/.#../.#..', 'Option E4 4x4 ╭ grid');
+  assert.equal(
+    renderGrid(arcDR, 2, 14),
+    '../../../../../..//##/#./#./#./#./#./#./#.'.replace('//', '/'),
+    'Option E4 2x14 ╭ grid',
+  );
+  assert.equal(renderGrid(arcDR, 5, 7), '...../...../...../...##/..##./..#../..#..', 'Option E4 5x7 ╭ grid');
+  assert.equal(renderGrid(arcDL, 5, 7), '...../...../...../##.../.##../..#../..#..', 'Option E4 5x7 ╮ grid');
+  assert.equal(renderGrid(arcUR, 5, 7), '..#../..#../..##./...##/...../...../.....', 'Option E4 5x7 ╰ grid');
+  assert.equal(renderGrid(arcUL, 5, 7), '..#../..#../.##../##.../...../...../.....', 'Option E4 5x7 ╯ grid');
+
+  const checkE4Invariants = (entry, W, H) => {
     const lightPx = Math.max(1, Math.floor((W * 10 + 50) / 100));
-    const num = u32Check(Math.max(11, 10 * lightPx) * 4096, 'arc halfQ num');
-    for (let H = 1; H <= 256; H++) {
-      const halfQ = Math.min(8192, Math.floor(num / (10 * Math.min(W, H))));
-      const rIn = satSub(4096, halfQ);
-      const rOut = 4096 + halfQ;
-      assert.equal(rOut * rOut < 0x80000000, true, `Q12 arc rOut^2 exceeded i32 at ${W}x${H}`);
-      assert.equal(rIn * rIn < 0x80000000, true, `Q12 arc rIn^2 exceeded i32 at ${W}x${H}`);
+    const vx0 = Math.floor(satSub(W, lightPx) / 2);
+    const vx1 = Math.min(W, vx0 + lightPx);
+    const hy0 = Math.floor(satSub(H, lightPx) / 2);
+    const hy1 = Math.min(H, hy0 + lightPx);
+    const hasRight = entry.right > 0;
+    const hasDown = entry.down > 0;
+    const edgeX = hasRight ? W - 1 : 0;
+    const edgeY = hasDown ? H - 1 : 0;
+
+    const litPixels = [];
+    const litSet = new Set();
+    for (let ly = 0; ly < H; ly++) {
+      for (let lx = 0; lx < W; lx++) {
+        if (evalBoxPixelInt(entry, lx, ly, W, H)) {
+          litPixels.push([lx, ly]);
+          litSet.add(ly * W + lx);
+        }
+      }
+    }
+    assert.equal(litPixels.length > 0, true, `Option E4 ${entry.hex} vanished at ${W}x${H}`);
+
+    // Single 8-connected component check
+    const visited = new Set([litPixels[0][1] * W + litPixels[0][0]]);
+    const queue = [litPixels[0]];
+    while (queue.length > 0) {
+      const [cx, cy] = queue.pop();
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+          const key = ny * W + nx;
+          if (litSet.has(key) && !visited.has(key)) {
+            visited.add(key);
+            queue.push([nx, ny]);
+          }
+        }
+      }
+    }
+    assert.equal(visited.size, litPixels.length, `Option E4 ${entry.hex} disconnected_8 at ${W}x${H}`);
+
+    // Outgoing-edge join sandwich: stroke mask ⊆ edge mask ⊆ sharp-corner edge mask
+    const sharpLit = (lx, ly) => {
+      const hArm = ly >= hy0 && ly < hy1 && (hasRight ? lx >= vx0 : lx < vx1);
+      const vArm = lx >= vx0 && lx < vx1 && (hasDown ? ly >= hy0 : ly < hy1);
+      return hArm || vArm;
+    };
+    for (let ly = 0; ly < H; ly++) {
+      const inStroke = ly >= hy0 && ly < hy1;
+      const inEdge = litSet.has(ly * W + edgeX);
+      const inSharp = sharpLit(edgeX, ly);
+      if (inStroke) assert.equal(inEdge, true, `E4 X-edge stroke⊆edge fail ${entry.hex} at ${W}x${H} y=${ly}`);
+      if (inEdge) assert.equal(inSharp, true, `E4 X-edge edge⊆sharp fail ${entry.hex} at ${W}x${H} y=${ly}`);
+    }
+    for (let lx = 0; lx < W; lx++) {
+      const inStroke = lx >= vx0 && lx < vx1;
+      const inEdge = litSet.has(edgeY * W + lx);
+      const inSharp = sharpLit(lx, edgeY);
+      if (inStroke) assert.equal(inEdge, true, `E4 Y-edge stroke⊆edge fail ${entry.hex} at ${W}x${H} x=${lx}`);
+      if (inEdge) assert.equal(inSharp, true, `E4 Y-edge edge⊆sharp fail ${entry.hex} at ${W}x${H} x=${lx}`);
+    }
+  };
+
+  for (const arc of [arcDR, arcDL, arcUR, arcUL]) {
+    for (let W = 1; W <= 24; W++) {
+      for (let H = 1; H <= 24; H++) {
+        checkE4Invariants(arc, W, H);
+      }
+    }
+    for (const [W, H] of [
+      [1, 256],
+      [256, 1],
+      [2, 256],
+      [256, 2],
+      [15, 2],
+      [28, 2],
+      [8, 16],
+      [16, 8],
+      [18, 7],
+      [64, 64],
+      [256, 256],
+    ]) {
+      checkE4Invariants(arc, W, H);
     }
   }
 
