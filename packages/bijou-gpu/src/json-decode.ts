@@ -41,7 +41,10 @@ export function arrayAt(
   if (!isJsonArray(value)) {
     return fail(path, 'expected an array');
   }
-  return value;
+  // Array.from turns holes into explicit undefined elements, so a sparse array
+  // handed in by a caller fails each element check instead of being skipped by
+  // map/forEach. JSON text cannot produce a hole; a programmatic caller can.
+  return Array.from(value);
 }
 
 export function stringAt(value: JsonValue | undefined, path: string, fail: DecodeFail): string {

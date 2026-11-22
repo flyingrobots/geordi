@@ -342,6 +342,18 @@ describe('malformed receipts', () => {
     expect(issuesFor(edited(softwareProbed, apply))).toContain(expected);
   });
 
+  it('rejects a sparse probe rgba array instead of accepting a missing channel', () => {
+    // A hole cannot come from JSON text, but a caller can hand one in directly.
+    const sparse = new Array<JsonValue>(4);
+    sparse[0] = 16;
+    sparse[2] = 48;
+    sparse[3] = 255;
+    const holed = edited(softwareProbed, (r) => (r.probes = [{ px: 0, py: 0, rgba: sparse }]));
+    expect(issuesFor(holed)).toEqual(['$.probes[0].rgba[1]: expected an integer in 0..255']);
+    const dense = edited(softwareProbed, (r) => (r.probes = [{ px: 0, py: 0, rgba: [0, 0, 0, 255] }]));
+    expect(issuesFor(dense)).toEqual([]);
+  });
+
   it('rejects non-object input without throwing', () => {
     expect(issuesFor([])).toEqual(['$: expected an object']);
     expect(issuesFor(null)).toEqual(['$: expected an object']);

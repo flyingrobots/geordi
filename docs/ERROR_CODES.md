@@ -506,8 +506,8 @@ in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
 ### `GEORDI_E_BIJOU_FRAME_HASH_MISMATCH`
 
 **Severity**: Error
-**Message**: A presenter frame did not hash bit-exactly to the reference oracle frame (`FrameHashMismatchError`)
-**Fix**: The presenter and the oracle disagree on at least one byte. Compare pixel probes to find it.
+**Message**: `assertBitExactFrameHash` could not match a presenter receipt to the reference oracle frame (`FrameHashMismatchError`)
+**Fix**: `detail` names which of four checks failed. The receipt carries no `frameRgbaSha256` (it is not probed evidence); its `canvasPxW` or `canvasPxH` differs from the oracle's; its `preparedBufferSha256` differs, meaning the prepared cells differ before any pixel is drawn, so compare the prepared buffers word by word; or its `frameRgbaSha256` differs, meaning at least one output byte differs, so compare pixel probes. Pixel probes can all match while the canvas size or the prepared buffer digest does not.
 
 ### `GEORDI_E_BIJOU_PIXEL_PROBE_MISMATCH`
 

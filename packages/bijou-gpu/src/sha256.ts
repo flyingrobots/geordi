@@ -16,6 +16,17 @@ function rotr(value: number, bits: number): number {
 }
 
 /**
+ * Length of a message after SHA-256 padding: the message, one `0x80` byte, and
+ * the 8-byte bit length, rounded up to a whole 64-byte block.
+ *
+ * Computed with plain arithmetic. Bitwise shifts would truncate to signed 32
+ * bits and go negative for messages of 2 GiB and more.
+ */
+export function sha256PaddedLength(length: number): number {
+  return (Math.floor((length + 8) / 64) + 1) * 64;
+}
+
+/**
  * Synchronous, dependency-free SHA-256 returning a lowercase 64-hex digest.
  *
  * The conformance kit hashes frames and prepared buffers in Node, browsers,
@@ -24,7 +35,7 @@ function rotr(value: number, bits: number): number {
  */
 export function sha256Hex(bytes: Uint8Array): string {
   const length = bytes.length;
-  const paddedLength = (((length + 8) >>> 6) + 1) << 6;
+  const paddedLength = sha256PaddedLength(length);
   const padded = new Uint8Array(paddedLength);
   padded.set(bytes);
   padded[length] = 0x80;

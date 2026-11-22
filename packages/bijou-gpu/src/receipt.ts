@@ -557,9 +557,15 @@ function validateProbes(
       valid = false;
       continue;
     }
-    const channels = rgba.map((channel, channelIndex) =>
-      c.integer(channel, `${path}.rgba[${String(channelIndex)}]`, 0, 255),
-    );
+    // Array.from makes holes explicit so a sparse array cannot hide a missing channel.
+    const channels = Array.from(rgba, (channel: JsonValue | undefined, channelIndex) => {
+      const channelPath = `${path}.rgba[${String(channelIndex)}]`;
+      if (channel === undefined) {
+        c.add(channelPath, 'expected an integer in 0..255');
+        return null;
+      }
+      return c.integer(channel, channelPath, 0, 255);
+    });
     const [r, g, b, a] = channels as [number | null, number | null, number | null, number | null];
     if (
       px === null ||

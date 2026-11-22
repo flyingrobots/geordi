@@ -38,7 +38,7 @@ Every row is implemented.
 | BG-FIX-07 | Bijou's own fixture is accepted | Bijou `RE-036` receipt bytes | `accepts the byte-identical Bijou RE-036 canonical receipt` |
 | BG-FIX-08 | Width-2 negative fixture | `GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH` at `$.bytes[0]` | `rejects the checked-in negative width-2 fixture with GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH` |
 | BG-FIX-09 | Width-2 side-table graphemes | Same code at the side-table path | `rejects a width-2 emoji side-table grapheme with a typed validation error`; `rejects an emoji-presentation sequence that widens a narrow base` |
-| BG-FIX-10 | Malformed receipts | `GEORDI_E_BIJOU_INVALID_PACKED_CELLS` at the offending path | `rejects %s` (19 cases); `rejects metadata that does not describe the grid`; `rejects non-object input` |
+| BG-FIX-10 | Malformed receipts | `GEORDI_E_BIJOU_INVALID_PACKED_CELLS` at the offending path | `rejects %s` (19 cases); `rejects metadata that does not describe the grid`; `rejects sparse arrays instead of accepting a missing element`; `rejects non-object input` |
 | BG-FIX-11 | Fixtures match their generator | Generated text equals checked-in text | `scripts/generate-bijou-gpu-conformance-fixtures.mjs --check` (package `test` script) |
 
 ## Test glyph pack
@@ -58,7 +58,7 @@ Every row is implemented.
 | BG-NUM-02 | No `2 * r` overflow | `3000000000 / 4000000000 = 1` | `compares r with d - r and never forms 2 * r, which would wrap in u32` |
 | BG-NUM-03 | Ties to even, zero divisor, domain | Hand values | `rounds exact ties to the even quotient`; `reports a zero divisor as DivisionByZero and refuses it in the scalar form`; `rejects operands that are not unsigned 32-bit integers` |
 | BG-NUM-04 | `bunny-u32-ellipse-classify/1` | Bunny's pinned vectors (1,444), file digest equals the pin | `matches every vector in the pinned Bunny fixture, whose bytes match the ABI pin` (ellipse); `handles degenerate semi-axes before the polynomial and reports out-of-domain operands` |
-| BG-NUM-05 | SHA-256 | `node:crypto` | `pure-TypeScript sha256Hex agrees with node:crypto across block boundaries` |
+| BG-NUM-05 | SHA-256 | `node:crypto`; padded length is a whole block for inputs of 2 GiB and more | `pure-TypeScript sha256Hex agrees with node:crypto across block boundaries`; `sizes SHA-256 padding without signed 32-bit overflow for inputs of 2 GiB and more` |
 
 ## Procedural geometry
 
@@ -111,7 +111,7 @@ Every row is implemented.
 | BG-RCPT-08 | Canvas 2D identity | Null shader digest, required executed artifact digest | `pins Canvas 2D by executed artifact digest with a null shader hash` |
 | BG-RCPT-09 | Pinned dependencies | Exact Bunny pins and table digest | `rejects drifted Bunny primitive pins and a drifted procedural table digest` |
 | BG-RCPT-10 | Implementation manifest digest | Stable; changes with artifact and backend only | `derives a content-addressed implementation manifest digest from the identity chain` |
-| BG-RCPT-11 | Malformed receipts | Issue text | `rejects %s` (12 cases); `rejects non-object input without throwing` |
+| BG-RCPT-11 | Malformed receipts | Issue text | `rejects %s` (12 cases); `rejects a sparse probe rgba array instead of accepting a missing channel`; `rejects non-object input without throwing` |
 | BG-RCPT-12 | Bit-exact frame gate | Pass on equality; fail on one flipped bit | `accepts a receipt whose frame hashes exactly to the oracle frame`; `rejects a single least-significant-bit difference`; `rejects receipts with no frame digest, another canvas, or another prepared buffer` |
 
 ## Browser probe harness

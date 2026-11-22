@@ -293,6 +293,39 @@ describe('malformed packed-bijou-cells/1 receipts', () => {
     );
   });
 
+  it('rejects sparse arrays instead of accepting a missing element', () => {
+    // A hole cannot come from JSON text, but a caller can hand one in directly.
+    const holedBytes = edit((r) => {
+      const source = r.bytes as readonly number[];
+      const bytes = new Array<number>(source.length);
+      source.forEach((value, index) => {
+        if (index !== 3) {
+          bytes[index] = value;
+        }
+      });
+      r.bytes = bytes;
+    });
+    expectRejected(holedBytes, invalid, '$.bytes[3]');
+
+    const holedSideTable = edit((r) => {
+      const sideTable = new Array<string>(2);
+      sideTable[0] = 'e\u0301';
+      r.sideTable = sideTable;
+    });
+    expectRejected(holedSideTable, invalid, '$.sideTable[1]');
+
+    const holedOwners = edit((r) => {
+      const scene = mutableClone(r.scene ?? null);
+      const owners = new Array<string>(4);
+      owners[0] = 'scene.root';
+      owners[1] = 'scene.root';
+      owners[3] = 'scene.root';
+      scene.cellNodeIds = owners;
+      r.scene = scene;
+    });
+    expectRejected(holedOwners, invalid, '$.scene.cellNodeIds[2]');
+  });
+
   it('rejects non-object input', () => {
     expectRejected([], invalid, '$');
     expectRejected(null, invalid, '$');

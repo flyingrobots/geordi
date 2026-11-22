@@ -12,6 +12,7 @@ import {
   sha256Hex,
   utf8Bytes,
 } from './index.js';
+import { sha256PaddedLength } from './sha256.js';
 import { arr, int, nodeSha256, obj, readFixtureBytes, readFixtureJson, str } from '../test/support.js';
 
 function pin(contractId: string): string {
@@ -112,6 +113,24 @@ describe('unsigned helpers and SHA-256', () => {
     expect(sha256Hex(new Uint8Array(0))).toBe(
       'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
     );
+  });
+
+  it('sizes SHA-256 padding without signed 32-bit overflow for inputs of 2 GiB and more', () => {
+    expect(sha256PaddedLength(0)).toBe(64);
+    expect(sha256PaddedLength(55)).toBe(64);
+    expect(sha256PaddedLength(56)).toBe(128);
+    expect(sha256PaddedLength(63)).toBe(128);
+    expect(sha256PaddedLength(64)).toBe(128);
+    expect(sha256PaddedLength(2 ** 31 - 9)).toBe(2 ** 31);
+    expect(sha256PaddedLength(2 ** 31)).toBe(2 ** 31 + 64);
+    expect(sha256PaddedLength(2 ** 32 - 9)).toBe(2 ** 32);
+    expect(sha256PaddedLength(2 ** 32 + 5)).toBe(2 ** 32 + 64);
+    for (const length of [0, 1, 55, 56, 119, 120, 2 ** 31, 2 ** 32 + 5]) {
+      const padded = sha256PaddedLength(length);
+      expect(padded % 64).toBe(0);
+      expect(padded).toBeGreaterThanOrEqual(length + 9);
+      expect(padded).toBeLessThan(length + 9 + 64);
+    }
   });
 
   it('utf8Bytes agrees with TextEncoder for BMP, astral, and combining text', () => {
