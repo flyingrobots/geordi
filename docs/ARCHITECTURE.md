@@ -62,6 +62,27 @@ consume prepared strict artifacts only. This package is not a WASM wrapper and d
 runtime text shaping, font parsing, or evidence generation. It does ship comparison (drift-gate
 via `geordi-text-prep compare`) and receipt generation as part of the strict text proof layer.
 
+### `@flyingrobots/geordi-bijou-gpu`
+
+**Conformance kit for the `bijou-surface-gpu/1` ABI**
+
+- **Presenter contract** (`src/presenter.ts`, `src/errors.ts`): `GpuSurfacePresenter`, the
+  sync-or-async `GpuSurfacePresenterFactory`, the shared `cellFromPoint` law, and
+  `BackendUnavailableError` distinct from `RendererFaultError`
+- **Packed-cell validator** (`src/packed-cells.ts`): strict `packed-bijou-cells/1` width-1
+  validation mirroring Bijou's
+- **Reference oracle** (`src/prepare.ts`, `src/reference.ts`, `src/procedural.ts`,
+  `src/numeric.ts`): lowering to the `rgba32uint` cell record and the pure-integer sRGB-direct
+  rasteriser `renderReferenceRgba`
+- **Receipt validator** (`src/receipt.ts`): `geordi-bijou-gpu-receipt/1`, the evidence taxonomy,
+  and `assertBitExactFrameHash`
+- **Test glyph pack** (`src/test-glyph-pack.ts`): explicit 8 x 16 bitmaps, no font
+- **Browser probe harness** (`harness/`, `e2e/`): Playwright + Vite
+
+**Key principle**: Bijou owns cell semantics and Bunny owns the integer primitives. This package
+is the CPU oracle that GPU presenters are compared against; it contains no presenter, shader,
+packer, or atlas. Reference: [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
+
 ### `@flyingrobots/geordi-profunctor-page`
 
 **Bounded Profunctor Page structural target**

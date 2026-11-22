@@ -15,6 +15,14 @@
 
 ### Features
 
+- **`@flyingrobots/geordi-bijou-gpu`** (new package): conformance kit for the `bijou-surface-gpu/1`
+  ABI (flyingrobots/geordi#169). It provides the `GpuSurfacePresenter` contract and sync-or-async
+  `GpuSurfacePresenterFactory`, `BackendUnavailableError` distinct from `RendererFaultError`, a
+  strict `packed-bijou-cells/1` width-1 validator, the `geordi-bijou-gpu-receipt/1` validator with
+  `assertBitExactFrameHash`, the pure-integer CPU reference rasteriser `renderReferenceRgba`, a
+  bundled deterministic test glyph pack, and a Playwright browser probe harness. A checked-in
+  fixture suite under `fixtures/bijou-gpu/` holds a paint frame, an erase frame, a width-2
+  negative, and oracle golden digests. No GPU presenter, shader, packer, or atlas is included.
 - **`native-render-everywhere`** (Rust): the native bunny demo's camera, projection, depth-range
   test and viewport mapping now run on Bunny Q32.32 (`FixedMat4::try_look_at`,
   `FixedMat4::try_perspective`, `FixedPlane3::classify`, `Viewport::try_ndc_to_viewport`)

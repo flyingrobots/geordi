@@ -1,0 +1,45 @@
+{
+  "bytes": [
+    34, 111, 255, 128, 64, 16, 32, 48, 0, 255,
+    32, 0, 0, 0, 0, 0, 0, 0, 128, 0,
+    32, 0, 0, 0, 0, 0, 0, 0, 128, 0,
+    32, 0, 0, 0, 0, 0, 0, 0, 128, 0,
+    32, 0, 0, 0, 0, 0, 0, 0, 128, 0,
+    32, 0, 0, 0, 0, 0, 0, 0, 128, 0,
+    32, 0, 0, 0, 0, 0, 0, 0, 128, 0,
+    32, 0, 0, 0, 0, 0, 0, 0, 128, 0
+  ],
+  "cellFormatId": "bijou-packed-cell-u8x10-le/1",
+  "chroma": {
+    "alphaEncoding": "uint6",
+    "channelEncoding": "uint8",
+    "colorSpace": "srgb",
+    "terminalDefaultEncoding": "presence-bits"
+  },
+  "focus": {
+    "focusableNodeIds": [],
+    "focusedNodeId": null
+  },
+  "glyphPolicyId": "unicode-grapheme-side-table/1",
+  "heightCells": 1,
+  "receiptVersion": "packed-bijou-cells/1",
+  "scene": {
+    "cellNodeIds": [
+      "scene.root",
+      "scene.root",
+      "scene.root",
+      "scene.root",
+      "scene.root",
+      "scene.root",
+      "scene.root",
+      "scene.root"
+    ],
+    "nodeIds": [
+      "scene.root"
+    ],
+    "sceneHash": "32efa59b668e1e41d13b2ef913bb1ccaf3b487621db5d5a497235d572eee45e1",
+    "sceneVersion": "ui-scene-ir/1"
+  },
+  "sideTable": [],
+  "widthCells": 8
+}
