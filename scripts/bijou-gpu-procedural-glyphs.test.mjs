@@ -490,6 +490,11 @@ test('bijou-surface-gpu/1 ADR defines zero-float integer ABI, LE byte order, val
     /halfQ\s*=\s*min\(\s*8192\s*,/,
     'ADR Section 7.1 must clamp Q12 arc halfQ at 8192 to prevent rOut*rOut u32 overflow over [1..256]^2',
   );
+  assert.match(
+    adr,
+    /halfS\s*=\s*\(lightPx\s*==\s*1\)\s*\?\s*11\s*:\s*lightPx/,
+    'ADR Section 7.1 diagonals must preserve exact 0.55 (11/20) minimum half-thickness when lightPx == 1',
+  );
   assert.match(adr, /!Number\.isFinite\(rect\.left\)/, 'ADR cellFromPoint must reject non-finite rect.left');
   assert.match(adr, /!Number\.isFinite\(rect\.top\)/, 'ADR cellFromPoint must reject non-finite rect.top');
   assert.match(adr, /!Number\.isFinite\(rect\.width\)/, 'ADR cellFromPoint must reject non-finite rect.width');
@@ -806,15 +811,32 @@ test('zero-float integer geometry passes Box-Drawing, diagonal boundary, Block E
     }
   }
 
-  // CodeRabbit boundary regression: U+2572 at W=72, H=96, lx=5, ly=1 must be strictly included in pure u32 integer math
+  // CodeRabbit boundary regressions:
+  // 1) U+2572 at W=72, H=96, lx=5, ly=1 (lightPx=7): exact boundary inclusion in pure u32 integer math
   const u2572 = data.boxDrawing.entries[0x2572 - 0x2500];
   assert.equal(evalBoxPixelInt(u2572, 5, 1, 72, 96), true, 'U+2572 boundary (5,1) at 72x96 must be lit');
   assert.equal(evalBoxPixelInt(u2572, 71, 0, 72, 96), false, 'U+2572 far exterior (71,0) at 72x96 must be unlit');
-  // Proven u32 ceiling at max cell size 256x256
-  const maxLight = Math.max(1, Math.floor((256 * 10 + 50) / 100));
-  const maxBound = maxLight * (256 + 256);
-  assert.equal(maxBound * maxBound < 0x100000000, true, 'Diagonal bound^2 must stay within u32');
-  assert.equal(maxLight * maxLight * (256 * 256 + 256 * 256) < 0x100000000, true, 'Diagonal RHS must stay within u32');
+  // 2) U+2572 at W=2, H=20, lx=1, ly=9 (lightPx=1): must preserve exact 0.55 (11/20) minimum half-thickness
+  assert.equal(
+    evalBoxPixelInt(u2572, 1, 9, 2, 20),
+    true,
+    'U+2572 at 2x20 (1,9) must preserve exact 0.55 (11/20) minimum half-thickness',
+  );
+  // Exhaustive [1..256]^2 u32/i32 overflow proof for diagonal bounds (both lightPx == 1 and lightPx >= 2)
+  for (let W = 1; W <= 256; W++) {
+    const lightPx = Math.max(1, Math.floor((W * 10 + 50) / 100));
+    const scale = lightPx === 1 ? 10 : 1;
+    const halfS = lightPx === 1 ? 11 : lightPx;
+    for (let H = 1; H <= 256; H++) {
+      const maxD = (2 * W - 1) * H + (2 * H - 1) * W;
+      const maxScaledD = u32Check(scale * maxD, `diag scaled d at ${W}x${H}`);
+      const bound = u32Check(halfS * (W + H), `diag bound at ${W}x${H}`);
+      const rhs = u32Check(halfS * halfS * (W * W + H * H), `diag rhs at ${W}x${H}`);
+      assert.equal(maxScaledD < 0x80000000, true, `diag maxScaledD exceeded i32 at ${W}x${H}`);
+      assert.equal(bound * bound < 0x80000000, true, `diag bound^2 exceeded i32 at ${W}x${H}`);
+      assert.equal(rhs < 0x80000000, true, `diag rhs exceeded i32 at ${W}x${H}`);
+    }
+  }
 
   // 2. Pure-integer decorations across H = 1..60, W = 1..32 (including curly integer triangle wave)
   for (const W of [1, 2, 6, 8, 10, 12, 16, 25]) {
