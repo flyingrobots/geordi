@@ -1,0 +1,302 @@
+{
+  "albedo-above-one.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_ALBEDO_OUT_OF_RANGE",
+    "path": "$.materials[1].albedo[0]",
+    "stage": "validate"
+  },
+  "camera-forward-zero.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_CAMERA_DEGENERATE",
+    "path": "$.camera.forward",
+    "stage": "validate"
+  },
+  "camera-kind-orthographic.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_CAMERA_UNSUPPORTED",
+    "path": "$.camera.kind",
+    "stage": "validate"
+  },
+  "camera-outside-trace-domain.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_TRACE_DOMAIN_EXCEEDED",
+    "path": "$.camera.position[2]",
+    "stage": "validate"
+  },
+  "camera-up-parallel.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_CAMERA_DEGENERATE",
+    "path": "$.camera.up",
+    "stage": "validate"
+  },
+  "camera-up-zero.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_CAMERA_DEGENERATE",
+    "path": "$.camera.up",
+    "stage": "validate"
+  },
+  "directional-without-toward-light.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_LIGHT_FIELD_INVALID",
+    "path": "$.lights[0].towardLight",
+    "stage": "validate"
+  },
+  "film-too-wide.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE",
+    "path": "$.film.width",
+    "stage": "validate"
+  },
+  "film-zero-height.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE",
+    "path": "$.film.height",
+    "stage": "validate"
+  },
+  "instance-material-unknown.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MATERIAL_REFERENCE_UNKNOWN",
+    "path": "$.instances[1].material",
+    "stage": "validate"
+  },
+  "instance-mesh-unknown.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MESH_REFERENCE_UNKNOWN",
+    "path": "$.instances[1].mesh",
+    "stage": "validate"
+  },
+  "instance-outside-trace-domain.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_TRACE_DOMAIN_EXCEEDED",
+    "path": "$.instances[0].worldFromMesh",
+    "stage": "validate"
+  },
+  "integrator-unknown.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_INTEGRATOR_UNSUPPORTED",
+    "path": "$.render.integrator",
+    "stage": "validate"
+  },
+  "json-invalid.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_JSON_INVALID",
+    "path": "$",
+    "stage": "parse"
+  },
+  "light-kind-point.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_LIGHT_UNSUPPORTED",
+    "path": "$.lights[0].kind",
+    "stage": "validate"
+  },
+  "material-id-duplicate.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_ID_DUPLICATE",
+    "path": "$.materials[1].id",
+    "stage": "validate"
+  },
+  "material-kind-specular.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MATERIAL_UNSUPPORTED",
+    "path": "$.materials[0].kind",
+    "stage": "validate"
+  },
+  "max-bounces-two.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MAX_BOUNCES_OUT_OF_RANGE",
+    "path": "$.render.maxBounces",
+    "stage": "validate"
+  },
+  "mesh-bounds-inverted.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MESH_BOUNDS_INVALID",
+    "path": "$.meshes[0].bounds",
+    "stage": "validate"
+  },
+  "mesh-count-negative.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MESH_COUNT_INVALID",
+    "path": "$.meshes[0].counts.vertices",
+    "stage": "validate"
+  },
+  "mesh-file-missing.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MESH_FILE_MISSING",
+    "path": "$.meshes[0].path",
+    "stage": "assets"
+  },
+  "mesh-hash-malformed.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MESH_HASH_INVALID",
+    "path": "$.meshes[0].sha256",
+    "stage": "validate"
+  },
+  "mesh-hash-mismatch.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MESH_HASH_MISMATCH",
+    "path": "$.meshes[0].sha256",
+    "stage": "assets"
+  },
+  "mesh-layout-ascii.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MESH_LAYOUT_UNSUPPORTED",
+    "path": "$.meshes[0].layout",
+    "stage": "validate"
+  },
+  "mesh-path-escapes.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_MESH_PATH_INVALID",
+    "path": "$.meshes[0].path",
+    "stage": "validate"
+  },
+  "missing-field.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SCENE_SHAPE",
+    "path": "$",
+    "stage": "parse"
+  },
+  "number-beyond-i64.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_NUMBER_OUT_OF_RANGE",
+    "path": "$.render.seed",
+    "stage": "parse"
+  },
+  "number-exponent.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_NUMBER_NOT_INTEGER",
+    "path": "$.camera.tanHalfFovY",
+    "stage": "parse"
+  },
+  "number-fraction.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_NUMBER_NOT_INTEGER",
+    "path": "$.camera.tanHalfFovY",
+    "stage": "parse"
+  },
+  "number-negative-zero.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_NUMBER_NOT_INTEGER",
+    "path": "$.film.width",
+    "stage": "parse"
+  },
+  "number-null.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_NUMBER_NOT_INTEGER",
+    "path": "$",
+    "stage": "parse"
+  },
+  "number-out-of-range.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_NUMBER_OUT_OF_RANGE",
+    "path": "$.camera.tanHalfFovY",
+    "stage": "parse"
+  },
+  "number-string.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_NUMBER_NOT_INTEGER",
+    "path": "$",
+    "stage": "parse"
+  },
+  "numeric-profile-binary64.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_NUMERIC_PROFILE_UNSUPPORTED",
+    "path": "$.numericProfile",
+    "stage": "validate"
+  },
+  "output-unknown.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_OUTPUT_UNSUPPORTED",
+    "path": "$.render.output",
+    "stage": "validate"
+  },
+  "primitive-count-exceeded.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_PRIMITIVE_COUNT_EXCEEDED",
+    "path": "$.instances",
+    "stage": "validate"
+  },
+  "radiance-above-cap.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_RADIANCE_OUT_OF_RANGE",
+    "path": "$.lights[0].radiance[1]",
+    "stage": "validate"
+  },
+  "radiance-negative.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_RADIANCE_OUT_OF_RANGE",
+    "path": "$.lights[1].radiance[2]",
+    "stage": "validate"
+  },
+  "reconstruction-unknown.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_RECONSTRUCTION_UNSUPPORTED",
+    "path": "$.render.reconstruction",
+    "stage": "validate"
+  },
+  "requirement-duplicate.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_REQUIREMENT_DUPLICATE",
+    "path": "$.requires[8]",
+    "stage": "validate"
+  },
+  "requirement-profile-missing.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_REQUIREMENT_MISSING",
+    "path": "$.requires",
+    "stage": "validate"
+  },
+  "requirement-unknown.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_REQUIREMENT_UNKNOWN",
+    "path": "$.requires[8]",
+    "stage": "validate"
+  },
+  "requirement-used-feature-missing.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_REQUIREMENT_MISSING",
+    "path": "$.requires",
+    "stage": "validate"
+  },
+  "sampler-malformed.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SAMPLER_IDENTITY_INVALID",
+    "path": "$.render.sampler",
+    "stage": "validate"
+  },
+  "samples-above-limit.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SAMPLES_PER_PIXEL_INVALID",
+    "path": "$.render.samplesPerPixel",
+    "stage": "validate"
+  },
+  "samples-not-power-of-two.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SAMPLES_PER_PIXEL_INVALID",
+    "path": "$.render.samplesPerPixel",
+    "stage": "validate"
+  },
+  "scene-id-empty.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_ID_EMPTY",
+    "path": "$.id",
+    "stage": "validate"
+  },
+  "scene-version-unsupported.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SCENE_VERSION_UNSUPPORTED",
+    "path": "$.sceneVersion",
+    "stage": "validate"
+  },
+  "seed-out-of-range.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SEED_OUT_OF_RANGE",
+    "path": "$.render.seed",
+    "stage": "validate"
+  },
+  "sky-missing.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SKY_COUNT",
+    "path": "$.lights",
+    "stage": "validate"
+  },
+  "sky-toward-light-null.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SCENE_SHAPE",
+    "path": "$",
+    "stage": "parse"
+  },
+  "sky-with-toward-light.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_LIGHT_FIELD_INVALID",
+    "path": "$.lights[1].towardLight",
+    "stage": "validate"
+  },
+  "tan-half-fov-y-above-four.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_TAN_HALF_FOV_Y_OUT_OF_RANGE",
+    "path": "$.camera.tanHalfFovY",
+    "stage": "validate"
+  },
+  "tan-half-fov-y-zero.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_TAN_HALF_FOV_Y_OUT_OF_RANGE",
+    "path": "$.camera.tanHalfFovY",
+    "stage": "validate"
+  },
+  "tone-curve-malformed.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_TONE_CURVE_IDENTITY_INVALID",
+    "path": "$.render.toneCurve",
+    "stage": "validate"
+  },
+  "toward-light-not-normalized.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_TOWARD_LIGHT_NOT_NORMALIZED",
+    "path": "$.lights[0].towardLight",
+    "stage": "validate"
+  },
+  "toward-light-zero.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_TOWARD_LIGHT_NOT_NORMALIZED",
+    "path": "$.lights[0].towardLight",
+    "stage": "validate"
+  },
+  "two-directional-lights.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT",
+    "path": "$.lights",
+    "stage": "validate"
+  },
+  "two-skies.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SKY_COUNT",
+    "path": "$.lights",
+    "stage": "validate"
+  },
+  "unknown-field.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SCENE_SHAPE",
+    "path": "$",
+    "stage": "parse"
+  }
+}

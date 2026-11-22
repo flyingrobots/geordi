@@ -1,0 +1,164 @@
+{
+  "camera": {
+    "forward": [
+      0,
+      -1073741824,
+      -4294967296
+    ],
+    "kind": "pinhole",
+    "position": [
+      0,
+      8589934592,
+      25769803776
+    ],
+    "tanHalfFovY": 1779033704,
+    "up": [
+      0,
+      4294967296,
+      0
+    ]
+  },
+  "film": {
+    "height": 36,
+    "width": 64
+  },
+  "id": "geordi:ray-traced-scene:reference",
+  "instances": [
+    {
+      "id": "ground",
+      "material": "grey",
+      "mesh": "unit-quad",
+      "worldFromMesh": {
+        "linearColumnMajor": [
+          34359738368,
+          0,
+          0,
+          0,
+          34359738368,
+          0,
+          0,
+          0,
+          34359738368
+        ],
+        "translation": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "id": "card",
+      "material": "red",
+      "mesh": "unit-quad",
+      "worldFromMesh": {
+        "linearColumnMajor": [
+          4294967296,
+          0,
+          0,
+          0,
+          0,
+          4294967296,
+          0,
+          -4294967296,
+          0
+        ],
+        "translation": [
+          0,
+          4294967296,
+          -8589934592
+        ]
+      }
+    }
+  ],
+  "lights": [
+    {
+      "id": "sun",
+      "kind": "directional",
+      "radiance": [
+        12884901888,
+        12884901888,
+        12884901888
+      ],
+      "towardLight": [
+        2147483648,
+        4294967296,
+        1073741824
+      ]
+    },
+    {
+      "id": "sky",
+      "kind": "uniformSky",
+      "radiance": [
+        1288490189,
+        1717986918,
+        2576980378
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "albedo": [
+        3006477107,
+        3006477107,
+        3006477107
+      ],
+      "id": "grey",
+      "kind": "diffuse"
+    },
+    {
+      "albedo": [
+        3435973837,
+        429496730,
+        429496730
+      ],
+      "id": "red",
+      "kind": "diffuse"
+    }
+  ],
+  "meshes": [
+    {
+      "bounds": {
+        "max": [
+          4294967296,
+          0,
+          4294967296
+        ],
+        "min": [
+          -4294967296,
+          0,
+          -4294967296
+        ]
+      },
+      "counts": {
+        "triangles": 2,
+        "vertices": 4
+      },
+      "id": "unit-quad",
+      "layout": "bunny-ply-binary-le-f32/1",
+      "path": "meshes/unit-quad.ply",
+      "sha256": "sha256:caca8649845effd4c3512ff53312877856be1733554d4c7b42dc3c2b0cd35230"
+    }
+  ],
+  "numericProfile": "geordi-fixed-q32.32/1",
+  "render": {
+    "integrator": "geordi-rt-diffuse-path/1",
+    "maxBounces": 1,
+    "output": "geordi-rgba8-srgb-opaque/1",
+    "reconstruction": "geordi-box-filter/1",
+    "sampler": "fixture-placeholder-sampler/1",
+    "samplesPerPixel": 16,
+    "seed": 0,
+    "toneCurve": "fixture-placeholder-tone-curve/1"
+  },
+  "requires": [
+    "asset.mesh",
+    "mesh.triangle",
+    "instance.affine3",
+    "camera.pinhole",
+    "material.diffuse",
+    "light.directional",
+    "light.uniform-sky"
+  ],
+  "sceneVersion": "geordi-ray-traced-scene/1"
+}

@@ -27,9 +27,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
+        run: rustup show active-toolchain || rustup toolchain install
 
       - name: Install dependencies
         run: pnpm install
