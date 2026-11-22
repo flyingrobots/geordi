@@ -4,7 +4,7 @@
 **Date**: 2026-11-21 (amended 2026-11-22)
 **Issue**: [#168](https://github.com/flyingrobots/geordi/issues/168)
 **Downstream implementation issues**: [#169](https://github.com/flyingrobots/geordi/issues/169) (conformance kit), [#170](https://github.com/flyingrobots/geordi/issues/170) (canonical WGSL + `naga` GLSL generator), [#171](https://github.com/flyingrobots/geordi/issues/171) (dirty-union packer), [#172](https://github.com/flyingrobots/geordi/issues/172) (`GlyphAtlas`), [#173](https://github.com/flyingrobots/geordi/issues/173) (WebGL2), [#174](https://github.com/flyingrobots/geordi/issues/174) (Canvas 2D), [#175](https://github.com/flyingrobots/geordi/issues/175) (WebGPU), [#58](https://github.com/flyingrobots/geordi/issues/58) (native Rust `wgpu`)
-**Upstream contracts read**: `flyingrobots/bijou` at `906666f9` (`packages/bijou/src/core/render/packed-cell.part01.ts`, `packages/bijou/src/core/packed-bijou-cells-contract.ts`, `packages/bijou/src/core/packed-bijou-cells-glyph-policy.ts`, `packages/bijou/src/ports/surface-contract.ts`, `packages/bijou/src/core/render/differ-packed.ts`, `docs/design/RE-510-geordi-native-gpu-host-for-bijou-cell-buffers.md`); `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md`, `docs/design/0005-gpu-compute-backend.md` Amendment 1 in [`bunny#429`](https://github.com/flyingrobots/bunny/pull/429), `bunny-u32-div-round-even/1` in [`bunny#431`](https://github.com/flyingrobots/bunny/pull/431) at `4063c1e`, `bunny-u32-ellipse-classify/1` in [`bunny#432`](https://github.com/flyingrobots/bunny/pull/432) at `052f7d9`)
+**Upstream contracts read**: `flyingrobots/bijou` at `906666f9` (`packages/bijou/src/core/render/packed-cell.part01.ts`, `packages/bijou/src/core/packed-bijou-cells-contract.ts`, `packages/bijou/src/core/packed-bijou-cells-glyph-policy.ts`, `packages/bijou/src/ports/surface-contract.ts`, `packages/bijou/src/core/render/differ-packed.ts`, `docs/design/RE-510-geordi-native-gpu-host-for-bijou-cell-buffers.md`); `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md`, `docs/design/0005-gpu-compute-backend.md` Amendment 1 in [`bunny#429`](https://github.com/flyingrobots/bunny/pull/429), `bunny-u32-div-round-even/1` in [`bunny#431`](https://github.com/flyingrobots/bunny/pull/431) at `3b7fbad`, `bunny-u32-ellipse-classify/1` in [`bunny#432`](https://github.com/flyingrobots/bunny/pull/432) at `292a2c3`)
 **Procedural glyph table**: [`fixtures/bijou-gpu/procedural-glyphs.json`](../../fixtures/bijou-gpu/procedural-glyphs.json) (`sha256: 7ebc92f74a57ec7744fc7ada20c886d76b4ea96c09b5005efbf0883562d62e46`)
 
 ## Reader job
@@ -43,10 +43,10 @@ Following `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md` and `docs/design/
 
 | Contract ID | Bunny Issue / PR | Bunny Commit | Artifact Path | SHA-256 |
 | --- | --- | --- | --- | --- |
-| `bunny-u32-div-round-even/1` | [`bunny#427`](https://github.com/flyingrobots/bunny/issues/427), [`#428`](https://github.com/flyingrobots/bunny/issues/428) / [`PR #431`](https://github.com/flyingrobots/bunny/pull/431) | `4063c1e` | `crates/bunny-gpu/shaders/bunny_u32_div_round_even.wgsl` | `ed93a26df071da13e8d8514c42a8dcfb5cbc5969d6ab4397d26b147fc5dc2e7f` |
-| `bunny-u32-div-round-even/1` | [`bunny#428`](https://github.com/flyingrobots/bunny/issues/428) / [`PR #431`](https://github.com/flyingrobots/bunny/pull/431) | `4063c1e` | `crates/bunny-gpu/fixtures/u32_div_round_even_vectors.json` | `df265cc7233772e33347b04fa1f7a3e71f34566e4aa6af5cf3fecf23e2b044a6` |
-| `bunny-u32-ellipse-classify/1` | [`bunny#430`](https://github.com/flyingrobots/bunny/issues/430) / [`PR #432`](https://github.com/flyingrobots/bunny/pull/432) | `052f7d9` | `crates/bunny-gpu/shaders/bunny_u32_ellipse_classify.wgsl` | `1b11121932031e2f1266087dded59e9c6f921bed7db1e9ed2ba4cf9b9c261e99` |
-| `bunny-u32-ellipse-classify/1` | [`bunny#430`](https://github.com/flyingrobots/bunny/issues/430) / [`PR #432`](https://github.com/flyingrobots/bunny/pull/432) | `052f7d9` | `crates/bunny-gpu/fixtures/u32_ellipse_classify_vectors.json` | `5f0ec6422de185e2ce7e832a7c1bce7ccde9b6f33e92b399f7c547191ef205e4` |
+| `bunny-u32-div-round-even/1` | [`bunny#427`](https://github.com/flyingrobots/bunny/issues/427), [`#428`](https://github.com/flyingrobots/bunny/issues/428) / [`PR #431`](https://github.com/flyingrobots/bunny/pull/431) | `3b7fbad` | `crates/bunny-gpu/shaders/bunny_u32_div_round_even.wgsl` | `ed93a26df071da13e8d8514c42a8dcfb5cbc5969d6ab4397d26b147fc5dc2e7f` |
+| `bunny-u32-div-round-even/1` | [`bunny#428`](https://github.com/flyingrobots/bunny/issues/428) / [`PR #431`](https://github.com/flyingrobots/bunny/pull/431) | `3b7fbad` | `crates/bunny-gpu/fixtures/u32_div_round_even_vectors.json` | `df265cc7233772e33347b04fa1f7a3e71f34566e4aa6af5cf3fecf23e2b044a6` |
+| `bunny-u32-ellipse-classify/1` | [`bunny#430`](https://github.com/flyingrobots/bunny/issues/430) / [`PR #432`](https://github.com/flyingrobots/bunny/pull/432) | `292a2c3` | `crates/bunny-gpu/shaders/bunny_u32_ellipse_classify.wgsl` | `1b11121932031e2f1266087dded59e9c6f921bed7db1e9ed2ba4cf9b9c261e99` |
+| `bunny-u32-ellipse-classify/1` | [`bunny#430`](https://github.com/flyingrobots/bunny/issues/430) / [`PR #432`](https://github.com/flyingrobots/bunny/pull/432) | `292a2c3` | `crates/bunny-gpu/fixtures/u32_ellipse_classify_vectors.json` | `5f0ec6422de185e2ce7e832a7c1bce7ccde9b6f33e92b399f7c547191ef205e4` |
 
 - **Explicit Q32.32 non-equivalence:** Adopting `bunny-u32-div-round-even/1` and `bunny-u32-ellipse-classify/1` covers bounded unsigned integer terminal math only and makes **no claim** of full `FixedQ32_32` GPU conformance; neither primitive depends on the rest of Bunny's Q32.32 GPU compute roadmap.
 - **Valid physical cell domain:** `1 <= cellPxW <= 256` and `1 <= cellPxH <= 256`. Dimensions outside `[1..256]` MUST fail loudly at validation (`GEORDI_E_BIJOU_INVALID_CELL_METRICS`) so every `u32` and 2-limb intermediate bound below holds unconditionally.
@@ -299,13 +299,13 @@ Every presenter emits a deterministic JSON receipt with `receiptVersion: "geordi
   "bunnyPrimitives": [
     {
       "contractId": "bunny-u32-div-round-even/1",
-      "bunnyCommit": "4063c1e",
+      "bunnyCommit": "3b7fbad",
       "wgslSha256": "ed93a26df071da13e8d8514c42a8dcfb5cbc5969d6ab4397d26b147fc5dc2e7f",
       "vectorsSha256": "df265cc7233772e33347b04fa1f7a3e71f34566e4aa6af5cf3fecf23e2b044a6"
     },
     {
       "contractId": "bunny-u32-ellipse-classify/1",
-      "bunnyCommit": "052f7d9",
+      "bunnyCommit": "292a2c3",
       "wgslSha256": "1b11121932031e2f1266087dded59e9c6f921bed7db1e9ed2ba4cf9b9c261e99",
       "vectorsSha256": "5f0ec6422de185e2ce7e832a7c1bce7ccde9b6f33e92b399f7c547191ef205e4"
     }
@@ -320,6 +320,8 @@ Every presenter emits a deterministic JSON receipt with `receiptVersion: "geordi
   "widthCells": 80,
   "heightCells": 24,
   "cellPx": { "width": 16, "height": 32 },
+  "canvasPxW": 1280,
+  "canvasPxH": 768,
   "dpr": 2,
   "defaultFg": "#E6EDF3",
   "defaultBg": "#0D1117",
@@ -333,6 +335,7 @@ Every presenter emits a deterministic JSON receipt with `receiptVersion: "geordi
 ```
 
 - **Dependency-to-artifact identity chain:** `bunnyPrimitives` pins the exact upstream Bunny revision and helper/vector SHA-256 digests baked into Geordi; `assembledWgslSha256` pins Geordi's final assembled `bijou-surface.wgsl`; `generatedGlslSha256` pins the pinned-`naga`-translated GLSL ES 3.00 source (`null` on WebGPU/native/Canvas 2D); `shaderSha256` pins the active GPU shader text (`assembledWgslSha256` for WebGPU/`wgpu`, `generatedGlslSha256` for WebGL2, and `null` for Canvas 2D); `executedArtifactSha256` is **always non-null** and pins the executed presenter artifact (for Canvas 2D, the SHA-256 of the deterministic JS presenter module/bundle so `shaderSha256: null` never leaves Canvas 2D unpinned).
+- **Physical canvas dimensions (`canvasPxW`, `canvasPxH`):** Receipts MUST record the exact integer physical canvas dimensions used to produce the frame (`canvasPxW >= widthCells * cellPx.width`, `canvasPxH >= heightCells * cellPx.height`) so consumers can distinguish canvases that have identical cell counts (`widthCells × heightCells`) but different letterboxed remainder pixels (e.g., `1280` vs. `1295` physical pixels wide at `16 px` cell width).
 - `defaultFg` and `defaultBg` MUST be recorded as canonical 7-character uppercase sRGB hex strings (`#RRGGBB`) matching `uDefaultFg` and `uDefaultBg`, so pixel probes remain reproducible when theme defaults change without cell-byte changes (matching Bijou `RE-510`).
 
 ### Exact integer canonical readback vs. display presentation (cross-GPU bit-exact hash law)
