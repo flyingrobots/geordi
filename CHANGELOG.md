@@ -15,6 +15,17 @@
 
 ### Features
 
+- **`@flyingrobots/geordi-bijou-gpu`**: dynamic `GlyphAtlas` for the `bijou-surface-gpu/1` ABI
+  (flyingrobots/geordi#172). `createGlyphAtlas()` caches width-1 glyphs by `(grapheme, bold)` in
+  an `rgba8uint` bitmap at integer physical cell metrics, drawing each through an injected
+  `GlyphRasterizer`; the core uses no browser API. Monochrome and colour-emoji slots get distinct
+  `glyph_kind` bits, decided by the divergence of alpha-weighted channel totals. `dirtyRects`
+  reports newly rasterized texels. A full atlas resets and marks everything dirty, incrementing
+  `generation`, as does `invalidate()`; `snapCellMetrics()` rounds CSS cell sizes to integer
+  pixels. An atlas can be passed to `packSurfaceDamage()` as its options. The browser adapter adds
+  `createCanvasGlyphRasterizer()` and `watchGlyphAtlasEnvironment()`, which invalidates on
+  `document.fonts.ready`, later font loads, and device pixel ratio changes. No texture upload is
+  included.
 - **`@flyingrobots/geordi-bijou-gpu`**: dirty-union cell packer for the `bijou-surface-gpu/1` ABI
   (flyingrobots/geordi#171). `packSurfaceDamage(state, current, target, options)` lowers the cells
   named by `current.renderDirtyWords | target.renderDirtyWords` into a retained `Uint32Array`

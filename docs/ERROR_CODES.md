@@ -441,13 +441,14 @@ with a JSON path. Field-level detail is in
 
 These come from `@flyingrobots/geordi-bijou-gpu`. Each is thrown as a named error class with a
 `code` property; validation errors also carry a JSON `path` and a `detail`. Field-level detail is
-in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md) and, for the dirty-union
-packer, [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md).
+in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md), for the dirty-union packer in
+[`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md), and for the glyph atlas in
+[`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md).
 
 ### `GEORDI_E_BIJOU_BACKEND_UNAVAILABLE`
 
 **Severity**: Error
-**Message**: A presenter backend cannot be created on this host (`BackendUnavailableError`)
+**Message**: A presenter backend cannot be created on this host, or the canvas glyph rasterizer or the glyph atlas watcher found no canvas, 2D context, or browser host (`BackendUnavailableError`)
 **Fix**: Not a defect. Report `capability-refused` evidence and choose another backend.
 
 ### `GEORDI_E_BIJOU_RENDERER_FAULT`
@@ -459,19 +460,19 @@ packer, [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md).
 ### `GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH`
 
 **Severity**: Error
-**Message**: A cell or side-table entry holds a width-2 grapheme
+**Message**: A cell or side-table entry holds a width-2 grapheme, or one was handed to a `GlyphAtlas` in strict canonical mode
 **Fix**: `bijou-surface-gpu/1` presents width-1 cells only. Do not emit wide graphemes into canonical `packed-bijou-cells/1` or into a surface handed to `packSurfaceDamage()`.
 
 ### `GEORDI_E_BIJOU_INVALID_PACKED_CELLS`
 
 **Severity**: Error
-**Message**: A `packed-bijou-cells/1` receipt violates the canonical contract
-**Fix**: Correct the field at `path`; the receipt must pass Bijou's own validator.
+**Message**: A `packed-bijou-cells/1` receipt violates the canonical contract, or a `GlyphAtlas` in strict canonical mode was handed text that is not one terminal-safe width-1 grapheme
+**Fix**: Correct the field at `path`; the receipt must pass Bijou's own validator. For the atlas, pass one grapheme per cell that Bijou's width-1 glyph policy accepts.
 
 ### `GEORDI_E_BIJOU_INVALID_CELL_METRICS`
 
 **Severity**: Error
-**Message**: `cellPxW` or `cellPxH` is not an integer in `1..256`
+**Message**: `cellPxW` or `cellPxH` is not an integer in `1..256`, or a CSS cell size or device pixel ratio given to `snapCellMetrics()` is not finite and positive
 **Fix**: Snap physical cell metrics into `1..256` at the host boundary.
 
 ### `GEORDI_E_BIJOU_INVALID_SURFACE`
@@ -483,8 +484,8 @@ packer, [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md).
 ### `GEORDI_E_BIJOU_INVALID_ATLAS`
 
 **Severity**: Error
-**Message**: An atlas bitmap or slot map is malformed, a cell references a slot beyond the atlas capacity, a slot resolver returned a slot outside `0..65535`, or the atlas generation advanced during two consecutive whole-grid packs
-**Fix**: Supply `atlasCols * cellPxW * atlasRows * cellPxH * 4` RGBA bytes and unique in-range slots. If the generation will not settle, the frame holds more glyphs than one atlas generation can; enlarge the atlas.
+**Message**: An atlas bitmap or slot map is malformed, a cell references a slot beyond the atlas capacity, a slot resolver returned a slot outside `0..65535`, the atlas generation advanced during two consecutive whole-grid packs, a `GlyphAtlas` was given a slot grid over 65536 slots, an empty `fontIdentity`, or an invalid canvas font, or its rasterizer returned a raster of the wrong length or with a non-byte value
+**Fix**: Supply `atlasCols * cellPxW * atlasRows * cellPxH * 4` RGBA bytes and unique in-range slots. A glyph rasterizer returns exactly `cellPxW * cellPxH * 4` bytes. If the generation will not settle, the frame holds more glyphs than one atlas generation can; enlarge the atlas.
 
 ### `GEORDI_E_BIJOU_MISSING_GLYPH_SLOT`
 

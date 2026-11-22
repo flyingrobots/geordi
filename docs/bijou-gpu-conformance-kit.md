@@ -12,14 +12,15 @@ suite, the endpoint receipt validator, the CPU reference oracle, and the browser
 The design record is the normative source for every equation; this page says how the kit
 exposes them.
 
-> **Not claimed.** Geordi has no GPU presenter, shader, or `GlyphAtlas`. The kit renders on the
-> CPU only. It is the oracle those components are checked against, tracked in
+> **Not claimed.** Geordi has no GPU presenter or shader. The kit renders on the CPU only. It is
+> the oracle those components are checked against, tracked in
 > [flyingrobots/geordi#170](https://github.com/flyingrobots/geordi/issues/170),
-> [flyingrobots/geordi#172](https://github.com/flyingrobots/geordi/issues/172) through
+> [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173) through
 > [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175), and
 > [flyingrobots/geordi#58](https://github.com/flyingrobots/geordi/issues/58). The dirty-union
-> packer that shares this package is described in
-> [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md).
+> packer and the glyph atlas that share this package are described in
+> [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md) and
+> [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md).
 
 ## Ownership
 

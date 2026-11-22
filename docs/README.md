@@ -21,6 +21,8 @@ that exists on `main`.
 | Find the evidence for each Bijou GPU conformance requirement | [`bijou-gpu-conformance-kit-test-plan.md`](./bijou-gpu-conformance-kit-test-plan.md) |
 | Look up the Bijou GPU dirty-union cell packer: damage law, full-refresh triggers, staging buffer and errors | [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md) |
 | Find the evidence for each Bijou GPU packer requirement | [`bijou-gpu-surface-damage-test-plan.md`](./bijou-gpu-surface-damage-test-plan.md) |
+| Look up the Bijou GPU glyph atlas: slots, colour detection, dirty rects, overflow and invalidation, and the browser rasterizer and font/DPR watcher | [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md) |
+| Find the evidence for each Bijou GPU glyph atlas requirement | [`bijou-gpu-glyph-atlas-test-plan.md`](./bijou-gpu-glyph-atlas-test-plan.md) |
 | Run Rust verification | [`RUST_GATES.md`](./RUST_GATES.md) |
 | Apply documentation policy | [`DOCUMENTATION_STANDARDS.md`](./DOCUMENTATION_STANDARDS.md) |
 

@@ -29,6 +29,8 @@ const checks = [
       'assertBitExactFrameHash',
       'assertPixelProbes',
       'cellFromPoint',
+      'createCanvasGlyphRasterizer',
+      'createGlyphAtlas',
       'createGpuSurfacePresenter',
       'createTestGlyphPack',
       'decodeProceduralGlyphTable',
@@ -36,6 +38,7 @@ const checks = [
       'parsePackedBijouCellsReceipt',
       'renderReferenceRgba',
       'validateEndpointReceipt',
+      'watchGlyphAtlasEnvironment',
     ],
   },
   {
