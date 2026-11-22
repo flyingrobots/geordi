@@ -10,6 +10,7 @@
     "outDir": "./dist-eslint",
     "baseUrl": ".",
     "paths": {
+      "@flyingrobots/geordi-bijou-gpu": ["packages/bijou-gpu/src/index.ts"],
       "@flyingrobots/geordi-compiler-core": ["packages/compiler-core/src/index.ts"],
       "@flyingrobots/geordi-core": ["packages/core/src/index.ts"],
       "@flyingrobots/geordi-gpvue": ["packages/gpvue/src/index.ts"],

@@ -1,0 +1,41 @@
+{
+  "name": "@flyingrobots/geordi-bijou-gpu",
+  "version": "0.1.0",
+  "description": "Conformance kit, receipt validator, and CPU reference oracle for the bijou-surface-gpu/1 ABI",
+  "type": "module",
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run && node ../../scripts/generate-bijou-gpu-conformance-fixtures.mjs --check",
+    "test:browser": "pnpm --filter @flyingrobots/geordi-core build && playwright test",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.harness.json"
+  },
+  "dependencies": {
+    "@flyingrobots/geordi-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^25.9.3",
+    "@typescript-eslint/eslint-plugin": "^8.61.0",
+    "@typescript-eslint/parser": "^8.61.0",
+    "eslint": "^10.5.0",
+    "eslint-config-prettier": "^10.1.8",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14",
+    "vitest": "^4.1.9"
+  }
+}
