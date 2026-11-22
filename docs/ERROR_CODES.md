@@ -441,7 +441,8 @@ with a JSON path. Field-level detail is in
 
 These come from `@flyingrobots/geordi-bijou-gpu`. Each is thrown as a named error class with a
 `code` property; validation errors also carry a JSON `path` and a `detail`. Field-level detail is
-in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
+in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md) and, for the dirty-union
+packer, [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md).
 
 ### `GEORDI_E_BIJOU_BACKEND_UNAVAILABLE`
 
@@ -459,7 +460,7 @@ in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
 
 **Severity**: Error
 **Message**: A cell or side-table entry holds a width-2 grapheme
-**Fix**: `bijou-surface-gpu/1` presents width-1 cells only. Do not emit wide graphemes into canonical `packed-bijou-cells/1`.
+**Fix**: `bijou-surface-gpu/1` presents width-1 cells only. Do not emit wide graphemes into canonical `packed-bijou-cells/1` or into a surface handed to `packSurfaceDamage()`.
 
 ### `GEORDI_E_BIJOU_INVALID_PACKED_CELLS`
 
@@ -476,14 +477,14 @@ in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
 ### `GEORDI_E_BIJOU_INVALID_SURFACE`
 
 **Severity**: Error
-**Message**: A surface, canvas size, theme colour, or probe coordinate is malformed
-**Fix**: Supply `widthCells * heightCells * 10` cell bytes, a canvas at least as large as the grid, uppercase `#RRGGBB` colours, and in-canvas probe coordinates.
+**Message**: A surface, canvas size, theme colour, probe coordinate, or packer state is malformed
+**Fix**: Supply `widthCells * heightCells * 10` cell bytes, a canvas at least as large as the grid, uppercase `#RRGGBB` colours, and in-canvas probe coordinates. For `packSurfaceDamage()`, also supply at least `ceil(width * height / 32)` render-dirty words, a side-table entry for every side-table cell, and a state from `createSurfaceDamageState()`.
 
 ### `GEORDI_E_BIJOU_INVALID_ATLAS`
 
 **Severity**: Error
-**Message**: An atlas bitmap or slot map is malformed, or a cell references a slot beyond the atlas capacity
-**Fix**: Supply `atlasCols * cellPxW * atlasRows * cellPxH * 4` RGBA bytes and unique in-range slots.
+**Message**: An atlas bitmap or slot map is malformed, a cell references a slot beyond the atlas capacity, a slot resolver returned a slot outside `0..65535`, or the atlas generation advanced during two consecutive whole-grid packs
+**Fix**: Supply `atlasCols * cellPxW * atlasRows * cellPxH * 4` RGBA bytes and unique in-range slots. If the generation will not settle, the frame holds more glyphs than one atlas generation can; enlarge the atlas.
 
 ### `GEORDI_E_BIJOU_MISSING_GLYPH_SLOT`
 
