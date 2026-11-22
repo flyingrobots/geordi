@@ -12,11 +12,14 @@ suite, the endpoint receipt validator, the CPU reference oracle, and the browser
 The design record is the normative source for every equation; this page says how the kit
 exposes them.
 
-> **Not claimed.** Geordi has no GPU presenter, shader, dirty-union packer, or `GlyphAtlas`. The
-> kit renders on the CPU only. It is the oracle those components are checked against, tracked in
-> [flyingrobots/geordi#170](https://github.com/flyingrobots/geordi/issues/170) through
-> [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175) and
-> [flyingrobots/geordi#58](https://github.com/flyingrobots/geordi/issues/58).
+> **Not claimed.** Geordi has no GPU presenter, shader, or `GlyphAtlas`. The kit renders on the
+> CPU only. It is the oracle those components are checked against, tracked in
+> [flyingrobots/geordi#170](https://github.com/flyingrobots/geordi/issues/170),
+> [flyingrobots/geordi#172](https://github.com/flyingrobots/geordi/issues/172) through
+> [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175), and
+> [flyingrobots/geordi#58](https://github.com/flyingrobots/geordi/issues/58). The dirty-union
+> packer that shares this package is described in
+> [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md).
 
 ## Ownership
 
@@ -138,9 +141,8 @@ Behaviour worth knowing:
   given.
 
 `prepareReferenceCells()` and `preparedBufferBytes()` expose the lowering on its own. The
-dirty-union packer
-([flyingrobots/geordi#171](https://github.com/flyingrobots/geordi/issues/171)) must agree with
-it word-for-word.
+[dirty-union packer](./bijou-gpu-surface-damage.md) must agree with it word-for-word, and its
+fuzz test checks that.
 
 Probe helpers: `readPixel(frame, px, py)`, `samplePixelProbes(frame, points)`,
 `findPixelProbeMismatches(frame, probes)`, and `assertPixelProbes(frame, probes)`, which throws
