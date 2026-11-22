@@ -350,16 +350,19 @@ absDiff(a, b) = (a >= b) ? (a - b) : (b - a)
    hyB0    = min(satSub(H, lightPx), hy0(lightPx) + dblGap)
    ```
 2. **Pure-`u32` diagonals (`diagSlash == 1 || diagBackslash == 1`, `U+2571..U+2573`):**
-   - Exact squared perpendicular distance check without `sqrt`, floats, or signed subtraction.
-   - **Proven-infallible `u32` overflow bound for `1 <= W, H <= 256`:** `half2 = max(1, lightPx) <= 26`, `bound = half2 * (W + H) <= 13,312`, `(2 * lx + 1) * H + (2 * ly + 1) * W <= 261,632 < 2^31`. Since `W + H > hypot(W, H)`, any pixel with `d > bound` is strictly outside; whenever `d <= bound`, `d * d <= 177,209,344 < 2^31 < 2^32` and `rhs = half2 * half2 * (W * W + H * H) <= 88,604,672 < 2^31 < 2^32`.
+   - Exact squared perpendicular distance check without `sqrt`, floats, or signed subtraction, preserving the exact `0.55` (`11/20`) minimum half-thickness when `lightPx == 1` (`1 <= W <= 14`, matching rounded arcs below) and `0.5 * lightPx` when `lightPx >= 2` (`15 <= W <= 256`).
+   - **Proven-infallible `u32`/`i32` overflow bound for `1 <= W, H <= 256`:**
+     - When `lightPx == 1` (`W <= 14`): `scale = 10`, `halfS = 11`, `(2 * lx + 1) * H + (2 * ly + 1) * W <= 14,066`, `dSlashS, dBackS <= 10 * 6,898 = 68,980 < 2^31`, `bound = 11 * (W + H) <= 2,970`, `bound * bound <= 8,820,900 < 2^31`, `rhs = 121 * (W * W + H * H) <= 7,953,572 < 2^31`.
+     - When `lightPx >= 2` (`15 <= W <= 256`): `scale = 1`, `halfS = lightPx <= 26`, `(2 * lx + 1) * H + (2 * ly + 1) * W <= 261,632`, `dSlashS, dBackS <= 130,560 < 2^31`, `bound = lightPx * (W + H) <= 13,312`, `bound * bound <= 177,209,344 < 2^31`, `rhs = lightPx * lightPx * (W * W + H * H) <= 88,604,672 < 2^31`.
    ```text
-   half2        = max(1, lightPx)
-   bound        = half2 * (W + H)
-   rhs          = half2 * half2 * (W * W + H * H)
-   dSlash       = absDiff((2 * lx + 1) * H + (2 * ly + 1) * W, 2 * W * H)
-   dBack        = absDiff((2 * lx + 1) * H, (2 * ly + 1) * W)
-   slashLit     = diagSlash     && (dSlash <= bound) && (dSlash * dSlash <= rhs)
-   backslashLit = diagBackslash && (dBack  <= bound) && (dBack  * dBack  <= rhs)
+   scale        = (lightPx == 1) ? 10 : 1
+   halfS        = (lightPx == 1) ? 11 : lightPx
+   bound        = halfS * (W + H)
+   rhs          = halfS * halfS * (W * W + H * H)
+   dSlashS      = scale * absDiff((2 * lx + 1) * H + (2 * ly + 1) * W, 2 * W * H)
+   dBackS       = scale * absDiff((2 * lx + 1) * H, (2 * ly + 1) * W)
+   slashLit     = diagSlash     && (dSlashS <= bound) && (dSlashS * dSlashS <= rhs)
+   backslashLit = diagBackslash && (dBackS  <= bound) && (dBackS  * dBackS  <= rhs)
    ```
 3. **Pure-`u32` Q12 rounded quarter-ellipse arcs (`rounded == 1`, `U+256D..U+2570`):**
    - Fixed-point scale `Q12 = 4096`.

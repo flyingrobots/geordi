@@ -348,16 +348,17 @@ function evalBoxPixelInt(e, lx, ly, W, H) {
   const hyB0 = Math.min(satSub(H, lightPx), hy0(lightPx) + dblGap);
 
   if (e.diagSlash || e.diagBackslash) {
-    const half2 = Math.max(1, lightPx);
-    const bound = u32Check(half2 * (W + H), 'diag bound');
-    const rhs = u32Check(half2 * half2 * (W * W + H * H), 'diag rhs');
+    const scale = lightPx === 1 ? 10 : 1;
+    const halfS = lightPx === 1 ? 11 : lightPx;
+    const bound = u32Check(halfS * (W + H), 'diag bound');
+    const rhs = u32Check(halfS * halfS * (W * W + H * H), 'diag rhs');
     if (e.diagSlash) {
-      const d = absDiff((2 * lx + 1) * H + (2 * ly + 1) * W, 2 * W * H);
-      if (d <= bound && u32Check(d * d, 'diag dSlash^2') <= rhs) return true;
+      const dS = u32Check(scale * absDiff((2 * lx + 1) * H + (2 * ly + 1) * W, 2 * W * H), 'diag dSlashS');
+      if (dS <= bound && u32Check(dS * dS, 'diag dSlashS^2') <= rhs) return true;
     }
     if (e.diagBackslash) {
-      const d = absDiff((2 * lx + 1) * H, (2 * ly + 1) * W);
-      if (d <= bound && u32Check(d * d, 'diag dBack^2') <= rhs) return true;
+      const dS = u32Check(scale * absDiff((2 * lx + 1) * H, (2 * ly + 1) * W), 'diag dBackS');
+      if (dS <= bound && u32Check(dS * dS, 'diag dBackS^2') <= rhs) return true;
     }
     return false;
   }
