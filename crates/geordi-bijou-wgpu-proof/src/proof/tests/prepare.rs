@@ -157,12 +157,14 @@ fn the_largest_canonical_grid_prepares_one_record_per_cell() -> TestResult {
     let cells = vec![EMPTY_CELL; MAX_CELLS as usize];
     let prepared = prepare_cells(&parse_value(&receipt(400, 250, &cells, &[]))?, &pack()?)?;
     assert_eq!(prepared.words.len(), MAX_CELLS as usize * 4);
-    assert!(prepared.atlas_uses.is_empty());
+    assert_eq!(prepared.atlas_uses, []);
     assert!(
         prepared
             .words
-            .chunks_exact(4)
-            .all(|words| words == [0, 0x8000_0000, 0, 0])
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .all(|words| *words == [0, 0x8000_0000, 0, 0])
     );
     Ok(())
 }

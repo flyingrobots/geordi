@@ -6,22 +6,9 @@
 //!
 //! The ABI is frozen in `docs/design/2026-11-bijou-surface-gpu-abi.md`.
 
-#[cfg(test)]
-mod tests;
+mod proof;
 
-mod error;
-mod glyph_pack;
-mod intake;
-mod prepare;
-
-pub use error::{ErrorCode, ProofError};
-pub use glyph_pack::{
-    GLYPH_PACK_PATH, GLYPH_PACK_VERSION, GlyphKind, GlyphPack, GlyphSlot, PINNED_GLYPH_PACK_SHA256,
-};
-pub use intake::{
-    CELL_STRIDE, MAX_CELLS, MAX_DIMENSION, MAX_INPUT_BYTES, PackedCells, parse_packed_cells,
-};
-pub use prepare::{AtlasGlyphUse, PreparedCells, prepare_cells};
+pub use proof::*;
 
 /// Version of the ABI this host presents.
 pub const GPU_ABI_VERSION: &str = geordi_bijou_shadergen::GPU_ABI_VERSION;

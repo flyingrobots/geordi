@@ -59,6 +59,8 @@ fn a_glyph_pack_that_is_not_the_pinned_file_is_refused() -> TestResult {
     Ok(())
 }
 
+type Edit<'a> = &'a dyn Fn(&mut Value);
+
 #[test]
 fn malformed_glyph_packs_are_refused() -> TestResult {
     let good: Value = serde_json::from_slice(&read_repo(GLYPH_PACK_PATH)?)?;
@@ -74,7 +76,7 @@ fn malformed_glyph_packs_are_refused() -> TestResult {
         8
     );
 
-    let cases: [(&str, &dyn Fn(&mut Value), ErrorCode); 9] = [
+    let cases: [(&str, Edit<'_>, ErrorCode); 9] = [
         (
             "version",
             &|pack| pack["packVersion"] = json!("geordi-bijou-gpu-test-glyph-pack/2"),
@@ -128,7 +130,7 @@ fn malformed_glyph_packs_are_refused() -> TestResult {
     for (label, edit, code) in cases {
         let error = mutate(edit)
             .err()
-            .ok_or(format!("accepted a pack with a bad {label}"))?;
+            .ok_or_else(|| format!("accepted a pack with a bad {label}"))?;
         assert_eq!(error.code, code, "{label}: {error}");
     }
     Ok(())
@@ -432,7 +434,7 @@ fn excessive_and_empty_dimensions_are_refused() {
     let mut document = receipt(1, 1, &[EMPTY_CELL], &[]);
     document["widthCells"] = json!(317);
     document["heightCells"] = json!(316);
-    assert!(317 * 316 > MAX_CELLS);
+    const { assert!(317 * 316 > MAX_CELLS) };
     assert_refused(&document, invalid, "$");
 }
 
