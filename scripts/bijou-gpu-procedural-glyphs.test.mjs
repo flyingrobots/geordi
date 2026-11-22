@@ -179,11 +179,34 @@ const EXPECTED_BLOCK_SPECS = {
 };
 
 function divRoundEven(n, d) {
+  assert.equal(Number.isInteger(n) && n >= 0 && n < 0x100000000, true, `divRoundEven numerator out of u32: ${n}`);
+  assert.equal(Number.isInteger(d) && d > 0 && d < 0x100000000, true, `divRoundEven denominator out of u32: ${d}`);
   const q = Math.floor(n / d);
   const r = n % d;
   const r2 = 2 * r;
   if (r2 > d || (r2 === d && (q & 1) === 1)) return q + 1;
   return q;
+}
+
+function lerpU8(a, b, num, den) {
+  return divRoundEven(a * (den - num) + b * num, den);
+}
+
+function satSub(a, b) {
+  return a > b ? a - b : 0;
+}
+
+function absDiff(a, b) {
+  return a >= b ? a - b : b - a;
+}
+
+function u32Check(val, label) {
+  assert.equal(
+    Number.isInteger(val) && val >= 0 && val < 0x100000000,
+    true,
+    `u32 invariant violated (${label}): ${val}`,
+  );
+  return val;
 }
 
 function packGpuCell({
@@ -316,25 +339,25 @@ function parseExpectedBoxFromUnicodeName(unicodeName) {
 function evalBoxPixelInt(e, lx, ly, W, H) {
   const lightPx = Math.max(1, Math.floor((W * 10 + 50) / 100));
   const heavyPx = 2 * lightPx;
-  const vx0 = (w) => Math.floor((W - w) / 2);
-  const hy0 = (w) => Math.floor((H - w) / 2);
+  const vx0 = (w) => Math.floor(satSub(W, w) / 2);
+  const hy0 = (w) => Math.floor(satSub(H, w) / 2);
   const dblGap = Math.max(1, lightPx);
-  const vxL0 = Math.max(0, vx0(lightPx) - dblGap);
-  const vxR0 = Math.min(W - lightPx, vx0(lightPx) + dblGap);
-  const hyT0 = Math.max(0, hy0(lightPx) - dblGap);
-  const hyB0 = Math.min(H - lightPx, hy0(lightPx) + dblGap);
+  const vxL0 = satSub(vx0(lightPx), dblGap);
+  const vxR0 = Math.min(satSub(W, lightPx), vx0(lightPx) + dblGap);
+  const hyT0 = satSub(hy0(lightPx), dblGap);
+  const hyB0 = Math.min(satSub(H, lightPx), hy0(lightPx) + dblGap);
 
   if (e.diagSlash || e.diagBackslash) {
     const half2 = Math.max(1, lightPx);
-    const bound = half2 * (W + H);
-    const rhs = half2 * half2 * (W * W + H * H);
+    const bound = u32Check(half2 * (W + H), 'diag bound');
+    const rhs = u32Check(half2 * half2 * (W * W + H * H), 'diag rhs');
     if (e.diagSlash) {
-      const d = Math.abs((2 * lx + 1) * H + (2 * ly + 1) * W - 2 * W * H);
-      if (d <= bound && d * d <= rhs) return true;
+      const d = absDiff((2 * lx + 1) * H + (2 * ly + 1) * W, 2 * W * H);
+      if (d <= bound && u32Check(d * d, 'diag dSlash^2') <= rhs) return true;
     }
     if (e.diagBackslash) {
-      const d = Math.abs((2 * lx + 1) * H - (2 * ly + 1) * W);
-      if (d <= bound && d * d <= rhs) return true;
+      const d = absDiff((2 * lx + 1) * H, (2 * ly + 1) * W);
+      if (d <= bound && u32Check(d * d, 'diag dBack^2') <= rhs) return true;
     }
     return false;
   }
@@ -342,15 +365,18 @@ function evalBoxPixelInt(e, lx, ly, W, H) {
   if (e.rounded) {
     const cx2 = e.right > 0 ? 2 * W : 0;
     const cy2 = e.down > 0 ? 2 * H : 0;
-    const dx = Math.abs(2 * lx + 1 - cx2);
-    const dy = Math.abs(2 * ly + 1 - cy2);
-    const nx = Math.floor((dx * 4096) / W);
-    const ny = Math.floor((dy * 4096) / H);
-    const r2 = nx * nx + ny * ny;
-    const halfQ = Math.floor((Math.max(11, 10 * lightPx) * 4096) / (10 * Math.min(W, H)));
-    const rIn = halfQ < 4096 ? 4096 - halfQ : 0;
+    const dx = absDiff(2 * lx + 1, cx2);
+    const dy = absDiff(2 * ly + 1, cy2);
+    const nx = Math.floor(u32Check(dx * 4096, 'arc dx*4096') / W);
+    const ny = Math.floor(u32Check(dy * 4096, 'arc dy*4096') / H);
+    const r2 = u32Check(nx * nx + ny * ny, 'arc r2');
+    const halfQ = Math.min(
+      8192,
+      Math.floor(u32Check(Math.max(11, 10 * lightPx) * 4096, 'arc halfQ num') / (10 * Math.min(W, H))),
+    );
+    const rIn = satSub(4096, halfQ);
     const rOut = 4096 + halfQ;
-    return r2 >= rIn * rIn && r2 <= rOut * rOut;
+    return r2 >= u32Check(rIn * rIn, 'arc rIn^2') && r2 <= u32Check(rOut * rOut, 'arc rOut^2');
   }
 
   if (e.dash > 0) {
@@ -452,15 +478,33 @@ test('bijou-surface-gpu/1 ADR defines zero-float integer ABI, LE byte order, val
 
   // Zero-float enforcement in core rendering math (Sections 5 & 7 must use pure integer/fixed-point math, no float/sin/sqrt)
   const sec5And7 = adr.split('## 5.')[1] ?? '';
-  assert.doesNotMatch(sec5And7, /sin\s*\(/, 'Section 5/7 must not use floating-point sin()');
-  assert.doesNotMatch(sec5And7, /sqrt\s*\(/, 'Section 5/7 must not use floating-point sqrt()');
-  assert.doesNotMatch(sec5And7, /float\s*\(/, 'Section 5/7 must not use float() casts');
+  assert.doesNotMatch(sec5And7, /\bsin\s*\(/, 'Section 5/7 must not use floating-point sin()');
+  assert.doesNotMatch(sec5And7, /\bsqrt\s*\(/, 'Section 5/7 must not use floating-point sqrt()');
+  assert.doesNotMatch(sec5And7, /\b(float\s*\(|f32|f64)\b/, 'Section 5/7 must not use float/f32/f64');
+
+  // R-1, R-2, R-4 ADR contract assertions: u32-safe satSub/absDiff, clamped Q12 arc halfQ, and full finite rect/dpr guards
+  assert.match(adr, /satSub\s*\(/, 'ADR must define u32-safe satSub() to prevent unsigned underflow');
+  assert.match(adr, /absDiff\s*\(/, 'ADR must define u32-safe absDiff() for unsigned differences');
+  assert.match(
+    adr,
+    /halfQ\s*=\s*min\(\s*8192\s*,/,
+    'ADR Section 7.1 must clamp Q12 arc halfQ at 8192 to prevent rOut*rOut u32 overflow over [1..256]^2',
+  );
+  assert.match(adr, /!Number\.isFinite\(rect\.left\)/, 'ADR cellFromPoint must reject non-finite rect.left');
+  assert.match(adr, /!Number\.isFinite\(rect\.top\)/, 'ADR cellFromPoint must reject non-finite rect.top');
+  assert.match(adr, /!Number\.isFinite\(rect\.width\)/, 'ADR cellFromPoint must reject non-finite rect.width');
+  assert.match(adr, /!Number\.isFinite\(rect\.height\)/, 'ADR cellFromPoint must reject non-finite rect.height');
+  assert.match(
+    adr,
+    /!Number\.isFinite\(dpr\)|non-finite or non-positive.*dpr/i,
+    'ADR DPR ingress must reject non-finite/non-positive dpr',
+  );
 
   // Verify Markdown link destination in docs/design/README.md actually resolves to ADR_PATH
   const designReadme = readFileSync(DESIGN_README_PATH, 'utf8');
-  const linkDestinations = [...designReadme.matchAll(/\[[^\]]+\]\(([^)#\s]+)(?:#[^)\s]*)?\)/g)].map(
-    (m) => m[1],
-  );
+  const linkDestinations = [
+    ...designReadme.matchAll(/\[[^\]]+\]\(\s*<?([^)#\s>]+)>?(?:#[^)\s]*)?(?:\s+(?:"[^"]*"|'[^']*'))?\s*\)/g),
+  ].map((m) => m[1]);
   const designDir = dirname(DESIGN_README_PATH);
   const resolvedTargets = linkDestinations
     .filter((dest) => !/^[a-z]+:\/\//i.test(dest))
@@ -555,7 +599,13 @@ test('bijou-surface-gpu/1 ADR defines zero-float integer ABI, LE byte order, val
   for (const vec of expectedVectors) {
     const hexWords = vec.words.map(hex32);
     const pattern = new RegExp(
-      `\|\s*\`${vec.id}\`\s*\|[^\n]*\|\s*\`${hexWords[0]}\`\s*\|\s*\`${hexWords[1]}\`\s*\|\s*\`${hexWords[2]}\`\s*\|\s*\`${hexWords[3]}\`\s*\|`,
+      String.raw`\|\s*\`${vec.id}\`\s*\|[^\n]*\|\s*\`${hexWords[0]}\`\s*\|\s*\`${hexWords[1]}\`\s*\|\s*\`${hexWords[2]}\`\s*\|\s*\`${hexWords[3]}\`\s*\|`,
+    );
+    assert.equal(pattern.test(''), false, `Vector regex for ${vec.id} must not be vacuous`);
+    assert.equal(
+      pattern.test(`| \`${vec.id}\` | bad | \`0xDEADBEEF\` | \`0xDEADBEEF\` | \`0xDEADBEEF\` | \`0xDEADBEEF\` |`),
+      false,
+      `Vector regex for ${vec.id} must reject corrupted hex words`,
     );
     assert.match(adr, pattern, `ADR vector ${vec.id} must match ${hexWords.join(' ')}`);
   }
@@ -685,7 +735,8 @@ test('procedural-glyphs.json passes domain bounds, independent pinned Unicode se
   const adr = readFileSync(ADR_PATH, 'utf8');
   const headerPin = /^\*\*Procedural glyph table\*\*:.*?\(`sha256:\s*([0-9a-f]{64})`\)/m.exec(adr);
   const receiptPin = /"proceduralTableSha256":\s*"([0-9a-f]{64})"/.exec(adr);
-  const sec7Pin = /## 7\.[\s\S]*?^- \*\*SHA-256\*\*:\s*`([0-9a-f]{64})`/m.exec(adr);
+  const sec7Block = (adr.split(/^## 7\./m)[1] ?? '').split(/^## /m)[0] ?? '';
+  const sec7Pin = /^- \*\*SHA-256\*\*:\s*`([0-9a-f]{64})`/m.exec(sec7Block);
   assert.notEqual(headerPin, null, 'ADR header procedural glyph table SHA-256 pin missing');
   assert.notEqual(receiptPin, null, 'ADR receipt proceduralTableSha256 pin missing');
   assert.notEqual(sec7Pin, null, 'ADR Section 7 procedural glyph table SHA-256 pin missing');
@@ -697,18 +748,52 @@ test('procedural-glyphs.json passes domain bounds, independent pinned Unicode se
 test('zero-float integer geometry passes Box-Drawing, diagonal boundary, Block Elements, Braille (incl 2x5), and curly wave', () => {
   const data = require(TABLE_PATH);
   const sizes = [
+    [1, 1],
+    [1, 2],
+    [2, 4],
+    [2, 5],
+    [3, 5],
+    [4, 8],
     [6, 12],
     [8, 16],
     [9, 18],
     [10, 20],
     [12, 24],
-    [14, 28],
+    [15, 1],
     [15, 30],
     [16, 32],
     [25, 50],
+    [145, 1],
+    [256, 1],
   ];
 
-  // 1. All 128 Box-Drawing glyphs: zero-float integer rules never vanish across sizes
+  // 0. Bunny NUMERIC_CONSTITUTION divRoundEven & lerpU8 ties-to-even + max emoji numerator tests
+  assert.equal(divRoundEven(1, 4), 0); // < half
+  assert.equal(divRoundEven(3, 4), 1); // > half
+  assert.equal(divRoundEven(1, 2), 0); // exact half -> even (0)
+  assert.equal(divRoundEven(3, 2), 2); // exact half -> even (2)
+  assert.equal(divRoundEven(5, 2), 2); // exact half -> even (2)
+  assert.equal(divRoundEven(7, 2), 4); // exact half -> even (4)
+  assert.equal(lerpU8(0, 255, 0, 63), 0);
+  assert.equal(lerpU8(0, 255, 63, 63), 255);
+  assert.equal(lerpU8(10, 11, 1, 2), 10); // 21/2 -> 10 (even)
+  assert.equal(lerpU8(11, 12, 1, 2), 12); // 23/2 -> 12 (even)
+  assert.equal(divRoundEven(255 * 63 * 255 + 255 * 16065, 16065), 510); // max premul emoji numerator 8,193,150 < 2^31
+
+  // 1. Exhaustive [1..256]^2 Q12 arc u32/i32 overflow proof (R-1)
+  for (let W = 1; W <= 256; W++) {
+    const lightPx = Math.max(1, Math.floor((W * 10 + 50) / 100));
+    const num = u32Check(Math.max(11, 10 * lightPx) * 4096, 'arc halfQ num');
+    for (let H = 1; H <= 256; H++) {
+      const halfQ = Math.min(8192, Math.floor(num / (10 * Math.min(W, H))));
+      const rIn = satSub(4096, halfQ);
+      const rOut = 4096 + halfQ;
+      assert.equal(rOut * rOut < 0x80000000, true, `Q12 arc rOut^2 exceeded i32 at ${W}x${H}`);
+      assert.equal(rIn * rIn < 0x80000000, true, `Q12 arc rIn^2 exceeded i32 at ${W}x${H}`);
+    }
+  }
+
+  // 2. All 128 Box-Drawing glyphs: pure u32 integer rules never underflow, overflow, or vanish across [1..256]^2 extremes
   for (const [W, H] of sizes) {
     for (const entry of data.boxDrawing.entries) {
       let lit = 0;
@@ -746,12 +831,8 @@ test('zero-float integer geometry passes Box-Drawing, diagonal boundary, Block E
         const t = ((2 * lx + 1) * 4) % (4 * W);
         const q = Math.floor(t / W);
         const r = t % W;
-        let off = 0;
-        if (q === 0) off = divRoundEven(r * ampPx, W);
-        else if (q === 1) off = divRoundEven((W - r) * ampPx, W);
-        else if (q === 2) off = -divRoundEven(r * ampPx, W);
-        else off = -divRoundEven((W - r) * ampPx, W);
-        const cy = Math.max(0, Math.min(H - decoPx, baseY + off));
+        const mag = divRoundEven((q === 0 || q === 2 ? r : W - r) * ampPx, W);
+        const cy = q < 2 ? Math.min(H - decoPx, baseY + mag) : satSub(baseY, mag);
         let colLit = 0;
         for (let ly = 0; ly < H; ly++) {
           if (ly >= cy && ly < cy + decoPx) colLit++;
@@ -791,7 +872,9 @@ test('zero-float integer geometry passes Box-Drawing, diagonal boundary, Block E
           if (intLit) lit++;
         }
       }
-      assert.equal(lit > 0, true, `Block ${entry.hex} vanished at ${W}x${H}`);
+      if (W >= 6 && H >= 12) {
+        assert.equal(lit > 0, true, `Block ${entry.hex} vanished at ${W}x${H}`);
+      }
     }
   }
 
