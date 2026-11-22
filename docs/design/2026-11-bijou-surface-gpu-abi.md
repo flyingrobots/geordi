@@ -4,12 +4,12 @@
 **Date**: 2026-11-21
 **Issue**: [#168](https://github.com/flyingrobots/geordi/issues/168)
 **Downstream implementation issues**: [#169](https://github.com/flyingrobots/geordi/issues/169) (conformance kit), [#170](https://github.com/flyingrobots/geordi/issues/170) (canonical WGSL + `naga` GLSL generator), [#171](https://github.com/flyingrobots/geordi/issues/171) (dirty-union packer), [#172](https://github.com/flyingrobots/geordi/issues/172) (`GlyphAtlas`), [#173](https://github.com/flyingrobots/geordi/issues/173) (WebGL2), [#174](https://github.com/flyingrobots/geordi/issues/174) (Canvas 2D), [#175](https://github.com/flyingrobots/geordi/issues/175) (WebGPU), [#58](https://github.com/flyingrobots/geordi/issues/58) (native Rust `wgpu`)
-**Upstream Bijou contracts read**: `flyingrobots/bijou` at `906666f9` (`packages/bijou/src/core/render/packed-cell.part01.ts`, `packages/bijou/src/core/packed-bijou-cells-contract.ts`, `packages/bijou/src/core/packed-bijou-cells-glyph-policy.ts`, `packages/bijou/src/ports/surface-contract.ts`, `packages/bijou/src/core/render/differ-packed.ts`, `docs/design/RE-510-geordi-native-gpu-host-for-bijou-cell-buffers.md`)
+**Upstream contracts read**: `flyingrobots/bijou` at `906666f9` (`packages/bijou/src/core/render/packed-cell.part01.ts`, `packages/bijou/src/core/packed-bijou-cells-contract.ts`, `packages/bijou/src/core/packed-bijou-cells-glyph-policy.ts`, `packages/bijou/src/ports/surface-contract.ts`, `packages/bijou/src/core/render/differ-packed.ts`, `docs/design/RE-510-geordi-native-gpu-host-for-bijou-cell-buffers.md`); `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md`)
 **Procedural glyph table**: [`fixtures/bijou-gpu/procedural-glyphs.json`](../../fixtures/bijou-gpu/procedural-glyphs.json) (`sha256: 7ebc92f74a57ec7744fc7ada20c886d76b4ea96c09b5005efbf0883562d62e46`)
 
 ## Reader job
 
-This record freezes the endpoint-prepared GPU ABI (`bijou-surface-gpu/1`) that lets Geordi present Bijou's canonical `PackedSurface` (`packed-bijou-cells/1` / `bijou-packed-cell-u8x10-le/1`) across browser WebGPU, browser WebGL2, browser Canvas 2D fallback, and native Rust `wgpu` (`#58`) from one single contract and one single procedural glyph data table.
+This record freezes the endpoint-prepared GPU ABI (`bijou-surface-gpu/1`) that lets Geordi present Bijou's canonical `PackedSurface` (`packed-bijou-cells/1` / `bijou-packed-cell-u8x10-le/1`) across browser WebGPU, browser WebGL2, browser Canvas 2D fallback, and native Rust `wgpu` (`#58`) from one single contract, one pure-integer zero-float rendering arithmetic law, and one single procedural glyph data table.
 
 Statements about what exists today cite the file and revision they come from. Planned contracts in Bijou or Geordi are labeled planned and linked to their issues. Nothing in `packages/bijou-gpu/` is implemented yet; this ADR defines the load-bearing ABI before any atlas, packer, shader, or presenter code lands.
 
@@ -22,11 +22,26 @@ Per [`docs/design/2026-06-portable-bijou-ui-render-endpoints.md`](./2026-06-port
 
 Geordi may present Bijou cells on the GPU. Geordi must not redefine Bijou cell semantics or invent canonical wide-cell rules.
 
+## Deterministic numeric law (zero floats in core rendering)
+
+Following `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md`):
+
+- **Zero floating-point arithmetic inside core rendering:** Every pixel evaluation in Sections 5 and 7—color blending, `DIM`, opacity, underlines, curly underlines, Box-Drawing arms/junctions/dashes/rounded arcs/diagonals, Block Elements, and Braille—uses strictly **32-bit integer and fixed-point arithmetic (`u32`/`i32`)** with explicit proven-infallible overflow bounds. No `f32`, `f64`, `sin`, `sqrt`, or platform-dependent transcendental calls may appear in core rendering math.
+- **Canonical rounding (`divRoundEven`):** Matches Bunny's Banker's Rounding / ties-to-even rule for non-negative integers `n >= 0`, `d > 0`:
+  ```text
+  divRoundEven(n, d):
+    q = n / d
+    r = n % d
+    return (2 * r > d || (2 * r == d && (q & 1) == 1)) ? (q + 1) : q
+  ```
+- **Valid physical cell domain:** `1 <= cellPxW <= 256` and `1 <= cellPxH <= 256`. Dimensions outside `[1..256]` MUST fail loudly at validation (`GEORDI_E_BIJOU_INVALID_CELL_METRICS`) so every `u32` intermediate proof below holds unconditionally.
+- **Float ingress is host-edge only:** Browser CSS values (`clientX`, `rect`, `dpr`) are converted once at the DOM host boundary with explicit non-finite/non-positive rejection; core rendering operates exclusively on integers (`u8`/`u32`/`i32`). Final GPU fragment output converts the exact integer RGB triple `(r, g, b)` (`0..255`) to the swapchain at the terminal return instruction only.
+
 ## Options considered
 
 | Option | Summary | Decision |
 | --- | --- | --- |
-| **Option A (Selected)** | **16-byte `rgba32uint` (`vec4<u32>` / `uvec4`) prepared cell texture (`textureLoad`) + procedural Braille, Block/Quadrant, and Box-Drawing driven by one checked-in per-codepoint data table compiled into a static WGSL `const` block + `packages/bijou-gpu`.** | **Selected.** Single `textureLoad` per fragment, identical data path across WebGPU, WebGL2, and native `wgpu`, zero inter-cell box-drawing seams at any DPR, zero extra GPU texture bindings, and zero changes to Bijou's canonical 10-byte format. |
+| **Option A (Selected)** | **16-byte `rgba32uint` (`vec4<u32>` / `uvec4`) prepared cell texture (`textureLoad`) + pure-integer procedural Braille, Block/Quadrant, and Box-Drawing driven by one checked-in per-codepoint data table compiled into a static WGSL `const` block + `packages/bijou-gpu`.** | **Selected.** Single `textureLoad` per fragment, identical zero-float integer data path across WebGPU, WebGL2, and native `wgpu`, zero inter-cell box-drawing seams at any DPR, zero extra GPU texture bindings, and zero changes to Bijou's canonical 10-byte format. |
 | **Option B (Rejected)** | Raw 10-byte `rg8ui` texture upload with zero CPU repack. | Rejected. Requires five `texelFetch` reads per pixel plus a per-fragment `charCode -> atlasSlot` indirection table lookup on every pixel. |
 | **Option C (Rejected)** | Per-cell instanced quad vertex buffers (two triangles per cell). | Rejected. Adds vertex-buffer lifecycle complexity and forfeits single fullscreen-triangle screen-space shader composition. |
 | **Option D (Rejected)** | 16-byte `rgba32uint` texture with CPU-rasterized box, block, and Braille glyphs baked into the atlas (Kitty/Ghostty/WezTerm style). | Rejected for v1. Eliminates shader geometry branches and unifies Canvas 2D pixels, but requires building and maintaining a separate deterministic Rust box/block/Braille rasterizer for native `#58`. May be revisited in `bijou-surface-gpu/2` if GPU shader complexity ever outweighs a shared Rust/TS rasterizer. |
@@ -42,9 +57,18 @@ All TypeScript browser GPU cell-presentation code lives in a dedicated Geordi wo
 
 Keeping `@flyingrobots/geordi-bijou-gpu` separate from `@flyingrobots/geordi-runtime-webgl` keeps the existing `geordi-ir/1` rectangle and strict-text proof harnesses untouched.
 
-## 2. Prepared GPU cell record (`rgba32uint`, 16 bytes/cell)
+## 2. Prepared GPU cell record (`rgba32uint`, 16 bytes/cell, little-endian)
 
-Each terminal cell at `(col, row)` in a `widthCells × heightCells` grid is prepared into **four `u32` lanes (`[word0, word1, word2, word3]`, 16 bytes)** stored in row-major order (`index = row * widthCells + col`) and uploaded to an **`rgba32uint`** 2D texture of dimensions `(widthCells, heightCells)` sampled strictly with **`textureLoad` / `texelFetch` at LOD 0** (no filtering, no mipmaps).
+Each terminal cell at `(col, row)` in a `widthCells × heightCells` grid is prepared into **four unsigned 32-bit lanes (`[word0, word1, word2, word3]`, 16 bytes)** stored in row-major order (`index = row * widthCells + col`) and uploaded to an **`rgba32uint`** 2D texture of dimensions `(widthCells, heightCells)` sampled strictly with **`textureLoad` / `texelFetch` at LOD 0** (no filtering, no mipmaps).
+
+### Canonical byte order (little-endian)
+
+All binary serializations, GPU texture uploads, and `preparedBufferSha256` digests MUST encode each `u32` lane in **little-endian byte order** (least-significant byte first: `[w & 0xFF, (w >> 8) & 0xFF, (w >> 16) & 0xFF, (w >> 24) & 0xFF]`, matching `u32::to_le_bytes()` in Rust and `DataView.setUint32(byteOffset, w, true)` in TypeScript):
+
+- Bytes `0..3`: `word0` (little-endian)
+- Bytes `4..7`: `word1` (little-endian) — byte `4` = `fg_r`, byte `5` = `fg_g`, byte `6` = `fg_b`, byte `7` = `flags`
+- Bytes `8..11`: `word2` (little-endian) — byte `8` = `bg_r`, byte `9` = `bg_g`, byte `10` = `bg_b`, byte `11` = `alpha_byte`
+- Bytes `12..15`: `word3` (little-endian) — `00 00 00 00`
 
 Using `rgba32uint` + `textureLoad` on WebGPU, WebGL2, and native `wgpu` keeps one identical data path across every GPU target and avoids fragment-stage storage-buffer limits on downlevel WebGPU adapters.
 
@@ -69,33 +93,34 @@ Using `rgba32uint` + `textureLoad` on WebGPU, WebGL2, and native `wgpu` keeps on
 
 | `glyph_kind` | Constant Name | `glyph_payload` (`word0 & 0xFFFFu`) | Shader Behavior |
 | --- | --- | --- | --- |
-| `0` | `GLYPH_KIND_EMPTY` | `0` | No glyph coverage (`0.0`); still paints resolved `bg`, underlines, and strikethrough if set. Used for `CHAR_EMPTY` (live `PackedSurface`), `FLAG_EMPTY`, and ASCII space (`U+0020`, canonical `packed-bijou-cells/1` empty cell). |
-| `1` | `GLYPH_KIND_ATLAS_MONO` | Atlas slot index (`0..65535`) | Sample `GlyphAtlas` at slot `payload`; monochrome coverage = `texel.a`; tint with resolved `fg`. |
-| `2` | `GLYPH_KIND_ATLAS_COLOR` | Atlas slot index (`0..65535`) | Sample `GlyphAtlas` at slot `payload`; premultiplied sRGB RGBA color glyph (do not tint with `fg`). |
+| `0` | `GLYPH_KIND_EMPTY` | `0` | No glyph coverage (`0`); still paints resolved `bg`, underlines, and strikethrough if set. Used for `CHAR_EMPTY` (live `PackedSurface`), `FLAG_EMPTY`, and ASCII space (`U+0020`, canonical `packed-bijou-cells/1` empty cell). |
+| `1` | `GLYPH_KIND_ATLAS_MONO` | Atlas slot index (`0..65535`) | Load `GlyphAtlas` integer texel at slot `payload`; monochrome coverage = `texel.a` (`0..255`); tint with resolved `fg`. |
+| `2` | `GLYPH_KIND_ATLAS_COLOR` | Atlas slot index (`0..65535`) | Load `GlyphAtlas` integer texel at slot `payload`; premultiplied sRGB `u8` RGBA color glyph (do not tint with `fg`). |
 | `3` | `GLYPH_KIND_BRAILLE` | `codePoint - 0x2800` (`0..255`) | Procedural 2×4 Braille dot mask directly from the 8-bit Unicode payload (zero lookup table). |
 | `4` | `GLYPH_KIND_BLOCK` | `codePoint - 0x2580` (`0..31`) | Index into static `BLOCK_GLYPHS[payload]` generated from `fixtures/bijou-gpu/procedural-glyphs.json`. |
 | `5` | `GLYPH_KIND_BOX` | `codePoint - 0x2500` (`0..127`) | Index into static `BOX_GLYPHS[payload]` generated from `fixtures/bijou-gpu/procedural-glyphs.json`. |
 
-### Pixel, cell-local, and atlas coordinates
+### Pixel, cell-local, and atlas coordinates (integer)
 
-For every integer physical output pixel `(px, py)` with `0 <= px < cols * cellPxW` and `0 <= py < rows * cellPxH` (origin `(0, 0)` at top-left, `+X` right, `+Y` down):
+For every integer physical output pixel `(px, py)` with `0 <= px < cols * cellPxW` and `0 <= py < rows * cellPxH` (origin `(0, 0)` at top-left, `+X` right, `+Y` down; `/` is integer floor division):
 
 ```text
-col = floor(px / cellPxW)
-row = floor(py / cellPxH)
+col = px / cellPxW
+row = py / cellPxH
 cellLocalPx = (lx, ly) = (px - col * cellPxW, py - row * cellPxH)
-uv = ((lx + 0.5) / cellPxW, (ly + 0.5) / cellPxH)
 ```
 
-In fragment shaders:
-- **WebGPU / native `wgpu`**: `@builtin(position).xy` is already at top-left pixel centers `(px + 0.5, py + 0.5)`, so `(px, py) = (u32(floor(pos.x)), u32(floor(pos.y)))`.
-- **WebGL2**: `gl_FragCoord.y` has bottom-left origin, so convert `fragY = float(uCanvasPxH) - gl_FragCoord.y` and compute `(px, py) = (u32(floor(gl_FragCoord.x)), u32(floor(fragY)))`.
+Pixel centers correspond mathematically to exact rationals `(2 * lx + 1) / (2 * cellPxW)` and `(2 * ly + 1) / (2 * cellPxH)`, evaluated without floats by integer cross-multiplication.
 
-The `GlyphAtlas` is an `rgba8unorm` 2D texture of `atlasCols * cellPxW` by `atlasRows * cellPxH` physical pixels sampled with exact integer texel loads (`textureLoad` / `texelFetch` at LOD 0). For any slot index `s`:
+In fragment shaders (converting hardware rasterizer position once to integer `(px, py)`):
+- **WebGPU / native `wgpu`**: `@builtin(position).xy` is at top-left pixel centers `(px + 0.5, py + 0.5)`, so `(px, py) = (u32(pos.x), u32(pos.y))`.
+- **WebGL2**: `gl_FragCoord.y` has bottom-left origin (`0.5 .. canvasPxH - 0.5`), so `px = uint(gl_FragCoord.x)` and `py = (uCanvasPxH - 1u) - uint(gl_FragCoord.y)`.
+
+The `GlyphAtlas` is an **`rgba8uint`** (`texture_2d<u32>` / `usampler2D`) 2D texture of `atlasCols * cellPxW` by `atlasRows * cellPxH` physical pixels sampled strictly with exact integer texel loads (`textureLoad` / `texelFetch` at LOD 0), returning exact `u8` channel values in `0..255` with zero floating-point normalization round-trip. For any slot index `s`:
 
 ```text
 slotCol = s % atlasCols
-slotRow = floor(s / atlasCols)
+slotRow = s / atlasCols
 atlasOriginPx = (slotCol * cellPxW, slotRow * cellPxH)
 samplePx = (atlasOriginPx.x + lx, atlasOriginPx.y + ly)
 ```
@@ -114,6 +139,12 @@ Every downstream packer (`#171`), reference oracle (`#169`), and native host (`#
 | `V3` | Braille `⣿` (`U+28FF`, mask `0xFF`), `fg=#00FFAA`, default bg, `DIM \| INVERSE`, opacity `32` | `0x000300FF` | `0x0AAAFF00` | `0x60000000` | `0x00000000` |
 | `V4` | Block `▀` (`U+2580`, index `0`), `fg=#FFFFFF`, `bg=#223344`, `UNDERLINE_CURLY`, opacity `63` | `0x00040000` | `0x20FFFFFF` | `0xFF443322` | `0x00000000` |
 | `V5` | Box `╭` (`U+256D`, index `109`), `fg=#AA55CC`, default bg, `STRIKETHROUGH \| UNDERLINE_DOTDASH \| FLAG_DASHED`, opacity `63` | `0x0005006D` | `0x74CC55AA` | `0x7F000000` | `0x00000000` |
+
+**Complete little-endian 16-byte serialized vector for `V1`** (used for uploads and `preparedBufferSha256`):
+
+```text
+07 00 01 00 FF 80 40 11 10 20 30 FF 00 00 00 00
+```
 
 ## 3. Width-1 canonical glyph policy boundary
 
@@ -145,29 +176,41 @@ Per Bijou's `PackedSurface` contract (`packages/bijou/src/ports/surface-contract
    - DPR or integer physical cell metric change (`cellPxW`, `cellPxH`).
    - Default theme color uniform change (`uDefaultFg`, `uDefaultBg`).
    - Graphics context or device restoration (`webglcontextrestored`, WebGPU `device.lost` recovery).
-5. **Retained CPU staging buffer:** Every presenter retains its full `Uint32Array(widthCells * heightCells * 4)` staging buffer so context/device restoration can re-upload the complete frame without waiting for a new application render.
+5. **Retained CPU staging buffer:** Every presenter retains its full little-endian `Uint32Array(widthCells * heightCells * 4)` staging buffer so context/device restoration can re-upload the complete frame without waiting for a new application render.
 6. **Synchronous `present()` lifetime:** `present(current, target, ctx)` is synchronous. Callers must consume, pack, or copy every required byte and side-table string before `present()` returns because `bijou-tui`'s `RuntimeFramebuffers.adoptTarget()` immediately swaps/reuses the surface buffers in the `Output` stage.
 
-## 5. Color space, blending, decorations, DPR, and `cellFromPoint` coordinate law
+## 5. Pure-integer color blending, decorations, DPR, and `cellFromPoint` law
 
-### Color space and swapchain format
+### Exact integer color blending (`sRGB-direct`, zero floats)
 
-- **Blend space:** **sRGB-direct** (operating directly on `[0..255] / 255.0` sRGB channel values with no hardware linear-to-sRGB or sRGB-to-linear conversion). This ensures terminal RGB bytes, WebGPU (`bgra8unorm` / `rgba8unorm`, never `-srgb`), WebGL2 (`RGBA8` default framebuffer), Canvas 2D, and `renderReferenceRgba()` produce matching sRGB hex values.
-- **Channel resolution order:**
-  1. `fg = (alpha_byte & 0x40) != 0 ? rgb(word1) : uDefaultFg`
-  2. `bg = (alpha_byte & 0x80) != 0 ? rgb(word2) : uDefaultBg`
-  3. If `(flags & FLAG_INVERSE) != 0`, swap `fg` and `bg`.
-  4. If `(flags & FLAG_DIM) != 0`, `fg = mix(bg, fg, 0.5)` (50% attenuation toward resolved `bg`, staying legible on both dark and light themes).
-  5. `cellOpacity = float(alpha_byte & 0x3Fu) / 63.0`.
-  6. Resolved cell background over canvas backdrop: `baseBg = mix(uDefaultBg, bg, cellOpacity)`.
-  7. For monochrome or procedural coverage `cov` in `[0, 1]`: `outRgb = mix(baseBg, fg, cov * cellOpacity)`.
-  8. For premultiplied color-emoji sample `(emojiRgb, emojiA)` (`GLYPH_KIND_ATLAS_COLOR`): `outRgb = emojiRgb * cellOpacity + baseBg * (1.0 - emojiA * cellOpacity)`.
-  9. Underlines and strikethrough evaluate after glyph compositing using `fg` with `cellOpacity` (`outRgb = mix(outRgb, fg, decoCov * cellOpacity)`).
-  10. Final framebuffer alpha is `1.0` (opaque swapchain). In `renderReferenceRgba()`, each output channel `c` is quantized to `uint8` via `floor(clamp(c, 0.0, 1.0) * 255.0 + 0.5)`.
+All color channels operate on exact integer bytes `0..255` in **sRGB-direct** space (non-`-srgb` swapchains: `bgra8unorm` / `rgba8unorm` in WebGPU, `RGBA8` in WebGL2, `RGBA8` in Canvas 2D and `renderReferenceRgba()`).
 
-### Underline and strikethrough geometry (integer pixel rows, guaranteed non-vanishing)
+Define exact integer interpolation using `divRoundEven` (all intermediates fit comfortably in `u32`, max `<= 8,193,150 < 2^32`):
 
-To guarantee every decoration lights at least 1 physical pixel at all `cellPxH >= 1` (including 1x DPR `8×16` where fixed `0.06` UV bands vanish) with zero `f64`/`f32` tie divergence, define in pure integer arithmetic (`/` is integer floor division):
+```text
+lerpU8(a, b, num, den) = divRoundEven(a * (den - num) + b * num, den)
+```
+
+Channel resolution order (per RGB channel in `0..255`):
+1. `fg = (alpha_byte & 0x40) != 0 ? rgb(word1) : uDefaultFg`
+2. `bg = (alpha_byte & 0x80) != 0 ? rgb(word2) : uDefaultBg`
+3. If `(flags & FLAG_INVERSE) != 0`, swap `fg` and `bg`.
+4. If `(flags & FLAG_DIM) != 0`, `fg = lerpU8(bg, fg, 1, 2)` (50% attenuation toward resolved `bg`, ties-to-even).
+5. `op = alpha_byte & 0x3F` (integer in `0..63`).
+6. Resolved cell background over canvas backdrop: `baseBg = lerpU8(uDefaultBg, bg, op, 63)`.
+7. Glyph compositing:
+   - Solid procedural hit (`lit == 1`): `out = lerpU8(baseBg, fg, op, 63)`.
+   - Procedural Block Element shade (`q ∈ {1, 2, 3}` quarter coverage): `out = lerpU8(baseBg, fg, q * op, 252)` (`252 = 4 * 63`).
+   - Monochrome atlas texel (`covU8 = texel.a` in `0..255`): `out = lerpU8(baseBg, fg, covU8 * op, 16065)` (`16065 = 255 * 63`).
+   - Premultiplied color emoji texel `(emojiRgbU8, emojiAU8)` (`GLYPH_KIND_ATLAS_COLOR`):
+     `out = min(255, divRoundEven(emojiRgbU8 * op * 255 + baseBg * (16065 - emojiAU8 * op), 16065))`.
+   - Empty / unlit pixel: `out = baseBg`.
+8. Decorations (`decoLit ∈ {0, 1}`): if `decoLit == 1`, `out = lerpU8(out, fg, op, 63)`.
+9. Final RGBA8 pixel: `(out.r, out.g, out.b, 255)`.
+
+### Pure-integer underline and strikethrough geometry (zero floats, guaranteed non-vanishing)
+
+Every decoration uses pure integer arithmetic (`/` is integer floor division) and is guaranteed to light `decoPx >= 1` pixels on every lit column for all `1 <= cellPxW, cellPxH <= 256`:
 
 ```text
 decoPx   = max(1, (cellPxH * 6 + 50) / 100)
@@ -178,22 +221,34 @@ strikeY0 = (cellPxH - decoPx) / 2
 - **`UNDERLINE_SOLID` (`0b01 << 4`):** `ly >= ulY0 && ly < ulY0 + decoPx`.
 - **`UNDERLINE_DOTDASH` (`0b11 << 4`, `FLAG_DASHED == 0`, dotted):** `ly >= ulY0 && ly < ulY0 + decoPx && ((lx * 8) / cellPxW) % 2 == 0`.
 - **`UNDERLINE_DOTDASH | FLAG_DASHED` (`dashed`):** `ly >= ulY0 && ly < ulY0 + decoPx && ((lx * 10) / cellPxW) % 5 < 3`.
-- **`UNDERLINE_CURLY` (`0b10 << 4`):** `waveY = (cellPxH * 90) / 100.0 + (cellPxH * 0.03) * sin(uv.x * 4.0 * PI)`, `halfT = 0.5 * decoPx + 0.0625`; lit when `abs((ly + 0.5) - waveY) <= halfT` (since `0.0625 = 1/16` is exact in both IEEE-754 `f32` and `f64`, `halfT >= 0.5625 > 0.5` px guarantees every column `lx` hits at least one integer row `ly` without exact half-integer boundary ties).
+- **`UNDERLINE_CURLY` (`0b10 << 4`, 2-cycle pure-integer triangle wave, zero `sin`):**
+  ```text
+  ampPx = (cellPxH >= 3) ? max(1, (cellPxH * 3 + 50) / 100) : 0
+  baseY = min(cellPxH - decoPx, (cellPxH * 90) / 100)
+  t     = ((2 * lx + 1) * 4) % (4 * cellPxW)
+  q     = t / cellPxW
+  r     = t % cellPxW
+  off   = (q == 0) ?  divRoundEven(r * ampPx, cellPxW)
+        : (q == 1) ?  divRoundEven((cellPxW - r) * ampPx, cellPxW)
+        : (q == 2) ? -divRoundEven(r * ampPx, cellPxW)
+        :            -divRoundEven((cellPxW - r) * ampPx, cellPxW)
+  cy    = clamp(baseY + off, 0, cellPxH - decoPx)
+  lit   = (ly >= cy && ly < cy + decoPx)
+  ```
 - **`FLAG_STRIKETHROUGH` (`0x04`):** `ly >= strikeY0 && ly < strikeY0 + decoPx`.
 
-### Physical pixels, fractional DPR, and letterboxed remainder
+### Physical pixels, DPR host ingress, and letterboxed remainder
 
-- Physical canvas dimensions `(canvasPxW, canvasPxH)` are read from `ResizeObserverEntry.devicePixelContentBoxSize` when available, falling back to `(Math.max(1, Math.round(cssW * dpr)), Math.max(1, Math.round(cssH * dpr)))`.
-- Physical cell dimensions are snapped to positive integers:
-  `cellPxW = Math.max(1, Math.round(cellCssW * dpr))`
-  `cellPxH = Math.max(1, Math.round(cellCssH * dpr))`
-- Grid capacity is `cols = Math.floor(canvasPxW / cellPxW)`, `rows = Math.floor(canvasPxH / cellPxH)`.
+- Host boundary ingress converts CSS dimensions to bounded integer physical pixels:
+  - `(canvasPxW, canvasPxH)` read from `ResizeObserverEntry.devicePixelContentBoxSize` when available, else `(max(1, round(cssW * dpr)), max(1, round(cssH * dpr)))`.
+  - `(cellPxW, cellPxH)` snapped and validated into `[1..256] × [1..256]`.
+- Grid capacity is `cols = canvasPxW / cellPxW`, `rows = canvasPxH / cellPxH` (integer floor division).
 - Origin is **top-left `(0, 0)`** (`+X` right, `+Y` down).
 - Any remainder pixels outside `[0, cols * cellPxW) × [0, rows * cellPxH)` bypass `textureLoad` and emit solid `uDefaultBg`.
 
-### `cellFromPoint(clientX, clientY)` coordinate law
+### `cellFromPoint(clientX, clientY)` host-boundary coordinate law
 
-Every presenter and the planned `@flyingrobots/bijou-web` input adapter ([`bijou#793`](https://github.com/flyingrobots/bijou/issues/793)) MUST implement the exact same **0-based** hit-test:
+Every presenter and the planned `@flyingrobots/bijou-web` input adapter ([`bijou#793`](https://github.com/flyingrobots/bijou/issues/793)) MUST implement the exact same **0-based** host-boundary hit-test:
 
 ```text
 if (cols === 0 || rows === 0 || rect.width <= 0 || rect.height <= 0 || !isFinite(clientX) || !isFinite(clientY))
@@ -261,7 +316,7 @@ The single source of truth for all 416 procedural terminal glyphs is checked in 
 - **Schema**: `bijou-procedural-glyphs/1`
 - **SHA-256**: `7ebc92f74a57ec7744fc7ada20c886d76b4ea96c09b5005efbf0883562d62e46`
 
-Both `#169` (TypeScript CPU reference oracle) and `#170` (canonical WGSL shader + `naga` GLSL ES 3.00 generator) MUST implement the exact closed-form rules below so `f64` (TypeScript) and `f32`/`i32` (WGSL/GLSL/Rust) match with zero pixel drift. Integer `/` denotes floor division.
+Both `#169` (TypeScript CPU reference oracle) and `#170` (canonical WGSL shader + `naga` GLSL ES 3.00 generator) MUST implement the exact **zero-float, 32-bit integer** rules below for all valid `1 <= W, H <= 256`. Integer `/` denotes floor division.
 
 ### 7.1 Box-Drawing (`U+2500..U+257F`, 128 entries, 14 bits/entry)
 
@@ -271,7 +326,7 @@ Bit layout per entry in `BOX_GLYPHS[codePoint - 0x2500]`:
 - `bit 11` = `rounded` (`1` for `U+256D..U+2570`).
 - `bit 12` = `diagSlash` (`/` lower-left to upper-right), `bit 13` = `diagBackslash` (`\` upper-left to lower-right).
 
-Closed-form geometry at integer cell-local pixel `(lx, ly)` with `W = cellPxW`, `H = cellPxH`:
+Closed-form pure-integer geometry at integer cell-local pixel `(lx, ly)` with `W = cellPxW`, `H = cellPxH`:
 
 1. **Integer stroke widths (same pixel thickness in X and Y so corners balance visually):**
    ```text
@@ -285,27 +340,38 @@ Closed-form geometry at integer cell-local pixel `(lx, ly)` with `W = cellPxW`, 
    hyT0    = max(0, hy0(lightPx) - dblGap)
    hyB0    = min(H - lightPx, hy0(lightPx) + dblGap)
    ```
-2. **Diagonals (`diagSlash == 1 || diagBackslash == 1`, `U+2571..U+2573`):**
+2. **Pure-integer diagonals (`diagSlash == 1 || diagBackslash == 1`, `U+2571..U+2573`):**
+   - Exact squared perpendicular distance check without `sqrt` or floats.
+   - **Proven-infallible `u32` overflow bound for `1 <= W, H <= 256`:** `half2 = max(1, lightPx) <= 26`, `bound = half2 * (W + H) <= 13,312`. Since `W + H > hypot(W, H)`, any pixel with `d > bound` is strictly outside; whenever `d <= bound`, `d * d <= 177,209,344 < 2^32` and `rhs = half2 * half2 * (W * W + H * H) <= 88,604,672 < 2^32`.
    ```text
-   halfT  = max(0.55, 0.5 * float(lightPx))
-   invLen = 1.0 / sqrt(float(W * W + H * H))
-   slashLit     = diagSlash     && abs((float(lx) + 0.5) * float(H) + (float(ly) + 0.5) * float(W) - float(W * H)) * invLen <= halfT
-   backslashLit = diagBackslash && abs((float(lx) + 0.5) * float(H) - (float(ly) + 0.5) * float(W)) * invLen <= halfT
+   half2        = max(1, lightPx)
+   bound        = half2 * (W + H)
+   rhs          = half2 * half2 * (W * W + H * H)
+   dSlash       = abs((2 * lx + 1) * H + (2 * ly + 1) * W - 2 * W * H)
+   dBack        = abs((2 * lx + 1) * H - (2 * ly + 1) * W)
+   slashLit     = diagSlash     && (dSlash <= bound) && (dSlash * dSlash <= rhs)
+   backslashLit = diagBackslash && (dBack  <= bound) && (dBack  * dBack  <= rhs)
    ```
-3. **Rounded quarter-ellipse arcs (`rounded == 1`, `U+256D..U+2570`):**
+3. **Pure-integer Q12 rounded quarter-ellipse arcs (`rounded == 1`, `U+256D..U+2570`):**
+   - Fixed-point scale `Q12 = 4096`.
+   - **Proven-infallible `u32` overflow bound for `1 <= W, H <= 256`:** `dx <= 2 * W - 1`, `dy <= 2 * H - 1` so `nx, ny <= 8,191`, `r2 = nx * nx + ny * ny <= 134,184,962 < 2^32`, and `rOut <= 8,601` so `rOut * rOut <= 73,977,201 < 2^32`.
    ```text
    cx2   = (R > 0) ? (2 * W) : 0
    cy2   = (D > 0) ? (2 * H) : 0
-   nx    = float(2 * lx + 1 - cx2) / float(W)
-   ny    = float(2 * ly + 1 - cy2) / float(H)
-   dist  = sqrt(nx * nx + ny * ny)
-   halfR = max(1.10, float(lightPx)) / float(min(W, H))
-   lit   = abs(dist - 1.0) <= halfR
+   dx    = abs(2 * lx + 1 - cx2)
+   dy    = abs(2 * ly + 1 - cy2)
+   nx    = (dx * 4096) / W
+   ny    = (dy * 4096) / H
+   r2    = nx * nx + ny * ny
+   halfQ = (max(11, 10 * lightPx) * 4096) / (10 * min(W, H))
+   rIn   = (halfQ < 4096) ? (4096 - halfQ) : 0
+   rOut  = 4096 + halfQ
+   lit   = (r2 >= rIn * rIn) && (r2 <= rOut * rOut)
    ```
-4. **Dashed lines (`dash ∈ {2, 3, 4}`, `U+2504..U+250B`, `U+254C..U+254F`):**
+4. **Pure-integer dashed lines (`dash ∈ {2, 3, 4}`, `U+2504..U+250B`, `U+254C..U+254F`):**
    - Horizontal (`L > 0 && R > 0`): `w = (L == 2) ? heavyPx : lightPx`; lit iff `ly >= hy0(w) && ly < hy0(w) + w && ((lx * 2 * dash) / W) % 2 == 0`.
    - Vertical (`U > 0 && D > 0`): `w = (U == 2) ? heavyPx : lightPx`; lit iff `lx >= vx0(w) && lx < vx0(w) + w && ((ly * 2 * dash) / H) % 2 == 0`.
-5. **Solid single, heavy, mixed, and mitered double-line arms and junctions (`dash == 0 && rounded == 0 && !diag`):**
+5. **Pure-integer solid single, heavy, mixed, and mitered double-line arms and junctions (`dash == 0 && rounded == 0 && !diag`):**
    ```text
    vMax = (U == 2 || D == 2) ? heavyPx : lightPx
    hMax = (L == 2 || R == 2) ? heavyPx : lightPx
@@ -330,34 +396,38 @@ Closed-form geometry at integer cell-local pixel `(lx, ly)` with `W = cellPxW`, 
 Bit layout per entry in `BLOCK_GLYPHS[codePoint - 0x2580]`:
 - `bits 16..17` = `kind` (`0` rect, `1` shade, `2` quadrant).
 - `kind == 0` (`rect`): `x0 = b & 15`, `y0 = (b >> 4) & 15`, `x1 = (b >> 8) & 15`, `y1 = (b >> 12) & 15` in integer eighths `[0..8]`. Pure integer pixel-center test:
-  `lit = (2 * lx + 1) * 4 >= x0 * W && (2 * lx + 1) * 4 < x1 * W && (2 * ly + 1) * 4 >= y0 * H && (2 * ly + 1) * 4 < y1 * H` (coverage `1.0` if lit else `0.0`).
-- `kind == 1` (`shade`): `q = b & 3` (`1` = `0.25`, `2` = `0.50`, `3` = `0.75` uniform coverage across the cell).
+  `lit = (2 * lx + 1) * 4 >= x0 * W && (2 * lx + 1) * 4 < x1 * W && (2 * ly + 1) * 4 >= y0 * H && (2 * ly + 1) * 4 < y1 * H`.
+- `kind == 1` (`shade`): `q = b & 3` (`1` = `1/4`, `2` = `2/4`, `3` = `3/4` uniform coverage via `lerpU8(baseBg, fg, q * op, 252)`).
 - `kind == 2` (`quadrant`): `mask = b & 15` (`bit 0` TL, `bit 1` TR, `bit 2` BL, `bit 3` BR). Pure integer pixel-center quadrant test:
   `qx = ((2 * lx + 1) >= W) ? 1 : 0`, `qy = ((2 * ly + 1) >= H) ? 1 : 0`, `lit = ((mask >> (qx + 2 * qy)) & 1) != 0`.
 
 ### 7.3 Braille Patterns (`U+2800..U+28FF`, 256 entries, 0 table bytes)
 
-8-bit dot mask `m = glyph_payload & 0xFFu` over a 2×4 grid (`col ∈ {0,1}`, `row ∈ {0,1,2,3}`), bit mapping `(0,0)=0`, `(0,1)=1`, `(0,2)=2`, `(1,0)=3`, `(1,1)=4`, `(1,2)=5`, `(0,3)=6`, `(1,3)=7`. Pure integer sub-cell test (exact pixel-center `[0.25, 0.75) × [0.20, 0.80)`):
+8-bit dot mask `m = glyph_payload & 0xFFu` over a 2×4 grid (`col ∈ {0,1}`, `row ∈ {0,1,2,3}`), bit mapping `(0,0)=0`, `(0,1)=1`, `(0,2)=2`, `(1,0)=3`, `(1,1)=4`, `(1,2)=5`, `(0,3)=6`, `(1,3)=7`.
+
+Pure integer sub-cell test (exact pixel-center `[1/4, 3/4) × [1/5, 4/5)` when `W >= 4` / `H >= 8`; fills sub-cell axis when `W < 4` or `H < 8` so every set dot lights at least 1 pixel for all `W >= 2, H >= 4`, including `2×5`):
 
 ```text
-subCol = (2 * lx + 1) / W
-subRow = (4 * ly + 2) / H
+subCol = min(1, (2 * lx + 1) / W)
+subRow = min(3, (4 * ly + 2) / H)
 bitIdx = (subRow == 3) ? (6 + subCol) : (subCol * 3 + subRow)
 subX   = (2 * lx + 1) - subCol * W
 subY   = (4 * ly + 2) - subRow * H
-inDot  = 4 * subX >= W && 4 * subX < 3 * W
-      && 5 * subY >= H && 5 * subY < 4 * H
-lit    = inDot && (((m >> bitIdx) & 1) != 0)
+inX    = (W < 4) || (4 * subX >= W && 4 * subX < 3 * W)
+inY    = (H < 8) || (5 * subY >= H && 5 * subY < 4 * H)
+lit    = inX && inY && (((m >> bitIdx) & 1) != 0)
 ```
+
+*(Note: 8 spatially distinct Braille dots physically require at least `2 × 4` pixels (`W >= 2, H >= 4`). Below that, clamping `subCol`/`subRow` keeps indices in bounds without out-of-range shifts.)*
 
 ### Delivery into `bijou-surface.wgsl` (Decision: Generated Checked-In `const` Block)
 
 `fixtures/bijou-gpu/procedural-glyphs.json` reaches `bijou-surface.wgsl` as a **deterministically generated, checked-in WGSL `const` block** (`const BOX_GLYPHS: array<u32, 128>` and `const BLOCK_GLYPHS: array<u32, 32>`) enforced by `#170`'s `--check` CI drift gate—**not** as a third GPU texture binding.
 
 - **GPU bind group stays minimal (3 bindings total):**
-  - `@binding(0)`: uniform buffer `BijouSurfaceUniforms` (`canvasPx`, `cellPx`, `gridCells`, `atlasCols`, `defaultFg`, `defaultBg`, `flags`).
+  - `@binding(0)`: uniform buffer `BijouSurfaceUniforms` (`canvasPx`, `cellPx`, `gridCells`, `atlasCols`, `defaultFg`, `defaultBg`, `flags`, all `u32`).
   - `@binding(1)`: `texture_2d<u32>` (`rgba32uint` cell grid).
-  - `@binding(2)`: `texture_2d<f32>` (`rgba8unorm` `GlyphAtlas`).
+  - `@binding(2)`: `texture_2d<u32>` (`rgba8uint` `GlyphAtlas`).
 - **Zero edits required to `#170`, `#173`, or `#175`:** Downstream shader and presenter cards stay strictly aligned on these exact bindings.
 
 ## Nonclaims
