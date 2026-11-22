@@ -264,9 +264,9 @@ describe('GlyphAtlas texels and bijou-surface-gpu/1 slot encoding', () => {
             const sx = (slot % atlasCols) * cellPxW + lx;
             const sy = Math.floor(slot / atlasCols) * cellPxH + ly;
             const offset = (sy * atlasCols * cellPxW + sx) * 4;
-            const alpha = rgba[offset + 3]!;
+            const alpha = rgba[offset + 3] ?? 0;
             const straight = [0, 1, 2].map((channel) =>
-              alpha === 0 ? 0 : Math.round((rgba[offset + channel]! * 255) / alpha),
+              alpha === 0 ? 0 : Math.round(((rgba[offset + channel] ?? 0) * 255) / alpha),
             );
             out.set([...straight, alpha], (ly * cellPxW + lx) * 4);
           }
@@ -620,10 +620,14 @@ describe('GlyphAtlas invalidation', () => {
     const atlas = atlasOf(fakeRasterizer());
     const a = must(atlas.resolve('A', false));
     const code = 'GEORDI_E_BIJOU_INVALID_CELL_METRICS';
-    expectCode(() => atlas.invalidate({ cellPxW: 13.5 }), code);
-    expectCode(() => atlas.invalidate({ cellPxH: 0 }), code);
-    expectCode(() => atlas.invalidate({ cellPxW: 257 }), code);
-    expectCode(() => atlas.invalidate({ fontIdentity: '' }), 'GEORDI_E_BIJOU_INVALID_ATLAS');
+    for (const update of [{ cellPxW: 13.5 }, { cellPxH: 0 }, { cellPxW: 257 }]) {
+      expectCode(() => {
+        atlas.invalidate(update);
+      }, code);
+    }
+    expectCode(() => {
+      atlas.invalidate({ fontIdentity: '' });
+    }, 'GEORDI_E_BIJOU_INVALID_ATLAS');
     expect(atlas.generation).toBe(GLYPH_ATLAS_FIRST_GENERATION);
     expect(atlas.metrics).toEqual(METRICS);
     expect(atlas.isCurrent(a)).toBe(true);
@@ -880,7 +884,7 @@ describe('GlyphAtlas fuzz and stress', () => {
       if (next(97) === 0) {
         atlas.invalidate(undefined, 'font-ready');
       }
-      const grapheme = pool[next(pool.length)]!;
+      const grapheme = pool[next(pool.length)] ?? 'A';
       const bold = next(2) === 1;
       const callsBefore = rasterizer.calls.length;
       const ref = must(atlas.resolve(grapheme, bold));
