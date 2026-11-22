@@ -2505,7 +2505,7 @@ fn is_fixture_local_relative_path(value: &str) -> bool {
         && !has_windows_drive_prefix(value)
 }
 
-fn has_windows_drive_prefix(value: &str) -> bool {
+const fn has_windows_drive_prefix(value: &str) -> bool {
     let bytes = value.as_bytes();
     bytes.len() >= 2 && bytes[0].is_ascii_alphabetic() && bytes[1] == b':'
 }
@@ -2824,7 +2824,7 @@ fn minifb_buffer(image: &RenderedImage) -> Result<Vec<u32>, NativeWindowError> {
             .ok_or_else(NativeWindowError::buffer_size)?,
     );
 
-    for rgba in image.rgba().chunks_exact(4) {
+    for rgba in image.rgba().as_chunks::<4>().0 {
         let red = u32::from(rgba[0]);
         let green = u32::from(rgba[1]);
         let blue = u32::from(rgba[2]);
@@ -3257,8 +3257,8 @@ fn draw_rect_rgba(
 }
 
 fn fill_rgba(buffer: &mut [u8], color: [u8; 4]) {
-    for pixel in buffer.chunks_exact_mut(4) {
-        pixel.copy_from_slice(&color);
+    for pixel in buffer.as_chunks_mut::<4>().0 {
+        *pixel = color;
     }
 }
 
@@ -3374,7 +3374,7 @@ fn rgba_to_minifb_buffer(rgba: &[u8], buffer: &mut [u32]) -> Result<(), NativeWi
         return Err(NativeWindowError::buffer_size());
     }
 
-    for (index, pixel) in rgba.chunks_exact(4).enumerate() {
+    for (index, pixel) in rgba.as_chunks::<4>().0.iter().enumerate() {
         let red = u32::from(pixel[0]);
         let green = u32::from(pixel[1]);
         let blue = u32::from(pixel[2]);
@@ -3457,7 +3457,7 @@ mod tests {
 
         run_smoke(&mut output, &loaded)?;
 
-        assert!(!output.is_empty());
+        assert_ne!(output, Vec::<u8>::new());
         Ok(())
     }
 
