@@ -64,7 +64,7 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
 
 ### `@flyingrobots/geordi-bijou-gpu`
 
-**Conformance kit and cell packer for the `bijou-surface-gpu/1` ABI**
+**Conformance kit, cell packer, and glyph atlas for the `bijou-surface-gpu/1` ABI**
 
 - **Presenter contract** (`src/presenter.ts`, `src/errors.ts`): `GpuSurfacePresenter`, the
   sync-or-async `GpuSurfacePresenterFactory`, the shared `cellFromPoint` law, and
@@ -79,14 +79,20 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
 - **Dirty-union cell packer** (`src/surface-damage.ts`): `packSurfaceDamage` and
   `accumulateSurfaceDamage` lower the union damage of two `PackedSurface` buffers into a retained
   staging buffer and report changed rows; no host API, glyph slots through an injected callback
+- **Glyph atlas** (`src/glyph-atlas.ts`): `createGlyphAtlas` caches glyphs by `(grapheme, bold)`
+  at integer physical cell metrics, with dirty sub-rects and a `generation` that advances on
+  overflow and invalidation; no host API, pixels through an injected rasterizer
+- **Glyph atlas browser adapter** (`src/glyph-atlas-browser.ts`): a 2D-canvas rasterizer and a
+  watcher that invalidates the atlas on font arrival and DPR change
 - **Test glyph pack** (`src/test-glyph-pack.ts`): explicit 8 x 16 bitmaps, no font
 - **Browser probe harness** (`harness/`, `e2e/`): Playwright + Vite
 
 **Key principle**: Bijou owns cell semantics and Bunny owns the integer primitives. This package
-is the CPU oracle that GPU presenters are compared against, plus the packer they will share; it
-contains no presenter or atlas. References:
-[`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md) and
-[`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md).
+is the CPU oracle that GPU presenters are compared against, plus the packer and glyph atlas they
+will share; it contains no presenter. References:
+[`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md),
+[`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md), and
+[`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md).
 
 Its `shaders/` directory holds the canonical `bijou-surface.wgsl`, the GLSL ES 3.00 stages that
 `crates/geordi-bijou-shadergen` generates from it with pinned `naga`, and their implementation

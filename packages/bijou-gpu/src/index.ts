@@ -1,5 +1,7 @@
 export * from './atlas.js';
 export * from './errors.js';
+export * from './glyph-atlas.js';
+export * from './glyph-atlas-browser.js';
 export * from './numeric.js';
 export * from './packed-cells.js';
 export * from './prepare.js';
