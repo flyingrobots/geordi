@@ -1,15 +1,15 @@
 # Bijou Surface GPU ABI (`bijou-surface-gpu/1`)
 
-**Status**: Proposed (Option A selected by `@flyingrobots` on 2026-11-21; tracked in [#168](https://github.com/flyingrobots/geordi/issues/168))
-**Date**: 2026-11-21
+**Status**: Proposed (Option A selected by `@flyingrobots` on 2026-11-21; Bunny primitive split + Option E4 rounded-corner geometry approved on 2026-11-22; tracked in [#168](https://github.com/flyingrobots/geordi/issues/168))
+**Date**: 2026-11-21 (amended 2026-11-22)
 **Issue**: [#168](https://github.com/flyingrobots/geordi/issues/168)
 **Downstream implementation issues**: [#169](https://github.com/flyingrobots/geordi/issues/169) (conformance kit), [#170](https://github.com/flyingrobots/geordi/issues/170) (canonical WGSL + `naga` GLSL generator), [#171](https://github.com/flyingrobots/geordi/issues/171) (dirty-union packer), [#172](https://github.com/flyingrobots/geordi/issues/172) (`GlyphAtlas`), [#173](https://github.com/flyingrobots/geordi/issues/173) (WebGL2), [#174](https://github.com/flyingrobots/geordi/issues/174) (Canvas 2D), [#175](https://github.com/flyingrobots/geordi/issues/175) (WebGPU), [#58](https://github.com/flyingrobots/geordi/issues/58) (native Rust `wgpu`)
-**Upstream contracts read**: `flyingrobots/bijou` at `906666f9` (`packages/bijou/src/core/render/packed-cell.part01.ts`, `packages/bijou/src/core/packed-bijou-cells-contract.ts`, `packages/bijou/src/core/packed-bijou-cells-glyph-policy.ts`, `packages/bijou/src/ports/surface-contract.ts`, `packages/bijou/src/core/render/differ-packed.ts`, `docs/design/RE-510-geordi-native-gpu-host-for-bijou-cell-buffers.md`); `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md`)
+**Upstream contracts read**: `flyingrobots/bijou` at `906666f9` (`packages/bijou/src/core/render/packed-cell.part01.ts`, `packages/bijou/src/core/packed-bijou-cells-contract.ts`, `packages/bijou/src/core/packed-bijou-cells-glyph-policy.ts`, `packages/bijou/src/ports/surface-contract.ts`, `packages/bijou/src/core/render/differ-packed.ts`, `docs/design/RE-510-geordi-native-gpu-host-for-bijou-cell-buffers.md`); `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md`, `docs/design/0005-gpu-compute-backend.md` Amendment 1 in [`bunny#429`](https://github.com/flyingrobots/bunny/pull/429), `bunny-u32-div-round-even/1` in [`bunny#431`](https://github.com/flyingrobots/bunny/pull/431) at `4063c1e`, `bunny-u32-ellipse-classify/1` in [`bunny#432`](https://github.com/flyingrobots/bunny/pull/432) at `052f7d9`)
 **Procedural glyph table**: [`fixtures/bijou-gpu/procedural-glyphs.json`](../../fixtures/bijou-gpu/procedural-glyphs.json) (`sha256: 7ebc92f74a57ec7744fc7ada20c886d76b4ea96c09b5005efbf0883562d62e46`)
 
 ## Reader job
 
-This record freezes the endpoint-prepared GPU ABI (`bijou-surface-gpu/1`) that lets Geordi present Bijou's canonical `PackedSurface` (`packed-bijou-cells/1` / `bijou-packed-cell-u8x10-le/1`) across browser WebGPU, browser WebGL2, browser Canvas 2D fallback, and native Rust `wgpu` (`#58`) from one single contract, one pure-integer zero-float rendering arithmetic law, and one single procedural glyph data table.
+This record freezes the endpoint-prepared GPU ABI (`bijou-surface-gpu/1`) that lets Geordi present Bijou's canonical `PackedSurface` (`packed-bijou-cells/1` / `bijou-packed-cell-u8x10-le/1`) across browser WebGPU, browser WebGL2, browser Canvas 2D fallback, and native Rust `wgpu` (`#58`) from one single contract, one pure-integer zero-float rendering arithmetic law backed by pinned `flyingrobots/bunny` GPU math primitives, and one single procedural glyph data table.
 
 Statements about what exists today cite the file and revision they come from. Planned contracts in Bijou or Geordi are labeled planned and linked to their issues. Nothing in `packages/bijou-gpu/` is implemented yet; this ADR defines the load-bearing ABI before any atlas, packer, shader, or presenter code lands.
 
@@ -18,24 +18,38 @@ Statements about what exists today cite the file and revision they come from. Pl
 Per [`docs/design/2026-06-portable-bijou-ui-render-endpoints.md`](./2026-06-portable-bijou-ui-render-endpoints.md) and Bijou `RE-510`:
 
 - **Bijou owns** `packed-bijou-cells/1`, `bijou-packed-cell-u8x10-le/1`, width-1 canonical glyph policy, `PackedSurface` semantics, TEA runtime state, and the planned `SurfacePresenter` seam ([`bijou#791`](https://github.com/flyingrobots/bijou/issues/791)) and planned `@flyingrobots/bijou-web` host adapters ([`bijou#792`](https://github.com/flyingrobots/bijou/issues/792)).
-- **Geordi owns** `bijou-surface-gpu/1` endpoint preparation, planned `packages/bijou-gpu` (`@flyingrobots/geordi-bijou-gpu`), the procedural glyph data table, `GlyphAtlas`, canonical `bijou-surface.wgsl`, generated GLSL ES 3.00, browser and native GPU presenters, pixel probes, and endpoint receipts.
+- **Bunny owns** reusable deterministic GPU math primitives (`bunny-u32-div-round-even/1` in [`bunny#427`](https://github.com/flyingrobots/bunny/issues/427)/[`#428`](https://github.com/flyingrobots/bunny/issues/428) and `bunny-u32-ellipse-classify/1` in [`bunny#430`](https://github.com/flyingrobots/bunny/issues/430)), their pure CPU references in `crates/bunny-num`, portable WGSL helpers, checked-in ordered vector fixtures, and `wgpu` equivalence harnesses in `crates/bunny-gpu`.
+- **Geordi owns** `bijou-surface-gpu/1` endpoint preparation, terminal glyph geometry (stroke widths, Option E4 inset-corner arcs and outgoing-edge join masks, Block Elements, Braille), planned `packages/bijou-gpu` (`@flyingrobots/geordi-bijou-gpu`), the procedural glyph data table, `GlyphAtlas`, canonical `bijou-surface.wgsl`, generated GLSL ES 3.00, browser and native GPU presenters, exact integer canonical pixel readback, and endpoint receipts.
 
-Geordi may present Bijou cells on the GPU. Geordi must not redefine Bijou cell semantics or invent canonical wide-cell rules.
+Geordi may present Bijou cells on the GPU. Geordi must not redefine Bijou cell semantics, invent canonical wide-cell rules, or fork Bunny's deterministic numeric primitives.
 
 ## Deterministic numeric law (zero floats in core rendering)
 
-Following `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md`):
+Following `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md` and `docs/design/0005-gpu-compute-backend.md` Amendment 1):
 
-- **Zero floating-point arithmetic inside core rendering:** Every pixel evaluation in Sections 5 and 7—color blending, `DIM`, opacity, underlines, curly underlines, Box-Drawing arms/junctions/dashes/rounded arcs/diagonals, Block Elements, and Braille—uses strictly **32-bit integer and fixed-point arithmetic (`u32`/`i32`)** with explicit proven-infallible overflow bounds. No `f32`, `f64`, `sin`, `sqrt`, or platform-dependent transcendental calls may appear in core rendering math.
-- **Canonical rounding (`divRoundEven`):** Matches Bunny's Banker's Rounding / ties-to-even rule for non-negative integers `n >= 0`, `d > 0`:
+- **Zero floating-point arithmetic inside core rendering:** Every pixel evaluation in Sections 5 and 7—color blending, `DIM`, opacity, underlines, curly underlines, Box-Drawing arms/junctions/dashes/rounded arcs/diagonals, Block Elements, and Braille—uses strictly **unsigned 32-bit integer arithmetic (`u32`)** (with portable 2-limb `u32` unsigned 64-bit arithmetic in `bunny-u32-ellipse-classify/1`) and explicit proven-infallible overflow bounds. No `f32`, `f64`, `sin`, `sqrt`, or platform-dependent transcendental calls may appear in core rendering math.
+- **Canonical rounding (`bunny-u32-div-round-even/1`):** Adopts Bunny's overflow-safe unsigned 32-bit ties-to-even division contract over `n, d ∈ [0..=4,294,967,295]`. Zero divisor (`d == 0`, including `0 / 0`) MUST be handled by a control-flow branch before `/` or `%` and return `[0, 1]` (`DivisionByZero`); valid divisors return `[q_rounded, 0]` using the overflow-safe complement comparison `s = d - r` (never `2 * r`, which wraps in `u32` on adversarial inputs such as `n = 3,000,000,000, d = 4,000,000,000`, whose exact rounded result is `1`):
   ```text
   divRoundEven(n, d):
+    if (d == 0) return [0, 1]   // DivisionByZero
     q = n / d
     r = n % d
-    return (2 * r > d || (2 * r == d && (q & 1) == 1)) ? (q + 1) : q
+    s = d - r
+    return [(r > s || (r == s && (q & 1) == 1)) ? (q + 1) : q, 0]
   ```
-- **Valid physical cell domain:** `1 <= cellPxW <= 256` and `1 <= cellPxH <= 256`. Dimensions outside `[1..256]` MUST fail loudly at validation (`GEORDI_E_BIJOU_INVALID_CELL_METRICS`) so every `u32` intermediate proof below holds unconditionally.
-- **Float ingress is host-edge only:** Browser CSS values (`clientX`, `rect`, `dpr`) are converted once at the DOM host boundary with explicit non-finite/non-positive rejection; core rendering operates exclusively on integers (`u8`/`u32`/`i32`). Final GPU fragment output converts the exact integer RGB triple `(r, g, b)` (`0..255`) to the swapchain at the terminal return instruction only.
+- **Exact ellipse classification (`bunny-u32-ellipse-classify/1`):** Adopts Bunny's exact unsigned 64-bit ellipse trichotomy predicate over `dx, dy, semi_x, semi_y ∈ [0..=46,340]` (implemented in portable 2-limb `u32` WGSL with zero floats, zero 64-bit extensions, zero divisions, and zero subtractions). Out-of-domain operands (`> 46,340`) return `[0, 1]` (`OutOfDomain`); degenerate zero-semiaxis inputs (`semi_x == 0 || semi_y == 0`) are handled by an explicit branch **before** the raw polynomial (`(0, 0) -> OnBoundary`, all other points -> `Outside`).
+- **Pinned Bunny primitive artifacts consumed by Geordi:**
+
+| Contract ID | Bunny Issue / PR | Bunny Commit | Artifact Path | SHA-256 |
+| --- | --- | --- | --- | --- |
+| `bunny-u32-div-round-even/1` | [`bunny#427`](https://github.com/flyingrobots/bunny/issues/427), [`#428`](https://github.com/flyingrobots/bunny/issues/428) / [`PR #431`](https://github.com/flyingrobots/bunny/pull/431) | `4063c1e` | `crates/bunny-gpu/shaders/bunny_u32_div_round_even.wgsl` | `ed93a26df071da13e8d8514c42a8dcfb5cbc5969d6ab4397d26b147fc5dc2e7f` |
+| `bunny-u32-div-round-even/1` | [`bunny#428`](https://github.com/flyingrobots/bunny/issues/428) / [`PR #431`](https://github.com/flyingrobots/bunny/pull/431) | `4063c1e` | `crates/bunny-gpu/fixtures/u32_div_round_even_vectors.json` | `df265cc7233772e33347b04fa1f7a3e71f34566e4aa6af5cf3fecf23e2b044a6` |
+| `bunny-u32-ellipse-classify/1` | [`bunny#430`](https://github.com/flyingrobots/bunny/issues/430) / [`PR #432`](https://github.com/flyingrobots/bunny/pull/432) | `052f7d9` | `crates/bunny-gpu/shaders/bunny_u32_ellipse_classify.wgsl` | `1b11121932031e2f1266087dded59e9c6f921bed7db1e9ed2ba4cf9b9c261e99` |
+| `bunny-u32-ellipse-classify/1` | [`bunny#430`](https://github.com/flyingrobots/bunny/issues/430) / [`PR #432`](https://github.com/flyingrobots/bunny/pull/432) | `052f7d9` | `crates/bunny-gpu/fixtures/u32_ellipse_classify_vectors.json` | `5f0ec6422de185e2ce7e832a7c1bce7ccde9b6f33e92b399f7c547191ef205e4` |
+
+- **Explicit Q32.32 non-equivalence:** Adopting `bunny-u32-div-round-even/1` and `bunny-u32-ellipse-classify/1` covers bounded unsigned integer terminal math only and makes **no claim** of full `FixedQ32_32` GPU conformance; neither primitive depends on the rest of Bunny's Q32.32 GPU compute roadmap.
+- **Valid physical cell domain:** `1 <= cellPxW <= 256` and `1 <= cellPxH <= 256`. Dimensions outside `[1..256]` MUST fail loudly at validation (`GEORDI_E_BIJOU_INVALID_CELL_METRICS`) so every `u32` and 2-limb intermediate bound below holds unconditionally.
+- **Float ingress and display presentation are edge-only:** Browser CSS values (`clientX`, `rect`, `dpr`) are converted once at the DOM host boundary with explicit non-finite/non-positive rejection; core rendering operates exclusively on integers (`u8`/`u32`). Canonical bit-exact readback uses exact integer offscreen targets (`rgba8uint` / `RGBA8UI`, Section 6); normalized swapchain conversion occurs only in the separate display presentation pass.
 
 ## Options considered
 
@@ -183,7 +197,7 @@ Per Bijou's `PackedSurface` contract (`packages/bijou/src/ports/surface-contract
 
 ### Exact integer color blending (`sRGB-direct`, zero floats)
 
-All color channels operate on exact integer bytes `0..255` in **sRGB-direct** space (non-`-srgb` swapchains: `bgra8unorm` / `rgba8unorm` in WebGPU, `RGBA8` in WebGL2, `RGBA8` in Canvas 2D and `renderReferenceRgba()`).
+All color channels operate on exact integer bytes `0..255` in **sRGB-direct** space. Canonical bit-exact rendering targets exact integer offscreen attachments (`rgba8uint` in WebGPU/native `wgpu`, `RGBA8UI` in WebGL2, integer `ImageData` in Canvas 2D and `renderReferenceRgba()`), strictly separate from non-`-srgb` normalized swapchain display presentation (`bgra8unorm` / `rgba8unorm` / default `RGBA8`).
 
 Define exact integer interpolation using `divRoundEven` (all intermediates fit comfortably in `u32`, max `<= 8,193,150 < 2^32`):
 
@@ -269,9 +283,9 @@ row = clamp(Math.floor(physY / cellPxH), 0, rows - 1)
 - Cell `[col, row]` covers physical pixels `[col * cellPxW, (col + 1) * cellPxW)` × `[row * cellPxH, (row + 1) * cellPxH)` (start inclusive, end exclusive).
 - Coordinates in the letterboxed remainder or outside the canvas clamp into `[0, cols - 1]` and `[0, rows - 1]`.
 
-## 6. Endpoint receipt schema and evidence taxonomy
+## 6. Endpoint receipt schema, artifact identity, and 4-layer evidence taxonomy
 
-Every presenter emits a deterministic JSON receipt with `receiptVersion: "geordi-bijou-gpu-receipt/1"`:
+Every presenter emits a deterministic JSON receipt with `receiptVersion: "geordi-bijou-gpu-receipt/1"` connecting the pinned upstream Bunny primitive artifacts to Geordi's assembled shader (or Canvas 2D presenter module) and runtime execution environment:
 
 ```json
 {
@@ -281,8 +295,26 @@ Every presenter emits a deterministic JSON receipt with `receiptVersion: "geordi
   "inputReceiptSha256": "<64-hex>",
   "preparedBufferSha256": "<64-hex>",
   "proceduralTableSha256": "7ebc92f74a57ec7744fc7ada20c886d76b4ea96c09b5005efbf0883562d62e46",
-  "shaderSha256": "<64-hex-or-null-for-canvas2d>",
+  "bunnyPrimitives": [
+    {
+      "contractId": "bunny-u32-div-round-even/1",
+      "bunnyCommit": "4063c1e",
+      "wgslSha256": "ed93a26df071da13e8d8514c42a8dcfb5cbc5969d6ab4397d26b147fc5dc2e7f",
+      "vectorsSha256": "df265cc7233772e33347b04fa1f7a3e71f34566e4aa6af5cf3fecf23e2b044a6"
+    },
+    {
+      "contractId": "bunny-u32-ellipse-classify/1",
+      "bunnyCommit": "052f7d9",
+      "wgslSha256": "1b11121932031e2f1266087dded59e9c6f921bed7db1e9ed2ba4cf9b9c261e99",
+      "vectorsSha256": "5f0ec6422de185e2ce7e832a7c1bce7ccde9b6f33e92b399f7c547191ef205e4"
+    }
+  ],
+  "assembledWgslSha256": "<64-hex-or-null-for-canvas2d>",
+  "generatedGlslSha256": "<64-hex-or-null-when-not-webgl2>",
+  "shaderSha256": "<64-hex-matching-active-backend-shader-or-null-for-canvas2d>",
+  "executedArtifactSha256": "<64-hex-required-for-all-backends-including-canvas2d>",
   "backendProfile": "geordi-webgl2/1",
+  "adapter": { "backend": "webgl2", "name": "<renderer-or-adapter-name>", "driver": "<version-or-empty>" },
   "evidenceLevel": "software-probed",
   "widthCells": 80,
   "heightCells": 24,
@@ -294,34 +326,42 @@ Every presenter emits a deterministic JSON receipt with `receiptVersion: "geordi
   "atlasGeneration": 1,
   "atlasStats": { "usedSlots": 42, "capacity": 1024, "monoCount": 41, "colorEmojiCount": 1 },
   "frameRgbaSha256": "<64-hex-or-null-when-not-read-back>",
-  "probePolicy": "srgb-exact-or-declared-tolerance",
+  "probePolicy": "integer-canonical-exact",
   "probes": []
 }
 ```
 
-`defaultFg` and `defaultBg` MUST be recorded as canonical 7-character uppercase sRGB hex strings (`#RRGGBB`) matching `uDefaultFg` and `uDefaultBg`, so pixel probes remain reproducible when theme defaults change without cell-byte changes (matching Bijou `RE-510`).
+- **Dependency-to-artifact identity chain:** `bunnyPrimitives` pins the exact upstream Bunny revision and helper/vector SHA-256 digests baked into Geordi; `assembledWgslSha256` pins Geordi's final assembled `bijou-surface.wgsl`; `generatedGlslSha256` pins the pinned-`naga`-translated GLSL ES 3.00 source (`null` on WebGPU/native/Canvas 2D); `shaderSha256` pins the active GPU shader text (`assembledWgslSha256` for WebGPU/`wgpu`, `generatedGlslSha256` for WebGL2, and `null` for Canvas 2D); `executedArtifactSha256` is **always non-null** and pins the executed presenter artifact (for Canvas 2D, the SHA-256 of the deterministic JS presenter module/bundle so `shaderSha256: null` never leaves Canvas 2D unpinned).
+- `defaultFg` and `defaultBg` MUST be recorded as canonical 7-character uppercase sRGB hex strings (`#RRGGBB`) matching `uDefaultFg` and `uDefaultBg`, so pixel probes remain reproducible when theme defaults change without cell-byte changes (matching Bijou `RE-510`).
 
-### Canonical RGBA8 frame readback and cross-GPU bit-exact hash law
+### Exact integer canonical readback vs. display presentation (cross-GPU bit-exact hash law)
+
+Canonical bit-exact pixel parity MUST NOT be measured through normalized swapchain egress (`RGBA8` / `rgba8unorm` / `bgra8unorm`), because OpenGL ES enables `GL_DITHER` by default and permits implementation-dependent fixed-point rounding during normalized conversion. Every backend MUST separate **exact integer canonical readback** from **display presentation**:
 
 Every backend that reads back rendered pixels MUST produce a **canonical tight top-left row-major RGBA8 byte buffer** of exact length `canvasPxW * canvasPxH * 4` bytes (`offset = (py * canvasPxW + px) * 4`, channels `[R, G, B, 255]`) and hash that exact byte stream into `frameRgbaSha256` (lowercase 64-hex SHA-256; MUST be `null` when `evidenceLevel` is `shader-validated`, `unit-upload`, or `capability-refused`):
 
 - **CPU reference oracle (`#169`):** Writes tight top-left row-major RGBA8 directly and computes `oracle.frameRgbaSha256`.
-- **WebGPU (`#175`) & native Rust `wgpu` (`#58`):** Fragment origin is top-left `(0, 0)`; readback via `copyTextureToBuffer` MUST target an `rgba8unorm` texture (or swizzle `BGRA -> RGBA` when reading a `bgra8unorm` surface) and strip any 256-byte `bytesPerRow` alignment padding before hashing.
-- **WebGL2 (`#173` & `#170`):** GLSL ES 3.00 MUST normalize `py = (canvasPxH - 1u) - uint(gl_FragCoord.y)` so cell addressing matches WebGPU's top-left origin; probe contexts MUST be created with `alpha: false`, `antialias: false`, `premultipliedAlpha: false`, `preserveDrawingBuffer: true`, with `gl.drawingBufferColorSpace = "srgb"`, read back via `gl.readPixels(..., gl.RGBA, gl.UNSIGNED_BYTE, buf)`, and flip rows from bottom-up to top-left before hashing.
-- **Canvas 2D deterministic probe path (`#174`):** Pure-integer `ImageData` compositing over the same deterministic `rgba8uint` atlas hashes the tight top-left `ImageData.data` bytes directly.
-- **Cross-GPU bit-exact parity test requirement:** Given identical `preparedBuffer`, identical integer uniforms, and identical `rgba8uint` `GlyphAtlas` bytes (or procedural-only cells with no atlas), every presenter test suite (`#173` WebGL2, `#174` Canvas 2D deterministic path, `#175` WebGPU, `#58` native Rust `wgpu`) MUST explicitly assert `receipt.frameRgbaSha256 === oracle.frameRgbaSha256` with **zero LSB tolerance**, proving bit-identical cryptographic frame hashes regardless of GPU vendor or OS. *(Normalized `unorm8` swapchain egress round-trips all 256 integer channel values `0..255` with zero error, per the Deterministic Numeric Law above.)*
+- **WebGPU (`#175`) & native Rust `wgpu` (`#58`):** Fragment origin is top-left `(0, 0)`. Canonical probe readback renders to an **`rgba8uint`** offscreen color attachment (`vec4<u32>` fragment output emitting exact `(r, g, b, 255)`), copies via `copyTextureToBuffer`, and strips any 256-byte `bytesPerRow` alignment padding before hashing. Presentation to the browser/window `bgra8unorm` or `rgba8unorm` swapchain is a separate terminal display pass converting exact `u8` channels at presentation only.
+- **WebGL2 (`#173` & `#170`):**
+  - **Mandatory drawing-buffer validation:** Before rendering, Y-flipping, or calling `readPixels`, WebGL2 presenters and probe harnesses MUST verify `gl.drawingBufferWidth === canvasPxW && gl.drawingBufferHeight === canvasPxH` and fail loudly with `GEORDI_E_BIJOU_DRAWING_BUFFER_MISMATCH` if the browser clamped or altered the backing buffer size.
+  - **Canonical frame readback (`RGBA8UI` FBO):** Probe contexts MUST be created with `alpha: false`, `antialias: false`, `premultipliedAlpha: false`, `preserveDrawingBuffer: true`, `gl.drawingBufferColorSpace = "srgb"`, and MUST call `gl.disable(gl.DITHER)`. GLSL ES 3.00 MUST normalize `py = (canvasPxH - 1u) - uint(gl_FragCoord.y)` so cell addressing matches WebGPU's top-left origin. Canonical probe frames render to an offscreen **`gl.RGBA8UI`** FBO attachment (`uvec4` fragment output emitting exact `(r, g, b, 255)`), read back via `gl.readPixels(0, 0, canvasPxW, canvasPxH, gl.RGBA_INTEGER, gl.UNSIGNED_BYTE, buf)`, and flip rows from bottom-up to top-left before hashing. Display presentation onto the default swapchain is a separate terminal display pass.
+  - **32-bit kernel conformance readback (`RGBA32UI` FBO + transport canary):** When `#170`/`#173` validate Bunny's 32-bit primitives (`bunny-u32-div-round-even/1`, `bunny-u32-ellipse-classify/1`) in translated GLSL ES 3.00, the test harness MUST execute an actual WebGL2 draw targeting an offscreen **`gl.RGBA32UI`** FBO, read back via `gl.readPixels(..., gl.RGBA_INTEGER, gl.UNSIGNED_INT, buf)`, and pass a known-pattern transport canary proving uncorrupted 32-bit unsigned integer readback alongside every kernel equivalence run.
+- **Canvas 2D deterministic probe path (`#174`):** Pure-integer `ImageData` compositing over the same deterministic `rgba8uint` atlas hashes the tight top-left `ImageData.data` bytes directly (`shaderSha256: null`, `executedArtifactSha256` pinned to the executed module).
+- **Cross-GPU bit-exact parity test requirement:** Given identical `preparedBuffer`, identical integer uniforms, and identical `rgba8uint` `GlyphAtlas` bytes (or procedural-only cells with no atlas), every presenter test suite (`#173` WebGL2, `#174` Canvas 2D deterministic path, `#175` WebGPU, `#58` native Rust `wgpu`) MUST explicitly assert `receipt.frameRgbaSha256 === oracle.frameRgbaSha256` with **zero LSB tolerance**, proving bit-identical cryptographic frame hashes through exact integer readback regardless of GPU vendor or OS.
 
-### Positive-evidence vs. capability-refusal law
+### 4-layer conformance & positive-evidence vs. capability-refusal law
+
+Compilation/linking, CPU unit testing, kernel equivalence, and full-frame rendered equivalence are **four separate verification layers**. Neither static WGSL/GLSL compilation nor linking proves runtime output equivalence, and a missing WebGPU or WebGL2 path MUST be reported as `capability-refused` / `Unavailable`—never as a pass.
 
 `evidenceLevel` MUST be one of five distinct values, and downstream gates MUST NEVER conflate them:
 
-| `evidenceLevel` | What it proves | Permitted to close a positive rendering claim? |
+| `evidenceLevel` | Layer & What it proves | Permitted to close a positive rendering claim? |
 | --- | --- | --- |
-| `shader-validated` | Shader text parsed and validated by pinned `naga` / `glslangValidator`. | No |
-| `unit-upload` | Dirty-union packer and upload range logic matched its unit oracle. | No |
-| `capability-refused` | Unavailable backend threw typed `BackendUnavailableError`; `probes` MUST be empty. | **No** (witnesses refusal only) |
-| `software-probed` | Declared software rasterizer (e.g., SwiftShader, Canvas 2D) rendered the fixture and passed pixel probes. | Yes for software/Canvas 2D lanes; **no** for hardware-GPU claims |
-| `gpu-probed` | Named hardware GPU adapter rendered the fixture and passed pixel probes. | Yes |
+| `shader-validated` | **Layer 1 (Static):** Shader text parsed, translated, and validated by pinned `naga` / `glslangValidator`. | No |
+| `unit-upload` | **Layer 2 (CPU/Unit):** Dirty-union packer, CPU reference oracle, and upload range logic matched their unit oracle. | No |
+| `capability-refused` | **Refusal:** Unavailable backend threw typed `BackendUnavailableError` (or reported `Unavailable`); `probes` MUST be empty and `frameRgbaSha256` MUST be `null`. | **No** (witnesses refusal only) |
+| `software-probed` | **Layers 3–4 (Software Execution):** Named software rasterizer (e.g., SwiftShader, Canvas 2D) executed kernel/frame draws and passed exact integer readback probes. | Yes for software/Canvas 2D lanes; **no** for hardware-GPU claims |
+| `gpu-probed` | **Layers 3–4 (Hardware GPU Execution):** Named hardware GPU adapter executed kernel/frame draws and passed exact integer readback probes. | Yes |
 
 ## 7. Procedural glyph data table and WGSL delivery decision
 
@@ -375,22 +415,58 @@ absDiff(a, b) = (a >= b) ? (a - b) : (b - a)
    slashLit     = diagSlash     && (dSlashS <= bound) && (dSlashS * dSlashS <= rhs)
    backslashLit = diagBackslash && (dBackS  <= bound) && (dBackS  * dBackS  <= rhs)
    ```
-3. **Pure-`u32` Q12 rounded quarter-ellipse arcs (`rounded == 1`, `U+256D..U+2570`):**
-   - Fixed-point scale `Q12 = 4096`.
-   - **Proven-infallible `u32`/`i32` overflow bound for `1 <= W, H <= 256`:** `dx <= 2 * W - 1 <= 511`, `dy <= 2 * H - 1 <= 511`, `dx * 4096 <= 2,093,056 < 2^31`, `nx, ny <= 8,191`, `r2 = nx * nx + ny * ny <= 134,184,962 < 2^31`. Clamping `halfQ` at `8192` keeps `rOut = 4096 + halfQ <= 12,288` so `rOut * rOut <= 150,994,944 < 2^31 < 2^32` (zero overflow even at extreme aspect ratios like `256 × 1`), and is mathematically identical to unbounded `halfQ` because whenever `halfQ >= 8192`, `rIn == 0` and every pixel satisfies `0 <= r2 <= 134,184,962 < 12,288^2`.
+3. **Option E4 rounded quarter-ellipse arcs (`rounded == 1`, `U+256D..U+2570`, consuming `bunny-u32-ellipse-classify/1`):**
+   - **Q12 disposition (rejected):** The earlier Q12 fixed-point truncation rule (`nx = (dx * 4096) / W`, `ny = (dy * 4096) / H`) was evaluated against an independent exact-rational reference over `[1..256]^2` and rejected due to **179,000 changed pixels** (26,183 false inclusions, 152,817 false exclusions) and **240 dropped exact boundary ties** (152 inner, 88 outer).
+   - **Approved geometry (Option E4 — Inset-Corner Exact Ellipse + 1-px Outgoing Edge Stubs):** Reserves the 1-pixel outgoing edge column/row strictly for the straight-stroke stub, places the quarter-ellipse center on the inner boundary of those stubs (`xIn`, `yIn`), and evaluates exact interior annulus + closed pixel-square centerline straddle via `bunny-u32-ellipse-classify/1` (`classify(dx, dy, a, b) ∈ {-1=Inside, 0=OnBoundary, +1=Outside}` mapped from Bunny's `{0, 1, 2}` codes).
+   - **Proven-infallible unsigned 64-bit bound over `[1..256]^2`:** In Case 3, `dx, dy` are odd integers `1 <= dx, dy <= 511`, `dx + 1, dy + 1 <= 512`, and `aOut, aIn, bOut, bIn, aMid, bMid <= 512 <= 46,340`. Even with the straddle `+1` corners, the conservative 2-limb intermediate upper bound is `2 * (512 * 512)^2 = 137,438,953,472 = 2^37 << 2^64` (exact pixel-center max `136,902,606,848`).
+   - **Normative equations for all four corners (`╭` `R,D`; `╮` `L,D`; `╰` `R,U`; `╯` `L,U`):**
    ```text
-   cx2   = (R > 0) ? (2 * W) : 0
-   cy2   = (D > 0) ? (2 * H) : 0
-   dx    = absDiff(2 * lx + 1, cx2)
-   dy    = absDiff(2 * ly + 1, cy2)
-   nx    = (dx * 4096) / W
-   ny    = (dy * 4096) / H
-   r2    = nx * nx + ny * ny
-   halfQ = min(8192, (max(11, 10 * lightPx) * 4096) / (10 * min(W, H)))
-   rIn   = satSub(4096, halfQ)
-   rOut  = 4096 + halfQ
-   lit   = (r2 >= rIn * rIn) && (r2 <= rOut * rOut)
+   vxStart = vx0(lightPx)
+   vxEnd   = min(W, vxStart + lightPx)
+   hyStart = hy0(lightPx)
+   hyEnd   = min(H, hyStart + lightPx)
+
+   edgeX = (R > 0) ? (W - 1) : 0
+   edgeY = (D > 0) ? (H - 1) : 0
+   xIn   = (R > 0) ? satSub(W, 1) : min(1, W)
+   yIn   = (D > 0) ? satSub(H, 1) : min(1, H)
+   cx2   = 2 * xIn
+   cy2   = 2 * yIn
+
+   aOut  = (R > 0) ? (2 * satSub(xIn, vxStart)) : (2 * satSub(vxEnd, xIn))
+   aIn   = (R > 0) ? (2 * satSub(xIn, vxEnd))   : (2 * satSub(vxStart, xIn))
+   bOut  = (D > 0) ? (2 * satSub(yIn, hyStart)) : (2 * satSub(hyEnd, yIn))
+   bIn   = (D > 0) ? (2 * satSub(yIn, hyEnd))   : (2 * satSub(hyStart, yIn))
+   aMid  = (aOut + aIn) / 2
+   bMid  = (bOut + bIn) / 2
+
+   inStrX = (lx >= vxStart && lx < vxEnd)
+   inStrY = (ly >= hyStart && ly < hyEnd)
+
+   // Case 1: Degenerate 1-px thin cells or straight stroke already meets outgoing edge
+   if (aOut == 0 || bOut == 0):
+     hArm = inStrY && ((R > 0) ? (lx >= vxStart) : (lx < vxEnd))
+     vArm = inStrX && ((D > 0) ? (ly >= hyStart) : (ly < hyEnd))
+     lit  = hArm || vArm
+
+   // Case 2: Outgoing 1-pixel edge stubs (exact straight-stroke join mask by construction)
+   else if (lx == edgeX || ly == edgeY):
+     lit  = (ly == edgeY && inStrX) || (lx == edgeX && inStrY)
+
+   // Case 3: Strict interior (exact Bunny ellipse annulus OR pixel-square centerline straddle)
+   else:
+     dx       = absDiff(2 * lx + 1, cx2)
+     dy       = absDiff(2 * ly + 1, cy2)
+     inBand   = (classify(dx, dy, aOut, bOut) <= 0) && (classify(dx, dy, aIn, bIn) >= 0)
+     straddle = (classify(dx - 1, dy - 1, aMid, bMid) <= 0) && (classify(dx + 1, dy + 1, aMid, bMid) >= 0)
+     lit      = inBand || straddle
    ```
+   - **Exhaustive `[1..256]^2 × 4` (`262,144` instances) acceptance invariants:**
+     - **Non-vanishing:** `0` empty rasters.
+     - **Single-component 8-connectivity:** `0` disconnected rasters across all `262,144` instances (whereas inset `inBand` without `straddle` disconnects on `11,557` instances, first at `2×24 ╭`).
+     - **Pinned outgoing-edge join sandwich gate:** **`stroke mask ⊆ edge mask ⊆ sharp-corner edge mask`** holds with `0 / 262,144` failures on both bounds. (Strict equality `edge mask == stroke mask` carries `15,254` benign perpendicular-arm extras at extreme aspect ratios `~7.5:1` or wider: `2,570` in Case 1 where the stroke lies on the outgoing edge itself such as `1×4 ╭`, and `12,684` in Case 2 starting at `15×2` where `hyEnd == H` puts the horizontal stub corner pixel on the bottom edge.)
+     - **Documented small-cell behavior:** At `W == 2`, `vxStart = floor((2 - 1) / 2) = 0` places the vertical stroke on column `0`, so `╮` and `╯` enter Case 1 (`#./#.` at `2×2`) while `╭` and `╰` enter Case 2 (`##/#.` at `2×2`). At `4×4`, the 1-px stub inset consumes one pixel of radius so `4×4 ╭` renders effectively square (`.### / .#.. / .#..`).
+     - **Shader diff gate (`#170`):** Executed WGSL and `naga`-translated GLSL ES 3.00 outputs MUST be diffed pixel-for-pixel against this Option E4 CPU reference across standard and adversarial cell sizes (`1×4`, `2×2`, `3×4`, `4×4`, `2×14`, `15×2`, `28×2`, `5×7`, `8×16`, `16×8`, `18×7`).
 4. **Pure-integer dashed lines (`dash ∈ {2, 3, 4}`, `U+2504..U+250B`, `U+254C..U+254F`):**
    - Horizontal (`L > 0 && R > 0`): `w = (L == 2) ? heavyPx : lightPx`; lit iff `ly >= hy0(w) && ly < hy0(w) + w && ((lx * 2 * dash) / W) % 2 == 0`.
    - Vertical (`U > 0 && D > 0`): `w = (U == 2) ? heavyPx : lightPx`; lit iff `lx >= vx0(w) && lx < vx0(w) + w && ((ly * 2 * dash) / H) % 2 == 0`.
