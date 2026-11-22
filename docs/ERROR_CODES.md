@@ -437,6 +437,90 @@ with a JSON path. Field-level detail is in
 **Message**: A receipt field violates the receipt contract
 **Fix**: Correct the named receipt field; the message states the rule.
 
+## Bijou GPU Conformance Kit Errors
+
+These come from `@flyingrobots/geordi-bijou-gpu`. Each is thrown as a named error class with a
+`code` property; validation errors also carry a JSON `path` and a `detail`. Field-level detail is
+in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
+
+### `GEORDI_E_BIJOU_BACKEND_UNAVAILABLE`
+
+**Severity**: Error
+**Message**: A presenter backend cannot be created on this host (`BackendUnavailableError`)
+**Fix**: Not a defect. Report `capability-refused` evidence and choose another backend.
+
+### `GEORDI_E_BIJOU_RENDERER_FAULT`
+
+**Severity**: Error
+**Message**: An available backend failed while preparing, drawing, or reading back a frame (`RendererFaultError`)
+**Fix**: Investigate the backend failure named in `detail`.
+
+### `GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH`
+
+**Severity**: Error
+**Message**: A cell or side-table entry holds a width-2 grapheme
+**Fix**: `bijou-surface-gpu/1` presents width-1 cells only. Do not emit wide graphemes into canonical `packed-bijou-cells/1`.
+
+### `GEORDI_E_BIJOU_INVALID_PACKED_CELLS`
+
+**Severity**: Error
+**Message**: A `packed-bijou-cells/1` receipt violates the canonical contract
+**Fix**: Correct the field at `path`; the receipt must pass Bijou's own validator.
+
+### `GEORDI_E_BIJOU_INVALID_CELL_METRICS`
+
+**Severity**: Error
+**Message**: `cellPxW` or `cellPxH` is not an integer in `1..256`
+**Fix**: Snap physical cell metrics into `1..256` at the host boundary.
+
+### `GEORDI_E_BIJOU_INVALID_SURFACE`
+
+**Severity**: Error
+**Message**: A surface, canvas size, theme colour, or probe coordinate is malformed
+**Fix**: Supply `widthCells * heightCells * 10` cell bytes, a canvas at least as large as the grid, uppercase `#RRGGBB` colours, and in-canvas probe coordinates.
+
+### `GEORDI_E_BIJOU_INVALID_ATLAS`
+
+**Severity**: Error
+**Message**: An atlas bitmap or slot map is malformed, or a cell references a slot beyond the atlas capacity
+**Fix**: Supply `atlasCols * cellPxW * atlasRows * cellPxH * 4` RGBA bytes and unique in-range slots.
+
+### `GEORDI_E_BIJOU_MISSING_GLYPH_SLOT`
+
+**Severity**: Error
+**Message**: A grapheme has no atlas slot for its `(grapheme, bold)` key
+**Fix**: Add the glyph to the atlas and slot map. There is no font fallback.
+
+### `GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE`
+
+**Severity**: Error
+**Message**: `procedural-glyphs.json` is malformed or a packed word disagrees with its fields
+**Fix**: Restore the table pinned by the ABI.
+
+### `GEORDI_E_BIJOU_INVALID_RECEIPT`
+
+**Severity**: Error
+**Message**: A `geordi-bijou-gpu-receipt/1` document failed validation (`EndpointReceiptValidationError`)
+**Fix**: Correct every entry in `issues`.
+
+### `GEORDI_E_BIJOU_FRAME_HASH_MISMATCH`
+
+**Severity**: Error
+**Message**: A presenter frame did not hash bit-exactly to the reference oracle frame (`FrameHashMismatchError`)
+**Fix**: The presenter and the oracle disagree on at least one byte. Compare pixel probes to find it.
+
+### `GEORDI_E_BIJOU_PIXEL_PROBE_MISMATCH`
+
+**Severity**: Error
+**Message**: One or more exact pixel probes did not match a frame (`PixelProbeMismatchError`)
+**Fix**: Inspect `mismatches` for the expected and actual RGBA of each probe.
+
+### `GEORDI_E_BIJOU_NUMERIC_DOMAIN`
+
+**Severity**: Error
+**Message**: An integer primitive received an operand that is not an unsigned 32-bit integer, or a zero divisor where none is permitted
+**Fix**: This is a caller bug. Validate cell metrics before rendering.
+
 ## Warnings
 
 ### `GEORDI_W_UNUSED_FIELD`
