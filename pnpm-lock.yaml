@@ -23,6 +23,9 @@ importers:
       '@flyingrobots/geordi-render-fixture':
         specifier: workspace:*
         version: link:packages/render-fixture
+      '@playwright/test':
+        specifier: ^1.61.0
+        version: 1.61.0
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
