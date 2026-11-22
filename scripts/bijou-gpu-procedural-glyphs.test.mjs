@@ -587,6 +587,15 @@ test('bijou-surface-gpu/1 ADR defines zero-float integer ABI, LE byte order, val
   assert.match(adr, /straddle\s*=/, 'ADR Section 7.1 must specify Option E4 centerline pixel-square straddle');
   assert.match(
     adr,
+    /\.\.\.\.\s*\/\s*\.###\s*\/\s*\.#\.\.\s*\/\s*\.#\.\./,
+    'ADR Section 7.1 4x4 ╭ worked example must include all 4 rows (.... / .### / .#.. / .#..)',
+  );
+  assert.match(adr, /##\/\.\./, 'ADR Section 7.1 2x2 worked example must state exact ╰ bitmap (##/..)');
+  assert.match(adr, /#\.\/\.\./, 'ADR Section 7.1 2x2 worked example must state exact ╯ bitmap (#./..)');
+  assert.match(adr, /res\.x\s*<=\s*1u/, 'ADR Section 7.1 must state direct u32 WGSL predicate res.x <= 1u');
+  assert.match(adr, /res\.x\s*>=\s*1u/, 'ADR Section 7.1 must state direct u32 WGSL predicate res.x >= 1u');
+  assert.match(
+    adr,
     /halfS\s*=\s*\(lightPx\s*==\s*1\)\s*\?\s*11\s*:\s*lightPx/,
     'ADR Section 7.1 diagonals must preserve exact 0.55 (11/20) minimum half-thickness when lightPx == 1',
   );
@@ -934,6 +943,8 @@ test('zero-float integer geometry passes Box-Drawing, diagonal boundary, Block E
   assert.equal(renderGrid(arcDR, 1, 4), './#/#/#', 'Option E4 1x4 ╭ grid');
   assert.equal(renderGrid(arcDR, 2, 2), '##/#.', 'Option E4 2x2 ╭ grid');
   assert.equal(renderGrid(arcDL, 2, 2), '#./#.', 'Option E4 2x2 ╮ grid (W==2 asymmetry)');
+  assert.equal(renderGrid(arcUR, 2, 2), '##/..', 'Option E4 2x2 ╰ grid (H==2 Case 1)');
+  assert.equal(renderGrid(arcUL, 2, 2), '#./..', 'Option E4 2x2 ╯ grid (W==2, H==2 Case 1)');
   assert.equal(renderGrid(arcDR, 3, 3), '.../.##/.#.', 'Option E4 3x3 ╭ grid');
   assert.equal(renderGrid(arcDR, 3, 4), '.../.##/.#./.#.', 'Option E4 3x4 ╭ grid');
   assert.equal(renderGrid(arcDR, 4, 4), '..../.###/.#../.#..', 'Option E4 4x4 ╭ grid');
