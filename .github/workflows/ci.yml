@@ -71,5 +71,14 @@ jobs:
       - name: Verify bijou-gpu browser probe harness
         run: pnpm --filter @flyingrobots/geordi-bijou-gpu test:browser
 
+      - name: Install glslangValidator
+        run: sudo apt-get update && sudo apt-get install --yes glslang-tools
+
+      - name: Verify bijou-gpu shader drift gate and kernel conformance
+        run: pnpm test:bijou-gpu:shaders
+
+      - name: Verify generated GLSL ES 3.00 with glslangValidator
+        run: cargo test -p geordi-bijou-shadergen -- --include-ignored
+
       - name: Verify native strict text smoke gate (geordi fixture)
         run: cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json

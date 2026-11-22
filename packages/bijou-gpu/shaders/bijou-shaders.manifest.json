@@ -1,0 +1,226 @@
+{
+  "bunnyPrimitives": [
+    {
+      "bunnyCommit": "3b7fbad",
+      "bunnyRepository": "flyingrobots/bunny",
+      "contractId": "bunny-u32-div-round-even/1",
+      "upstreamVectorsPath": "crates/bunny-gpu/fixtures/u32_div_round_even_vectors.json",
+      "upstreamWgslPath": "crates/bunny-gpu/shaders/bunny_u32_div_round_even.wgsl",
+      "vectorsPath": "fixtures/bijou-gpu/bunny/u32_div_round_even_vectors.json",
+      "vectorsSha256": "df265cc7233772e33347b04fa1f7a3e71f34566e4aa6af5cf3fecf23e2b044a6",
+      "wgslPath": "packages/bijou-gpu/shaders/vendor/bunny/bunny_u32_div_round_even.wgsl",
+      "wgslSha256": "ed93a26df071da13e8d8514c42a8dcfb5cbc5969d6ab4397d26b147fc5dc2e7f"
+    },
+    {
+      "bunnyCommit": "292a2c3",
+      "bunnyRepository": "flyingrobots/bunny",
+      "contractId": "bunny-u32-ellipse-classify/1",
+      "upstreamVectorsPath": "crates/bunny-gpu/fixtures/u32_ellipse_classify_vectors.json",
+      "upstreamWgslPath": "crates/bunny-gpu/shaders/bunny_u32_ellipse_classify.wgsl",
+      "vectorsPath": "fixtures/bijou-gpu/bunny/u32_ellipse_classify_vectors.json",
+      "vectorsSha256": "5f0ec6422de185e2ce7e832a7c1bce7ccde9b6f33e92b399f7c547191ef205e4",
+      "wgslPath": "packages/bijou-gpu/shaders/vendor/bunny/bunny_u32_ellipse_classify.wgsl",
+      "wgslSha256": "1b11121932031e2f1266087dded59e9c6f921bed7db1e9ed2ba4cf9b9c261e99"
+    }
+  ],
+  "fragmentOrigin": {
+    "glsl": "bottom-left, normalized by py = (canvasPx.y - 1u) - uint(gl_FragCoord.y)",
+    "wgslDefault": "top-left",
+    "wgslOverride": "BIJOU_FRAG_ORIGIN_BOTTOM_LEFT"
+  },
+  "generatedGlslSha256Rule": "SHA-256 of, for each stage in order: file name, LF, decimal byte length, LF, file bytes",
+  "generator": {
+    "name": "geordi-bijou-shadergen",
+    "version": "0.1.0"
+  },
+  "gpuAbiVersion": "bijou-surface-gpu/1",
+  "manifestVersion": "geordi-bijou-gpu-shader-manifest/1",
+  "naga": {
+    "features": [
+      "wgsl-in",
+      "glsl-out"
+    ],
+    "glslOptions": {
+      "bindingMap": {},
+      "boundsCheckPolicies": "default (unchecked)",
+      "isWebgl": true,
+      "multiview": null,
+      "version": "300 es",
+      "writerFlags": [],
+      "zeroInitializeWorkgroupMemory": true
+    },
+    "validation": {
+      "capabilities": [],
+      "flags": "all"
+    },
+    "version": "29.0.4"
+  },
+  "proceduralTablePath": "fixtures/bijou-gpu/procedural-glyphs.json",
+  "proceduralTableSha256": "7ebc92f74a57ec7744fc7ada20c886d76b4ea96c09b5005efbf0883562d62e46",
+  "shaders": [
+    {
+      "assembledWgslSha256": "241e1392c446866b331e9992046ef599cc3fd5c83c01bb4f3674f26979a06c53",
+      "authoredSource": {
+        "path": "packages/bijou-gpu/shaders/src/bijou-surface.main.wgsl",
+        "sha256": "908f8e3e3b515105935adc9d4f991b79c57e1ecbb0e156dff4fa747d99f4bd4b"
+      },
+      "bindings": [
+        {
+          "binding": 0,
+          "byteSize": 64,
+          "glslNameKind": "uniform-block",
+          "glslNames": {
+            "bijou-surface.frag.glsl": "BijouSurfaceUniforms_block_0Fragment",
+            "bijou-surface.vert.glsl": null
+          },
+          "group": 0,
+          "kind": "uniform-buffer",
+          "members": [
+            {
+              "byteOffset": 0,
+              "name": "canvasPx",
+              "wgslType": "vec2<u32>"
+            },
+            {
+              "byteOffset": 8,
+              "name": "cellPx",
+              "wgslType": "vec2<u32>"
+            },
+            {
+              "byteOffset": 16,
+              "name": "gridCells",
+              "wgslType": "vec2<u32>"
+            },
+            {
+              "byteOffset": 24,
+              "name": "atlasCols",
+              "wgslType": "u32"
+            },
+            {
+              "byteOffset": 32,
+              "name": "defaultFg",
+              "wgslType": "vec3<u32>"
+            },
+            {
+              "byteOffset": 48,
+              "name": "defaultBg",
+              "wgslType": "vec3<u32>"
+            },
+            {
+              "byteOffset": 60,
+              "name": "flags",
+              "wgslType": "u32"
+            }
+          ],
+          "wgslName": "surface",
+          "wgslType": "BijouSurfaceUniforms"
+        },
+        {
+          "binding": 1,
+          "glslNameKind": "sampler-uniform",
+          "glslNames": {
+            "bijou-surface.frag.glsl": "_group_0_binding_1_fs",
+            "bijou-surface.vert.glsl": null
+          },
+          "glslType": "usampler2D",
+          "group": 0,
+          "kind": "texture",
+          "textureFormat": "rgba32uint",
+          "wgslName": "cells",
+          "wgslType": "texture_2d<u32>"
+        },
+        {
+          "binding": 2,
+          "glslNameKind": "sampler-uniform",
+          "glslNames": {
+            "bijou-surface.frag.glsl": "_group_0_binding_2_fs",
+            "bijou-surface.vert.glsl": null
+          },
+          "glslType": "usampler2D",
+          "group": 0,
+          "kind": "texture",
+          "textureFormat": "rgba8uint",
+          "wgslName": "glyph_atlas",
+          "wgslType": "texture_2d<u32>"
+        }
+      ],
+      "generatedGlslSha256": "ee0924ab19dfa78e59fb2560304ee81647b95f3a7d681842ecf7836dca1620cf",
+      "id": "bijou-surface",
+      "includesProceduralTable": true,
+      "pipelineConstants": {
+        "BIJOU_FRAG_ORIGIN_BOTTOM_LEFT": 1.0
+      },
+      "stages": [
+        {
+          "entryPoint": "vs_main",
+          "path": "packages/bijou-gpu/shaders/bijou-surface.vert.glsl",
+          "sha256": "0fd67d80ef689992608ab50d65d456d1097f324563d8c4b48e7314b1d1d9fbc5",
+          "stage": "vertex"
+        },
+        {
+          "entryPoint": "fs_main",
+          "path": "packages/bijou-gpu/shaders/bijou-surface.frag.glsl",
+          "sha256": "6d6a2dee7a8b766ef8396a37aa25ae1d6c3e7bfbae11280768db5c459c18418b",
+          "stage": "fragment"
+        }
+      ],
+      "wgslPath": "packages/bijou-gpu/shaders/bijou-surface.wgsl"
+    },
+    {
+      "assembledWgslSha256": "22ca17f192562fdc04e8885eb6285b21b142b2147db9448728cc5e51cf8a47f8",
+      "authoredSource": {
+        "path": "packages/bijou-gpu/shaders/src/bijou-kernel-conformance.main.wgsl",
+        "sha256": "d0586695d6d1adbb5619713eb8fee0d1a8ad9d5795f36a3c5c858f844bae568f"
+      },
+      "bindings": [
+        {
+          "binding": 0,
+          "glslNameKind": "sampler-uniform",
+          "glslNames": {
+            "bijou-kernel-conformance.div-round-even.frag.glsl": "_group_0_binding_0_fs",
+            "bijou-kernel-conformance.ellipse-classify.frag.glsl": "_group_0_binding_0_fs",
+            "bijou-kernel-conformance.transport-canary.frag.glsl": "_group_0_binding_0_fs",
+            "bijou-kernel-conformance.vert.glsl": null
+          },
+          "glslType": "usampler2D",
+          "group": 0,
+          "kind": "texture",
+          "textureFormat": "rgba32uint",
+          "wgslName": "kernel_inputs",
+          "wgslType": "texture_2d<u32>"
+        }
+      ],
+      "generatedGlslSha256": "8ddb65f37ef517cc1dca271415120a941bf208e3a54407850dab91f628c0fca6",
+      "id": "bijou-kernel-conformance",
+      "includesProceduralTable": false,
+      "pipelineConstants": {},
+      "stages": [
+        {
+          "entryPoint": "vs_main",
+          "path": "packages/bijou-gpu/shaders/bijou-kernel-conformance.vert.glsl",
+          "sha256": "dc34fed4590535bc7cb6bc637663fa2461975f373b11edb5ac6e5f001f7c1734",
+          "stage": "vertex"
+        },
+        {
+          "entryPoint": "fs_transport_canary",
+          "path": "packages/bijou-gpu/shaders/bijou-kernel-conformance.transport-canary.frag.glsl",
+          "sha256": "4e638a28ac3165ff2293b60fba35b0072f6e2fcee4482b550c65f6e6ecdba898",
+          "stage": "fragment"
+        },
+        {
+          "entryPoint": "fs_div_round_even",
+          "path": "packages/bijou-gpu/shaders/bijou-kernel-conformance.div-round-even.frag.glsl",
+          "sha256": "492f596f7566484b9614be9f7e8dd8d04a436d7c6fd28fbcbeee93ee8450f8d8",
+          "stage": "fragment"
+        },
+        {
+          "entryPoint": "fs_ellipse_classify",
+          "path": "packages/bijou-gpu/shaders/bijou-kernel-conformance.ellipse-classify.frag.glsl",
+          "sha256": "4d0623eabc0f7d4f9ab59fda6a391236ae336b35c9c2c78f47097c2027214ae6",
+          "stage": "fragment"
+        }
+      ],
+      "wgslPath": "packages/bijou-gpu/shaders/bijou-kernel-conformance.wgsl"
+    }
+  ]
+}

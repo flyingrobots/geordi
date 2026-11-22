@@ -80,8 +80,13 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
 - **Browser probe harness** (`harness/`, `e2e/`): Playwright + Vite
 
 **Key principle**: Bijou owns cell semantics and Bunny owns the integer primitives. This package
-is the CPU oracle that GPU presenters are compared against; it contains no presenter, shader,
-packer, or atlas. Reference: [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
+is the CPU oracle that GPU presenters are compared against; it contains no presenter, packer, or
+atlas. Reference: [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
+
+Its `shaders/` directory holds the canonical `bijou-surface.wgsl`, the GLSL ES 3.00 stages that
+`crates/geordi-bijou-shadergen` generates from it with pinned `naga`, and their implementation
+manifest. The npm package does not publish that directory. Reference:
+[`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md).
 
 ### `@flyingrobots/geordi-profunctor-page`
 

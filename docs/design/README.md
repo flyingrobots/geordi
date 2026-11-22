@@ -31,8 +31,10 @@ for [#168](https://github.com/flyingrobots/geordi/issues/168). Downstream browse
 slices are tracked in [#169](https://github.com/flyingrobots/geordi/issues/169)–[#175](https://github.com/flyingrobots/geordi/issues/175)
 and [#58](https://github.com/flyingrobots/geordi/issues/58). The conformance kit
 ([#169](https://github.com/flyingrobots/geordi/issues/169)) exists and is described in
-[`../bijou-gpu-conformance-kit.md`](../bijou-gpu-conformance-kit.md). No GPU presenter, shader,
-packer, or atlas is claimed as implemented yet.
+[`../bijou-gpu-conformance-kit.md`](../bijou-gpu-conformance-kit.md). The canonical shader and its
+GLSL ES 3.00 generator ([#170](https://github.com/flyingrobots/geordi/issues/170)) exist and are
+described in [`../bijou-gpu-shaders.md`](../bijou-gpu-shaders.md). No GPU presenter, packer, or
+atlas is claimed as implemented yet.
 
 ## Accepted Design: Fixed-Point And Ray-Traced Scene Profiles
 

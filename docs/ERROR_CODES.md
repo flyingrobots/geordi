@@ -521,6 +521,52 @@ in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
 **Message**: An integer primitive received an operand that is not an unsigned 32-bit integer, or a zero divisor where none is permitted
 **Fix**: This is a caller bug. Validate cell metrics before rendering.
 
+## Bijou GPU Shader Generator
+
+These come from `geordi-bijou-shadergen`. Each is the `code` of a
+`geordi.bijou_shadergen.error` JSON line on stderr. The tool is described in
+[`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md).
+
+### `GEORDI_E_BIJOU_SHADERGEN_IO`
+
+**Message**: A generator input or output file could not be read or written
+**Fix**: Run the tool from the repository root or pass `--repo-root`; the message names the file.
+
+### `GEORDI_E_BIJOU_SHADERGEN_BUNNY_DIGEST_MISMATCH`
+
+**Message**: A vendored Bunny helper or vector fixture does not have its pinned SHA-256
+**Fix**: Restore the exact bytes from the Bunny commit the design record pins. To adopt a new Bunny revision, follow [`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md#changing-a-shader).
+
+### `GEORDI_E_BIJOU_SHADERGEN_GLYPH_TABLE_INVALID`
+
+**Message**: `fixtures/bijou-gpu/procedural-glyphs.json` is not a `bijou-procedural-glyphs/1` table with 128 Box-Drawing and 32 Block Element entries in code point order
+**Fix**: Correct the table entry the message names.
+
+### `GEORDI_E_BIJOU_SHADERGEN_WGSL_PARSE`
+
+**Message**: Pinned `naga` could not parse an assembled WGSL module
+**Fix**: Fix the authored WGSL at the location in the `naga` diagnostic.
+
+### `GEORDI_E_BIJOU_SHADERGEN_WGSL_VALIDATION`
+
+**Message**: Pinned `naga` parsed an assembled WGSL module but rejected it
+**Fix**: Fix the authored WGSL at the location in the `naga` diagnostic.
+
+### `GEORDI_E_BIJOU_SHADERGEN_GLSL_WRITE`
+
+**Message**: Pinned `naga` could not translate an entry point to GLSL ES 3.00
+**Fix**: Use only WGSL features that GLSL ES 3.00 for WebGL supports; the message names the entry point.
+
+### `GEORDI_E_BIJOU_SHADERGEN_USAGE`
+
+**Message**: The command line is not valid
+**Fix**: Pass exactly one of `--check`, `--write`, `--schema`, `--help`. Exit code 2.
+
+### `GEORDI_E_BIJOU_SHADERGEN_DRIFT`
+
+**Message**: Checked-in generated shader files differ from a fresh generation
+**Fix**: Run `cargo run -p geordi-bijou-shadergen -- --write` and commit the regenerated files with the change that caused them.
+
 ## Warnings
 
 ### `GEORDI_W_UNUSED_FIELD`

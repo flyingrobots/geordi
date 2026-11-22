@@ -11,9 +11,15 @@ import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import test, { after, before } from 'node:test';
 
+import {
+  BUNNY_PRIMITIVE_PINS,
+  createGlyphSlotMap,
+  decodeProceduralGlyphTable,
+  renderReferenceRgba,
+} from '@flyingrobots/geordi-bijou-gpu';
 import { chromium } from '@playwright/test';
 
-import { ADR_E4_SIZES, EXTRA_E4_SIZES, diffE4Sizes, e4CornerLit } from './lib/bijou-gpu-e4-reference.mjs';
+import { ADR_E4_SIZES, EXTRA_E4_SIZES, e4CornerLit } from './lib/bijou-gpu-e4-reference.mjs';
 import { buildKernelReceipts, sha256Hex, u32LeBytes } from './lib/bijou-gpu-kernel-receipt.mjs';
 import { runKernelConformance } from './lib/bijou-gpu-shader-harness.mjs';
 
@@ -430,4 +436,159 @@ test('assembled WGSL Option E4 arcs match the reference model with zero divergen
   assert.equal(result.diff.divergentPixels, 0);
   assert.equal(result.diff.instances, sizes.length * 4);
   t.diagnostic(`WebGPU adapter "${result.adapter}": ${result.diff.instances} corner instances, ${result.diff.pixels} pixels, 0 divergent`);
+});
+
+// ---------------------------------------------------------------------------------------------
+// Full-frame parity with the CPU reference oracle of @flyingrobots/geordi-bijou-gpu
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * A frame holding all 416 procedural glyphs, atlas glyphs, the space and the empty cell, once
+ * plainly styled and once with seeded pseudo-random flags, presence bits, opacity and colors,
+ * over a synthetic atlas of mono and premultiplied color slots, with a letterboxed remainder.
+ */
+function oracleFrame(cellPxW, cellPxH) {
+  let seed = 0x12345678 + cellPxW * 257 + cellPxH;
+  const next = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return (seed >>> 8) & 0xff;
+  };
+  const atlasCols = 4;
+  const atlasRows = 2;
+  const atlasRgba = new Uint8Array(atlasCols * cellPxW * atlasRows * cellPxH * 4);
+  for (let at = 0; at < atlasRgba.length; at += 4) {
+    const slotCol = Math.floor(((at / 4) % (atlasCols * cellPxW)) / cellPxW);
+    const alpha = next();
+    if (slotCol >= 2) {
+      atlasRgba.set([0, 1, 2].map(() => Math.floor((next() * alpha) / 255)), at);
+    }
+    atlasRgba[at + 3] = alpha;
+  }
+  const graphemes = ['A', 'B', '\u2665', '\u2666', 'C', 'D', '\u2660', '\u2663'];
+  const slotMap = createGlyphSlotMap(
+    graphemes.flatMap((grapheme, slot) =>
+      [false, true].map((bold) => ({ grapheme, bold, slot, kind: slot % 4 < 2 ? 'mono' : 'color' })),
+    ),
+  );
+  const codes = [];
+  for (const [start, count] of [[0x2500, 128], [0x2580, 32], [0x2800, 256]]) {
+    for (let index = 0; index < count; index += 1) {
+      codes.push(start + index);
+    }
+  }
+  codes.push(...graphemes.map((grapheme) => grapheme.codePointAt(0)), 0x20, 0);
+  const widthCells = 32;
+  const heightCells = Math.ceil((codes.length * 2) / widthCells);
+  const bytes = new Uint8Array(widthCells * heightCells * 10);
+  for (let cell = 0; cell < widthCells * heightCells; cell += 1) {
+    const code = codes[cell % codes.length];
+    const styled = cell >= codes.length;
+    const flags = styled ? next() & (cell % 2 === 0 ? 0xff : 0x7f) : 0;
+    const alpha = styled ? next() : 0xff;
+    const fg = (alpha & 0x40) === 0 ? [0, 0, 0] : [next(), next(), next()];
+    const bg = (alpha & 0x80) === 0 ? [0, 0, 0] : [next(), next(), next()];
+    bytes.set([code & 0xff, code >> 8, ...fg, ...bg, flags, alpha], cell * 10);
+  }
+  const canvasPx = [widthCells * cellPxW + 5, heightCells * cellPxH + 3];
+  const reference = renderReferenceRgba(
+    { widthCells, heightCells, bytes, sideTable: [] },
+    { cellPxW, cellPxH, atlasCols, atlasRows, rgba: atlasRgba },
+    slotMap,
+    decodeProceduralGlyphTable(glyphTable),
+    { canvasPxW: canvasPx[0], canvasPxH: canvasPx[1], defaultFg: '#E6EDF3', defaultBg: '#0D1117' },
+  );
+  return {
+    reference,
+    frame: {
+      uniforms: {
+        canvasPx,
+        cellPx: [cellPxW, cellPxH],
+        gridCells: [widthCells, heightCells],
+        atlasCols,
+        defaultFg: [0xe6, 0xed, 0xf3],
+        defaultBg: [0x0d, 0x11, 0x17],
+        flags: 0,
+      },
+      cells: { width: widthCells, height: heightCells, words: Array.from(reference.preparedCells) },
+      atlas: { width: atlasCols * cellPxW, height: atlasRows * cellPxH, bytes: Array.from(atlasRgba) },
+    },
+  };
+}
+
+const ORACLE_SIZES = [
+  [8, 16],
+  [5, 7],
+  [2, 5],
+  [3, 4],
+  [15, 30],
+];
+
+/** Renders `frame` in the page through WebGL2 GLSL and, when available, WebGPU WGSL. */
+function renderFrameInPage(shader, frame) {
+  return page.evaluate(
+    async ({ shader: pageShader, frame: pageFrame }) => {
+      const harness = await import('/bijou-gpu-shader-harness.mjs');
+      const base64 = (bytes) => {
+        let text = '';
+        for (let at = 0; at < bytes.length; at += 0x8000) {
+          text += String.fromCharCode(...bytes.subarray(at, at + 0x8000));
+        }
+        return btoa(text);
+      };
+      const gl = document.createElement('canvas').getContext('webgl2', { alpha: false, antialias: false });
+      const renderer = gl === null ? null : harness.createSurfaceRendererWebGl2(gl, pageShader);
+      const webgl2 = renderer?.render?.(pageFrame) ?? { rgba: null, detail: 'no WebGL2 program' };
+      const adapter = navigator.gpu === undefined ? null : await navigator.gpu.requestAdapter();
+      let webgpu = null;
+      if (adapter !== null) {
+        const usage = { buffer: GPUBufferUsage, texture: GPUTextureUsage, map: GPUMapMode };
+        webgpu = await harness.runSurfaceFrameWebGpu(await adapter.requestDevice(), usage, pageShader, pageFrame);
+      }
+      const encode = (result) => ({ rgba: result.rgba === null ? null : base64(result.rgba), detail: result.detail });
+      return { webgl2: encode(webgl2), webgpu: webgpu === null ? null : encode(webgpu) };
+    },
+    { shader, frame },
+  );
+}
+
+test('the manifest pins the same Bunny primitives as the endpoint receipt validator', () => {
+  assert.deepEqual(
+    manifest.bunnyPrimitives.map(({ contractId, bunnyCommit, wgslSha256, vectorsSha256 }) => ({
+      contractId,
+      bunnyCommit,
+      wgslSha256,
+      vectorsSha256,
+    })),
+    BUNNY_PRIMITIVE_PINS.map(({ contractId, bunnyCommit, wgslSha256, vectorsSha256 }) => ({
+      contractId,
+      bunnyCommit,
+      wgslSha256,
+      vectorsSha256,
+    })),
+  );
+});
+
+test('full frames of every procedural glyph, atlas glyph and style match the CPU reference oracle bit for bit', async (t) => {
+  const shader = surfaceShader();
+  let webgpuFrames = 0;
+  for (const [cellPxW, cellPxH] of ORACLE_SIZES) {
+    const { reference, frame } = oracleFrame(cellPxW, cellPxH);
+    const rendered = await renderFrameInPage(shader, frame);
+    assert.ok(rendered.webgl2.rgba !== null, `WebGL2 is required for this gate: ${rendered.webgl2.detail}`);
+    const hashOf = (base64) => sha256Hex(Buffer.from(base64, 'base64'));
+    assert.equal(hashOf(rendered.webgl2.rgba), reference.frameRgbaSha256, `WebGL2 GLSL at ${cellPxW}x${cellPxH}`);
+    if (rendered.webgpu !== null) {
+      assert.ok(rendered.webgpu.rgba !== null, rendered.webgpu.detail);
+      assert.equal(hashOf(rendered.webgpu.rgba), reference.frameRgbaSha256, `WebGPU WGSL at ${cellPxW}x${cellPxH}`);
+      webgpuFrames += 1;
+    }
+  }
+  assert.notEqual(
+    webgpuFrames === 0 && process.env.GEORDI_BIJOU_GPU_REQUIRE_WEBGPU === '1',
+    true,
+    'WebGPU is required but unavailable',
+  );
+  t.diagnostic(
+    `WebGL2 GLSL: ${ORACLE_SIZES.length} frames identical to the oracle; WebGPU WGSL: ${webgpuFrames === 0 ? 'unavailable, not executed' : `${webgpuFrames} frames identical to the oracle`}`,
+  );
 });

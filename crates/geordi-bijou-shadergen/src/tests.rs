@@ -7,11 +7,10 @@ use std::process::Command;
 
 use serde_json::Value;
 
-use crate::cli::SCHEMAS;
 use crate::{
     ArtifactState, BUNNY_PRIMITIVES, FRAG_ORIGIN_OVERRIDE, GLYPH_TABLE_PATH, MANIFEST_PATH,
-    MANIFEST_VERSION, NAGA_VERSION, SHADER_DIR, SHADERS, ShadergenError, Stage, check, generate,
-    generated_glsl_sha256, glyph_table_wgsl, run, sha256_hex, validate_wgsl, write,
+    MANIFEST_VERSION, NAGA_VERSION, SCHEMAS, SHADER_DIR, SHADERS, ShadergenError, Stage, check,
+    generate, generated_glsl_sha256, glyph_table_wgsl, run, sha256_hex, validate_wgsl, write,
 };
 
 type TestResult = Result<(), Box<dyn Error>>;
@@ -63,8 +62,8 @@ impl TempRepo {
             fs::remove_dir_all(&root)?;
         }
         let repo = Self { root };
-        repo.copy_dir(&repo_root().join(SHADER_DIR), &repo.root.join(SHADER_DIR))?;
-        repo.copy_dir(
+        copy_dir(&repo_root().join(SHADER_DIR), &repo.root.join(SHADER_DIR))?;
+        copy_dir(
             &repo_root().join("fixtures/bijou-gpu/bunny"),
             &repo.root.join("fixtures/bijou-gpu/bunny"),
         )?;
@@ -75,20 +74,6 @@ impl TempRepo {
         Ok(repo)
     }
 
-    fn copy_dir(&self, from: &Path, to: &Path) -> Result<(), Box<dyn Error>> {
-        fs::create_dir_all(to)?;
-        for entry in fs::read_dir(from)? {
-            let entry = entry?;
-            let target = to.join(entry.file_name());
-            if entry.file_type()?.is_dir() {
-                self.copy_dir(&entry.path(), &target)?;
-            } else {
-                let _bytes = fs::copy(entry.path(), target)?;
-            }
-        }
-        Ok(())
-    }
-
     fn path(&self, relative: &str) -> PathBuf {
         self.root.join(relative)
     }
@@ -96,6 +81,20 @@ impl TempRepo {
     fn run(&self, args: &[&str]) -> (u8, String, String) {
         run_cli(args, &self.root)
     }
+}
+
+fn copy_dir(from: &Path, to: &Path) -> Result<(), Box<dyn Error>> {
+    fs::create_dir_all(to)?;
+    for entry in fs::read_dir(from)? {
+        let entry = entry?;
+        let target = to.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir(&entry.path(), &target)?;
+        } else {
+            let _bytes = fs::copy(entry.path(), target)?;
+        }
+    }
+    Ok(())
 }
 
 impl Drop for TempRepo {
@@ -151,7 +150,10 @@ fn validate(schema: &Value, value: &Value, at: &str) -> Result<(), String> {
                 }
             }
             "enum" => {
-                if !rule.as_array().is_some_and(|options| options.contains(value)) {
+                if !rule
+                    .as_array()
+                    .is_some_and(|options| options.contains(value))
+                {
                     return Err(format!("{at}: {value} is not one of {rule}"));
                 }
             }
@@ -184,10 +186,16 @@ fn validate(schema: &Value, value: &Value, at: &str) -> Result<(), String> {
             }
             "additionalProperties" => {
                 if rule != &Value::Bool(false) {
-                    return Err(format!("{at}: only additionalProperties false is supported"));
+                    return Err(format!(
+                        "{at}: only additionalProperties false is supported"
+                    ));
                 }
                 let known = schema.get("properties").and_then(Value::as_object);
-                for name in value.as_object().into_iter().flat_map(|object| object.keys()) {
+                for name in value
+                    .as_object()
+                    .into_iter()
+                    .flat_map(|object| object.keys())
+                {
                     if !known.is_some_and(|known| known.contains_key(name)) {
                         return Err(format!("{at}: unexpected member {name}"));
                     }
@@ -250,10 +258,7 @@ fn vendored_bunny_artifacts_have_the_digests_and_commits_the_abi_record_pins() -
             let row = format!("`{}` | `{upstream}` | `{digest}` |", primitive.bunny_commit);
             assert!(adr.contains(&row), "ABI record must pin {row}");
         }
-        assert!(adr.contains(&format!(
-            "\"contractId\": \"{}\"",
-            primitive.contract_id
-        )));
+        assert!(adr.contains(&format!("\"contractId\": \"{}\"", primitive.contract_id)));
     }
     Ok(())
 }
@@ -265,11 +270,24 @@ fn assembled_surface_wgsl_embeds_the_bunny_helpers_verbatim_and_the_procedural_t
     let kernel = shader_file("bijou-kernel-conformance.wgsl")?;
     for primitive in &BUNNY_PRIMITIVES {
         let helper = read_repo(primitive.wgsl_path)?;
-        assert_eq!(surface.matches(helper.as_str()).count(), 1, "{}", primitive.contract_id);
-        assert_eq!(kernel.matches(helper.as_str()).count(), 1, "{}", primitive.contract_id);
+        assert_eq!(
+            surface.matches(helper.as_str()).count(),
+            1,
+            "{}",
+            primitive.contract_id
+        );
+        assert_eq!(
+            kernel.matches(helper.as_str()).count(),
+            1,
+            "{}",
+            primitive.contract_id
+        );
     }
     // The arithmetic helpers exist once: the shader adopts them and never redefines them.
-    for name in ["fn bunny_u32_div_round_even(", "fn bunny_u32_ellipse_classify("] {
+    for name in [
+        "fn bunny_u32_div_round_even(",
+        "fn bunny_u32_ellipse_classify(",
+    ] {
         assert_eq!(surface.matches(name).count(), 1, "{name}");
     }
     let table = fs::read(repo_root().join(GLYPH_TABLE_PATH))?;
@@ -382,7 +400,10 @@ fn surface_wgsl_reads_both_textures_as_integers_and_never_as_rgba8unorm() -> Tes
     assert!(surface.contains("textureLoad(cells, vec2<u32>(col, row), 0)"));
     assert!(surface.contains("textureLoad(glyph_atlas, vec2<u32>(sample_x, sample_y), 0)"));
     assert!(surface.contains("@builtin(vertex_index) vertex_index: u32"));
-    assert!(!surface.contains("@location(0) position"), "no vertex buffers");
+    assert!(
+        !surface.contains("@location(0) position"),
+        "no vertex buffers"
+    );
     Ok(())
 }
 
@@ -434,10 +455,16 @@ fn core_rendering_functions_hold_no_floating_point_value() -> TestResult {
             assert!(!float, "{name}: float expression {expression:?}");
         }
     }
-    assert!(checked >= 20, "expected the whole pixel law, found {checked}");
-    assert!(module.functions.iter().any(|(_, function)| {
-        function.name.as_deref() == Some("shade_pixel")
-    }));
+    assert!(
+        checked >= 20,
+        "expected the whole pixel law, found {checked}"
+    );
+    assert!(
+        module
+            .functions
+            .iter()
+            .any(|(_, function)| { function.name.as_deref() == Some("shade_pixel") })
+    );
     Ok(())
 }
 
@@ -452,9 +479,9 @@ fn surface_glsl_is_es_300_with_integer_texel_fetch_and_top_left_normalization() 
     assert_eq!(fragment.matches("uniform highp usampler2D ").count(), 2);
     assert_eq!(fragment.matches("sampler2D").count(), 2, "only usampler2D");
     assert!(fragment.contains("texelFetch(_group_0_binding_1_fs, ivec2(uvec2(col, row)), 0)"));
-    assert!(fragment.contains(
-        "texelFetch(_group_0_binding_2_fs, ivec2(uvec2(sample_x, sample_y)), 0)"
-    ));
+    assert!(
+        fragment.contains("texelFetch(_group_0_binding_2_fs, ivec2(uvec2(sample_x, sample_y)), 0)")
+    );
     assert_eq!(fragment.matches("texelFetch(").count(), 2);
     assert!(!fragment.contains("texture("));
     assert!(fragment.contains("layout(location = 0) out uvec4 "));
@@ -462,15 +489,16 @@ fn surface_glsl_is_es_300_with_integer_texel_fetch_and_top_left_normalization() 
     // py = (canvasPxH - 1u) - uint(gl_FragCoord.y), compiled in for GLSL.
     assert!(fragment.contains(&format!("const bool {FRAG_ORIGIN_OVERRIDE} = true;")));
     let compact: String = fragment.split_whitespace().collect();
-    assert!(compact.contains(
-        "uint_e5=_group_0_binding_0_fs.canvasPx.y;return((_e5-1u)-uint(frag_y));"
-    ));
+    assert!(
+        compact.contains("uint_e5=_group_0_binding_0_fs.canvasPx.y;return((_e5-1u)-uint(frag_y));")
+    );
     assert!(compact.contains("vec4position=gl_FragCoord;"));
     assert!(compact.contains("frag_py(position.y)"));
     // The WGSL default keeps the WebGPU top-left origin.
-    assert!(shader_file("bijou-surface.wgsl")?.contains(&format!(
-        "override {FRAG_ORIGIN_OVERRIDE}: bool = false;"
-    )));
+    assert!(
+        shader_file("bijou-surface.wgsl")?
+            .contains(&format!("override {FRAG_ORIGIN_OVERRIDE}: bool = false;"))
+    );
 
     let vertex = shader_file("bijou-surface.vert.glsl")?;
     assert!(vertex.starts_with("#version 300 es\n"));
@@ -486,20 +514,26 @@ fn kernel_glsl_keeps_the_branch_first_guards_of_the_bunny_helpers() -> TestResul
     let div: String = shader_file("bijou-kernel-conformance.div-round-even.frag.glsl")?
         .split_whitespace()
         .collect();
-    let guard = div.find("if((d==0u)){returnuvec2(0u,1u);}").ok_or("d == 0 guard")?;
+    let guard = div
+        .find("if((d==0u)){returnuvec2(0u,1u);}")
+        .ok_or("d == 0 guard")?;
     let divide = div.find("(n/d)").ok_or("division")?;
     assert!(guard < divide, "the zero divisor branch must precede `/`");
-    assert!(div.contains("uints=(d-r);"), "complement comparison, never 2 * r");
+    assert!(
+        div.contains("uints=(d-r);"),
+        "complement comparison, never 2 * r"
+    );
     assert!(!div.contains("2u*r") && !div.contains("r*2u"));
 
     let ellipse: String = shader_file("bijou-kernel-conformance.ellipse-classify.frag.glsl")?
         .split_whitespace()
         .collect();
-    let degenerate = ellipse
-        .find("(semi_x==0u)")
-        .ok_or("semi_x == 0 branch")?;
+    let degenerate = ellipse.find("(semi_x==0u)").ok_or("semi_x == 0 branch")?;
     let polynomial = ellipse.find("uintterm_x=").ok_or("polynomial")?;
-    assert!(degenerate < polynomial, "the degenerate branch must precede the polynomial");
+    assert!(
+        degenerate < polynomial,
+        "the degenerate branch must precede the polynomial"
+    );
     assert!(ellipse.contains("(semi_y==0u)"));
     Ok(())
 }
@@ -559,7 +593,7 @@ fn manifest_digests_are_the_sha256_of_the_bytes_they_name() -> TestResult {
     assert_eq!(manifest["naga"]["glslOptions"]["version"], "300 es");
     assert_eq!(manifest["naga"]["glslOptions"]["isWebgl"], true);
     assert_eq!(manifest["generator"]["name"], "geordi-bijou-shadergen");
-    assert_eq!(manifest["proceduralTable"]["sha256"], ADR_GLYPH_TABLE_SHA256);
+    assert_eq!(manifest["proceduralTableSha256"], ADR_GLYPH_TABLE_SHA256);
 
     let primitives = list(&manifest["bunnyPrimitives"], "bunnyPrimitives")?;
     assert_eq!(primitives.len(), BUNNY_PRIMITIVES.len());
@@ -590,7 +624,12 @@ fn manifest_digests_are_the_sha256_of_the_bytes_they_name() -> TestResult {
             assert_eq!(stage["stage"], stage_spec.stage.name());
             assert_eq!(stage["entryPoint"], stage_spec.entry_point);
             let bytes = fs::read(repo_root().join(text(&stage["path"], "stage.path")?))?;
-            assert_eq!(stage["sha256"], sha256_hex(&bytes), "{}", stage_spec.glsl_file);
+            assert_eq!(
+                stage["sha256"],
+                sha256_hex(&bytes),
+                "{}",
+                stage_spec.glsl_file
+            );
             stage_bytes.push(bytes);
         }
         let framed: Vec<(&str, &[u8])> = spec
@@ -717,7 +756,8 @@ fn check_passes_on_the_checked_in_artifacts() -> TestResult {
 fn check_reports_drift_and_missing_files_and_writes_nothing() -> TestResult {
     let repo = TempRepo::new("drift")?;
     let fragment = repo.path(&format!("{SHADER_DIR}/bijou-surface.frag.glsl"));
-    let tampered = fs::read_to_string(&fragment)?.replace("- 1u) - uint(frag_y)", "- 0u) - uint(frag_y)");
+    let tampered =
+        fs::read_to_string(&fragment)?.replace("- 1u) - uint(frag_y)", "- 0u) - uint(frag_y)");
     fs::write(&fragment, &tampered)?;
     fs::remove_file(repo.path(MANIFEST_PATH))?;
 
@@ -751,7 +791,11 @@ fn check_reports_drift_and_missing_files_and_writes_nothing() -> TestResult {
         errors[0]["paths"],
         serde_json::json!([drifted, MANIFEST_PATH])
     );
-    assert_eq!(fs::read_to_string(&fragment)?, tampered, "--check must not write");
+    assert_eq!(
+        fs::read_to_string(&fragment)?,
+        tampered,
+        "--check must not write"
+    );
     assert!(!repo.path(MANIFEST_PATH).exists(), "--check must not write");
 
     // An authored source edit drifts the assembled WGSL, its GLSL and the manifest.
@@ -872,7 +916,7 @@ fn every_help_schema_and_usage_line_validates_against_its_declared_schema() -> T
 }
 
 #[test]
-fn human_flag_switches_every_stream_to_prose() -> TestResult {
+fn human_flag_switches_every_stream_to_prose() {
     for args in [
         &["--check", "--human"][..],
         &["--humanize", "--help"],
@@ -880,7 +924,7 @@ fn human_flag_switches_every_stream_to_prose() -> TestResult {
     ] {
         let (code, stdout, _) = run_cli(args, &repo_root());
         assert_eq!(code, 0, "{args:?}");
-        assert!(!stdout.is_empty());
+        assert_ne!(stdout, "");
         let first = stdout.lines().next().unwrap_or_default();
         assert!(
             serde_json::from_str::<Value>(first).is_err(),
@@ -890,5 +934,4 @@ fn human_flag_switches_every_stream_to_prose() -> TestResult {
     let (code, stdout, stderr) = run_cli(&["--human"], &repo_root());
     assert_eq!((code, stdout.as_str()), (2, ""));
     assert!(stderr.starts_with("error [GEORDI_E_BIJOU_SHADERGEN_USAGE]: "));
-    Ok(())
 }
