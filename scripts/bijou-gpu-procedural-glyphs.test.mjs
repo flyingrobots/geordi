@@ -473,6 +473,11 @@ test('bijou-surface-gpu/1 ADR defines zero-float integer ABI, LE byte order, val
   assert.match(adr, /defaultFg/);
   assert.match(adr, /defaultBg/);
   assert.match(adr, /geordi-bijou-gpu-receipt\/1/);
+  assert.match(adr, /"frameRgbaSha256":/);
+  assert.match(adr, /canvasPxW \* canvasPxH \* 4/);
+  assert.match(adr, /copyTextureToBuffer/);
+  assert.match(adr, /gl\.readPixels/);
+  assert.match(adr, /receipt\.frameRgbaSha256 === oracle\.frameRgbaSha256/);
   assert.match(adr, /fixtures\/bijou-gpu\/procedural-glyphs\.json/);
   assert.doesNotMatch(adr, /awaiting maintainer merge/i);
   assert.doesNotMatch(adr, /\bT2\.1[bc]\b/);
@@ -785,6 +790,13 @@ test('zero-float integer geometry passes Box-Drawing, diagonal boundary, Block E
   assert.equal(lerpU8(10, 11, 1, 2), 10); // 21/2 -> 10 (even)
   assert.equal(lerpU8(11, 12, 1, 2), 12); // 23/2 -> 12 (even)
   assert.equal(divRoundEven(255 * 63 * 255 + 255 * 16065, 16065), 510); // max premul emoji numerator 8,193,150 < 2^31
+
+  // Exhaustive IEEE-754 f32 swapchain egress round-trip proof (0..255 -> f32(k)/255 -> u8 == k with 0 LSB drift)
+  for (let k = 0; k <= 255; k++) {
+    const f32Norm = Math.fround(Math.fround(k) / Math.fround(255));
+    const recovered = Math.round(f32Norm * 255);
+    assert.equal(recovered, k, `IEEE-754 f32 swapchain egress drifted at u8=${k}`);
+  }
 
   // 1. Exhaustive [1..256]^2 Q12 arc u32/i32 overflow proof (R-1)
   for (let W = 1; W <= 256; W++) {
