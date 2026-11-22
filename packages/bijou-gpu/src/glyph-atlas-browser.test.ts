@@ -382,7 +382,7 @@ describe('watchGlyphAtlasEnvironment: DPR changes', () => {
     expect(atlas.metrics).toEqual({ cellPxW: 14, cellPxH: 26, fontIdentity: '"Fira Code", monospace 21px' });
     expect(atlas.lastInvalidation?.reason).toBe('dpr-change');
     expect(atlas.needsFullRefresh).toBe(true);
-    expect(early !== null && atlas.isCurrent(early)).toBe(false);
+    expect(early !== undefined && atlas.isCurrent(early)).toBe(false);
     expect(rasterizer.font.sizePx).toBe(21);
     expect(watcher.dpr).toBe(1.5);
     // The spent query is released and the new DPR is watched.
@@ -510,7 +510,7 @@ describe('watchGlyphAtlasEnvironment: font arrival', () => {
     expect(atlas.generation).toBe(GLYPH_ATLAS_FIRST_GENERATION + 1);
     expect(atlas.lastInvalidation?.reason).toBe('font-ready');
     expect(atlas.needsFullRefresh).toBe(true);
-    expect(early !== null && atlas.isCurrent(early)).toBe(false);
+    expect(early !== undefined && atlas.isCurrent(early)).toBe(false);
     expect(atlas.metrics).toEqual({ cellPxW: 9, cellPxH: 17, fontIdentity: '"Fira Code", monospace 14px' });
     expect(events.map((event) => event.reason)).toEqual(['font-ready']);
 

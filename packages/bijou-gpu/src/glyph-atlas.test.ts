@@ -6,13 +6,18 @@ import { describe, expect, it } from 'vitest';
 
 import {
   BijouGpuValidationError,
+  CELL_STRIDE,
   classifyGlyphPixels,
   COLOR_GLYPH_DIVERGENCE_THRESHOLD,
   createGlyphAtlas,
+  createSurfaceDamageState,
   encodeAtlasGlyphWord0,
   FLAG_BOLD,
   FLAG_DIM,
   GLYPH_ATLAS_FIRST_GENERATION,
+  packSurfaceDamage,
+  prepareReferenceCells,
+  referenceSurfaceFromPackedSurface,
   renderReferenceRgba,
   serializeEndpointReceipt,
   snapCellMetrics,
@@ -25,6 +30,9 @@ import {
   type GlyphAtlasSlotRef,
   type GlyphRasterizer,
   type GlyphRasterRequest,
+  type GpuPackedSurface,
+  type ResolveGlyphSlot,
+  type SurfaceDamageOptions,
 } from './index.js';
 import { renderSuite, suiteFrame } from '../test/support.js';
 
@@ -92,8 +100,8 @@ function atlasOf(
   return createGlyphAtlas({ rasterizer, atlasCols, atlasRows, metrics });
 }
 
-function must(ref: GlyphAtlasSlotRef | null): GlyphAtlasSlotRef {
-  expect(ref).not.toBeNull();
+function must(ref: GlyphAtlasSlotRef | undefined): GlyphAtlasSlotRef {
+  expect(ref).toBeDefined();
   return ref!;
 }
 
@@ -741,9 +749,9 @@ describe('GlyphAtlas edges and refusals', () => {
   it('handles the empty string safely: no slot, no raster, no state change', () => {
     const rasterizer = fakeRasterizer();
     const atlas = atlasOf(rasterizer);
-    expect(atlas.resolve('', false)).toBeNull();
-    expect(atlas.resolve('', true)).toBeNull();
-    expect(atlas.resolveSlot('', FLAG_BOLD)).toBeNull();
+    expect(atlas.resolve('', false)).toBeUndefined();
+    expect(atlas.resolve('', true)).toBeUndefined();
+    expect(atlas.resolveSlot('', FLAG_BOLD)).toBeUndefined();
     expect(rasterizer.calls).toEqual([]);
     expect(atlas.dirtyRects).toEqual([]);
     expect(atlas.getStats()).toMatchObject({ usedSlots: 0, generation: GLYPH_ATLAS_FIRST_GENERATION });
@@ -941,5 +949,125 @@ describe('GlyphAtlas core purity', () => {
     expect(typeof Reflect.get(globalThis, 'OffscreenCanvas')).toBe('undefined');
     const atlas = atlasOf(fakeRasterizer());
     expect(must(atlas.resolve('A', false)).slot).toBe(0);
+  });
+});
+
+/** A one-row live surface: one glyph per cell, `''` for an empty cell. */
+function rowSurface(cells: readonly (string | readonly [string, number])[], dirty: readonly number[]): GpuPackedSurface {
+  const buffer = new Uint8Array(cells.length * CELL_STRIDE);
+  const renderDirtyWords = new Uint32Array(Math.ceil(cells.length / 32));
+  cells.forEach((cell, index) => {
+    const [glyph, flags] = typeof cell === 'string' ? [cell, 0] : cell;
+    const code = glyph === '' ? 0x20 : glyph.charCodeAt(0);
+    buffer.set([code & 0xff, code >>> 8, 0, 0, 0, 0, 0, 0, flags, 63], index * CELL_STRIDE);
+  });
+  for (const cell of dirty) {
+    renderDirtyWords[cell >>> 5] = ((renderDirtyWords[cell >>> 5] ?? 0) | (1 << (cell & 31))) >>> 0;
+  }
+  return { width: cells.length, height: 1, buffer, sideTable: [], renderDirtyWords };
+}
+
+/** The whole-grid reference lowering against the atlas as it stands now. */
+function referenceWords(surface: GpuPackedSurface, atlas: GlyphAtlas): number[] {
+  return Array.from(prepareReferenceCells(referenceSurfaceFromPackedSurface(surface), atlas.toSlotMap()));
+}
+
+describe('GlyphAtlas as the dirty-union packer\'s atlas', () => {
+  it('is a SurfaceDamageOptions: resolveSlot is a ResolveGlyphSlot and atlasGeneration reads generation', () => {
+    const atlas = atlasOf(fakeRasterizer());
+    const options: SurfaceDamageOptions = atlas;
+    const resolveSlot: ResolveGlyphSlot = atlas.resolveSlot;
+    expect(options.atlasGeneration?.()).toBe(GLYPH_ATLAS_FIRST_GENERATION);
+    expect(resolveSlot('A', FLAG_BOLD)).toEqual({ slot: 0, kind: 'mono', generation: 1 });
+    atlas.invalidate();
+    expect(atlas.atlasGeneration()).toBe(atlas.generation);
+    expect(atlas.atlasGeneration()).toBe(GLYPH_ATLAS_FIRST_GENERATION + 1);
+  });
+
+  it('packs a first frame whose words match the reference lowering, kind bits included', () => {
+    const atlas = atlasOf(fakeRasterizer());
+    const empty = rowSurface(['', '', '', ''], []);
+    const target = rowSurface(['A', ['A', FLAG_BOLD], TEST_GLYPH_COLOR_HEART, ''], [0, 1, 2]);
+    const result = packSurfaceDamage(createSurfaceDamageState(), empty, target, atlas);
+
+    expect(result.fullRefresh).toBe(true);
+    expect(Array.from(result.staging)).toEqual(referenceWords(target, atlas));
+    expect([0, 1, 2, 3].map((cell) => result.staging[cell * 4])).toEqual([
+      0x00010000, 0x00010001, 0x00020002, 0x00000000,
+    ]);
+    expect(atlas.generation).toBe(GLYPH_ATLAS_FIRST_GENERATION);
+  });
+
+  it('repacks the whole grid when the atlas overflows in the middle of a first pack', () => {
+    const atlas = atlasOf(fakeRasterizer(), 2, 2);
+    for (const grapheme of ['X', 'Y', 'Z']) {
+      atlas.resolve(grapheme, false);
+    }
+    const target = rowSurface(['A', 'B', 'C'], [0, 1, 2]);
+    const result = packSurfaceDamage(createSurfaceDamageState(), rowSurface(['', '', ''], []), target, atlas);
+
+    // 'A' took the last free slot (3); 'B' overflowed and reset the atlas, so
+    // slot 3 from the abandoned pass must not survive in the staging buffer.
+    expect(atlas.generation).toBe(GLYPH_ATLAS_FIRST_GENERATION + 1);
+    expect(result.fullRefresh).toBe(true);
+    expect([0, 1, 2].map((cell) => result.staging[cell * 4])).toEqual([0x00010002, 0x00010000, 0x00010001]);
+    expect(Array.from(result.staging)).toEqual(referenceWords(target, atlas));
+    expect(atlas.getStats()).toMatchObject({ usedSlots: 3, capacity: 4 });
+  });
+
+  it('discards an incremental pack and repacks when one new glyph overflows the atlas', () => {
+    const atlas = atlasOf(fakeRasterizer(), 2, 2);
+    const state = createSurfaceDamageState();
+    const frame1 = rowSurface(['A', 'B', 'C', ''], [0, 1, 2]);
+    packSurfaceDamage(state, rowSurface(['', '', '', ''], []), frame1, atlas);
+    const frame2 = rowSurface(['A', 'B', 'C', 'D'], [3]);
+    const second = packSurfaceDamage(state, frame1, frame2, atlas);
+    expect(second.fullRefresh).toBe(false);
+    expect(atlas.getStats().usedSlots).toBe(4);
+    const beforeOverflow = Array.from(second.staging);
+
+    // One changed cell, one unseen glyph, a full atlas.
+    const frame3 = rowSurface(['A', 'B', 'C', 'E'], [3]);
+    const third = packSurfaceDamage(state, frame2, frame3, atlas);
+    expect(atlas.generation).toBe(GLYPH_ATLAS_FIRST_GENERATION + 1);
+    expect(third.fullRefresh).toBe(true);
+    expect(third.fullRefreshReason).toBe('atlas-generation');
+    expect(third.dirtyRowSpans).toEqual([{ minRow: 0, maxRow: 0 }]);
+    // 'E' reset the atlas and took slot 0, which 'A' held. The three clean
+    // cells were re-slotted too; keeping their old words would draw 'E' for 'A'.
+    expect([0, 1, 2, 3].map((cell) => beforeOverflow[cell * 4])).toEqual([
+      0x00010000, 0x00010001, 0x00010002, 0x00010003,
+    ]);
+    expect([0, 1, 2, 3].map((cell) => third.staging[cell * 4])).toEqual([
+      0x00010001, 0x00010002, 0x00010003, 0x00010000,
+    ]);
+    expect(Array.from(third.staging)).toEqual(referenceWords(frame3, atlas));
+  });
+
+  it('forces a full repack after a font-ready invalidation with no dirty cells', () => {
+    const rasterizer = fakeRasterizer();
+    const atlas = atlasOf(rasterizer);
+    const state = createSurfaceDamageState();
+    const frame = rowSurface(['B', 'A'], [0, 1]);
+    packSurfaceDamage(state, rowSurface(['', ''], []), frame, atlas);
+    const clean = rowSurface(['B', 'A'], []);
+    expect(packSurfaceDamage(state, frame, clean, atlas).fullRefresh).toBe(false);
+
+    atlas.invalidate(undefined, 'font-ready');
+    const after = packSurfaceDamage(state, clean, clean, atlas);
+    expect(after.fullRefresh).toBe(true);
+    expect(after.fullRefreshReason).toBe('atlas-generation');
+    expect(Array.from(after.staging)).toEqual(referenceWords(clean, atlas));
+    expect(rasterizer.calls.filter((call) => call.grapheme === 'A')).toHaveLength(2);
+  });
+
+  it('lets the packer refuse a frame with more distinct glyphs than the atlas holds', () => {
+    const atlas = atlasOf(fakeRasterizer(), 2, 1);
+    const target = rowSurface(['A', 'B', 'C'], [0, 1, 2]);
+    expectCode(
+      () => packSurfaceDamage(createSurfaceDamageState(), rowSurface(['', '', ''], []), target, atlas),
+      'GEORDI_E_BIJOU_INVALID_ATLAS',
+      'atlasGeneration',
+    );
   });
 });

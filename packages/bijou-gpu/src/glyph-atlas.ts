@@ -154,17 +154,23 @@ export interface GlyphAtlas {
   /** The most recent reset, or `null` when there has been none. */
   readonly lastInvalidation: GlyphAtlasInvalidation | null;
   /**
-   * Slot for `(grapheme, bold)`, rasterizing it on first use. Returns `null`
-   * for the empty string, which has no glyph. May reset the atlas when it is
+   * Slot for `(grapheme, bold)`, rasterizing it on first use. Returns
+   * `undefined` for the empty string, which has no glyph. May reset the atlas when it is
    * full; compare {@link GlyphAtlas.generation} or call
    * {@link GlyphAtlas.consumeFullRefresh} afterwards.
    */
-  resolve(grapheme: string, bold: boolean): GlyphAtlasSlotRef | null;
+  resolve(grapheme: string, bold: boolean): GlyphAtlasSlotRef | undefined;
   /**
    * {@link GlyphAtlas.resolve} keyed by a packed `OFF_FLAGS` byte: only
-   * `FLAG_BOLD` selects the slot. Safe to pass detached as a callback.
+   * `FLAG_BOLD` selects the slot. It is a `ResolveGlyphSlot`, safe to pass
+   * detached; an atlas is itself a valid `SurfaceDamageOptions`.
    */
-  readonly resolveSlot: (grapheme: string, flags: number) => GlyphAtlasSlotRef | null;
+  readonly resolveSlot: (grapheme: string, flags: number) => GlyphAtlasSlotRef | undefined;
+  /**
+   * {@link GlyphAtlas.generation} as a function, the shape `packSurfaceDamage`
+   * reads to notice a reset while it is resolving cells.
+   */
+  readonly atlasGeneration: () => number;
   /** Whether `ref` was issued in the current generation. */
   isCurrent(ref: GlyphAtlasSlotRef): boolean;
   /** Return the dirty regions and clear them. */
@@ -430,9 +436,9 @@ export function createGlyphAtlas(options: GlyphAtlasOptions): GlyphAtlas {
     }
   }
 
-  function resolve(grapheme: string, bold: boolean): GlyphAtlasSlotRef | null {
+  function resolve(grapheme: string, bold: boolean): GlyphAtlasSlotRef | undefined {
     if (grapheme.length === 0) {
-      return null;
+      return undefined;
     }
     const key = slotKey(grapheme, bold);
     const known = slots.get(key);
@@ -492,6 +498,7 @@ export function createGlyphAtlas(options: GlyphAtlasOptions): GlyphAtlas {
     },
     resolve,
     resolveSlot: (grapheme, flags) => resolve(grapheme, (flags & FLAG_BOLD) !== 0),
+    atlasGeneration: () => generation,
     isCurrent: (ref) => ref.generation === generation,
     takeDirtyRects() {
       const rects = wholeAtlasDirty ? [wholeRect()] : pendingRects;

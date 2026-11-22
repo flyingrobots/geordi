@@ -103,7 +103,7 @@ function describeSlot(atlas: GlyphAtlas, grapheme: string, bold: boolean): Glyph
     }
     throw error;
   }
-  if (ref === null) {
+  if (ref === undefined) {
     return null;
   }
   const { cellPxW, cellPxH, atlasCols, rgba } = atlas.bitmap;
