@@ -15,6 +15,15 @@
 
 ### Features
 
+- **`@flyingrobots/geordi-bijou-gpu`**: dirty-union cell packer for the `bijou-surface-gpu/1` ABI
+  (flyingrobots/geordi#171). `packSurfaceDamage(state, current, target, options)` lowers the cells
+  named by `current.renderDirtyWords | target.renderDirtyWords` into a retained `Uint32Array`
+  staging buffer and returns the row spans whose words changed. Side-table cells are compared by
+  grapheme string. `accumulateSurfaceDamage()` ORs the dirty words of frames coalesced between two
+  presents. The whole grid is rebuilt on the first frame, a dimension change, an atlas generation
+  change, a refused pack, and `forceFullRefresh`. Glyph slots come from an injected
+  `resolveSlot(grapheme, flags)`; width-2 graphemes are refused with
+  `GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH`. The module uses no browser API and performs no upload.
 - **`@flyingrobots/geordi-bijou-gpu`** (new package): conformance kit for the `bijou-surface-gpu/1`
   ABI (flyingrobots/geordi#169). It provides the `GpuSurfacePresenter` contract and sync-or-async
   `GpuSurfacePresenterFactory`, `BackendUnavailableError` distinct from `RendererFaultError`, a
