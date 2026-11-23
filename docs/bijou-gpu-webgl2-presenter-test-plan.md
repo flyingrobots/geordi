@@ -3,7 +3,9 @@
 Contract ledger for [`bijou-gpu-webgl2-presenter.md`](./bijou-gpu-webgl2-presenter.md). Each row
 names a requirement, the case, the oracle that decides it, and the test that is the evidence.
 Requirements come from
-[flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173) and sections 4 to 6
+[flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173),
+[flyingrobots/geordi#185](https://github.com/flyingrobots/geordi/issues/185) (shader source port)
+and sections 4 to 6
 of the [design record](./design/2026-11-bijou-surface-gpu-abi.md).
 
 Test files are under `packages/bijou-gpu/`. Run them with:
@@ -18,7 +20,8 @@ Every row is implemented.
 Unit tests (`src/webgl2-presenter.test.ts`, `src/presenter-atlas.test.ts`) drive a recording fake
 WebGL2 context, `test/webgl2-fake.ts`: they prove calls, uploads, refusals and receipts, never
 pixels. Browser tests (`e2e/webgl2-presenter.e2e.ts`) render in Chrome through
-`harness/webgl2.html` and compare with `renderReferenceRgba()` at zero tolerance.
+`harness/webgl2.html`, whose presenters take no shader argument and so run the bundled adapter,
+and compare with `renderReferenceRgba()` at zero tolerance.
 
 ## Evidence levels
 
@@ -40,8 +43,12 @@ All twelve browser tests passed in both local runs. Both renderers reported
 | ID | Case | Oracle | Test |
 | --- | --- | --- | --- |
 | BG-WEBGL2-01 | Pin equals the manifest | Every digest, stage file, uniform offset and sampler name of the checked-in `bijou-shaders.manifest.json`, and the SHA-256 of the files on disk | `pins exactly the checked-in naga-generated GLSL ES 3.00 stages, digests and binding map of the manifest` |
-| BG-WEBGL2-02 | Generated GLSL compiled unmodified | The exact file text reaches `shaderSource`; the only other stage is the display stage | `compiles the injected generated GLSL text unmodified, with zero hand-edited forks` |
-| BG-WEBGL2-03 | Edited GLSL refused | `RendererFaultError` naming SHA-256, no GL object created | `refuses GLSL whose bytes differ from the manifest pin with a RendererFaultError, before touching GL` |
+| BG-WEBGL2-02 | Generated GLSL compiled unmodified | The exact file text, from the bundled adapter, reaches `shaderSource`; the only other stage is the display stage | `compiles the bundled generated GLSL text unmodified, with zero hand-edited forks` |
+| BG-WEBGL2-03 | Edited GLSL refused | An extra byte, an edited token or CRLF line endings from a port: `RendererFaultError` naming SHA-256, no GL object created | `refuses GLSL whose bytes differ from the manifest pin with a RendererFaultError, before touching GL` |
+| BG-WEBGL2-36 | Port missing a stage | A port without the vertex or fragment stage: `RendererFaultError` `has no bijou-surface.(vert\|frag).glsl`, no GL object created | `refuses a shader source that is missing a stage with a RendererFaultError, before touching GL` |
+| BG-WEBGL2-37 | No shader argument | `createWebGL2SurfacePresenter({ canvas, atlas })` presents; the receipt's `assembledWgslSha256`, `generatedGlslSha256`, `shaderSha256` equal the manifest and `executedArtifactSha256` equals the digest over the files on disk | `creates a presenter with only a canvas and an atlas, and its receipt reports the manifest digests` |
+| BG-WEBGL2-38 | Any port | The core over `createFileShaderSource()` compiles the same texts as the default wiring | `takes any ShaderSourcePort: the core over the file adapter compiles the same bytes as the default` |
+| BG-WEBGL2-39 | Core boundary | The import graph of `webgl2-presenter.ts` reaches no `node:` module, no `?raw` specifier, no generated module and no adapter; the browser harness imports no shader file | `src/shader-source.test.ts`: `the core module %s reaches no node: module, no ?raw specifier and no embedded shader text`, `the browser harness %s imports no shader file from the repository` |
 | BG-WEBGL2-04 | Enum table | Every `WEBGL2_ENUMS` value equals the live context's constant | Chrome: `pins WebGL2 enums that equal the live context and creates the canonical context` |
 
 ## Capability refusal and faults

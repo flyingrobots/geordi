@@ -1,7 +1,5 @@
 import { parseJsonValue, type JsonObject } from '@flyingrobots/geordi-core';
 
-import fragmentGlsl from '../shaders/bijou-surface.frag.glsl?raw';
-import vertexGlsl from '../shaders/bijou-surface.vert.glsl?raw';
 import eraseFrameText from '../../../fixtures/bijou-gpu/width1-erase.packed-bijou-cells.json?raw';
 import paintFrameText from '../../../fixtures/bijou-gpu/width1-paint.packed-bijou-cells.json?raw';
 import proceduralTableText from '../../../fixtures/bijou-gpu/procedural-glyphs.json?raw';
@@ -49,13 +47,12 @@ import { markChangedCells, markCellDirty, packedSurfaceFromReference } from '../
  * Real-browser probe for the WebGL2 surface presenter.
  *
  * Every scenario creates its own canvas and presenter, renders the checked-in
- * conformance frames (or a generated animation) through the generated GLSL,
+ * conformance frames (or a generated animation) through the generated GLSL
+ * that the presenter's bundled shader source carries (no shader argument),
  * and returns what it read back next to what the CPU reference oracle renders
  * for the same input. The e2e test decides pass or fail.
  */
 export const WEBGL2_PROBE_VERSION = 'geordi-bijou-gpu-webgl2-probe/1';
-
-const SHADERS = { vertex: vertexGlsl, fragment: fragmentGlsl };
 
 interface SuiteSettings {
   readonly canvasPxW: number;
@@ -270,7 +267,6 @@ function presenterOn(
 ): WebGL2SurfacePresenter {
   return createWebGL2SurfacePresenter({
     canvas,
-    shaders: SHADERS,
     atlas,
     defaultFg: settings.defaultFg,
     defaultBg: settings.defaultBg,

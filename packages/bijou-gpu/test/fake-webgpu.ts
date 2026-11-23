@@ -193,6 +193,8 @@ export class FakeDevice implements WebGpuDevice {
   public readonly bindGroups: { label: string; entries: WebGpuBindGroupEntry[] }[] = [];
   public readonly bindGroupLayouts: { label: string; entries: WebGpuBindGroupLayoutEntry[] }[] = [];
   public readonly pipelines: WebGpuRenderPipelineDescriptor[] = [];
+  /** Every `createShaderModule` call, in order: the label and the exact code. */
+  public readonly shaderModules: { label: string; code: string }[] = [];
   public readonly uniformWrites: Uint32Array[] = [];
   public readonly draws: { pipeline: string; target: FakeTexture; vertexCount: number }[] = [];
   public readonly validationErrors: string[] = [];
@@ -325,6 +327,7 @@ export class FakeDevice implements WebGpuDevice {
 
   createShaderModule(descriptor: { label?: string; code: string }): WebGpuShaderModule {
     const label = descriptor.label ?? '';
+    this.shaderModules.push({ label, code: descriptor.code });
     const failing = this.behaviour.compileErrors?.includes(label) === true;
     return {
       getCompilationInfo: () =>

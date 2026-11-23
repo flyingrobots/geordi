@@ -575,6 +575,37 @@ These come from `geordi-bijou-shadergen`. Each is the `code` of a
 **Message**: Checked-in generated shader files differ from a fresh generation
 **Fix**: Run `cargo run -p geordi-bijou-shadergen -- --write` and commit the regenerated files with the change that caused them.
 
+## Bijou GPU Shader Sources Generator
+
+These come from `scripts/generate-bijou-gpu-shader-sources.mjs`. Each is the `code` of a
+`geordi.bijou_shader_sources.error` JSON line on stderr. The tool is described in
+[`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md#shader-sources).
+
+### `GEORDI_E_BIJOU_SHADER_SOURCES_USAGE`
+
+**Message**: The command line is not valid
+**Fix**: Pass exactly one of `--check`, `--write`, `--schema`, `--help`, and a directory after `--repo-root`. Exit code 2.
+
+### `GEORDI_E_BIJOU_SHADER_SOURCES_IO`
+
+**Message**: A shader file to embed does not exist
+**Fix**: Run `cargo run -p geordi-bijou-shadergen -- --write` to regenerate the shader artifacts.
+
+### `GEORDI_E_BIJOU_SHADER_SOURCES_PIN_MISMATCH`
+
+**Message**: A shader file contains a carriage return or does not hash to its manifest pin
+**Fix**: Check the file out with LF line endings (`.gitattributes` requires them), or regenerate the shader artifacts with `geordi-bijou-shadergen --write`. Never edit a generated file.
+
+### `GEORDI_E_BIJOU_SHADER_SOURCES_DRIFT`
+
+**Message**: The bundled shader-source modules differ from a fresh generation
+**Fix**: Run `node scripts/generate-bijou-gpu-shader-sources.mjs --write` and commit the modules with the shader change that caused them.
+
+### `GEORDI_E_BIJOU_SHADER_SOURCES_INTERNAL`
+
+**Message**: An unexpected failure, including a missing `packages/core/dist`
+**Fix**: Build `@flyingrobots/geordi-core` first (`pnpm --filter @flyingrobots/geordi-core build`), then rerun.
+
 ## Bijou GPU Native `wgpu` Proof
 
 These come from `geordi-bijou-wgpu-proof`. Each is the `code` of a
