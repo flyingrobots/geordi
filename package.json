@@ -16,7 +16,7 @@
     "test:research:rustybuzz-wasm32": "cargo fmt --check --manifest-path research/rustybuzz-wasm32/Cargo.toml && cargo clippy --locked --manifest-path research/rustybuzz-wasm32/Cargo.toml --all-targets -- -D warnings && cargo test --locked --manifest-path research/rustybuzz-wasm32/Cargo.toml && node research/rustybuzz-wasm32/run.mjs",
     "test:lint-rules": "node --test scripts/eslint-loop-allocation.test.mjs scripts/eslint-nondeterminism.test.mjs scripts/ban-nondeterminism.test.mjs",
     "test:exports": "pnpm build && node scripts/smoke-package-exports.mjs && node scripts/smoke-bijou-gpu-packed-package.mjs",
-    "test:contracts": "cargo test -p geordi-contract-api && cargo clippy -p geordi-contract-api --all-targets -- -D warnings && cargo build --locked -p geordi-contract-api && node --test scripts/json-schema-subset.test.mjs scripts/ray-traced-scene-schema.test.mjs scripts/contract-gate.test.mjs scripts/contract-gate-replay-212.test.mjs",
+    "test:contracts": "cargo test -p geordi-contract-api && cargo clippy -p geordi-contract-api --all-targets -- -D warnings && cargo build --locked -p geordi-contract-api && node --test scripts/json-schema-subset.test.mjs scripts/ray-traced-scene-schema.test.mjs scripts/contract-gate.test.mjs scripts/contract-gate-crate-copy.test.mjs scripts/contract-gate-replay-212.test.mjs",
     "contracts:check": "node scripts/contract-gate.mjs",
     "test:docs": "node scripts/check-doc-hygiene.mjs && node --test scripts/bijou-gpu-procedural-glyphs.test.mjs scripts/rust-toolchain-pin.test.mjs scripts/core-artifact-literals.test.mjs",
     "test:package-names": "node scripts/check-package-name-scope.mjs",

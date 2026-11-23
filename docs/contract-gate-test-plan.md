@@ -77,6 +77,17 @@ Tests are in `scripts/contract-gate.test.mjs`, over temporary git repositories.
 | CG-BASE-03 | An unresolvable base ref | `GEORDI_E_CONTRACT_GATE_BASE` | `an unresolvable base fails closed with a schema-tagged error` |
 | CG-BASE-04 | A shallow clone | `GEORDI_E_CONTRACT_GATE_BASE` naming `git fetch --unshallow` | `a shallow clone that cannot reach the merge base fails closed` |
 
+## The encoder crate copy
+
+Tests are in `scripts/contract-gate-crate-copy.test.mjs`, over scratch trees. A base read from git
+is extracted under `target/contract-gate/trees/`, so its absolute paths all contain `target`.
+
+| ID | Case | Oracle | Test |
+| --- | --- | --- | --- |
+| CG-COPY-01 | A tree extracted under a `target` directory | The copy holds the crate's manifest and source and the root lock | `CG-COPY-01 a tree extracted under a target directory keeps its crate` |
+| CG-COPY-02 | Build output inside the crate | The crate's own `target/` directory is not copied | `CG-COPY-02 build output inside the crate is still skipped` |
+| CG-COPY-03 | A cached copy with its marker and no manifest | The copy is rebuilt in place | `CG-COPY-03 a cached copy that has its marker but no manifest is rebuilt` |
+
 ## Command line and the repository's own registry
 
 | ID | Case | Oracle | Test |
