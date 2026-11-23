@@ -118,6 +118,12 @@ import {
   type RenderFixtureStrictTextFixtureReceipt,
 } from './index.js';
 
+function uniqueGlyphIds(
+  glyphRuns: RenderFixtureStrictTextFixtureManifest['glyphRuns'],
+): number[] {
+  return [...new Set(glyphRuns.flatMap((run) => run.glyphs.map((glyph) => glyph.glyphId)))];
+}
+
 function makeManifest(): RenderFixtureManifest {
   return {
     artifactHash: 'sha256:30623d6141ba69c382c14c09eca9adedd40cb02644ff4ee9621de101da6b0082',
@@ -1136,9 +1142,7 @@ describe('render fixture strict text fixture manifest validation', () => {
       const coveredGlyphIds = glyphEntries.map((entry) =>
         requireJsonNumberField(entry, 'glyphId', 'outline evidence pack glyph'),
       );
-      const referencedGlyphIds = [
-        ...new Set(fixture.glyphRuns.flatMap((run) => run.glyphs.map((glyph) => glyph.glyphId))),
-      ];
+      const referencedGlyphIds = uniqueGlyphIds(fixture.glyphRuns);
 
       expect(pack.evidencePackVersion).toBe('geordi-glyph-evidence-pack/1');
       expect(pack.evidenceKind).toBe(RENDER_FIXTURE_GLYPH_EVIDENCE_KIND_OUTLINE_PATHS);

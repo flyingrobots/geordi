@@ -11,7 +11,8 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "test": "turbo run test && pnpm test:profunctor-page-target:artifacts && pnpm test:profunctor-page-typecheck-gate",
+    "test": "turbo run test && pnpm test:profunctor-page-target:artifacts && pnpm test:profunctor-page-typecheck-gate && pnpm test:lint-rules",
+    "test:lint-rules": "node --test scripts/eslint-loop-allocation.test.mjs",
     "test:exports": "pnpm build && node scripts/smoke-package-exports.mjs && node scripts/smoke-bijou-gpu-packed-package.mjs",
     "test:docs": "node scripts/check-doc-hygiene.mjs && node --test scripts/bijou-gpu-procedural-glyphs.test.mjs",
     "test:package-names": "node scripts/check-package-name-scope.mjs",

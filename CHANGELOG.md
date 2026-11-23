@@ -19,6 +19,16 @@
   after it can still end with two complete output sets, last rename wins. A lock directory left by the
   previous writer is never removed automatically; delete it by hand once no writer runs (flyingrobots/geordi#54)
 
+### Lint
+
+- **`eslint.config.mjs`**: a `no-restricted-syntax` selector now rejects `new Set(...)` and `new Map(...)`
+  inside a loop body (`for`, `for...of`, `for...in`, `while`, `do...while`, including callbacks and nested
+  loops there) and in a `for` / `while` / `do...while` condition or `for` update. The `for` initialiser and
+  the `for...of` / `for...in` subject run once and are not matched. `scripts/eslint-loop-allocation.test.mjs`
+  (`pnpm test:lint-rules`, part of `pnpm test`) pins both sides of that boundary. The four existing
+  violations were fixed by hoisting or restructuring, with no disable comments
+  (flyingrobots/geordi#64)
+
 ### CI
 
 - Make the toolchain ready for the open Dependabot groups (flyingrobots/geordi#73). Root cause of the failing `Test` job on the dev-tooling group: `typescript-eslint` 8.x peers on `typescript <6.1.0` and throws at load time on TypeScript 7, so `pnpm lint` fails. `.github/dependabot.yml` now ignores TypeScript major updates until typescript-eslint supports 7. The newer `typescript-eslint` also reports nine new lint findings in three test sources (`no-meaningless-void-operator`, `no-unsafe-class-instance-assignment`) are fixed without suppressions (the randomized resize test timeout was fixed separately on main)
