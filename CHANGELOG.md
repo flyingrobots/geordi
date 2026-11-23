@@ -22,6 +22,9 @@
 
 ### Added
 
+- Issue templates: the shared `issue-dag/2` templates (feature, bug, decision, research,
+  investigation, spike, task) in `.github/ISSUE_TEMPLATE/`, so a new issue starts with the
+  frontmatter Taskalisk compiles and the nine sections (flyingrobots/geordi#221).
 - **Contract gate** (`scripts/contract-gate.mjs`, `pnpm contracts:check`, `contracts/`,
   `crates/geordi-contract-api`, `docs/contract-gate.md`). CI now compares each pull request's public
   contracts with those of its merge base. It computes each surface from source on both trees with

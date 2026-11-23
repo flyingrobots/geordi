@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Project documentation
+    url: https://github.com/flyingrobots/geordi/blob/main/docs/README.md
+    about: Usage, contracts, and design decisions.
