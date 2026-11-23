@@ -23,13 +23,19 @@
       "types": "./dist/shader-source-node.d.ts",
       "import": "./dist/shader-source-node.js"
     },
+    "./procedural-glyphs": {
+      "types": "./dist/procedural-glyphs-bundled.d.ts",
+      "import": "./dist/procedural-glyphs-bundled.js"
+    },
+    "./procedural-glyphs.json": "./procedural/procedural-glyphs.json",
     "./shaders/*": "./shaders/*"
   },
   "files": [
     "dist",
     "shaders/bijou-shaders.manifest.json",
     "shaders/*.glsl",
-    "shaders/*.wgsl"
+    "shaders/*.wgsl",
+    "procedural/procedural-glyphs.json"
   ],
   "sideEffects": false,
   "scripts": {

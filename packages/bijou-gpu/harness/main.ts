@@ -2,11 +2,11 @@ import { parseJsonValue, type JsonObject, type JsonValue } from '@flyingrobots/g
 
 import eraseFrameText from '../../../fixtures/bijou-gpu/width1-erase.packed-bijou-cells.json?raw';
 import paintFrameText from '../../../fixtures/bijou-gpu/width1-paint.packed-bijou-cells.json?raw';
-import proceduralTableText from '../../../fixtures/bijou-gpu/procedural-glyphs.json?raw';
 import suiteText from '../../../fixtures/bijou-gpu/width1-conformance-suite.json?raw';
 import {
   createTestGlyphPack,
-  decodeProceduralGlyphTable,
+  BUNDLED_PROCEDURAL_GLYPH_TABLE_TEXT,
+  loadBundledProceduralGlyphTable,
   parsePackedBijouCellsReceipt,
   readPixel,
   renderReferenceRgba,
@@ -96,7 +96,7 @@ function boot(): BijouGpuProbeHarness {
   const defaultBg = stringOf(suite.defaultBg, 'defaultBg');
 
   const pack = createTestGlyphPack();
-  const table = decodeProceduralGlyphTable(parseJsonValue(proceduralTableText));
+  const table = loadBundledProceduralGlyphTable();
   const rendered = new Map<string, ReferenceFrame>();
   const frames: HarnessFrame[] = [];
   for (const [id, text] of [
@@ -148,7 +148,7 @@ function boot(): BijouGpuProbeHarness {
     harnessVersion: HARNESS_VERSION,
     fontIdentity: pack.fontIdentity,
     atlasRgbaSha256: pack.atlasRgbaSha256,
-    proceduralTableSha256: sha256Hex(utf8Bytes(proceduralTableText)),
+    proceduralTableSha256: sha256Hex(utf8Bytes(BUNDLED_PROCEDURAL_GLYPH_TABLE_TEXT)),
     cellPxW: pack.atlasBitmap.cellPxW,
     cellPxH: pack.atlasBitmap.cellPxH,
     canvasPxW,
