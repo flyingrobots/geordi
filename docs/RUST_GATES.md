@@ -5,10 +5,12 @@ inside the Cargo workspace and inherit workspace lint settings for every crate.
 
 ## Pinned toolchain
 
-`rust-toolchain.toml` pins Rust to exactly `1.96.0` (minimal profile, with `clippy` and `rustfmt`).
+`rust-toolchain.toml` pins Rust to exactly `1.96.0` (minimal profile, with `clippy`, `rustfmt` and the `wasm32-unknown-unknown` target).
 CI installs the toolchain that file names, so a new stable release cannot fail the gates on
 unchanged code through newly added lints. The pin matches the dev-container image, which also
-provides only 1.96.0. It satisfies the workspace `rust-version` of 1.93 and edition 2024.
+provides only 1.96.0. The workspace `rust-version` is 1.96, the same as Bunny and Echo. CI runs `rustup toolchain install`,
+which installs the channel, components and target that file names. Install `rustup` for local work: a
+Homebrew `rustc` ignores `rust-toolchain.toml`.
 
 To raise the pin deliberately: change `channel` in `rust-toolchain.toml` in a dedicated change,
 run every gate below at the new version, fix or justify each new finding (do not silence lints
@@ -22,6 +24,7 @@ cargo metadata --format-version 1
 cargo fmt --check
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
+cargo build -p geordi-ir --target wasm32-unknown-unknown
 ```
 
 Workspace Clippy settings deny the major lint groups plus explicit high-risk lints. The only

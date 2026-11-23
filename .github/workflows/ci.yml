@@ -27,7 +27,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Set up Rust
-        run: rustup show active-toolchain || rustup toolchain install
+        run: rustup toolchain install
+
+      - name: Build geordi-ir for wasm32
+        run: cargo build -p geordi-ir --target wasm32-unknown-unknown
 
       - name: Install dependencies
         run: pnpm install
