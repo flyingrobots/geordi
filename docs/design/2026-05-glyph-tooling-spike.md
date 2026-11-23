@@ -717,7 +717,7 @@ flowchart TD
   G014 --> G015[G015 checkpoint and decision gate]
 ~~~
 
-## 1. Feature Overview & Objectives:
+## 1. Feature Overview & Objectives
 
 Feature/product name: Geordi Glyph Workbench and Glyph Tools Spike.
 
@@ -743,7 +743,7 @@ Success metrics:
 | Determinism | Re-running import dry-run, verification, inventory, preview-model generation, and receipt comparison on unchanged inputs produces byte-identical JSON/report output. | Golden tests for `G002`, `G003`, `G005`, `G009`, and `G012`. |
 | Contract enforcement | 100% of known invalid fixtures in the gallery fail with the expected error class; no browser/native host font fallback is accepted as compliant preview evidence. | Failure gallery hard-fail status and workbench smoke tests. |
 
-## 2. Scope Definition:
+## 2. Scope Definition
 
 In Scope:
 
@@ -779,7 +779,7 @@ Out of Scope:
   redistribution rights.
 - Automatic mutation of fixtures or manifests without an explicit output path and user action.
 
-## 3. Detailed User Stories:
+## 3. Detailed User Stories
 
 | Story ID | Slice(s) | User Story |
 | --- | --- | --- |
@@ -799,7 +799,7 @@ Out of Scope:
 | `US-014` | `G014` | As a new contributor, I want accurate CLI/workbench docs and screenshots so that I can reproduce the spike workflows without tribal knowledge. |
 | `US-015` | `G015` | As a technical lead, I want a checkpoint assessment so that the team can decide what becomes production work and what remains spike-only. |
 
-## 4. Acceptance Criteria (BDD Format):
+## 4. Acceptance Criteria (BDD Format)
 
 | Story ID | Given | When | Then |
 | --- | --- | --- | --- |
@@ -842,9 +842,9 @@ Out of Scope:
 | `US-014` | A command name changes during the spike. | Docs hygiene tests or review run. | Stale command examples are detected before the slice is accepted. |
 | `US-015` | All previous slices are complete or explicitly failed. | The checkpoint document is written. | It separates production-worthy code from throwaway spike code, records residual risks, and recommends next slices without broad text-support claims. |
 
-## 5. Detailed Test Plan:
+## 5. Detailed Test Plan
 
-### Test Scenarios:
+### Test Scenarios
 
 | ID | Slice(s) | Scenario | Input Fixture or Setup | Expected Result | Automation Level |
 | --- | --- | --- | --- | --- | --- |
@@ -882,7 +882,7 @@ Out of Scope:
 | `TS-032` | `G014` | Docs command freshness | README and spike examples | Commands match registered CLI names | Docs hygiene |
 | `TS-033` | `G015` | Checkpoint quality gate | Completed spike state | Assessment includes worked/failed/graduation/risk sections | Review checklist |
 
-### Happy Path Testing:
+### Happy Path Testing
 
 1. `G001` command namespace:
    - Install dependencies using the repo-standard command.
@@ -926,7 +926,7 @@ Out of Scope:
    - Review the checkpoint and verify it explicitly separates code to keep, code to delete, and next
      recommended slices.
 
-### Negative/Edge Case Testing:
+### Negative/Edge Case Testing
 
 | Category | Cases | Expected Handling |
 | --- | --- | --- |
@@ -937,7 +937,7 @@ Out of Scope:
 | Concurrent operations | Two CLI imports targeting same output, two browser tabs loading different artifacts, repeated tab switching during validation, simultaneous gallery run and manual artifact load. | No hidden shared mutable state in domain services; writes require explicit path and should fail rather than overwrite stale assumptions; UI associates results with the active artifact hash. |
 | Noncompliant behavior | Browser-native text preview, system font fallback, implicit shaping, guessed cmap coverage, silently ignored validation issue. | Must be labeled noncompliant if shown as demo convenience, and must never satisfy acceptance criteria for compliant preview or verification. |
 
-### Non-Functional Testing:
+### Non-Functional Testing
 
 | Area | Requirement | Test Method |
 | --- | --- | --- |
