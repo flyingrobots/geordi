@@ -236,7 +236,10 @@ Read the names from the manifest. `naga` derives them from the group and binding
 
 The presenters do not read files. Each takes a `ShaderSourcePort`
 (`packages/bijou-gpu/src/shader-source.ts`), asks it for the artifacts it executes, and checks
-every byte against the manifest pin itself, so a port is a loader and never a source of trust.
+every byte against a pin compiled into the package itself, so a port is a loader and never a source of trust.
+The WebGPU WGSL digest and manifest layout are pinned in `BIJOU_SURFACE_SHADER_PIN`
+(`src/surface-shader-pin.ts`), the same source the WebGL2 pin takes its WGSL digest from; a port that
+supplies altered WGSL with a matching altered manifest is refused.
 
 ```ts
 interface ShaderSourcePort {
@@ -394,7 +397,9 @@ Set `GEORDI_BIJOU_GPU_E4_EXHAUSTIVE=1` to diff the Option E4 corners at every ce
 1. Edit an authored file under `src/`, or the procedural glyph table.
 2. Run `cargo run -p geordi-bijou-shadergen -- --write`.
 3. Run `node scripts/generate-bijou-gpu-shader-sources.mjs --write`.
-4. Update `WEBGL2_SURFACE_SHADER_PIN` in `src/webgl2-presenter.ts` from the new manifest.
+4. Update `BIJOU_SURFACE_SHADER_PIN` in `src/surface-shader-pin.ts` and `WEBGL2_SURFACE_SHADER_PIN` in
+   `src/webgl2-presenter.ts` from the new manifest. `node scripts/generate-bijou-gpu-shader-sources.mjs --check`
+   fails until the first matches the manifest, and a unit test fails until the second does.
 5. Run `pnpm test:bijou-gpu:shaders`.
 6. Commit the authored change and every regenerated file together.
 

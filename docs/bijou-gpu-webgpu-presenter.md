@@ -47,7 +47,19 @@ const presenter = await createWebGPUSurfacePresenter(canvas, {
 The host passes no shader: `createWebGPUSurfacePresenter()` is the composition root, which calls
 the core, `createWebGPUSurfacePresenterCore()`, with the bundled adapter.
 `loadBijouSurfaceShader(port)` reads both files from a port and decodes them with
-`decodeBijouSurfaceShader({ wgsl, manifest })`.
+`decodeBijouSurfaceShader({ wgsl, manifest })`, then checks the result against the canonical shader
+pinned in the package, `BIJOU_SURFACE_SHADER_PIN` (`src/surface-shader-pin.ts`): the WGSL must hash to
+the pinned `assembledWgslSha256`, and the manifest must declare the pinned binding map, uniform
+layout and texture formats. The WebGL2 presenter takes its WGSL digest and uniform layout from the
+same pin. The check runs before any shader module is created, and also in
+`createWebGpuRefusalReceipt()`, so neither a presenter nor a receipt can name a shader the package did
+not ship. A port is a loader, not a source of trust: altered WGSL behind a manifest altered to match is
+refused.
+
+`createWebGPUSurfacePresenterWithUnpinnedShaderForTesting()` is the one exception, for tests only. It
+checks the WGSL against the manifest the port supplies, so a test can compile a deliberately broken
+shader on a real device. No factory calls it, the default factory never takes it, and a receipt from it
+is no evidence of the canonical shader.
 
 `canvas` is an `HTMLCanvasElement` or an `OffscreenCanvas`. The factory returns a promise, as the
 `GpuSurfacePresenterFactory` contract allows.
@@ -63,7 +75,7 @@ The factory checks capability first, then everything else.
 | `requestDevice()` rejects | `BackendUnavailableError` |
 | The canvas has no `webgpu` context | `BackendUnavailableError` |
 | The shader source has no `bijou-surface.wgsl` or no manifest | `RendererFaultError` naming the file and the port |
-| The WGSL does not hash to the manifest's `assembledWgslSha256` (including a CRLF-converted file), or the manifest is malformed | `RendererFaultError` |
+| The WGSL does not hash to the pinned canonical digest (including a CRLF-converted file), the manifest pins another digest or declares another binding map, uniform layout or texture format, or the manifest is malformed | `RendererFaultError`, before any shader module exists |
 | A shader module reports a compilation error | `RendererFaultError` |
 | A render pipeline rejects, or a validation, out-of-memory or internal error scope catches an error during creation | `RendererFaultError` |
 | The preferred canvas format is not `bgra8unorm` or `rgba8unorm` | `RendererFaultError` |
@@ -165,7 +177,7 @@ Digest fields:
 
 | Field | Value |
 | --- | --- |
-| `assembledWgslSha256`, `shaderSha256` | The manifest's `assembledWgslSha256`, which the WGSL text was checked against |
+| `assembledWgslSha256`, `shaderSha256` | The pinned canonical `assembledWgslSha256`, which the WGSL text and the manifest were checked against |
 | `generatedGlslSha256` | `null` |
 | `executedArtifactSha256` | SHA-256 of both executed WGSL texts, framed like the manifest's `generatedGlslSha256`: for `bijou-surface.wgsl` then `geordi-webgpu-display.wgsl`, the name, a line feed, the decimal byte length, a line feed, and the bytes |
 | `preparedBufferSha256` | SHA-256 of the little-endian staging buffer |

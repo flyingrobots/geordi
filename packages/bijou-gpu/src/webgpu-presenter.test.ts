@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { parseJsonValue, type JsonValue } from '@flyingrobots/geordi-core';
+import { parseJsonValue, stringifyCanonicalJson, type JsonObject, type JsonValue } from '@flyingrobots/geordi-core';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -17,6 +17,7 @@ import {
   RendererFaultError,
 } from './errors.js';
 import type { GlyphAtlasDirtyRect } from './glyph-atlas.js';
+import { isJsonArray, isJsonObject } from './json-decode.js';
 import { createStaticAtlasSource, type PresenterAtlasSource } from './presenter-atlas.js';
 import { packedSurfaceFromReference } from '../test/packed-surface.js';
 import type { GpuPackedSurface } from './presenter.js';
@@ -189,15 +190,21 @@ function replaceInManifest(from: string, to: string): string {
   return MANIFEST_TEXT.split(from).join(to);
 }
 
-/** The manifest text with its `bijou-surface` entry edited by `edit`. */
-function editedSurfaceManifest(edit: (surface: Record<string, unknown>) => void): string {
-  const manifest = JSON.parse(MANIFEST_TEXT) as { shaders: Record<string, unknown>[] };
-  const surface = manifest.shaders.find((entry) => entry.id === 'bijou-surface');
-  if (surface === undefined) {
-    throw new Error('the manifest has no bijou-surface entry');
+/** The manifest text with each `bijou-surface` binding that `matches` replaced by `change(binding)`. */
+function editedSurfaceBindings(
+  matches: (binding: JsonObject) => boolean,
+  change: (binding: JsonObject) => JsonObject,
+): string {
+  if (!isJsonObject(MANIFEST) || !isJsonArray(MANIFEST.shaders)) {
+    throw new BijouGpuValidationError('GEORDI_E_BIJOU_INVALID_SURFACE', 'manifest', 'no shaders');
   }
-  edit(surface);
-  return JSON.stringify(manifest, null, 2);
+  const shaders = MANIFEST.shaders.map((entry) => {
+    if (!isJsonObject(entry) || entry.id !== 'bijou-surface' || !isJsonArray(entry.bindings)) {
+      return entry;
+    }
+    return { ...entry, bindings: entry.bindings.map((binding) => (isJsonObject(binding) && matches(binding) ? change(binding) : binding)) };
+  });
+  return stringifyCanonicalJson({ ...MANIFEST, shaders });
 }
 
 const ALTERED_WGSL = `${WGSL}// altered by a port\n`;
@@ -250,28 +257,20 @@ describe('WebGPU shader verification against the pinned digest', () => {
       'canonical WGSL with a manifest whose binding map differs',
       hostShaderSource(
         WGSL,
-        editedSurfaceManifest((surface) => {
-          for (const binding of surface.bindings as { wgslName: string; binding: number }[]) {
-            if (binding.wgslName === 'cells') {
-              binding.binding = 5;
-            }
-          }
-        }),
+        editedSurfaceBindings(
+          (binding) => binding.wgslName === 'cells',
+          (binding) => ({ ...binding, binding: 5 }),
+        ),
       ),
     ],
     [
       'canonical WGSL with a manifest whose uniform layout differs',
       hostShaderSource(
         WGSL,
-        editedSurfaceManifest((surface) => {
-          for (const binding of surface.bindings as { wgslName: string; members?: { name: string; byteOffset: number }[] }[]) {
-            for (const member of binding.members ?? []) {
-              if (member.name === 'flags') {
-                member.byteOffset = 56;
-              }
-            }
-          }
-        }),
+        editedSurfaceBindings(
+          (binding) => binding.wgslName === 'surface',
+          (binding) => ({ ...binding, byteSize: 80 }),
+        ),
       ),
     ],
   ] as const;

@@ -31,6 +31,7 @@ import {
 import { parseHexColor, REFERENCE_DEFAULT_BG, REFERENCE_DEFAULT_FG } from './reference.js';
 import { sha256Hex, utf8Bytes } from './sha256.js';
 import { requireShaderText, type ShaderSourcePort } from './shader-source.js';
+import { BIJOU_SURFACE_SHADER_PIN } from './surface-shader-pin.js';
 import {
   createSurfaceDamageState,
   packSurfaceDamage,
@@ -62,12 +63,13 @@ export const WEBGL2_SURFACE_BACKEND_PROFILE = 'geordi-webgl2/1';
 
 /**
  * The `bijou-surface` entry of `packages/bijou-gpu/shaders/bijou-shaders.manifest.json`
- * this presenter executes. A unit test asserts every value against the
+ * this presenter executes. The WGSL digest and the uniform layout come from
+ * `BIJOU_SURFACE_SHADER_PIN`, the pin the WebGPU presenter verifies against. A unit test asserts every value against the
  * checked-in manifest, so regenerating the shaders fails until this pin is
  * updated with them.
  */
 export const WEBGL2_SURFACE_SHADER_PIN = {
-  assembledWgslSha256: '241e1392c446866b331e9992046ef599cc3fd5c83c01bb4f3674f26979a06c53',
+  assembledWgslSha256: BIJOU_SURFACE_SHADER_PIN.assembledWgslSha256,
   generatedGlslSha256: 'ee0924ab19dfa78e59fb2560304ee81647b95f3a7d681842ecf7836dca1620cf',
   vertex: {
     file: 'bijou-surface.vert.glsl',
@@ -78,16 +80,8 @@ export const WEBGL2_SURFACE_SHADER_PIN = {
     sha256: '6d6a2dee7a8b766ef8396a37aa25ae1d6c3e7bfbae11280768db5c459c18418b',
   },
   uniformBlock: 'BijouSurfaceUniforms_block_0Fragment',
-  uniformByteSize: 64,
-  uniformOffsets: {
-    canvasPx: 0,
-    cellPx: 8,
-    gridCells: 16,
-    atlasCols: 24,
-    defaultFg: 32,
-    defaultBg: 48,
-    flags: 60,
-  },
+  uniformByteSize: BIJOU_SURFACE_SHADER_PIN.uniformByteSize,
+  uniformOffsets: BIJOU_SURFACE_SHADER_PIN.uniformOffsets,
   cellsSampler: '_group_0_binding_1_fs',
   atlasSampler: '_group_0_binding_2_fs',
 } as const;

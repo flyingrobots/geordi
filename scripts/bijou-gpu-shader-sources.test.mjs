@@ -17,6 +17,7 @@ const GENERATOR = join(REPO_ROOT, 'scripts', 'generate-bijou-gpu-shader-sources.
 const SCHEMA_DIR = join(REPO_ROOT, 'schemas', 'geordi-bijou-shader-sources');
 const SHADER_DIR = 'packages/bijou-gpu/shaders';
 const GENERATED_DIR = 'packages/bijou-gpu/src/generated';
+const PIN_FILE = 'packages/bijou-gpu/src/surface-shader-pin.ts';
 const SOURCES = ['bijou-shaders.manifest.json', 'bijou-surface.vert.glsl', 'bijou-surface.frag.glsl', 'bijou-surface.wgsl'];
 
 class SchemaViolationError extends Error {
@@ -112,6 +113,7 @@ function scratchRepo() {
     cpSync(join(REPO_ROOT, SHADER_DIR, file), join(root, SHADER_DIR, file));
   }
   cpSync(join(REPO_ROOT, GENERATED_DIR), join(root, GENERATED_DIR), { recursive: true });
+  cpSync(join(REPO_ROOT, PIN_FILE), join(root, PIN_FILE));
   return root;
 }
 
@@ -216,6 +218,38 @@ test('refuses a CRLF-converted or edited shader file instead of embedding it, an
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  }
+});
+
+test('--check and --write refuse a pinned WebGPU shader digest that differs from the manifest', () => {
+  for (const mode of ['--check', '--write']) {
+    const root = scratchRepo();
+    try {
+      const path = join(root, PIN_FILE);
+      const text = readFileSync(path, 'utf8');
+      writeFileSync(path, text.replace(/assembledWgslSha256: '[0-9a-f]{64}'/u, `assembledWgslSha256: '${'0'.repeat(64)}'`));
+      const run = generate(mode, '--repo-root', root);
+      assert.equal(run.status, 1);
+      assert.equal(run.stderr.length, 1);
+      assert.equal(run.stderr[0].code, 'GEORDI_E_BIJOU_SHADER_SOURCES_PIN_MISMATCH');
+      assert.deepEqual(run.stderr[0].paths, [PIN_FILE]);
+      assert.match(run.stderr[0].message, /assembledWgslSha256/u);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
+test('--check refuses a pin file that pins no digest at all', () => {
+  const root = scratchRepo();
+  try {
+    writeFileSync(join(root, PIN_FILE), 'export const BIJOU_SURFACE_SHADER_PIN = {};\n');
+    const run = generate('--check', '--repo-root', root);
+    assert.equal(run.status, 1);
+    assert.equal(run.stderr[0].code, 'GEORDI_E_BIJOU_SHADER_SOURCES_PIN_MISMATCH');
+    assert.deepEqual(run.stderr[0].paths, [PIN_FILE]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
 

@@ -11,6 +11,7 @@ import {
   createTestGlyphPack,
   createInMemoryShaderSource,
   createWebGPUSurfacePresenter,
+  createWebGPUSurfacePresenterWithUnpinnedShaderForTesting,
   createWebGpuRefusalReceipt,
   decodeProceduralGlyphTable,
   FrameHashMismatchError,
@@ -442,13 +443,14 @@ async function runResizeSequence(steps: number, seed: number): Promise<WebGpuRes
 }
 
 async function runShaderFault(): Promise<WebGpuFaultResult> {
-  // A port whose manifest pins a broken WGSL text, so the digest check passes and the device compiles it.
+  // A port whose manifest pins a broken WGSL text. The default factory refuses it against the package's
+  // pinned digest, so this goes through the named test-only seam that checks the manifest instead.
   const surfaceWgsl = WEBGPU_BUNDLED_SHADER_SOURCE.readText('bijou-surface.wgsl') ?? '';
   const manifestText = WEBGPU_BUNDLED_SHADER_SOURCE.readText('bijou-shaders.manifest.json') ?? '';
   const broken = surfaceWgsl.replace('fn fs_main(', 'fn fs_main(this is not wgsl ');
   const manifest = manifestText.split(sha256Hex(utf8Bytes(surfaceWgsl))).join(sha256Hex(utf8Bytes(broken)));
   try {
-    const presenter = await createWebGPUSurfacePresenter(freshCanvas(), {
+    const presenter = await createWebGPUSurfacePresenterWithUnpinnedShaderForTesting(freshCanvas(), {
       shaderSource: createInMemoryShaderSource({ 'bijou-surface.wgsl': broken, 'bijou-shaders.manifest.json': manifest }, 'harness:broken'),
       atlas: staticOf(PACK),
       size: { cssWidth: GEOMETRY.canvasPxW, cssHeight: GEOMETRY.canvasPxH, dpr: 1 },

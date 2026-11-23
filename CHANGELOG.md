@@ -15,6 +15,17 @@
 
 ### Fixes
 
+- **`@flyingrobots/geordi-bijou-gpu`**: the WebGPU presenter verifies the shader against a pin
+  compiled into the package (flyingrobots/geordi#189). Before, it checked the WGSL against the
+  digest in the manifest that the same `ShaderSourcePort` supplied, so a port could ship altered
+  WGSL with a manifest altered to match, and the receipt reported the altered digest as canonical.
+  Now `BIJOU_SURFACE_SHADER_PIN` (the WGSL digest, binding map, uniform layout and texture
+  formats) is checked before any shader module is created, by the presenter and by
+  `createWebGpuRefusalReceipt()`, with the existing `RendererFaultError`; the WebGL2 pin takes its
+  WGSL digest and uniform layout from the same module. The bundled and file adapters are accepted
+  and receipts carry the same digests. `createWebGPUSurfacePresenterWithUnpinnedShaderForTesting()`
+  is a test-only seam that keeps the real-device compile-error test possible; no factory calls it.
+  `generate-bijou-gpu-shader-sources.mjs --check` now fails when the pin differs from the manifest.
 - **`@flyingrobots/geordi-bijou-gpu`**: the package now ships its own shaders, behind a port
   (flyingrobots/geordi#185). Before, it published only `dist`, and both GPU presenters required
   the host to pass the package's generated shader text. Now:
