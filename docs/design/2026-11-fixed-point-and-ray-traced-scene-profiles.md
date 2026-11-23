@@ -128,8 +128,9 @@ The following facts were read from the named files; they constrain the design.
   (`crates/bunny-linalg/src/fixed_affine3.rs`). `FixedAngle` stores binary angles with
   table-based sine and cosine (`crates/bunny-num/src/fixed_angle.rs`).
 - `bunny-codec` parses only binary little-endian PLY with `float x, y, z` vertices and
-  `uchar int` triangle faces (`crates/bunny-codec/src/ply.rs`). An ASCII PLY reader is planned
-  ([bunny#247](https://github.com/flyingrobots/bunny/issues/247)).
+  `uchar int` triangle faces (`crates/bunny-codec/src/ply.rs`). An ASCII PLY reader was planned
+  ([bunny#247](https://github.com/flyingrobots/bunny/issues/247)). Update of 2026-11-22: it has since
+  landed on Bunny `main` as `parse_ascii_ply`, but it is not in the published `0.7.1`.
 - `bunny-mesh` defines a quantized 16-bit vertex layout and a domain-separated mesh hash
   (`bunny-mesh:v2`) over bounds, vertices and indices (`crates/bunny-mesh/src/lib.rs`).
 - Bunny's schema declares `BunnyFixedQ32_32Raw` (Rust `i64`, TypeScript `bigint`), but its
@@ -403,8 +404,40 @@ indices, so it fixes both the container and the conversion:
   ([bunny#247](https://github.com/flyingrobots/bunny/issues/247); Geordi's side is
   [geordi#155](https://github.com/flyingrobots/geordi/issues/155)). It must be a different
   identity: converting decimal text directly to Q32.32 and converting it through `f32` first give
-  different raw values for most inputs. Until then the binary-versus-ASCII question stays open in
-  those two issues; version 1 accepts only the binary layout.
+  different raw values for most inputs. Version 1 accepts only the binary layout.
+- **Decision (2026-11-22, [geordi#155](https://github.com/flyingrobots/geordi/issues/155)): one
+  parser per profile.** Geordi keeps its own parser for the binary64 mesh profile
+  `geordi-ascii-ply-triangle-mesh/1`. `bunny-codec` becomes the reader for a Q32.32 ASCII PLY layout,
+  which gets its own layout identity when it is added. That layout needs a Bunny release that
+  includes the ASCII reader, because Geordi takes Bunny crates from crates.io. The published
+  `bunny-codec 0.7.1` (tag `v0.7.1`, 2026-11-13) does not include it. Converting the bunny demo's
+  mesh to Q32.32 at load is
+  [geordi#72](https://github.com/flyingrobots/geordi/issues/72).
+
+  Measured against Bunny `main` at `36da048`, with path dependencies, on the checked-in
+  `fixtures/render-everywhere/assets/stanford-bunny/bun_zipper_res3.ply`:
+
+  - `bunny_codec::parse_ascii_ply` reads the asset: 1889 vertices and 3851 faces. Each face's
+    indices are the same, in the same order, as what `parse_ascii_ply_triangle_mesh` reads.
+  - It returns Q32.32 positions. Profile `/1` returns `f64`. Converted to `f64`, all 5667 of 5667
+    coordinates differ from Geordi's. Geordi's `f64` values rounded to Q32.32 (ties to even) match
+    Bunny's raw values for all 5667. The test
+    `rounds_bunny_coordinates_to_the_q32_32_values_bunny_codec_reads` in `crates/geordi-mesh` pins a
+    digest of those raw values.
+  - Swapping parsers under `/1` breaks pinned values. This was simulated by rounding the existing
+    parser's output to Q32.32 and running the existing tests:
+    - the `f64` bounds pinned in `geordi-mesh` fail;
+    - the bit-exact bounds check against `bunny.mesh.json` fails;
+    - with that check bypassed,
+      `every_frame_of_a_full_turn_draws_the_same_pixels_as_the_binary64_path` fails at frame 411 by
+      6 pixels, because its binary64 reference gets different inputs.
+  - In that simulation, all 480 rendered frame digests of a full turn are byte-identical to
+    `main`'s.
+  - Read from source, not run: the TypeScript parser in `packages/render-fixture` implements the
+    same `f64` profile. Inferred: a Rust-only swap would make the native and browser mesh data
+    disagree.
+
+  These are value measurements taken on the host, not timings.
 - `counts` and `bounds` are declared so the validator can check the trace domain without reading
   mesh bytes. The runtime recomputes both from the decoded mesh and rejects a mismatch.
 - A mesh coordinate is one local unit. Scale belongs to the instance transform; the layout claims
@@ -861,10 +894,10 @@ Decisions on the findings in [What exists today](#what-exists-today):
 
 - Lumen's built-in reference scene is made of triangles only, a requirement on
   [lumen#2](https://github.com/flyingrobots/lumen/issues/2).
-- The mesh layout question (binary `f32` PLY versus ASCII) stays open in
-  [bunny#247](https://github.com/flyingrobots/bunny/issues/247) and
-  [geordi#155](https://github.com/flyingrobots/geordi/issues/155). Version 1 uses
-  `bunny-ply-binary-le-f32/1`; an ASCII layout identity may be added once Bunny can read it.
+- The mesh layout question (binary `f32` PLY versus ASCII) was settled on 2026-11-22 in
+  [geordi#155](https://github.com/flyingrobots/geordi/issues/155): one parser per profile (see
+  [B2](#b2-scene-content), **Meshes**). Version 1 uses `bunny-ply-binary-le-f32/1`. A Q32.32 ASCII
+  layout identity, read by `bunny-codec`, may be added once a Bunny release ships the ASCII reader.
 - The depth-range mismatch (`[-1, 1]` in Geordi's rasterized bunny projection, `[0, 1]` in Bunny's
   coordinate law) does not affect this profile. It is resolved in
   [geordi#154](https://github.com/flyingrobots/geordi/issues/154), when the rasterized 3D path
