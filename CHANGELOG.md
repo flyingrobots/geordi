@@ -325,6 +325,7 @@
 
 ### Tests
 
+- Property-based tests for `validateCanonicalAst` (`packages/compiler-core/test/validateAst.fuzz.test.ts`, flyingrobots/geordi#4) using `fast-check`, a new dev dependency of `@flyingrobots/geordi-compiler-core`. Nine properties with fixed seed `20260101` and 200 runs each (about one second): valid ASTs produce no diagnostic, dimension errors match finite-and-positive exactly, cycle reports match an independent oracle, duplicate ids and multi-parent nodes never cause a false cycle, omitted required props give exactly one diagnostic each, validation never throws on a well-typed AST with arbitrary ids, kinds, numbers and JSON props, and results are stable and non-mutating. The properties found no bug in the validator
 - Pin the node order of the Terminal SDL end-to-end path in `packages/schema-graphql/test/e2e.terminal.test.ts` (flyingrobots/geordi#67). The Terminal fixture never has equal `zIndex` values (the default is field order plus one), so a new case compiles eight nodes that share `zIndex: 0` with explicit ids and scrambled declaration order, and asserts the hand-written order `zIndex`, then `kind`, then `id`, bytewise. Reversing the `kind` or `id` comparison in `emitIr.ts` makes it fail. No production change: the sort already ends in a total order on unique ids
 - `@flyingrobots/geordi-bijou-gpu` unit tests have a 30 s default timeout. Tests that rasterize and
   hash whole frames (`procedural.test.ts` among them) exceeded vitest's 5 s default on a loaded
