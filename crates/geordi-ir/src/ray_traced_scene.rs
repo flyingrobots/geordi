@@ -981,6 +981,12 @@ const fn end_of_string(source: &str, at: usize) -> usize {
     bytes.len()
 }
 
+fn is_path_or_descendant(candidate: &str, path: &str) -> bool {
+    candidate
+        .strip_prefix(path)
+        .is_some_and(|rest| rest.is_empty() || rest.starts_with('.') || rest.starts_with('['))
+}
+
 /// Scan the value starting at `at`; return the index just past it.
 fn scan_integer_tokens(
     source: &str,
@@ -998,7 +1004,10 @@ fn scan_integer_tokens(
                     serde_json::from_str::<String>(&source[index..key_end]).unwrap_or_default();
                 let colon = skip_whitespace(source, key_end);
                 let value = skip_whitespace(source, colon + 1);
-                index = scan_integer_tokens(source, value, &format!("{path}.{key}"), tokens);
+                let member = format!("{path}.{key}");
+                // A repeated key replaces the earlier value, subtree included, as in `Value`.
+                tokens.retain(|known, _| !is_path_or_descendant(known, &member));
+                index = scan_integer_tokens(source, value, &member, tokens);
                 index = skip_whitespace(source, index);
                 if bytes.get(index) == Some(&b',') {
                     index = skip_whitespace(source, index + 1);

@@ -44,7 +44,8 @@
     record is corrected, not the code.
   - The profile page now specifies canonical JSON byte for byte (UTF-8 written raw, the escapes used,
     number form, key order, separators, empty containers, final newline), says it equals Python's
-    `json.dumps(..., sort_keys=True, indent=2, ensure_ascii=False)` (not the default `ensure_ascii=True`),
+    `json.dumps(..., sort_keys=True, indent=2, ensure_ascii=False) + "\n"` (not the default
+    `ensure_ascii=True`),
     and states which differences between equivalent scenes change `sceneHash`. A test pins a non-ASCII
     digest computed with Python.
   - Seven validator mutations that no test caught now fail a named test: dropping the `instance.affine3` or

@@ -1244,3 +1244,35 @@ fn a_repeated_object_key_is_a_parse_error() -> TestResult {
     assert_eq!(issue_codes(&error)[0].0, GEORDI_E_RT_SCENE_SHAPE);
     Ok(())
 }
+
+#[test]
+fn a_repeated_key_does_not_leave_a_stale_integer_token_behind() -> TestResult {
+    // `serde_json::Value` keeps the last value of a repeated key, so the token scan must too:
+    // after `"seed": 0` comes `"seed": 1.5`, which is a fraction, not an out-of-range 0. The same
+    // holds when a later value replaces a whole subtree.
+    let source = reference_source()?;
+    let fraction = source.replace("\"seed\": 0", "\"seed\": 0, \"seed\": 1.5");
+    let subtree = source.replace(
+        "\"seed\": 0",
+        "\"seed\": 0, \"seed\": {\"x\": 18446744073709551616}, \"seed\": 1.5",
+    );
+    let big_then_small =
+        source.replace("\"seed\": 0", "\"seed\": 18446744073709551616, \"seed\": 1");
+    for (name, changed, code) in [
+        ("fraction", fraction, GEORDI_E_RT_NUMBER_NOT_INTEGER),
+        ("subtree", subtree, GEORDI_E_RT_NUMBER_NOT_INTEGER),
+        ("big then small", big_then_small, GEORDI_E_RT_SCENE_SHAPE),
+    ] {
+        let error = parse_geordi_ray_traced_scene(&changed)
+            .err()
+            .ok_or("a repeated key was accepted")?;
+        assert_eq!(issue_codes(&error)[0].0, code, "{name}");
+    }
+    // A number whose value overflows binary64 is refused by the JSON reader before the scan.
+    let huge = source.replace("\"seed\": 0", &format!("\"seed\": {}", "9".repeat(400)));
+    let error = parse_geordi_ray_traced_scene(&huge)
+        .err()
+        .ok_or("a 400-digit integer was accepted")?;
+    assert_eq!(issue_codes(&error)[0].0, GEORDI_E_RT_JSON_INVALID);
+    Ok(())
+}

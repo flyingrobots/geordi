@@ -250,8 +250,9 @@ This equals Python's `json.dumps(value, sort_keys=True, indent=2, ensure_ascii=F
 Python's default `ensure_ascii=True` is **not** the same: it escapes every non-ASCII character as
 `\uXXXX` and gives a different digest for any scene whose strings are not ASCII. The test
 `canonical_bytes_write_non_ascii_raw_and_escape_only_quote_backslash_and_controls` pins a digest
-computed that way. Committed scene fixtures are stored in canonical form, so their `sceneHash`
-equals the SHA-256 of the file bytes.
+computed that way. The reference fixture is stored in canonical form, so its `sceneHash` equals the
+SHA-256 of the file bytes. Failure fixtures are not all canonical (some are not even valid JSON
+numbers), so that shortcut does not apply to them.
 
 **What changes the hash.** The hash is over the canonical bytes of the document as written, and
 nothing is normalized beyond the formatting above. Scenes that would render the same still have
