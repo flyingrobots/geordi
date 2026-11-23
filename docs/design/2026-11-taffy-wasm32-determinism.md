@@ -16,7 +16,7 @@ block and flex layout?
 
 ## Answer
 
-**Yes, for these inputs on these hosts.** Every one of 703,938 `f32` output values from 50
+**Yes, for these inputs on these hosts.** Every one of 673,332 `f32` output values from 50
 generated block and flex trees had the same bits on aarch64 macOS, on Intel and AMD x86-64 Linux,
 and as wasm32 in Node and headless Chromium, in every build listed below. That
 includes 17,482 negative zeros and 9 subnormals. No variant differed from another in any bit.
@@ -33,8 +33,8 @@ workspace dependency.
   `5 + 12i` nodes, 15,303 nodes in all, and depth up to 7. Each tree is laid out twice, once with
   Taffy's rounding and once with `disable_rounding()`. All 22 `f32` fields of every node's `Layout`
   (location, size, scrollable overflow rectangle, scrollbar size, border, padding, margin) are
-  written as raw bits, with `order` and depth, in depth-first order. That gives 703,938 float
-  values in a 2,877,572-byte stream.
+  written as raw bits, with the integer `order` and depth, in depth-first order. That gives
+  673,332 float values (and 30,606 integer `order` words) in a 2,877,572-byte stream.
 - The native binary prints the stream as hex in one JSON line. The `cdylib` built for
   `wasm32-unknown-unknown` exports `dump_ptr` and `dump_len` and has no imports, so the same
   `.wasm` file runs in Node and in a browser page unchanged.

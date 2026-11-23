@@ -1,5 +1,5 @@
-//! Native runner: prints the experiment's byte stream as JSON Lines, one line
-//! per tree, so `run.mjs` can compare it with the wasm32 module's bytes.
+//! Native runner: prints the experiment's whole byte stream as one JSON line, so
+//! `run.mjs` can compare it with the wasm32 module's bytes.
 
 use std::io::Write;
 
@@ -19,7 +19,7 @@ fn main() -> std::io::Result<()> {
     if std::env::args().any(|arg| arg == "--help") {
         writeln!(
             out,
-            r#"{{"_schema":{{"id":"geordi.research.taffy_wasm32.help","version":"1.0.0"}},"kind":"help","description":"Prints the Taffy layout dump of flyingrobots/geordi#136 as one JSON line per tree. Run research/taffy-wasm32/run.mjs to compare targets."}}"#
+            r#"{{"_schema":{{"id":"geordi.research.taffy_wasm32.help","version":"1.0.0"}},"kind":"help","command":"taffy-wasm32-determinism [--help]","description":"Prints the whole Taffy layout byte stream of flyingrobots/geordi#136 as one JSON line. Run research/taffy-wasm32/run.mjs to compare targets.","emits":["help","dump"],"schemas":"schemas/geordi-research-taffy-wasm32/"}}"#
         )?;
         return Ok(());
     }

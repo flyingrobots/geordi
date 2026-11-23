@@ -105,7 +105,25 @@ const run = (command, args, options = {}) => {
     maxBuffer: 64 * 1024 * 1024,
     ...options,
   });
-  return { ok: result.status === 0, stdout: result.stdout ?? '', stderr: result.stderr ?? '' };
+  const stderr = result.stderr ?? '';
+  // Keep why a process failed: a startup error (ENOENT for a missing executable, EACCES and
+  // others), a signal, or an exit status, alongside whatever it wrote to stderr.
+  const failure =
+    result.error !== undefined
+      ? result.error.code === 'ENOENT'
+        ? `${command} not found`
+        : `${command} could not start: ${result.error.message}`
+      : result.signal !== null
+        ? `${command} killed by ${result.signal}`
+        : result.status === 0
+          ? null
+          : `${command} exited with status ${result.status}`;
+  return { ok: failure === null, failure, stdout: result.stdout ?? '', stderr };
+};
+
+const describeFailure = (result) => {
+  const errors = result.stderr.split('\n').filter((entry) => entry.startsWith('error'));
+  return [result.failure, ...errors].join('; ');
 };
 
 const toolchain = () => {
@@ -150,29 +168,34 @@ const variants = [
 const targetDir = (variant) =>
   join(here, 'target', `${variant.target}-${variant.profile}${variant.rustflags === '' ? '' : '-flags'}`);
 
-const build = (variant) => {
-  const args = ['build', '--locked', '--profile', variant.profile];
+// Builds one variant for an explicit target triple, so the artifact path does not depend on an
+// inherited CARGO_BUILD_TARGET or build.target, and with only the variant's RUSTFLAGS: an inherited
+// CARGO_ENCODED_RUSTFLAGS would take precedence over RUSTFLAGS, so it is removed.
+const build = (variant, hostTriple) => {
+  const triple = variant.target === 'wasm32' ? 'wasm32-unknown-unknown' : hostTriple;
+  const args = ['build', '--locked', '--profile', variant.profile, '--target', triple];
   if (variant.target === 'wasm32') {
-    args.push('--lib', '--target', 'wasm32-unknown-unknown');
+    args.push('--lib');
   }
-  const result = run('cargo', args, {
-    env: { ...process.env, CARGO_TARGET_DIR: targetDir(variant), RUSTFLAGS: variant.rustflags },
-  });
+  const env = { ...process.env, CARGO_TARGET_DIR: targetDir(variant), RUSTFLAGS: variant.rustflags };
+  delete env.CARGO_ENCODED_RUSTFLAGS;
+  delete env.CARGO_BUILD_TARGET;
+  const result = run('cargo', args, { env });
   if (!result.ok) {
-    return { ok: false, reason: result.stderr.split('\n').filter((entry) => entry.startsWith('error')).join('; ') };
+    return { ok: false, reason: describeFailure(result) };
   }
   const profileDir = variant.profile === 'dev' ? 'debug' : variant.profile;
   const artifact =
     variant.target === 'wasm32'
-      ? join(targetDir(variant), 'wasm32-unknown-unknown', profileDir, `${crateName}.wasm`)
-      : join(targetDir(variant), profileDir, 'taffy-wasm32-determinism');
+      ? join(targetDir(variant), triple, profileDir, `${crateName}.wasm`)
+      : join(targetDir(variant), triple, profileDir, 'taffy-wasm32-determinism');
   return { ok: true, artifact };
 };
 
 const runNative = (artifact) => {
   const result = run(artifact, []);
   if (!result.ok) {
-    throw new ExperimentError('native-run-failed', result.stderr);
+    throw new ExperimentError('native-run-failed', describeFailure(result));
   }
   const line = JSON.parse(result.stdout.trim());
   return { bytes: Buffer.from(line.bytes, 'hex'), engine: null };
@@ -354,7 +377,7 @@ const main = async () => {
       failed ||= inCi;
       continue;
     }
-    const built = build(variant);
+    const built = build(variant, chain.host);
     if (!built.ok) {
       emit('refusal', { variant: variant.name, reason: `build failed: ${built.reason}` });
       failed ||= inCi;
@@ -375,6 +398,8 @@ const main = async () => {
     }
     const summary = summarise(output.bytes);
     results.push({ variant, summary });
+    // A tree that fails to lay out has no nodes, so every variant would agree on it: the run fails.
+    failed ||= summary.failedTrees.length > 0;
     emit('variant', {
       variant: variant.name,
       target: variant.target === 'native' ? chain.host : 'wasm32-unknown-unknown',
@@ -384,7 +409,8 @@ const main = async () => {
       treeCount: summary.treeCount,
       failedTrees: summary.failedTrees,
       nodeCount: summary.nodeCount,
-      valueCount: summary.nodeCount * 2 * wordsPerLayout,
+      // Floats only: each layout is one integer order word and 22 f32 words.
+      valueCount: summary.nodeCount * 2 * (wordsPerLayout - 1),
       streamSha256: summary.streamSha256,
       nanWords: summary.nanWords,
       negativeZeroWords: summary.negativeZeroWords,
@@ -401,8 +427,28 @@ const main = async () => {
     if (variant === reference.variant) {
       continue;
     }
-    for (const [index, tree] of summary.trees.entries()) {
-      const diff = diffTree(reference.summary.trees[index], tree, maxReportedFields);
+    // The verdict is the whole-stream digest; the per-tree diff only locates a difference.
+    if (summary.streamSha256 !== reference.summary.streamSha256) {
+      failed = true;
+    }
+    const treeCount = Math.max(summary.trees.length, reference.summary.trees.length);
+    for (let index = 0; index < treeCount; index += 1) {
+      const tree = summary.trees[index];
+      const expected = reference.summary.trees[index];
+      if (tree === undefined || expected === undefined) {
+        emit('mismatch', {
+          against: `${reference.variant.name} (${chain.host}, this run)`,
+          variant: variant.name,
+          tree: index,
+          differingWords: 1,
+          fields: [{ field: 'tree', reference: expected === undefined ? 'missing' : 'present', candidate: tree === undefined ? 'missing' : 'present' }],
+        });
+        continue;
+      }
+      const headerDiffers = !tree.bytes.subarray(0, 12).equals(expected.bytes.subarray(0, 12));
+      const diff = headerDiffers
+        ? { count: 1, fields: [{ field: 'tree header', reference: expected.bytes.subarray(0, 12).toString('hex'), candidate: tree.bytes.subarray(0, 12).toString('hex') }] }
+        : diffTree(expected, tree, maxReportedFields);
       if (diff.count > 0) {
         failed = true;
         emit('mismatch', {
@@ -416,7 +462,9 @@ const main = async () => {
     }
   }
 
-  if (writeGolden) {
+  if (writeGolden && failed) {
+    emit('golden', { action: 'not-written', path: 'research/taffy-wasm32/golden.json', reason: 'the run failed' });
+  } else if (writeGolden) {
     const golden = {
       format: 'TFY1',
       taffy,
@@ -435,7 +483,10 @@ const main = async () => {
       const differingTrees = summary.trees
         .filter((tree, index) => sha256(tree.bytes) !== golden.treeSha256[index])
         .map((tree) => tree.index);
-      const matches = summary.streamSha256 === golden.streamSha256;
+      const matches =
+        summary.streamSha256 === golden.streamSha256 &&
+        summary.trees.length === golden.treeSha256.length &&
+        differingTrees.length === 0;
       failed ||= !matches;
       // The golden file holds hashes only, so a cross-host difference is located by writing the
       // differing trees' bytes to the log, to be diffed against a local run on the golden host.
