@@ -335,6 +335,9 @@ fn a_denied_adapter_streams_a_typed_refusal_and_never_a_pass() -> TestResult {
     let result = &lines[4];
     assert_eq!(result["outcome"], "capability-refused");
     assert_eq!(result["hardwareGpuClaim"], false);
+    // The cells were authored on the CPU by Bijou; no run of this host claims GPU cell production.
+    assert_eq!(lines[0]["cellProduction"], "cpu-authored");
+    assert_eq!(result["gpuCellProductionClaim"], false);
     assert_eq!(result["frameRgbaSha256"], Value::Null);
     assert_eq!(result["frameComparison"], "not-requested");
     assert_eq!(
@@ -488,6 +491,9 @@ fn rendering_streams_a_probed_receipt_and_checks_the_expected_frame_digest() -> 
         "{outcome}"
     );
     assert_eq!(result["hardwareGpuClaim"], outcome == "gpu-probed");
+    // A hardware claim covers presentation of CPU-authored cells, never GPU cell production.
+    assert_eq!(lines[0]["cellProduction"], "cpu-authored");
+    assert_eq!(result["gpuCellProductionClaim"], false);
     assert_eq!(result["frameRgbaSha256"], expected);
     assert_eq!(result["frameComparison"], "match");
     assert_eq!(lines[3]["receipt"]["evidenceLevel"], outcome);

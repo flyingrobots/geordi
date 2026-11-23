@@ -21,6 +21,10 @@ use super::shader::ShaderBundle;
 /// Version of every message type this command writes.
 const MESSAGE_VERSION: &str = "1.0.0";
 
+/// Who authored the cells this host presents. Every input is a `packed-bijou-cells/1` file
+/// written on the CPU by Bijou; this host presents cells on the GPU and never produces them there.
+const CELL_PRODUCTION: &str = "cpu-authored";
+
 /// Name of the prepared cell layout, as the `prepared` message reports it.
 const PREPARED_LAYOUT: &str = "bijou-surface-gpu/1 rgba32uint, 16 bytes per cell, little-endian";
 
@@ -542,6 +546,7 @@ fn emit_intake(request: &RenderRequest, cells: &PackedCells, output: &mut Output
             "heightCells": cells.height_cells,
             "cellCount": cells.width_cells * cells.height_cells,
             "sideTableEntries": cells.side_table.len(),
+            "cellProduction": CELL_PRODUCTION,
         }),
         &format!(
             "intake: {} is a valid {}x{} packed-bijou-cells/1 receipt (sha256 {})",
@@ -680,6 +685,7 @@ fn emit_result(
             "ok": true,
             "outcome": evidence.name(),
             "hardwareGpuClaim": evidence == EvidenceLevel::GpuProbed,
+            "gpuCellProductionClaim": false,
             "frameRgbaSha256": frame_sha256,
             "frameComparison": frame_comparison,
             "obstruction": obstruction.map(|error| json!({
