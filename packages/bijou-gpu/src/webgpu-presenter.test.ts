@@ -754,7 +754,9 @@ describe('randomized resize sequences', () => {
       expect(write.layout.bytesPerRow).toBe(write.texture.width * bytesPerTexel);
     }
     expect(device.validationErrors).toEqual([]);
-  });
+    // 120 full-frame captures with a SHA-256 each: about 2 s alone, and past the 5 s default when
+    // the machine is loaded. The bound is on correctness, not on time.
+  }, 60_000);
 });
 
 describe('capability-refused receipts', () => {
