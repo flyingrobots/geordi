@@ -120,10 +120,14 @@ export interface Canvas2DGlyphAtlas {
   getReceiptAssets(): GlyphAtlasReceiptAssets;
 }
 
-export interface Canvas2DSurfacePresenterOptions {
+export interface Canvas2DSurfacePresenterCoreOptions {
   readonly canvas: Canvas2DSurfaceCanvas;
   readonly atlas: Canvas2DGlyphAtlas;
-  /** From `decodeProceduralGlyphTable(fixtures/bijou-gpu/procedural-glyphs.json)`. */
+  /**
+   * The procedural glyph table, from `decodeProceduralGlyphTableText()` or
+   * `loadBundledProceduralGlyphTable()`. The core does not verify it:
+   * `createCanvas2DSurfacePresenter()` does.
+   */
   readonly proceduralTable: ProceduralGlyphTable;
   /** `uDefaultFg`, uppercase `#RRGGBB`. Defaults to `REFERENCE_DEFAULT_FG`. */
   readonly defaultFg?: string;
@@ -168,7 +172,7 @@ export interface Canvas2DSurfacePresenter extends GpuSurfacePresenter {
  * not part of this text.
  */
 const EXECUTED_FUNCTIONS: readonly { readonly name: string; toString(): string }[] = [
-  createCanvas2DSurfacePresenter,
+  createCanvas2DSurfacePresenterCore,
   composeCanvas2DCell,
   fillCanvas2DRect,
   packSurfaceDamage,
@@ -272,15 +276,17 @@ interface FrameRecord {
 }
 
 /**
- * Create a Canvas 2D presenter on `options.canvas`. It is a synchronous
- * `GpuSurfacePresenterFactory<Canvas2DSurfacePresenterOptions>`.
+ * Create a Canvas 2D presenter on `options.canvas` from a table the caller
+ * already holds. Hosts call `createCanvas2DSurfacePresenter()`, which wires in
+ * the bundled table. It is a synchronous
+ * `GpuSurfacePresenterFactory<Canvas2DSurfacePresenterCoreOptions>`.
  *
  * @throws BackendUnavailableError when the canvas has no 2D context.
  * @throws BijouGpuValidationError for invalid theme colours, DPR, or
  *   `executedArtifactSha256`.
  */
-export function createCanvas2DSurfacePresenter(
-  options: Canvas2DSurfacePresenterOptions,
+export function createCanvas2DSurfacePresenterCore(
+  options: Canvas2DSurfacePresenterCoreOptions,
 ): Canvas2DSurfacePresenter {
   const { canvas, atlas, proceduralTable } = options;
   const defaultFgHex = options.defaultFg ?? REFERENCE_DEFAULT_FG;

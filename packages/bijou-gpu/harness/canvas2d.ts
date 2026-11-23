@@ -2,14 +2,13 @@ import { parseJsonValue, type JsonObject, type JsonValue } from '@flyingrobots/g
 
 import eraseFrameText from '../../../fixtures/bijou-gpu/width1-erase.packed-bijou-cells.json?raw';
 import paintFrameText from '../../../fixtures/bijou-gpu/width1-paint.packed-bijou-cells.json?raw';
-import proceduralTableText from '../../../fixtures/bijou-gpu/procedural-glyphs.json?raw';
 import suiteText from '../../../fixtures/bijou-gpu/width1-conformance-suite.json?raw';
 import {
   createCanvas2DSurfacePresenter,
   createCanvasGlyphRasterizer,
   createGlyphAtlas,
   createTestGlyphPack,
-  decodeProceduralGlyphTable,
+  loadBundledProceduralGlyphTable,
   FLAG_BOLD,
   FLAG_INVERSE,
   parsePackedBijouCellsReceipt,
@@ -119,7 +118,7 @@ function boot(): Canvas2DProbe {
   const defaultFg = stringOf(suite.defaultFg, 'defaultFg');
   const defaultBg = stringOf(suite.defaultBg, 'defaultBg');
   const pack = createTestGlyphPack();
-  const table = decodeProceduralGlyphTable(parseJsonValue(proceduralTableText));
+  const table = loadBundledProceduralGlyphTable();
   const receipts = {
     paint: parsePackedBijouCellsReceipt(parseJsonValue(paintFrameText)),
     erase: parsePackedBijouCellsReceipt(parseJsonValue(eraseFrameText)),
@@ -135,7 +134,6 @@ function boot(): Canvas2DProbe {
   const presenter = createCanvas2DSurfacePresenter({
     canvas,
     atlas: testGlyphPackAtlas(pack),
-    proceduralTable: table,
     defaultFg,
     defaultBg,
   });
@@ -187,7 +185,6 @@ function boot(): Canvas2DProbe {
     const repaint = createCanvas2DSurfacePresenter({
       canvas: element,
       atlas: testGlyphPackAtlas(pack),
-      proceduralTable: table,
       defaultFg,
       defaultBg,
     });
@@ -229,7 +226,6 @@ function boot(): Canvas2DProbe {
     const live = createCanvas2DSurfacePresenter({
       canvas: element,
       atlas,
-      proceduralTable: table,
       defaultFg,
       defaultBg,
       dpr: window.devicePixelRatio,

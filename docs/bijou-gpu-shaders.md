@@ -273,13 +273,22 @@ inputs. The same files resolve through the `./shaders/*` export, for example
 
 ### Bundled modules
 
-The bundled adapters read three generated modules in `packages/bijou-gpu/src/generated/`:
+The bundled adapters read these generated modules in `packages/bijou-gpu/src/generated/`:
 
 | Module | Embeds |
 | --- | --- |
 | `bijou-shaders-manifest.generated.ts` | `bijou-shaders.manifest.json` |
 | `bijou-surface-glsl.generated.ts` | `bijou-surface.vert.glsl`, `bijou-surface.frag.glsl` |
 | `bijou-surface-wgsl.generated.ts` | `bijou-surface.wgsl` |
+| `bijou-procedural-glyphs.generated.ts` | `fixtures/bijou-gpu/procedural-glyphs.json` |
+
+The same generator embeds the procedural glyph table (the Canvas 2D presenter's bundled table, see
+[Procedural glyph table](./bijou-gpu-canvas2d-presenter.md#procedural-glyph-table)) in a fourth
+module, `bijou-procedural-glyphs.generated.ts`, and keeps `packages/bijou-gpu/procedural/procedural-glyphs.json`,
+the published copy, byte-identical to `fixtures/bijou-gpu/procedural-glyphs.json`. It checks the
+fixture against the manifest's `proceduralTableSha256` and against `PROCEDURAL_GLYPH_TABLE_SHA256`
+in `src/procedural-table.ts`; a carriage return or a different digest is `GEORDI_E_BIJOU_SHADER_SOURCES_PIN_MISMATCH`.
+`--check` reports the copy as one more artifact.
 
 Each text is one JSON string literal on one line, so converting a module's line endings cannot
 change the bytes it embeds. `scripts/generate-bijou-gpu-shader-sources.mjs` writes them:
