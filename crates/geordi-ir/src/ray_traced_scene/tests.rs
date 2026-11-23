@@ -1009,3 +1009,121 @@ fn an_oversized_integer_token_is_found_by_path_among_strings_and_arrays() -> Tes
     );
     Ok(())
 }
+
+// Each test below kills a validator mutation that the suite did not catch before
+// flyingrobots/geordi#167: the named line of the validator can be removed or neutered and every
+// earlier test still passed.
+
+#[test]
+fn every_used_feature_must_be_required() -> TestResult {
+    // Kills: dropping `mesh.triangle` or `instance.affine3` from `used_features`.
+    let code = Some(GEORDI_E_RT_REQUIREMENT_MISSING);
+    for feature in [
+        GEORDI_RAY_TRACED_3D_PROFILE,
+        GEORDI_RAY_TRACED_FEATURE_ASSET_MESH,
+        GEORDI_RAY_TRACED_FEATURE_MESH_TRIANGLE,
+        GEORDI_RAY_TRACED_FEATURE_INSTANCE_AFFINE3,
+        GEORDI_RAY_TRACED_FEATURE_CAMERA_PINHOLE,
+        GEORDI_RAY_TRACED_FEATURE_MATERIAL_DIFFUSE,
+        GEORDI_RAY_TRACED_FEATURE_LIGHT_DIRECTIONAL,
+        GEORDI_RAY_TRACED_FEATURE_LIGHT_UNIFORM_SKY,
+    ] {
+        check(
+            |scene| {
+                let before = scene.requires.len();
+                scene.requires.retain(|requirement| requirement != feature);
+                assert_eq!(
+                    scene.requires.len() + 1,
+                    before,
+                    "{feature} was not required"
+                );
+                Ok(())
+            },
+            code,
+        )?;
+    }
+    Ok(())
+}
+
+#[test]
+fn light_ids_must_be_unique() -> TestResult {
+    // Kills: skipping the uniqueness check for lights.
+    check(
+        |scene| {
+            let first = scene.lights[0].id.clone();
+            scene.lights[1].id = first;
+            Ok(())
+        },
+        Some(GEORDI_E_RT_ID_DUPLICATE),
+    )
+}
+
+#[test]
+fn instance_ids_must_be_unique() -> TestResult {
+    // Kills: skipping the uniqueness check for instances.
+    check(
+        |scene| {
+            let first = scene.instances[0].id.clone();
+            scene.instances[1].id = first;
+            Ok(())
+        },
+        Some(GEORDI_E_RT_ID_DUPLICATE),
+    )
+}
+
+#[test]
+fn mesh_ids_must_be_unique() -> TestResult {
+    // Kills: skipping the uniqueness check for meshes. With a duplicate id an instance's mesh
+    // lookup would silently pick the first declaration.
+    check(
+        |scene| {
+            let copy = scene.meshes[0].clone();
+            scene.meshes.push(copy);
+            Ok(())
+        },
+        Some(GEORDI_E_RT_ID_DUPLICATE),
+    )
+}
+
+#[test]
+fn receipt_validation_rejects_an_unsupported_asset_layout() -> TestResult {
+    // Kills: removing the receipt's asset-layout check.
+    let mut receipt = reference_receipt()?;
+    receipt.assets[0].layout = "bunny-ply-binary-le-f64/1".to_owned();
+    let error = validate_geordi_ray_traced_render_receipt(&receipt)
+        .err()
+        .ok_or("an unsupported asset layout was accepted")?;
+    assert_eq!(
+        issue_codes(&error),
+        vec![(
+            GEORDI_E_RT_RECEIPT_FIELD_INVALID.to_owned(),
+            "$.assets[0].layout".to_owned()
+        )]
+    );
+    Ok(())
+}
+
+#[test]
+fn receipt_validation_checks_the_seed_range() -> TestResult {
+    // Kills: removing the receipt's seed-range check.
+    let max = GEORDI_RAY_TRACED_SEED_MAX;
+    for (seed, accepted) in [(-1, false), (0, true), (max, true), (max + 1, false)] {
+        let mut receipt = reference_receipt()?;
+        receipt.seed = seed;
+        let result = validate_geordi_ray_traced_render_receipt(&receipt);
+        if accepted {
+            result?;
+        } else {
+            let error = result.err().ok_or("an out-of-range seed was accepted")?;
+            assert_eq!(
+                issue_codes(&error),
+                vec![(
+                    GEORDI_E_RT_RECEIPT_FIELD_INVALID.to_owned(),
+                    "$.seed".to_owned()
+                )],
+                "{seed}"
+            );
+        }
+    }
+    Ok(())
+}
