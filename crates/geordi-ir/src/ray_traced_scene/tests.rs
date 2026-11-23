@@ -6,7 +6,8 @@ type TestResult = Result<(), Box<dyn Error>>;
 const ONE: i64 = GEORDI_FIXED_Q32_32_ONE_RAW;
 
 /// Independent oracle: `hashlib.sha256` over the committed reference scene bytes, which are the
-/// canonical form (`json.dumps(sort_keys=True, indent=2)` plus a newline).
+/// canonical form (`json.dumps(sort_keys=True, indent=2, ensure_ascii=False)` plus a newline; the
+/// reference scene is ASCII, so `ensure_ascii` does not matter here).
 const REFERENCE_SCENE_HASH: &str =
     "sha256:5ea6b6085b5178fcda09fc966737e44cd5c731ed311e4fcd601ddf935a480a24";
 
@@ -1125,5 +1126,121 @@ fn receipt_validation_checks_the_seed_range() -> TestResult {
             );
         }
     }
+    Ok(())
+}
+
+/// Independent oracle for non-ASCII text. Python 3:
+/// `d["id"] = "geordi:ray-traced-scene:é\u0001\"\\/\x7f 😀😀"` on the reference scene, then
+/// `hashlib.sha256((json.dumps(d, sort_keys=True, indent=2, ensure_ascii=False) + "\n").encode())`.
+/// Python's default `ensure_ascii=True` would escape every non-ASCII character and give a different
+/// digest; the profile fixes the raw form.
+const NON_ASCII_SCENE_HASH: &str =
+    "sha256:f9c1feacc27fe04175e332c7a09afca8158fce446afad45430e9a9e450d42dd7";
+
+#[test]
+fn canonical_bytes_write_non_ascii_raw_and_escape_only_quote_backslash_and_controls() -> TestResult
+{
+    let source = reference_source()?;
+    let with_id = |literal: &str| {
+        source.replacen(
+            "\"geordi:ray-traced-scene:reference\"",
+            &format!("\"geordi:ray-traced-scene:{literal}\""),
+            1,
+        )
+    };
+    // The same text spelled with raw characters, with `\u` escapes and with a surrogate pair, and
+    // with the solidus escaped, must give one canonical form.
+    let spellings = [
+        with_id("é\\u0001\\\"\\\\/\u{7f}\u{2028}😀😀"),
+        with_id("\\u00e9\\u0001\\\"\\\\\\/\\u007f\\u2028\\ud83d\\ude00\\ud83d\\ude00"),
+    ];
+    for spelling in &spellings {
+        let canonical = geordi_ray_traced_scene_canonical_json(spelling)?;
+        assert!(
+            canonical.contains(
+                "\"id\": \"geordi:ray-traced-scene:é\\u0001\\\"\\\\/\u{7f}\u{2028}😀😀\""
+            ),
+            "{canonical}"
+        );
+        assert_eq!(
+            geordi_ray_traced_scene_hash(spelling)?,
+            NON_ASCII_SCENE_HASH
+        );
+    }
+    // Short escapes for the five control characters that have them; lower-case hex otherwise.
+    let canonical =
+        geordi_ray_traced_scene_canonical_json(&with_id("\\b\\f\\n\\r\\t\\u001f\\u000B"))?;
+    assert!(canonical.contains("\"geordi:ray-traced-scene:\\b\\f\\n\\r\\t\\u001f\\u000b\""));
+    Ok(())
+}
+
+/// Hash of the reference scene after `mutate` edits its JSON value.
+fn hash_after(mutate: impl FnOnce(&mut Value)) -> Result<String, Box<dyn Error>> {
+    let mut value: Value = serde_json::from_str(&reference_source()?)?;
+    mutate(&mut value);
+    Ok(geordi_ray_traced_scene_hash(&serde_json::to_string(
+        &value,
+    )?)?)
+}
+
+#[test]
+fn scenes_that_render_alike_but_are_written_differently_have_different_hashes() -> TestResult {
+    // The profile states that identity is the canonical bytes and nothing is normalized: array
+    // order, the order of `requires`, and the spelling of a mesh path all change `sceneHash`.
+    let reference = geordi_ray_traced_scene_hash(&reference_source()?)?;
+    assert_eq!(hash_after(|_| {})?, reference);
+    for (name, hash) in [
+        (
+            "lights reversed",
+            hash_after(|v| {
+                if let Some(items) = v["lights"].as_array_mut() {
+                    items.reverse();
+                }
+            })?,
+        ),
+        (
+            "instances reversed",
+            hash_after(|v| {
+                if let Some(items) = v["instances"].as_array_mut() {
+                    items.reverse();
+                }
+            })?,
+        ),
+        (
+            "requires reversed",
+            hash_after(|v| {
+                if let Some(items) = v["requires"].as_array_mut() {
+                    items.reverse();
+                }
+            })?,
+        ),
+        (
+            "mesh path spelled with ./",
+            hash_after(|v| v["meshes"][0]["path"] = Value::from("./meshes/unit-quad.ply"))?,
+        ),
+        (
+            "mesh path spelled with a doubled slash",
+            hash_after(|v| v["meshes"][0]["path"] = Value::from("meshes//unit-quad.ply"))?,
+        ),
+    ] {
+        assert_ne!(hash, reference, "{name}");
+    }
+    // The spelled-differently scenes are still valid scenes: the validator does not normalize.
+    let mut scene = reference_scene()?;
+    scene.meshes[0].path = "./meshes//unit-quad.ply".to_owned();
+    scene.lights.reverse();
+    scene.requires.reverse();
+    validate_geordi_ray_traced_scene(&scene)?;
+    validate_geordi_ray_traced_scene_mesh_assets(&scene, fixture_root())?;
+    Ok(())
+}
+
+#[test]
+fn a_repeated_object_key_is_a_parse_error() -> TestResult {
+    let source = reference_source()?.replacen("\"seed\": 0,", "\"seed\": 0,\n    \"seed\": 1,", 1);
+    let error = parse_geordi_ray_traced_scene(&source)
+        .err()
+        .ok_or("a repeated key was accepted")?;
+    assert_eq!(issue_codes(&error)[0].0, GEORDI_E_RT_SCENE_SHAPE);
     Ok(())
 }

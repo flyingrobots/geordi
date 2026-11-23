@@ -1821,6 +1821,51 @@ mod tests {
     }
 
     #[test]
+    fn mesh_projections_reject_a_vertical_field_of_view_of_pi_or_more() {
+        use std::f64::consts::{FRAC_PI_4, PI};
+        let issues_for = |vertical_fov_radians: f64| {
+            let mut issues = Vec::new();
+            validate_mesh_projection(
+                &BunnyMeshProjection {
+                    far: 10.0,
+                    kind: "perspective".to_owned(),
+                    near: 1.0,
+                    vertical_fov_radians,
+                    viewport: BunnyMeshViewport {
+                        height: 512,
+                        width: 512,
+                    },
+                },
+                &mut issues,
+            );
+            issues
+                .into_iter()
+                .map(|issue| issue.path)
+                .collect::<Vec<_>>()
+        };
+        // 7.0 and 2 pi + 0.5 are above pi; the latter has the tangent of 0.5 and would draw
+        // exactly like it.
+        for rejected in [PI, 3.5, 7.0, 2.0f64.mul_add(PI, 0.5), 1.0e300] {
+            assert_eq!(
+                issues_for(rejected),
+                vec!["$.projection.verticalFovRadians".to_owned()],
+                "{rejected}"
+            );
+        }
+        for accepted in [1.0e-6, FRAC_PI_4, 3.0, PI - 1.0e-9] {
+            assert!(issues_for(accepted).is_empty(), "{accepted}");
+        }
+        // Not positive or not finite: one issue, from the positive-and-finite rule.
+        for rejected in [0.0, -1.0, f64::NAN, f64::INFINITY] {
+            assert_eq!(
+                issues_for(rejected),
+                vec!["$.projection.verticalFovRadians".to_owned()],
+                "{rejected}"
+            );
+        }
+    }
+
+    #[test]
     fn mesh_asset_sources_reject_non_iso_retrieved_dates() {
         let mut issues = Vec::new();
 

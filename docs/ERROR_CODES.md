@@ -183,7 +183,7 @@ with a JSON path. Field-level detail is in
 
 **Severity**: Error
 **Message**: An integer is outside `-(2^53 - 1)..=2^53 - 1`
-**Fix**: Keep every integer within `-(2^53 - 1)..=2^53 - 1`.
+**Fix**: Keep every integer within `-(2^53 - 1)..=2^53 - 1`. This covers an integer of any size, including one above `2^64 - 1` such as `18446744073709551616`.
 
 ### `GEORDI_E_RT_SCENE_VERSION_UNSUPPORTED`
 

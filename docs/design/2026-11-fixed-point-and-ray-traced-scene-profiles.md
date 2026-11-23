@@ -819,16 +819,26 @@ The maintainer settled the open questions on 2026-11-13 ([#152](https://github.c
    needs the type without the renderer.
 7. **Cross-architecture gate.** Required before the profile is claimed
    ([B9](#b9-proof-gates-and-non-claims), gate 3).
-8. **Identities are recognized at negotiation, not by the artifact validator.** Settled during the
-   first implementation slice ([#153](https://github.com/flyingrobots/geordi/issues/153)). The
-   validator checks only that a sampler, tone curve, reconstruction, output or integrator identity
-   has the form `name/N`; whether an identity is implemented is a fact about a runtime, so the
-   runtime-profile check rejects one the runtime does not declare
+8. **Sampler and tone curve identities are recognized at negotiation; the three Geordi-owned
+   identities are exact.** Settled during the first implementation slice
+   ([#153](https://github.com/flyingrobots/geordi/issues/153)) and corrected by
+   [#167](https://github.com/flyingrobots/geordi/issues/167). The validator checks only that a
+   sampler or tone curve identity has the form `name/N`; whether one is implemented is a fact about
+   a runtime, so the runtime-profile check rejects one the runtime does not declare
    ([B5](#b5-the-integrator-identity-and-everything-else-that-affects-pixels),
    [B8](#b8-validation-and-failure): "where it can see the fact"). Rationale: Bunny has not yet
    published sampler or tone curve identities, and a validator with a built-in list would make
    every artifact invalid until Geordi is re-released for each new identity. The reference fixture
    uses placeholder identities that no runtime implements: it validates and cannot be rendered.
+   The integrator, reconstruction and output identities are different: Geordi owns them, and
+   version 1 has exactly one value for each (`geordi-rt-diffuse-path/1`, `geordi-box-filter/1`,
+   `geordi-rgba8-srgb-opaque/1`). The validator requires those strings exactly and refuses any
+   other, including a well-formed one such as `lumen-diffuse-path/1`, with
+   `GEORDI_E_RT_INTEGRATOR_UNSUPPORTED`, `GEORDI_E_RT_RECONSTRUCTION_UNSUPPORTED` and
+   `GEORDI_E_RT_OUTPUT_UNSUPPORTED`. B8 lists "an unknown ... integrator ... reconstruction or
+   output identity" among what the Geordi validator rejects, and the profile page documents the
+   exact strings. The first version of this decision said all five were checked by form only; the
+   code never did that for these three, and the record is corrected rather than the code.
 9. **`-0` is rejected.** [A2](#a2-representation-in-canonical-json) said `-0` is normalized to `0`.
    The Rust parser reads `-0` as a float, like `-0.0`, and this profile rejects every float, so the
    implementation rejects `-0` with the same diagnostic. This is the stricter reading and it
