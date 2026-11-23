@@ -92,9 +92,11 @@ fn validate(schema: &Value, value: &Value, at: &str) -> Result<(), String> {
                 }
             }
             "required" => {
+                // As in JSON Schema 2020-12, `required` constrains object instances only, so a
+                // member typed `["object", "null"]` may be null.
                 for name in rule.as_array().into_iter().flatten() {
                     let name = name.as_str().unwrap_or_default();
-                    if value.get(name).is_none() {
+                    if value.is_object() && value.get(name).is_none() {
                         return Err(format!("{at}: missing required member {name}"));
                     }
                 }
@@ -317,7 +319,15 @@ fn a_denied_adapter_streams_a_typed_refusal_and_never_a_pass() -> TestResult {
         lines[1]["preparedLayout"],
         "bijou-surface-gpu/1 rgba32uint, 16 bytes per cell, little-endian"
     );
-    assert_eq!(lines[1]["atlasUses"].as_array().map(Vec::len), Some(8));
+    // Paint draws six of the pack's eight slots: A, bold A, e + acute, bold e + acute, U+F000
+    // and the colour heart; bold U+F000 and the bold heart are never drawn.
+    let slots: Vec<u64> = lines[1]["atlasUses"]
+        .as_array()
+        .ok_or("no atlasUses")?
+        .iter()
+        .filter_map(|entry| entry["slot"].as_u64())
+        .collect();
+    assert_eq!(slots, [0, 1, 2, 3, 4, 6]);
     assert_eq!(lines[2]["available"], false);
     assert_eq!(lines[2]["policy"], "deny");
     assert_eq!(lines[2]["evidenceLevel"], "capability-refused");

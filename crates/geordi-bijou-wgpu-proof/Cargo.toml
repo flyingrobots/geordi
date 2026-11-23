@@ -21,3 +21,7 @@ workspace = true
 [dependencies]
 geordi-bijou-shadergen = { path = "../geordi-bijou-shadergen" }
 serde_json = "1.0.150"
+pollster = "0.4.0"
+# Exact pin: wgpu 29.0.4 compiles shaders with naga 29.0.4, the version geordi-bijou-shadergen
+# pins to validate and translate the same bijou-surface.wgsl.
+wgpu = { version = "=29.0.4", default-features = false, features = ["std", "wgsl", "metal", "vulkan", "dx12", "gles"] }
