@@ -1,0 +1,4 @@
+# The shader artifacts are pinned by SHA-256 in their manifest, and the bundled
+# shader-source modules embed their exact bytes: never convert their line endings.
+packages/bijou-gpu/shaders/** text eol=lf
+packages/bijou-gpu/src/generated/** text eol=lf
