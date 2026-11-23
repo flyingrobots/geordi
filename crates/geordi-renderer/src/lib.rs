@@ -10,7 +10,7 @@ use geordi_ir::{
     validate_geordi_strict_text_evidence_line_boxes, validate_geordi_strict_text_fixture_manifest,
     validate_geordi_strict_text_outline_evidence_pack,
 };
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
@@ -807,7 +807,7 @@ fn build_strict_text_render_paths(
         .glyphs
         .iter()
         .map(|glyph| (glyph.glyph_id, glyph))
-        .collect::<HashMap<_, _>>();
+        .collect::<BTreeMap<_, _>>();
     let mut paths = StrictTextRenderPaths {
         command_count: 0,
         draw_glyph_count: 0,

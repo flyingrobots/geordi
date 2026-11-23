@@ -1,0 +1,13 @@
+# Rule-scoped nondeterminism waivers for Geordi's canonical Rust crates.
+# Format (Echo's):
+#   <rule-id> <path> <reason>
+#
+# A row waives only the named rule for the named path (a glob; * also matches /). It is not a
+# file-wide exemption. A row without a reason refuses the whole file. Prefer an inline comment
+# for one line or one region: `ban-nondeterminism: allow(<rule>) <reason>`.
+# See docs/nondeterminism-rules.md.
+
+json-serialization crates/geordi-ir/src/lib.rs serde_json is the artifact codec: it parses and writes the IR, font-pack, strict-text and receipt documents. Canonical bytes come from to_string_pretty over a serde_json Value, whose objects are ordered maps because the preserve_order feature is off for every crate in the workspace.
+json-serialization crates/geordi-ir/src/ray_traced_scene.rs serde_json is the artifact codec for the ray-traced scene and its receipt; the parser rejects every floating-point token before typing, and the canonical bytes are to_string_pretty over an ordered Value.
+json-serialization crates/geordi-ir/src/ray_traced_scene/tests.rs tests feed the scene parser and the failure fixtures through the same codec.
+std-fs crates/geordi-ir/src/ray_traced_scene/tests.rs test fixture I/O only; the tests read checked-in fixtures and nothing here reaches a canonical output.

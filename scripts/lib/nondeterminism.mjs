@@ -262,6 +262,29 @@ function walkRust(directory, files) {
   }
 }
 
+/** Scan one file's text; appends to `findings` and counts the waived hits into `waived`. */
+function scanText({ repoPath, text, compiled, findings, waived }) {
+  const inline = new Map();
+  text.split('\n').forEach((lineText, index) => {
+    // One verdict per rule per line: several patterns of a rule can match the same line.
+    const rules = new Set(RUST_PATTERNS.filter(({ pattern }) => pattern.test(lineText)).map(({ rule }) => rule));
+    for (const rule of rules) {
+      let covered = compiled.some((waiver) => waiver.rule === rule && waiver.regexp.test(repoPath));
+      if (!covered) {
+        if (!inline.has(rule)) {
+          inline.set(rule, inlineWaivedLines(text, rule));
+        }
+        covered = inline.get(rule).has(index + 1);
+      }
+      if (covered) {
+        waived[rule] = (waived[rule] ?? 0) + 1;
+      } else {
+        findings.push({ rule, file: repoPath, line: index + 1, text: lineText.trim() });
+      }
+    }
+  });
+}
+
 /**
  * Scan Rust files below `paths` (relative to `root`). Returns the findings that no allowlist row
  * and no inline comment waives, and the number that were waived, by rule.
@@ -283,27 +306,7 @@ export function scanRust({ root, paths, waivers }) {
     }
     for (const file of files) {
       const repoPath = relative(root, file).split(sep).join('/');
-      const lines = readFileSync(file, 'utf8').split('\n');
-      const text = lines.join('\n');
-      const inline = new Map();
-      lines.forEach((lineText, index) => {
-        // One verdict per rule per line: several patterns of a rule can match the same line.
-        const rules = new Set(RUST_PATTERNS.filter(({ pattern }) => pattern.test(lineText)).map(({ rule }) => rule));
-        for (const rule of rules) {
-          let covered = compiled.some((waiver) => waiver.rule === rule && waiver.regexp.test(repoPath));
-          if (!covered) {
-            if (!inline.has(rule)) {
-              inline.set(rule, inlineWaivedLines(text, rule));
-            }
-            covered = inline.get(rule).has(index + 1);
-          }
-          if (covered) {
-            waived[rule] = (waived[rule] ?? 0) + 1;
-          } else {
-            findings.push({ rule, file: repoPath, line: index + 1, text: lineText.trim() });
-          }
-        }
-      });
+      scanText({ repoPath, text: readFileSync(file, 'utf8'), compiled, findings, waived });
     }
   }
   return { findings, waived };
