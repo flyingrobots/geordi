@@ -1,7 +1,5 @@
-import { parseJsonValue, type JsonObject, type JsonValue } from '@flyingrobots/geordi-core';
+import { parseJsonValue, type JsonObject } from '@flyingrobots/geordi-core';
 
-import manifestText from '../shaders/bijou-shaders.manifest.json?raw';
-import surfaceWgsl from '../shaders/bijou-surface.wgsl?raw';
 import eraseFrameText from '../../../fixtures/bijou-gpu/width1-erase.packed-bijou-cells.json?raw';
 import paintFrameText from '../../../fixtures/bijou-gpu/width1-paint.packed-bijou-cells.json?raw';
 import proceduralTableText from '../../../fixtures/bijou-gpu/procedural-glyphs.json?raw';
@@ -11,6 +9,7 @@ import {
   BackendUnavailableError,
   createGlyphSlotMap,
   createTestGlyphPack,
+  createInMemoryShaderSource,
   createWebGPUSurfacePresenter,
   createWebGpuRefusalReceipt,
   decodeProceduralGlyphTable,
@@ -32,15 +31,16 @@ import {
   type ReferenceSurface,
   type WebGpuSurfacePresenter,
 } from '../src/index.js';
+import { WEBGPU_BUNDLED_SHADER_SOURCE } from '../src/shader-source-webgpu.js';
 import { packedSurfaceFromReference } from '../test/packed-surface.js';
 
 /**
  * Real-browser WebGPU presenter probe.
  *
  * It runs `createWebGPUSurfacePresenter` on the page's canvas with the
- * canonical `bijou-surface.wgsl` loaded verbatim, presents the width-1
- * conformance frames, reads the canonical `rgba8uint` frame back, and compares
- * it byte for byte with `renderReferenceRgba()` run in the same page. When the
+ * canonical `bijou-surface.wgsl` from its bundled shader source (no shader
+ * argument), presents the width-1 conformance frames, reads the canonical
+ * `rgba8uint` frame back, and compares it byte for byte with `renderReferenceRgba()` run in the same page. When the
  * browser has no WebGPU adapter it records the refusal instead; a refusal is
  * never reported as a rendered frame.
  */
@@ -160,7 +160,6 @@ function suiteGeometry(): SuiteGeometry {
 }
 
 const GEOMETRY = suiteGeometry();
-const MANIFEST: JsonValue = parseJsonValue(manifestText);
 const TABLE = decodeProceduralGlyphTable(parseJsonValue(proceduralTableText));
 const PACK = createTestGlyphPack();
 const PAINT = parsePackedBijouCellsReceipt(parseJsonValue(paintFrameText));
@@ -284,12 +283,11 @@ async function runFixture(
 ): Promise<WebGpuProbeResult> {
   const canvas = freshCanvas();
   const atlas: PresenterAtlasSource = staticOf(atlasInput);
-  const shader = { wgsl: surfaceWgsl, manifest: MANIFEST };
   const size = { cssWidth: GEOMETRY.canvasPxW, cssHeight: GEOMETRY.canvasPxH, dpr: 1 };
   let presenter: WebGpuSurfacePresenter;
   try {
+    // No shader argument: the presenter wires its bundled WGSL and manifest.
     presenter = await createWebGPUSurfacePresenter(canvas, {
-      shader,
       atlas,
       size,
       defaultFg: GEOMETRY.defaultFg,
@@ -308,7 +306,7 @@ async function runFixture(
       reason: error.reason,
       receipt: createWebGpuRefusalReceipt({
         error,
-        shader,
+        shaderSource: WEBGPU_BUNDLED_SHADER_SOURCE,
         atlas,
         target: packedSurfaceFromReference(first.surface),
         size,
@@ -389,7 +387,6 @@ async function runResizeSequence(steps: number, seed: number): Promise<WebGpuRes
   let presenter: WebGpuSurfacePresenter;
   try {
     presenter = await createWebGPUSurfacePresenter(canvas, {
-      shader: { wgsl: surfaceWgsl, manifest: MANIFEST },
       atlas: staticOf(PACK),
       size: { cssWidth: GEOMETRY.canvasPxW, cssHeight: GEOMETRY.canvasPxH, dpr: 1 },
       defaultFg: GEOMETRY.defaultFg,
@@ -445,11 +442,14 @@ async function runResizeSequence(steps: number, seed: number): Promise<WebGpuRes
 }
 
 async function runShaderFault(): Promise<WebGpuFaultResult> {
+  // A port whose manifest pins a broken WGSL text, so the digest check passes and the device compiles it.
+  const surfaceWgsl = WEBGPU_BUNDLED_SHADER_SOURCE.readText('bijou-surface.wgsl') ?? '';
+  const manifestText = WEBGPU_BUNDLED_SHADER_SOURCE.readText('bijou-shaders.manifest.json') ?? '';
   const broken = surfaceWgsl.replace('fn fs_main(', 'fn fs_main(this is not wgsl ');
-  const manifest = parseJsonValue(manifestText.split(sha256Hex(utf8Bytes(surfaceWgsl))).join(sha256Hex(utf8Bytes(broken))));
+  const manifest = manifestText.split(sha256Hex(utf8Bytes(surfaceWgsl))).join(sha256Hex(utf8Bytes(broken)));
   try {
     const presenter = await createWebGPUSurfacePresenter(freshCanvas(), {
-      shader: { wgsl: broken, manifest },
+      shaderSource: createInMemoryShaderSource({ 'bijou-surface.wgsl': broken, 'bijou-shaders.manifest.json': manifest }, 'harness:broken'),
       atlas: staticOf(PACK),
       size: { cssWidth: GEOMETRY.canvasPxW, cssHeight: GEOMETRY.canvasPxH, dpr: 1 },
     });

@@ -1,7 +1,8 @@
 # Bijou GPU WebGL2 Presenter Reference
 
 **Package**: `@flyingrobots/geordi-bijou-gpu` (`packages/bijou-gpu`)
-**Modules**: `src/webgl2-presenter.ts`, `src/webgl2-gl.ts`, `src/presenter-atlas.ts`
+**Modules**: `src/webgl2-presenter.ts` (core), `src/webgl2-presenter-default.ts` (composition
+root), `src/webgl2-gl.ts`, `src/presenter-atlas.ts`, `src/shader-source.ts`
 **ABI**: `bijou-surface-gpu/1`
 **Backend profile**: `geordi-webgl2/1`
 **Rationale**: [design record](./design/2026-11-bijou-surface-gpu-abi.md), sections 4 to 6
@@ -24,8 +25,6 @@ canvas by executing the checked-in, naga-generated GLSL ES 3.00 stages of
 Abridged from `packages/bijou-gpu/harness/webgl2.ts`, which a Vite page loads:
 
 ```ts
-import fragment from '../shaders/bijou-surface.frag.glsl?raw';
-import vertex from '../shaders/bijou-surface.vert.glsl?raw';
 import {
   createStaticAtlasSource,
   createTestGlyphPack,
@@ -35,7 +34,6 @@ import {
 const pack = createTestGlyphPack();
 const presenter = createWebGL2SurfacePresenter({
   canvas,
-  shaders: { vertex, fragment },
   atlas: createStaticAtlasSource({
     bitmap: pack.atlasBitmap,
     slotMap: pack.slotMap,
@@ -48,16 +46,18 @@ const presenter = createWebGL2SurfacePresenter({
 presenter.present(paint, paint, {});
 ```
 
-The package build does not ship the `.glsl` files; the host passes the text of
-`packages/bijou-gpu/shaders/bijou-surface.vert.glsl` and `bijou-surface.frag.glsl`, here through
-Vite's `?raw` import. A live application passes a `GlyphAtlas` as `atlas` instead. The factory has
-the shape of `GpuSurfacePresenterFactory<WebGL2SurfacePresenterOptions>` and returns
+The host passes no shader. `createWebGL2SurfacePresenter()` is the composition root: it calls
+the core, `createWebGL2SurfacePresenterCore()`, with `WEBGL2_BUNDLED_SHADER_SOURCE`, which embeds
+the generated GLSL stages (see [shader sources](./bijou-gpu-shaders.md#shader-sources)). A host
+that loads the shaders another way passes its own `ShaderSourcePort` as `shaderSource`; the core
+checks it against the same pin. A live application passes a `GlyphAtlas` as `atlas`. The factory
+has the shape of `GpuSurfacePresenterFactory<WebGL2SurfacePresenterOptions>` and returns
 synchronously.
 
 | Option | Meaning |
 | --- | --- |
 | `canvas` | An `HTMLCanvasElement`, or anything with the `WebGL2SurfaceCanvas` slice: `width`, `height`, `getContext('webgl2', attributes)`, `addEventListener`, `removeEventListener`, `getBoundingClientRect()`. |
-| `shaders` | `{ vertex, fragment }`: the generated GLSL text, unmodified. |
+| `shaderSource` | Optional `ShaderSourcePort` that yields `bijou-surface.vert.glsl` and `bijou-surface.frag.glsl`. Default: `WEBGL2_BUNDLED_SHADER_SOURCE`. Required by `createWebGL2SurfacePresenterCore()`. |
 | `atlas` | A `PresenterAtlasSource`. A `GlyphAtlas` is one as it is; `createStaticAtlasSource()` wraps a fixed bitmap and slot map. |
 | `defaultFg`, `defaultBg` | Uppercase `#RRGGBB`. Default to `REFERENCE_DEFAULT_FG` and `REFERENCE_DEFAULT_BG`. |
 | `canonicalReadback` | Read every frame back for its receipt. Default `false`. |
@@ -70,7 +70,8 @@ synchronously.
 | Condition | Thrown |
 | --- | --- |
 | `getContext('webgl2')` returns `null`, or the context is lost at creation | `BackendUnavailableError` (`GEORDI_E_BIJOU_BACKEND_UNAVAILABLE`), backend `webgl2`. Evidence `capability-refused`; never a pass. |
-| A shader's SHA-256 differs from `WEBGL2_SURFACE_SHADER_PIN` | `RendererFaultError`, before any GL call |
+| The shader source has no `bijou-surface.vert.glsl` or `bijou-surface.frag.glsl` | `RendererFaultError` naming the file and the port, before any GL call |
+| A shader's SHA-256 differs from `WEBGL2_SURFACE_SHADER_PIN`, including a CRLF-converted file | `RendererFaultError`, before any GL call |
 | A stage fails to compile or link, a uniform block or sampler named in the pin is missing, the canonical framebuffer is incomplete | `RendererFaultError` |
 | `gl.getError()` reports anything but `NO_ERROR` or `CONTEXT_LOST_WEBGL` after a frame | `RendererFaultError` |
 | `drawingBufferWidth` or `drawingBufferHeight` differs from the canvas size | `DrawingBufferMismatchError` (`GEORDI_E_BIJOU_DRAWING_BUFFER_MISMATCH`). Nothing is drawn. |
@@ -87,7 +88,8 @@ A fault is never caught and turned into a fallback. Choosing another backend aft
 `generatedGlslSha256`, each stage's file name and SHA-256, the `std140` uniform block name, its
 64-byte size and member offsets, and the two `usampler2D` names. A unit test compares every value
 with the checked-in manifest and files, so regenerating the shaders fails the tests until the pin
-is updated.
+is updated. The pin, not the port, is the trust anchor: the presenter does not read the manifest
+from the port.
 
 `webgl2FramedGlslSha256(stages)` applies the manifest's framing rule: for each stage, the file
 name, a line feed, the decimal byte length, a line feed, and the bytes.
@@ -155,7 +157,7 @@ shader, and the canonical frame never passes through it.
 | `adapter` | `backend: "webgl2"`, `name`: the `WEBGL_debug_renderer_info` unmasked renderer (`RENDERER` without it), `driver`: `VERSION` |
 | `assembledWgslSha256`, `generatedGlslSha256` | From the pin |
 | `shaderSha256` | `generatedGlslSha256` |
-| `executedArtifactSha256` | `webgl2ExecutedArtifactSha256(shaders)`: the framed digest of the generated vertex, generated fragment and display fragment stages |
+| `executedArtifactSha256` | `webgl2ExecutedArtifactSha256(shaders)` over the stages the port yielded: the framed digest of the generated vertex, generated fragment and display fragment stages |
 | `preparedBufferSha256` | SHA-256 of the staging buffer, little-endian |
 | `cellPx`, `fontIdentity`, `atlasGeneration`, `atlasStats` | `atlas.getReceiptAssets()` |
 | `canvasPxW`, `canvasPxH`, `dpr` | The canvas size and the last `resize()` ratio (1 before any) |

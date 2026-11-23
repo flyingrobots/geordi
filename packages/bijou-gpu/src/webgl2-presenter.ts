@@ -30,6 +30,7 @@ import {
 } from './receipt.js';
 import { parseHexColor, REFERENCE_DEFAULT_BG, REFERENCE_DEFAULT_FG } from './reference.js';
 import { sha256Hex, utf8Bytes } from './sha256.js';
+import { requireShaderText, type ShaderSourcePort } from './shader-source.js';
 import {
   createSurfaceDamageState,
   packSurfaceDamage,
@@ -172,10 +173,14 @@ export function webgl2ExecutedArtifactSha256(shaders: WebGL2SurfaceShaderSources
   ]);
 }
 
-export interface WebGL2SurfacePresenterOptions {
+export interface WebGL2SurfacePresenterCoreOptions {
   readonly canvas: WebGL2SurfaceCanvas;
-  /** The checked-in generated GLSL. Refused unless it hashes to {@link WEBGL2_SURFACE_SHADER_PIN}. */
-  readonly shaders: WebGL2SurfaceShaderSources;
+  /**
+   * Where the two generated GLSL stages come from. Each is refused unless it
+   * hashes to {@link WEBGL2_SURFACE_SHADER_PIN}, so a port is a loader, not a
+   * source of trust.
+   */
+  readonly shaderSource: ShaderSourcePort;
   /** A live `GlyphAtlas`, or `createStaticAtlasSource()` over a fixed bitmap. */
   readonly atlas: PresenterAtlasSource;
   /** `#RRGGBB`; defaults to `REFERENCE_DEFAULT_FG`. */
@@ -266,7 +271,17 @@ function invalidSurface(path: string, detail: string): never {
   throw new BijouGpuValidationError('GEORDI_E_BIJOU_INVALID_SURFACE', path, detail);
 }
 
-function verifyShaderSources(shaders: WebGL2SurfaceShaderSources): void {
+/** Read both stages from the port and refuse any byte that is not the manifest pin. */
+function loadShaderSources(port: ShaderSourcePort): WebGL2SurfaceShaderSources {
+  const shaders: WebGL2SurfaceShaderSources = {
+    vertex: requireShaderText(port, WEBGL2_SURFACE_SHADER_PIN.vertex.file, 'webgl2'),
+    fragment: requireShaderText(port, WEBGL2_SURFACE_SHADER_PIN.fragment.file, 'webgl2'),
+  };
+  verifyShaderSources(shaders, port.description);
+  return shaders;
+}
+
+function verifyShaderSources(shaders: WebGL2SurfaceShaderSources, origin: string): void {
   for (const [label, source, pin] of [
     ['vertex', shaders.vertex, WEBGL2_SURFACE_SHADER_PIN.vertex],
     ['fragment', shaders.fragment, WEBGL2_SURFACE_SHADER_PIN.fragment],
@@ -274,7 +289,7 @@ function verifyShaderSources(shaders: WebGL2SurfaceShaderSources): void {
     const digest = sha256Hex(utf8Bytes(source));
     if (digest !== pin.sha256) {
       fault(
-        `${label} GLSL SHA-256 ${digest} is not the manifest pin ${pin.sha256} of ${pin.file}; pass the checked-in generated file unmodified`,
+        `${label} GLSL SHA-256 ${digest} from ${origin} is not the manifest pin ${pin.sha256} of ${pin.file}; the shader source must yield the checked-in generated file unmodified`,
       );
     }
   }
@@ -345,17 +360,19 @@ function defaultProbePoints(width: number, height: number): [number, number][] {
 }
 
 /**
- * Create a WebGL2 presenter on `options.canvas`.
+ * The WebGL2 presenter core: create a presenter on `options.canvas` with the
+ * GLSL from `options.shaderSource`. `createWebGL2SurfacePresenter()` is the
+ * same with the bundled adapter wired in by default.
  *
  * @throws BackendUnavailableError when the canvas has no WebGL2 context, or it
  *   is lost at creation. This is a capability refusal, never a pass.
- * @throws RendererFaultError when the shader text is not the pinned generated
- *   GLSL, or a stage fails to compile or link, or a binding is missing. A
+ * @throws RendererFaultError when the shader source lacks a stage, a stage is
+ *   not the pinned generated GLSL, or a stage fails to compile or link, or a binding is missing. A
  *   fault is never turned into a fallback.
  */
-export function createWebGL2SurfacePresenter(options: WebGL2SurfacePresenterOptions): WebGL2SurfacePresenter {
-  verifyShaderSources(options.shaders);
-  const { canvas, shaders, atlas } = options;
+export function createWebGL2SurfacePresenterCore(options: WebGL2SurfacePresenterCoreOptions): WebGL2SurfacePresenter {
+  const shaders = loadShaderSources(options.shaderSource);
+  const { canvas, atlas } = options;
   const defaultFg = options.defaultFg ?? REFERENCE_DEFAULT_FG;
   const defaultBg = options.defaultBg ?? REFERENCE_DEFAULT_BG;
   const fgRgb = parseHexColor(defaultFg, 'options.defaultFg');
