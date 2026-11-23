@@ -246,7 +246,7 @@ describe('selectWebGpuCanvasFormat', () => {
     const { canvas, device, presenter } = await rig({ preferredFormat: 'rgba8unorm' });
     expect(presenter.canvasFormat).toBe('rgba8unorm');
     expect(canvas.context.configuration?.format).toBe('rgba8unorm');
-    expect(device.pipelines.map((pipeline) => pipeline.fragment.targets[0]?.format)).toEqual([
+    expect(device.pipelines.map((pipeline) => pipeline.fragment?.targets[0]?.format)).toEqual([
       'rgba8uint',
       'rgba8unorm',
     ]);

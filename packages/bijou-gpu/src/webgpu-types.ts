@@ -3,9 +3,10 @@
  * structurally.
  *
  * The package compiles without DOM typings, so it cannot name `GPUDevice` and
- * friends. Every member here is a subset of the corresponding WebGPU interface,
- * so a browser's `navigator.gpu` satisfies {@link WebGpuGpu} directly, and a
- * test can inject a recording fake.
+ * friends. Each object type here lists a subset of the members of its WebGPU
+ * interface, and each parameter type accepts at least what WebGPU's does, so
+ * a browser's `navigator.gpu` and `HTMLCanvasElement` satisfy these types
+ * without a cast, and a test can inject a recording fake.
  */
 
 /** `GPUBufferUsage` flags, as fixed by the WebGPU specification. */
@@ -53,10 +54,10 @@ export interface WebGpuSupportedLimits {
 }
 
 export interface WebGpuBuffer {
-  mapAsync(mode: number): Promise<undefined>;
+  mapAsync(mode: number): Promise<void>;
   getMappedRange(): ArrayBuffer;
-  unmap(): undefined;
-  destroy(): undefined;
+  unmap(): void;
+  destroy(): void;
 }
 
 export interface WebGpuTextureView {
@@ -68,7 +69,7 @@ export interface WebGpuTexture {
   readonly height: number;
   readonly format: string;
   createView(): WebGpuTextureView;
-  destroy(): undefined;
+  destroy(): void;
 }
 
 export interface WebGpuBindGroupLayout {
@@ -97,98 +98,122 @@ export interface WebGpuCommandBuffer {
   readonly label: string;
 }
 
-export interface WebGpuRenderPassEncoder {
-  setPipeline(pipeline: WebGpuRenderPipeline): undefined;
-  setBindGroup(index: number, bindGroup: WebGpuBindGroup): undefined;
-  draw(vertexCount: number): undefined;
-  end(): undefined;
-}
+/** `GPUExtent3D`. The presenter always passes `[width, height]`. */
+export type WebGpuExtent = number[] | { width: number; height?: number; depthOrArrayLayers?: number };
+
+/** `GPUOrigin3D`. The presenter always passes `[x, y]`. */
+export type WebGpuOrigin = number[] | { x?: number; y?: number; z?: number };
+
+/** `AllowSharedBufferSource`. */
+export type WebGpuBufferSource = ArrayBufferLike | ArrayBufferView;
 
 export interface WebGpuTexelCopyBufferLayout {
-  readonly offset?: number;
-  readonly bytesPerRow?: number;
-  readonly rowsPerImage?: number;
+  offset?: number;
+  bytesPerRow?: number;
+  rowsPerImage?: number;
+}
+
+export interface WebGpuTexelCopyTextureInfo {
+  texture: WebGpuTexture;
+  origin?: WebGpuOrigin;
+  mipLevel?: number;
+  aspect?: string;
+}
+
+export interface WebGpuRenderPassColorAttachment {
+  view: WebGpuTexture | WebGpuTextureView;
+  loadOp: string;
+  storeOp: string;
+  clearValue?: number[] | { r: number; g: number; b: number; a: number };
+}
+
+export interface WebGpuRenderPassEncoder {
+  setPipeline(pipeline: WebGpuRenderPipeline): void;
+  setBindGroup(index: number, bindGroup: WebGpuBindGroup | null): void;
+  draw(vertexCount: number): void;
+  end(): void;
 }
 
 export interface WebGpuCommandEncoder {
   beginRenderPass(descriptor: {
-    colorAttachments: {
-      view: WebGpuTextureView;
-      loadOp: 'clear' | 'load';
-      storeOp: 'store' | 'discard';
-      clearValue?: number[];
-    }[];
+    label?: string;
+    colorAttachments: (WebGpuRenderPassColorAttachment | null)[];
   }): WebGpuRenderPassEncoder;
   copyTextureToBuffer(
-    source: { texture: WebGpuTexture },
-    destination: { buffer: WebGpuBuffer; bytesPerRow: number; rowsPerImage: number },
-    copySize: number[],
-  ): undefined;
+    source: WebGpuTexelCopyTextureInfo,
+    destination: WebGpuTexelCopyBufferLayout & { buffer: WebGpuBuffer },
+    copySize: WebGpuExtent,
+  ): void;
   finish(): WebGpuCommandBuffer;
 }
 
 export interface WebGpuQueue {
-  writeBuffer(buffer: WebGpuBuffer, bufferOffset: number, data: Uint32Array): undefined;
+  writeBuffer(buffer: WebGpuBuffer, bufferOffset: number, data: WebGpuBufferSource): void;
   writeTexture(
-    destination: { texture: WebGpuTexture; origin?: number[] },
-    data: Uint8Array | Uint32Array,
+    destination: WebGpuTexelCopyTextureInfo,
+    data: WebGpuBufferSource,
     dataLayout: WebGpuTexelCopyBufferLayout,
-    size: number[],
-  ): undefined;
-  submit(commandBuffers: WebGpuCommandBuffer[]): undefined;
-  onSubmittedWorkDone(): Promise<undefined>;
+    size: WebGpuExtent,
+  ): void;
+  submit(commandBuffers: WebGpuCommandBuffer[]): void;
 }
 
 export interface WebGpuBindGroupLayoutEntry {
   binding: number;
   visibility: number;
-  buffer?: { type: 'uniform' };
-  texture?: { sampleType: 'uint'; viewDimension: '2d' };
+  buffer?: { type?: string };
+  texture?: { sampleType?: string; viewDimension?: string; multisampled?: boolean };
 }
 
 export interface WebGpuBindGroupEntry {
   binding: number;
-  resource: WebGpuTextureView | { buffer: WebGpuBuffer };
+  /** A texture view or `{ buffer }` here; WebGPU also accepts samplers and more. */
+  resource: object;
+}
+
+export interface WebGpuProgrammableStage {
+  module: WebGpuShaderModule;
+  entryPoint?: string;
 }
 
 export interface WebGpuRenderPipelineDescriptor {
-  label: string;
-  layout: WebGpuPipelineLayout;
-  vertex: { module: WebGpuShaderModule; entryPoint: string };
-  fragment: { module: WebGpuShaderModule; entryPoint: string; targets: { format: string }[] };
-  primitive: { topology: 'triangle-list' };
+  label?: string;
+  layout: WebGpuPipelineLayout | 'auto';
+  vertex: WebGpuProgrammableStage;
+  fragment?: WebGpuProgrammableStage & { targets: ({ format: string } | null)[] };
+  primitive?: { topology?: string };
 }
 
 export interface WebGpuDevice {
   readonly limits: WebGpuSupportedLimits;
   readonly queue: WebGpuQueue;
   readonly lost: Promise<WebGpuDeviceLostInfo>;
-  createBuffer(descriptor: { label: string; size: number; usage: number }): WebGpuBuffer;
+  createBuffer(descriptor: { label?: string; size: number; usage: number }): WebGpuBuffer;
   createTexture(descriptor: {
-    label: string;
-    size: number[];
+    label?: string;
+    size: WebGpuExtent;
     format: string;
     usage: number;
   }): WebGpuTexture;
-  createShaderModule(descriptor: { label: string; code: string }): WebGpuShaderModule;
+  createShaderModule(descriptor: { label?: string; code: string }): WebGpuShaderModule;
   createBindGroupLayout(descriptor: {
-    label: string;
+    label?: string;
     entries: WebGpuBindGroupLayoutEntry[];
   }): WebGpuBindGroupLayout;
   createPipelineLayout(descriptor: {
-    label: string;
-    bindGroupLayouts: WebGpuBindGroupLayout[];
+    label?: string;
+    bindGroupLayouts: (WebGpuBindGroupLayout | null)[];
   }): WebGpuPipelineLayout;
   createRenderPipelineAsync(descriptor: WebGpuRenderPipelineDescriptor): Promise<WebGpuRenderPipeline>;
   createBindGroup(descriptor: {
-    label: string;
+    label?: string;
     layout: WebGpuBindGroupLayout;
     entries: WebGpuBindGroupEntry[];
   }): WebGpuBindGroup;
   createCommandEncoder(): WebGpuCommandEncoder;
-  pushErrorScope(filter: 'validation' | 'out-of-memory' | 'internal'): undefined;
+  pushErrorScope(filter: string): void;
   popErrorScope(): Promise<WebGpuError | null>;
-  destroy(): undefined;
+  destroy(): void;
 }
 
 export interface WebGpuAdapter {
@@ -202,20 +227,41 @@ export interface WebGpuGpu {
   getPreferredCanvasFormat(): string;
 }
 
+export interface WebGpuCanvasConfiguration {
+  device: WebGpuDevice;
+  format: string;
+  alphaMode?: string;
+  usage?: number;
+}
+
 export interface WebGpuCanvasContext {
-  configure(configuration: {
-    device: WebGpuDevice;
-    format: string;
-    alphaMode: 'opaque';
-    usage: number;
-  }): undefined;
-  unconfigure(): undefined;
+  configure(configuration: WebGpuCanvasConfiguration): void;
+  unconfigure(): void;
   getCurrentTexture(): WebGpuTexture;
 }
 
-/** The slice of `HTMLCanvasElement` or `OffscreenCanvas` the presenter uses. */
+/**
+ * The slice of `HTMLCanvasElement` or `OffscreenCanvas` the presenter uses.
+ *
+ * `getContext` returns a plain object because DOM typings declare it as an
+ * overload set that no single structural signature matches; the presenter
+ * checks the returned object for the context members it calls.
+ */
 export interface WebGpuCanvas {
   width: number;
   height: number;
-  getContext(contextId: 'webgpu'): WebGpuCanvasContext | null;
+  getContext(contextId: 'webgpu'): object | null;
+}
+
+/** Whether a `getContext('webgpu')` result has the members the presenter calls. */
+export function isWebGpuCanvasContext(value: object | null): value is WebGpuCanvasContext {
+  return (
+    value !== null &&
+    'configure' in value &&
+    typeof value.configure === 'function' &&
+    'unconfigure' in value &&
+    typeof value.unconfigure === 'function' &&
+    'getCurrentTexture' in value &&
+    typeof value.getCurrentTexture === 'function'
+  );
 }

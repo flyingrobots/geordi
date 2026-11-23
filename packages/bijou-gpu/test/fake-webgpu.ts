@@ -6,6 +6,7 @@ import type {
   WebGpuBindGroupLayout,
   WebGpuBindGroupLayoutEntry,
   WebGpuBuffer,
+  WebGpuCanvasConfiguration,
   WebGpuCanvasContext,
   WebGpuCommandBuffer,
   WebGpuCommandEncoder,
@@ -18,7 +19,11 @@ import type {
   WebGpuRenderPipeline,
   WebGpuRenderPipelineDescriptor,
   WebGpuShaderModule,
+  WebGpuBufferSource,
+  WebGpuExtent,
+  WebGpuOrigin,
   WebGpuTexelCopyBufferLayout,
+  WebGpuTexelCopyTextureInfo,
   WebGpuTexture,
   WebGpuTextureView,
 } from '../src/webgpu-types.js';
@@ -39,6 +44,12 @@ export class FakeWebGpuRejection extends Error {
     super(detail);
     this.name = new.target.name;
   }
+}
+
+function bytesOf(data: WebGpuBufferSource): Uint8Array {
+  return ArrayBuffer.isView(data)
+    ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+    : new Uint8Array(data);
 }
 
 const BYTES_PER_TEXEL: Readonly<Record<string, number>> = {
@@ -86,8 +97,25 @@ export class FakeTexture implements WebGpuTexture {
   }
 }
 
-function textureOfView(view: WebGpuTextureView): FakeTexture {
-  return (view as WebGpuTextureView & { texture: FakeTexture }).texture;
+function textureOfView(view: WebGpuTexture | WebGpuTextureView): FakeTexture {
+  return view instanceof FakeTexture ? view : (view as WebGpuTextureView & { texture: FakeTexture }).texture;
+}
+
+function extent2d(size: WebGpuExtent): [number, number] {
+  if (Array.isArray(size)) {
+    return [size[0] ?? 0, size[1] ?? 1];
+  }
+  return [size.width, size.height ?? 1];
+}
+
+function origin2d(origin: WebGpuOrigin | undefined): [number, number] {
+  if (origin === undefined) {
+    return [0, 0];
+  }
+  if (Array.isArray(origin)) {
+    return [origin[0] ?? 0, origin[1] ?? 0];
+  }
+  return [origin.x ?? 0, origin.y ?? 0];
 }
 
 export class FakeBuffer implements WebGpuBuffer {
@@ -186,19 +214,19 @@ export class FakeDevice implements WebGpuDevice {
       return true;
     };
     this.queue = {
-      writeBuffer: (_buffer: WebGpuBuffer, _offset: number, data: Uint32Array): undefined => {
-        this.uniformWrites.push(Uint32Array.from(data));
+      writeBuffer: (_buffer: WebGpuBuffer, _offset: number, data: WebGpuBufferSource): undefined => {
+        this.uniformWrites.push(new Uint32Array(bytesOf(data).slice().buffer));
         return undefined;
       },
       writeTexture: (
-        destination: { texture: WebGpuTexture; origin?: number[] },
-        data: Uint8Array | Uint32Array,
+        destination: WebGpuTexelCopyTextureInfo,
+        data: WebGpuBufferSource,
         layout: WebGpuTexelCopyBufferLayout,
-        size: number[],
+        size: WebGpuExtent,
       ): undefined => {
         const texture = destination.texture as FakeTexture;
-        const [ox = 0, oy = 0] = destination.origin ?? [];
-        const [width = 0, height = 1] = size;
+        const [ox, oy] = origin2d(destination.origin);
+        const [width, height] = extent2d(size);
         this.writes.push({
           texture,
           origin: [ox, oy],
@@ -233,7 +261,7 @@ export class FakeDevice implements WebGpuDevice {
           raise(`writeTexture region exceeds ${texture.label}`);
           return undefined;
         }
-        const source = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+        const source = bytesOf(data);
         for (let row = 0; row < height; row += 1) {
           texture.bytes.set(
             source.subarray(offset + row * bytesPerRow, offset + row * bytesPerRow + rowBytes),
@@ -265,19 +293,20 @@ export class FakeDevice implements WebGpuDevice {
     this.resolveLost({ reason, message: `fake device ${String(this.id)} lost` });
   }
 
-  createBuffer(descriptor: { label: string; size: number; usage: number }): WebGpuBuffer {
-    const buffer = new FakeBuffer(descriptor.label, descriptor.size, descriptor.usage);
+  createBuffer(descriptor: { label?: string; size: number; usage: number }): WebGpuBuffer {
+    const buffer = new FakeBuffer(descriptor.label ?? '', descriptor.size, descriptor.usage);
     this.buffers.push(buffer);
     return buffer;
   }
 
-  createTexture(descriptor: { label: string; size: number[]; format: string; usage: number }): WebGpuTexture {
-    const [width = 0, height = 1] = descriptor.size;
+  createTexture(descriptor: { label?: string; size: WebGpuExtent; format: string; usage: number }): WebGpuTexture {
+    const label = descriptor.label ?? '';
+    const [width, height] = extent2d(descriptor.size);
     if (width < 1 || height < 1 || width > FAKE_MAX_TEXTURE_DIMENSION || height > FAKE_MAX_TEXTURE_DIMENSION) {
-      this.raise('validation', `createTexture ${descriptor.label} with size ${String(width)}x${String(height)}`);
+      this.raise('validation', `createTexture ${label} with size ${String(width)}x${String(height)}`);
     }
     const texture = new FakeTexture(
-      descriptor.label,
+      label,
       Math.max(1, width),
       Math.max(1, height),
       descriptor.format,
@@ -287,23 +316,28 @@ export class FakeDevice implements WebGpuDevice {
     return texture;
   }
 
-  createShaderModule(descriptor: { label: string; code: string }): WebGpuShaderModule {
-    const failing = this.behaviour.compileErrors?.includes(descriptor.label) === true;
+  createShaderModule(descriptor: { label?: string; code: string }): WebGpuShaderModule {
+    const label = descriptor.label ?? '';
+    const failing = this.behaviour.compileErrors?.includes(label) === true;
     return {
       getCompilationInfo: () =>
         Promise.resolve({
-          messages: failing ? [{ type: 'error', message: `fake compile error in ${descriptor.label}` }] : [],
+          messages: failing ? [{ type: 'error', message: `fake compile error in ${label}` }] : [],
         }),
     };
   }
 
-  createBindGroupLayout(descriptor: { label: string; entries: WebGpuBindGroupLayoutEntry[] }): WebGpuBindGroupLayout {
-    this.bindGroupLayouts.push(descriptor);
-    return { label: descriptor.label };
+  createBindGroupLayout(descriptor: { label?: string; entries: WebGpuBindGroupLayoutEntry[] }): WebGpuBindGroupLayout {
+    const label = descriptor.label ?? '';
+    this.bindGroupLayouts.push({ label, entries: descriptor.entries });
+    return { label };
   }
 
-  createPipelineLayout(descriptor: { label: string; bindGroupLayouts: WebGpuBindGroupLayout[] }): WebGpuPipelineLayout {
-    return { label: descriptor.label };
+  createPipelineLayout(descriptor: {
+    label?: string;
+    bindGroupLayouts: (WebGpuBindGroupLayout | null)[];
+  }): WebGpuPipelineLayout {
+    return { label: descriptor.label ?? '' };
   }
 
   createRenderPipelineAsync(descriptor: WebGpuRenderPipelineDescriptor): Promise<WebGpuRenderPipeline> {
@@ -311,26 +345,28 @@ export class FakeDevice implements WebGpuDevice {
     if (this.behaviour.creationValidationError !== undefined && this.pipelines.length === 1) {
       this.raise('validation', this.behaviour.creationValidationError);
     }
-    if (this.behaviour.pipelineRejections?.includes(descriptor.label) === true) {
-      return Promise.reject(new FakeWebGpuRejection(`fake GPUPipelineError for ${descriptor.label}`));
+    const label = descriptor.label ?? '';
+    if (this.behaviour.pipelineRejections?.includes(label) === true) {
+      return Promise.reject(new FakeWebGpuRejection(`fake GPUPipelineError for ${label}`));
     }
-    return Promise.resolve({ label: descriptor.label });
+    return Promise.resolve({ label });
   }
 
   createBindGroup(descriptor: {
-    label: string;
+    label?: string;
     layout: WebGpuBindGroupLayout;
     entries: WebGpuBindGroupEntry[];
   }): WebGpuBindGroup {
-    this.bindGroups.push({ label: descriptor.label, entries: descriptor.entries });
-    return { label: descriptor.label };
+    const label = descriptor.label ?? '';
+    this.bindGroups.push({ label, entries: descriptor.entries });
+    return { label };
   }
 
   createCommandEncoder(): WebGpuCommandEncoder {
     return {
       beginRenderPass: (descriptor): WebGpuRenderPassEncoder => {
         const attachment = descriptor.colorAttachments.at(0);
-        const target = attachment === undefined ? null : textureOfView(attachment.view);
+        const target = attachment === undefined || attachment === null ? null : textureOfView(attachment.view);
         let pipeline = '';
         return {
           setPipeline: (value: WebGpuRenderPipeline): undefined => {
@@ -353,19 +389,20 @@ export class FakeDevice implements WebGpuDevice {
       copyTextureToBuffer: (source, destination, copySize): undefined => {
         const texture = source.texture as FakeTexture;
         const buffer = destination.buffer as FakeBuffer;
-        const [width = 0, height = 1] = copySize;
+        const [width, height] = extent2d(copySize);
+        const bytesPerRow = destination.bytesPerRow ?? 0;
         this.copies.push({
           texture,
-          bytesPerRow: destination.bytesPerRow,
-          rowsPerImage: destination.rowsPerImage,
+          bytesPerRow,
+          rowsPerImage: destination.rowsPerImage ?? height,
           size: [width, height],
         });
         const rowBytes = width * texture.bytesPerTexel;
-        if (destination.bytesPerRow % 256 !== 0) {
-          this.raise('validation', `copyTextureToBuffer bytesPerRow ${String(destination.bytesPerRow)} is not a multiple of 256`);
+        if (bytesPerRow % 256 !== 0 || bytesPerRow === 0) {
+          this.raise('validation', `copyTextureToBuffer bytesPerRow ${String(bytesPerRow)} is not a positive multiple of 256`);
           return undefined;
         }
-        if (destination.bytesPerRow < rowBytes || buffer.size < destination.bytesPerRow * (height - 1) + rowBytes) {
+        if (bytesPerRow < rowBytes || buffer.size < bytesPerRow * (height - 1) + rowBytes) {
           this.raise('validation', 'copyTextureToBuffer destination too small');
           return undefined;
         }
@@ -377,7 +414,7 @@ export class FakeDevice implements WebGpuDevice {
         for (let row = 0; row < height; row += 1) {
           buffer.bytes.set(
             texture.bytes.subarray(row * texture.width * texture.bytesPerTexel, row * texture.width * texture.bytesPerTexel + rowBytes),
-            row * destination.bytesPerRow,
+            row * bytesPerRow,
           );
         }
         return undefined;
@@ -386,7 +423,7 @@ export class FakeDevice implements WebGpuDevice {
     };
   }
 
-  pushErrorScope(filter: 'validation' | 'out-of-memory' | 'internal'): undefined {
+  pushErrorScope(filter: string): undefined {
     this.scopes.push({ filter, errors: [] });
     return undefined;
   }
@@ -504,13 +541,13 @@ export class FakeGpu implements WebGpuGpu {
 }
 
 export class FakeCanvasContext implements WebGpuCanvasContext {
-  public configuration: { device: WebGpuDevice; format: string; alphaMode: 'opaque'; usage: number } | null = null;
+  public configuration: WebGpuCanvasConfiguration | null = null;
   public configureCount = 0;
   private current: FakeTexture | null = null;
 
   constructor(private readonly canvas: FakeCanvas) {}
 
-  configure(configuration: { device: WebGpuDevice; format: string; alphaMode: 'opaque'; usage: number }): undefined {
+  configure(configuration: WebGpuCanvasConfiguration): undefined {
     this.configuration = configuration;
     this.configureCount += 1;
     this.current = null;
@@ -533,7 +570,7 @@ export class FakeCanvasContext implements WebGpuCanvasContext {
         this.canvas.width,
         this.canvas.height,
         configuration.format,
-        configuration.usage,
+        configuration.usage ?? 0,
       );
     }
     return this.current;
@@ -552,7 +589,7 @@ export class FakeCanvas implements WebGpuPresenterCanvas {
     this.context = new FakeCanvasContext(this);
   }
 
-  getContext(_contextId: 'webgpu'): WebGpuCanvasContext | null {
+  getContext(_contextId: 'webgpu'): object | null {
     return this.hasContext ? this.context : null;
   }
 

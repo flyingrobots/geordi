@@ -47,6 +47,7 @@ import {
   type WebGpuRenderPipeline,
   type WebGpuShaderModule,
   type WebGpuTexture,
+  isWebGpuCanvasContext,
 } from './webgpu-types.js';
 
 /**
@@ -1204,7 +1205,7 @@ export async function createWebGPUSurfacePresenter(
   }
   const { adapter, device } = await requestDevice(gpu, options.powerPreference);
   const context = canvas.getContext('webgpu');
-  if (context === null) {
+  if (!isWebGpuCanvasContext(context)) {
     device.destroy();
     throw new BackendUnavailableError('webgpu', 'the canvas has no webgpu context');
   }
