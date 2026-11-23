@@ -3,6 +3,10 @@
 //
 // - the tarball holds the shader manifest and every generated shader artifact,
 //   and none of the authored or vendored shader inputs;
+// - the tarball holds the procedural glyph table as a byte-identical JSON copy
+//   and a bundled module, and a consumer can construct the Canvas 2D presenter
+//   from the packed copy alone, with no proceduralTable argument and no path
+//   into this repository;
 // - every subpath export resolves by package name and has its named exports;
 // - the Node file adapter reads every artifact from the packed shaders/ at its
 //   manifest digest, byte-identical to the bundled adapters.
@@ -47,6 +51,11 @@ const REQUIRED_ENTRIES = [
   'package/dist/generated/bijou-surface-glsl.generated.js',
   'package/dist/generated/bijou-surface-wgsl.generated.js',
   'package/dist/generated/bijou-shaders-manifest.generated.js',
+  'package/procedural/procedural-glyphs.json',
+  'package/dist/procedural-glyphs-bundled.js',
+  'package/dist/procedural-glyphs-bundled.d.ts',
+  'package/dist/canvas2d-presenter-default.js',
+  'package/dist/generated/bijou-procedural-glyphs.generated.js',
 ];
 
 class PackedPackageSmokeError extends Error {
@@ -74,7 +83,7 @@ function run(command, args, cwd) {
  */
 const PROBE = `
 import { createHash } from 'node:crypto';
-import { realpathSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const sha = (text) => createHash('sha256').update(text, 'utf8').digest('hex');
@@ -82,7 +91,8 @@ const out = (record) => process.stdout.write(JSON.stringify(record) + '\\n');
 const fail = (message) => { out({ kind: 'probe-failure', message }); process.exitCode = 1; };
 
 const specifiers = {
-  '${PACKAGE_NAME}': ['createWebGL2SurfacePresenter', 'createWebGL2SurfacePresenterCore', 'createWebGPUSurfacePresenter', 'createWebGPUSurfacePresenterCore', 'loadBijouSurfaceShader', 'createInMemoryShaderSource', 'requireShaderText', 'BIJOU_SHADER_ARTIFACT_FILES', 'WEBGL2_SURFACE_SHADER_PIN'],
+  '${PACKAGE_NAME}': ['createWebGL2SurfacePresenter', 'createWebGL2SurfacePresenterCore', 'createWebGPUSurfacePresenter', 'createWebGPUSurfacePresenterCore', 'loadBijouSurfaceShader', 'createInMemoryShaderSource', 'requireShaderText', 'BIJOU_SHADER_ARTIFACT_FILES', 'WEBGL2_SURFACE_SHADER_PIN', 'createCanvas2DSurfacePresenter', 'decodeProceduralGlyphTableText', 'createTestGlyphPack', 'PROCEDURAL_GLYPH_TABLE_SHA256'],
+  '${PACKAGE_NAME}/procedural-glyphs': ['BUNDLED_PROCEDURAL_GLYPH_TABLE_TEXT', 'loadBundledProceduralGlyphTable', 'verifyProceduralGlyphTable'],
   '${PACKAGE_NAME}/shader-source/webgl2': ['WEBGL2_BUNDLED_SHADER_SOURCE'],
   '${PACKAGE_NAME}/shader-source/webgpu': ['WEBGPU_BUNDLED_SHADER_SOURCE'],
   '${PACKAGE_NAME}/shader-source/node': ['createFileShaderSource'],
@@ -108,6 +118,62 @@ if (!manifestPath.startsWith(packedRoot)) {
   fail('shaders/* resolved outside the packed copy: ' + manifestPath);
 }
 out({ kind: 'resolved', specifier: '${PACKAGE_NAME}/shaders/bijou-shaders.manifest.json', path: manifestPath.slice(packedRoot.length), exports: [] });
+
+// The procedural glyph table: the published JSON file, the bundled module and the
+// Canvas 2D presenter agree, and the presenter is built from the packed copy alone.
+const root = modules['${PACKAGE_NAME}'];
+const glyphs = modules['${PACKAGE_NAME}/procedural-glyphs'];
+const tablePath = realpathSync(fileURLToPath(import.meta.resolve('${PACKAGE_NAME}/procedural-glyphs.json')));
+if (!tablePath.startsWith(packedRoot)) {
+  fail('procedural-glyphs.json resolved outside the packed copy: ' + tablePath);
+}
+const tableText = readFileSync(tablePath, 'utf8');
+if (sha(tableText) !== root.PROCEDURAL_GLYPH_TABLE_SHA256) {
+  fail('the packed procedural-glyphs.json has SHA-256 ' + sha(tableText) + ', not ' + root.PROCEDURAL_GLYPH_TABLE_SHA256);
+}
+if (tableText !== glyphs.BUNDLED_PROCEDURAL_GLYPH_TABLE_TEXT) {
+  fail('the bundled procedural glyph table differs from the packed procedural-glyphs.json');
+}
+const decoded = root.decodeProceduralGlyphTableText(tableText);
+out({ kind: 'procedural-table', path: tablePath.slice(packedRoot.length), sha256: sha(tableText), boxGlyphs: decoded.boxGlyphs.length, blockGlyphs: decoded.blockGlyphs.length });
+
+const pack = root.createTestGlyphPack();
+const atlas = {
+  bitmap: pack.atlasBitmap,
+  resolveSlot: (...args) => root.resolveSlotFromSlotMap(pack.slotMap)(...args),
+  atlasGeneration: () => 1,
+  getReceiptAssets: () => ({
+    atlasGeneration: 1,
+    atlasStats: { ...pack.atlasStats },
+    fontIdentity: pack.fontIdentity,
+    cellPx: { width: pack.atlasBitmap.cellPxW, height: pack.atlasBitmap.cellPxH },
+  }),
+};
+const context = {
+  createImageData: (width, height) => ({ width, height, data: new Uint8ClampedArray(width * height * 4) }),
+  putImageData() {},
+  getImageData: (x, y, width, height) => ({ data: new Uint8ClampedArray(width * height * 4) }),
+};
+const makeCanvas = () => ({ width: 16, height: 32, getContext: () => context });
+try {
+  const presenter = root.createCanvas2DSurfacePresenter({ canvas: makeCanvas(), atlas });
+  presenter.dispose();
+  out({ kind: 'canvas2d-presenter', proceduralTable: 'bundled' });
+} catch (error) {
+  fail('createCanvas2DSurfacePresenter({ canvas, atlas }) failed from the packed copy: ' + String(error));
+}
+try {
+  const altered = Uint32Array.from(decoded.boxGlyphs);
+  altered[0] ^= 1;
+  root.createCanvas2DSurfacePresenter({ canvas: makeCanvas(), atlas, proceduralTable: { ...decoded, boxGlyphs: altered } });
+  fail('the packed Canvas 2D presenter accepted an altered procedural table');
+} catch (error) {
+  if (error?.code === 'GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE') {
+    out({ kind: 'canvas2d-presenter-refusal', code: error.code, path: error.path });
+  } else {
+    fail('the packed Canvas 2D presenter refused an altered table with ' + String(error));
+  }
+}
 
 const files = modules['${PACKAGE_NAME}/shader-source/node'].createFileShaderSource();
 if (!files.description.includes(packedRoot.split('/').slice(-3).join('/'))) {
@@ -171,7 +237,7 @@ try {
   if (unexpected.length > 0) {
     throw new PackedPackageSmokeError(`the tarball publishes sources it must not: ${unexpected.join(', ')}`);
   }
-  for (const entry of entries.filter((name) => name.startsWith('package/shaders/'))) {
+  for (const entry of entries.filter((name) => name.startsWith('package/shaders/') || name.startsWith('package/procedural/'))) {
     emit({ kind: 'tarball-entry', path: entry });
   }
 
