@@ -4,7 +4,8 @@
 // pinned value: schemas are canonicalised and hashed, example documents are hashed by the
 // tree's own encoder (a Rust function built from that tree), diagnostic codes are read from
 // the catalog and from the source, and public Rust items are parsed from source with
-// crates/geordi-contract-api.
+// crates/geordi-contract-api. The public TypeScript API of each published package is read from
+// the tree's own sources by the TypeScript compiler: see typescript-api.mjs.
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -12,6 +13,7 @@ import { join, relative, sep } from 'node:path';
 
 import { ContractGateError } from './errors.mjs';
 import { canonicalJson, ContractGateJsonError, parseJson } from './json.mjs';
+import { publishedPackages, typescriptApis } from './typescript-api.mjs';
 import { JsonSchemaViolationError, loadSchemaDirectory, UnsupportedJsonSchemaError, validateJsonSchema } from '../json-schema-subset.mjs';
 
 export const REGISTRY_PATH = 'contracts/registry.json';
@@ -132,7 +134,49 @@ export function expandContracts(tree, registry, side) {
       });
     }
   }
+  if (registry.typescriptPackages !== undefined) {
+    for (const entry of typescriptPackageContracts(tree, registry.typescriptPackages, side)) {
+      add(entry);
+    }
+  }
   return contracts;
+}
+
+/** What the TypeScript surface does not see; printed on every package's coverage line. */
+export const TYPESCRIPT_NOT_COVERED = [
+  'Behaviour: a function whose signature is unchanged may still do something else.',
+  'Third-party types are read from the dependencies installed for the repository running the gate (the head\'s lockfile), on both trees; a dependency upgrade that changes a re-exported third-party type is seen only where it changes a type this package prints.',
+  'Types are compared as the compiler prints them: two spellings of one type (an alias and its expansion) differ, and a parameter widened is reported as changed (breaking), like one narrowed.',
+  'Only package.json exports (or types/main) are entry points; deep imports into dist/ are not public API.',
+];
+
+/**
+ * One contract per published package (`private` is not true) under the group's directory:
+ * `<package name>/<major version>`, compared by its public TypeScript API.
+ */
+function typescriptPackageContracts(tree, group, side) {
+  const entries = [];
+  for (const pkg of publishedPackages(tree, group.directory)) {
+    const major = /^(0|[1-9][0-9]*)\.[0-9]+\.[0-9]+(?:[-+].*)?$/u.exec(pkg.version ?? '');
+    if (major === null) {
+      throw new ContractGateError(
+        'GEORDI_E_CONTRACT_GATE_REGISTRY',
+        `${side} ${pkg.dir}/package.json is a published package with no semantic version, so its TypeScript API contract has no name/N key`,
+        [`${pkg.dir}/package.json`],
+      );
+    }
+    entries.push({
+      contract: `${pkg.name}/${major[1]}`,
+      status: group.status,
+      statusEvidence: group.statusEvidence,
+      schema: null,
+      examples: [],
+      typescriptApi: { package: pkg.dir },
+      notCovered: [...(group.notCovered ?? []), ...TYPESCRIPT_NOT_COVERED],
+      family: null,
+    });
+  }
+  return entries;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -260,9 +304,12 @@ function copyCrate(tree, crate, cacheRoot) {
         writeFileSync(join(staging, root), bytes);
       }
     }
-    cpSync(tree.absolute(crate), join(staging, ...crate.split('/')), {
+    // Skip build output inside the crate. The test is relative to the crate: a git base is
+    // extracted under target/contract-gate/trees/, so every absolute path of it contains `target`.
+    const crateRoot = tree.absolute(crate);
+    cpSync(crateRoot, join(staging, ...crate.split('/')), {
       recursive: true,
-      filter: (source) => !source.split(sep).includes('target'),
+      filter: (source) => !relative(crateRoot, source).split(sep).includes('target'),
     });
     writeFileSync(join(staging, '.contract-gate-complete'), `${digest}\n`);
     rmSync(dir, { recursive: true, force: true });
@@ -462,10 +509,14 @@ function selectRustItems(itemsByFile, selectors) {
  */
 export function snapshotTree(tree, contracts, cacheRoot) {
   const rustFiles = new Set();
+  const typescriptPackageDirs = new Set();
   const rustExamples = [];
   for (const entry of contracts.values()) {
     if (entry.status === 'superseded') {
       continue;
+    }
+    if (entry.typescriptApi !== undefined) {
+      typescriptPackageDirs.add(entry.typescriptApi.package);
     }
     for (const selector of entry.rustApi ?? []) {
       rustFiles.add(selector.file);
@@ -484,12 +535,27 @@ export function snapshotTree(tree, contracts, cacheRoot) {
   }
   const itemsByFile = rustItems(tree, [...rustFiles].sort());
   const hashes = rustHashes(tree, rustExamples, cacheRoot);
+  const apis = typescriptApis(tree, [...typescriptPackageDirs].sort(), SCRIPT_REPO_ROOT);
 
   const snapshots = new Map();
   for (const [key, entry] of contracts) {
-    snapshots.set(key, snapshotContract(tree, key, entry, itemsByFile, hashes));
+    snapshots.set(key, entry.typescriptApi === undefined ? snapshotContract(tree, key, entry, itemsByFile, hashes) : packageSnapshot(entry, apis));
   }
   return snapshots;
+}
+
+/** A published package's contract: its TypeScript API is its only surface. */
+function packageSnapshot(entry, apis) {
+  return {
+    entry,
+    superseded: false,
+    files: new Map(),
+    schema: null,
+    examples: new Map(),
+    diagnostics: null,
+    rustApi: null,
+    typescriptApi: apis.get(entry.typescriptApi.package),
+  };
 }
 
 function snapshotContract(tree, key, entry, itemsByFile, hashes) {
@@ -522,6 +588,7 @@ function snapshotContract(tree, key, entry, itemsByFile, hashes) {
     examples,
     diagnostics: entry.diagnostics === undefined ? null : diagnosticsOf(tree, entry.diagnostics, itemsByFile),
     rustApi: entry.rustApi === undefined ? null : selectRustItems(itemsByFile, entry.rustApi),
+    typescriptApi: null,
   };
 }
 
