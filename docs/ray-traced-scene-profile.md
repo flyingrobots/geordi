@@ -139,10 +139,11 @@ Q32.32 fields are marked Q. A diagnostic code is listed for each rule; see
 | `instances[].mesh` | Names a declared mesh | `GEORDI_E_RT_MESH_REFERENCE_UNKNOWN` |
 | `instances[].material` | Names a declared material | `GEORDI_E_RT_MATERIAL_REFERENCE_UNKNOWN` |
 | `instances[].worldFromMesh` (Q) | 9 linear entries, column-major (`column * 3 + row`), and 3 translation entries; see [trace domain](#trace-domain-check) | `GEORDI_E_RT_TRACE_DOMAIN_EXCEEDED` |
+| Sum over instances of the instanced mesh's `counts.triangles` | At least 1 (an empty `instances`, or only zero-triangle meshes, is refused; Lumen's `Scene::new` returns `Empty`) | `GEORDI_E_RT_SCENE_EMPTY` |
 | Sum over instances of the instanced mesh's `counts.triangles` | At most `2^32 - 1` | `GEORDI_E_RT_PRIMITIVE_COUNT_EXCEEDED` |
 | `camera.kind` | Exactly `pinhole` | `GEORDI_E_RT_CAMERA_UNSUPPORTED` |
 | `camera.position` (Q) | Each coordinate below 256 units in magnitude | `GEORDI_E_RT_TRACE_DOMAIN_EXCEEDED` |
-| `camera.forward`, `camera.up` (Q) | Neither zero; not parallel (exact 128-bit cross product is non-zero) | `GEORDI_E_RT_CAMERA_DEGENERATE` |
+| `camera.forward`, `camera.up` (Q) | Neither zero; the sine of the angle between them is at least `2^-15`, i.e. `|forward x up|^2 * 2^30 >= |forward|^2 * |up|^2`, evaluated exactly in 256-bit integers. Bunny's camera basis refuses a sine below about `2^-16` (by largest cross-product component, which can be `sqrt(3)` below the length), so `2^-15` is the nearest power of two that no such runtime accepts below. A sine in `[2^-16, 2^-15)` may be accepted by Bunny and is still refused here | `GEORDI_E_RT_CAMERA_DEGENERATE` |
 | `camera.tanHalfFovY` (Q) | In `(0, 4]`: raw `1..=17179869184` | `GEORDI_E_RT_TAN_HALF_FOV_Y_OUT_OF_RANGE` |
 | `lights[].kind` | `directional` or `uniformSky` | `GEORDI_E_RT_LIGHT_UNSUPPORTED` |
 | `lights[].towardLight` (Q) | Required on `directional`; forbidden on `uniformSky` | `GEORDI_E_RT_LIGHT_FIELD_INVALID` |
@@ -150,7 +151,7 @@ Q32.32 fields are marked Q. A diagnostic code is listed for each rule; see
 | `lights[].radiance` (Q, 3 channels) | Each in `[0, 65536]`: raw `0..=281474976710656` | `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE` |
 | `lights` | At most one `directional` | `GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT` |
 | `lights` | Exactly one `uniformSky` | `GEORDI_E_RT_SKY_COUNT` |
-| `film.width`, `film.height` | Integer in `1..=16384` | `GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE` |
+| `film.width`, `film.height` | Integer in `1..=16384`. The area is not bounded by the scene profile: a runtime bounds it through `max_film_pixels` at [negotiation](#runtime-profile-negotiation) | `GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE` |
 | `render.integrator` | Exactly `geordi-rt-diffuse-path/1` | `GEORDI_E_RT_INTEGRATOR_UNSUPPORTED` |
 | `render.samplesPerPixel` | Power of two in `1..=1024` | `GEORDI_E_RT_SAMPLES_PER_PIXEL_INVALID` |
 | `render.sampler` | Well-formed versioned identity (see below) | `GEORDI_E_RT_SAMPLER_IDENTITY_INVALID` |
@@ -257,8 +258,11 @@ except `runtime` is equal; equal `imageHash` values then mean the renders agree.
 
 `GeordiRayTracedRuntimeProfile` (in `geordi-renderer`) is what a ray-tracing runtime declares:
 the `(sceneVersion, numericProfile)` pairs it accepts, and the requirements, mesh layouts,
-integrators, samplers, tone curves, reconstructions and outputs it implements.
-`assert_ray_traced_runtime_profile(scene, profile)` checks the artifact pair first, then each
+integrators, samplers, tone curves, reconstructions and outputs it implements, and
+`max_film_pixels`, the largest film area it can allocate (Lumen's cap is `2^27` pixels; a
+`16384 x 16384` film is `2^28` and is valid in the scene profile).
+`assert_ray_traced_runtime_profile(scene, profile)` checks the artifact pair first, then the film
+area (`film=16384x16384 (268435456 pixels)` against `film=at most 134217728 pixels`), then each
 requirement, mesh layout and render identity, and returns `GeordiRuntimeUnsupportedProfileError`
 naming the first unsupported value (for example `sampler=x/1`) and what the profile supports.
 This is the same error type `assert_native_runtime_profile` returns. Geordi defines no ray-tracing

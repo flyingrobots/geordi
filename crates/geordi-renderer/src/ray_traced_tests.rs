@@ -8,6 +8,7 @@ use geordi_ir::{
     GEORDI_RAY_TRACED_MESH_LAYOUT_BUNNY_PLY_BINARY_LE_F32,
     GEORDI_RAY_TRACED_OUTPUT_RGBA8_SRGB_OPAQUE, GEORDI_RAY_TRACED_RECONSTRUCTION_BOX_FILTER,
     GEORDI_RAY_TRACED_SCENE_VERSION, GeordiRayTracedScene, load_geordi_ray_traced_scene,
+    validate_geordi_ray_traced_scene,
 };
 use std::error::Error;
 use std::path::PathBuf;
@@ -30,6 +31,7 @@ const TEST_PROFILE: GeordiRayTracedRuntimeProfile = GeordiRayTracedRuntimeProfil
     tone_curves: &["fixture-placeholder-tone-curve/1"],
     reconstructions: &[GEORDI_RAY_TRACED_RECONSTRUCTION_BOX_FILTER],
     outputs: &[GEORDI_RAY_TRACED_OUTPUT_RGBA8_SRGB_OPAQUE],
+    max_film_pixels: 1 << 27,
 };
 
 fn reference_scene() -> Result<GeordiRayTracedScene, Box<dyn Error>> {
@@ -153,5 +155,28 @@ fn ray_traced_profile_rejects_each_unimplemented_identity() -> TestResult {
             .ok_or_else(|| format!("{expected} was accepted"))?;
         assert_eq!(error.requirement(), expected);
     }
+    Ok(())
+}
+
+#[test]
+fn ray_traced_profile_refuses_a_film_above_its_pixel_cap() -> TestResult {
+    let scene = load_geordi_ray_traced_scene(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(
+        "../../fixtures/ray-traced-scene/negotiation/\
+             film-pixels-above-runtime-cap.rt-scene.geordi.json",
+    ))?;
+    // The scene is valid: each side is within 1..=16384.
+    validate_geordi_ray_traced_scene(&scene)?;
+    let error = assert_ray_traced_runtime_profile(&scene, &TEST_PROFILE)
+        .err()
+        .ok_or("a 16384 x 16384 film was accepted")?;
+    assert_eq!(error.requirement(), "film=16384x16384 (268435456 pixels)");
+    assert_eq!(error.supported(), "film=at most 134217728 pixels");
+    // Exactly the cap is accepted.
+    let mut at_cap = reference_scene()?;
+    at_cap.film.width = 16_384;
+    at_cap.film.height = 8_192;
+    assert_ray_traced_runtime_profile(&at_cap, &TEST_PROFILE)?;
+    at_cap.film.height = 8_193;
+    assert!(assert_ray_traced_runtime_profile(&at_cap, &TEST_PROFILE).is_err());
     Ok(())
 }

@@ -19,6 +19,11 @@
     "path": "$.camera.position[2]",
     "stage": "validate"
   },
+  "camera-up-nearly-parallel.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_CAMERA_DEGENERATE",
+    "path": "$.camera.up",
+    "stage": "validate"
+  },
   "camera-up-parallel.rt-scene.geordi.json": {
     "code": "GEORDI_E_RT_CAMERA_DEGENERATE",
     "path": "$.camera.up",
@@ -227,6 +232,11 @@
   "samples-not-power-of-two.rt-scene.geordi.json": {
     "code": "GEORDI_E_RT_SAMPLES_PER_PIXEL_INVALID",
     "path": "$.render.samplesPerPixel",
+    "stage": "validate"
+  },
+  "scene-empty.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SCENE_EMPTY",
+    "path": "$.instances",
     "stage": "validate"
   },
   "scene-id-empty.rt-scene.geordi.json": {
