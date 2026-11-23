@@ -325,6 +325,13 @@
 
 ### Tests
 
+- **Lint rule, `eslint.config.mjs`**: a `no-restricted-syntax` selector now rejects `new Set(...)` and `new Map(...)`
+  inside a loop body (`for`, `for...of`, `for...in`, `while`, `do...while`, including callbacks and nested
+  loops there) and in a `for` / `while` / `do...while` condition or `for` update. The `for` initialiser and
+  the `for...of` / `for...in` subject run once and are not matched. `scripts/eslint-loop-allocation.test.mjs`
+  (`pnpm test:lint-rules`, part of `pnpm test`) pins both sides of that boundary. The four existing
+  violations were fixed by hoisting or restructuring, with no disable comments
+  (flyingrobots/geordi#64)
 - Property-based tests for `validateCanonicalAst` (`packages/compiler-core/test/validateAst.fuzz.test.ts`, flyingrobots/geordi#4) using `fast-check`, a new dev dependency of `@flyingrobots/geordi-compiler-core`. Nine properties with fixed seed `20260101` and 200 runs each (about one second): valid ASTs produce no diagnostic, dimension errors match finite-and-positive exactly, cycle reports match an independent oracle, duplicate ids and multi-parent nodes never cause a false cycle, omitted required props give exactly one diagnostic each, validation never throws on a well-typed AST with arbitrary ids, kinds, numbers and JSON props, and results are stable and non-mutating. The properties found no bug in the validator
 - Pin the node order of the Terminal SDL end-to-end path in `packages/schema-graphql/test/e2e.terminal.test.ts` (flyingrobots/geordi#67). The Terminal fixture never has equal `zIndex` values (the default is field order plus one), so a new case compiles eight nodes that share `zIndex: 0` with explicit ids and scrambled declaration order, and asserts the hand-written order `zIndex`, then `kind`, then `id`, bytewise. Reversing the `kind` or `id` comparison in `emitIr.ts` makes it fail. No production change: the sort already ends in a total order on unique ids
 - `@flyingrobots/geordi-bijou-gpu` unit tests have a 30 s default timeout. Tests that rasterize and

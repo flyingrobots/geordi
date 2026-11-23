@@ -380,8 +380,9 @@ function validateSlots(
   rootNodeId: string,
 ): void {
   const parentByChild = new Map<string, string>();
+  const slotNames = new Set<string>();
   for (const [nodeIndex, node] of nodes.entries()) {
-    const slotNames = new Set<string>();
+    slotNames.clear();
     for (const [slotIndex, slot] of node.slots.entries()) {
       const path = `$page.nodes[${nodeIndex}].slots[${slotIndex}]`;
       if (slotNames.has(slot.name)) {

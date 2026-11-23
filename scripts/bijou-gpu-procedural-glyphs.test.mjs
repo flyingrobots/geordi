@@ -1217,7 +1217,7 @@ test('zero-float integer geometry passes Box-Drawing, diagonal boundary, Block E
       assert.equal(dotCounts[dot] > 0, true, `Braille dot ${dot} vanished at ${W}x${H}`);
     }
     if (W % 2 === 0 && H % 4 === 0) {
-      assert.equal(new Set(dotCounts).size, 1, `Braille dots asymmetric at ${W}x${H}: ${dotCounts.join(',')}`);
+      assert.equal(dotCounts.every((count) => count === dotCounts[0]), true, `Braille dots asymmetric at ${W}x${H}: ${dotCounts.join(',')}`);
     }
   }
 });
