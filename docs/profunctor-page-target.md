@@ -54,6 +54,13 @@ complete page-node ID, making the mapping injective. The receipt binds the
 exact input and output bytes, repeats the page-wide capability requirements,
 and records `upstreamClaimsInherited: false`.
 
+Action IDs are `action:v1:<pageNodeId>:<role>:<href>`, where `pageNodeId` and
+`href` are percent-escaped (`%` becomes `%25`, `:` becomes `%3A`) and `role` is
+a closed vocabulary (`documentation`, `feature`, `related-project`, `source`)
+that contains neither character. Because `:` only ever separates components,
+distinct `(pageNodeId, role, href)` tuples always give distinct IDs. The `v1`
+segment versions this scheme; any change to the encoding must bump it.
+
 The SVG labels are host SVG text used only for inspection. They are not Geordi
 `Text` nodes and do not establish a general-text claim. Labels containing
 characters forbidden by XML 1.0 fail with `GEORDI_PAGE_OUTPUT_INVALID` instead

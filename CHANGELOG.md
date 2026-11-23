@@ -7,6 +7,17 @@
 - Typecheck the Profunctor Page test sources: `pnpm typecheck` now also runs `tsc --noEmit -p tsconfig.test.json` in `@flyingrobots/geordi-profunctor-page`, so an invalid type in a `*.test.ts` file fails CI. The build still uses `tsconfig.json` and emits only production files. A node test (`pnpm test:profunctor-page-typecheck-gate`) proves the gate fails on an invalid test type (flyingrobots/geordi#56)
 - Pin the Rust toolchain to 1.96.0 with `rust-toolchain.toml` and install that toolchain in CI instead of floating `stable`, so new compiler lints no longer fail CI on unchanged code (flyingrobots/geordi#158)
 
+### Fixes
+
+- **`@flyingrobots/geordi-profunctor-page`**: derive action identities injectively. The old
+  `action:${pageNodeId}:${role}:${href}` joined unescaped components, so distinct tuples such as
+  `("a:feature:x", "source", "y")` and `("a", "feature", "x:source:y")` collided. IDs are now
+  `action:v1:<escaped pageNodeId>:<role>:<escaped href>` with `%` and `:` percent-escaped in the
+  two free-form components. **Breaking for stored identities:** every action ID changes, so the
+  checked-in Project Keep `scene.geordi.map.json` and `scene.geordi.json.receipt` are regenerated;
+  any consumer that persisted or compared old `action:...` IDs must re-derive them
+  (flyingrobots/geordi#55)
+
 ### Dependencies
 
 - **`native-render-everywhere`** (Rust): depend on `bunny-num`, `bunny-linalg` and `bunny-geom`
@@ -269,6 +280,8 @@
 
 ### Tests
 
+- The WebGPU presenter's randomized resize test has an explicit 60 s timeout. It takes about
+  2 s alone and exceeded the 5 s default on a loaded machine; no assertion changed.
 - **Profunctor Page target**: Pin the three upstream conformance artifacts by
   exact SHA-256 identity, verify all four generated outputs, and cover
   malformed, unsupported, stale, duplicate, dangling, ambiguous, missing, and
