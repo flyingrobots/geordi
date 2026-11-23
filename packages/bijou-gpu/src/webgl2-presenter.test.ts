@@ -388,7 +388,12 @@ describe('createWebGL2SurfacePresenter: textures and uploads', () => {
     expect(cellUploads(canvas.gl.calls)).toEqual([{ y: 0, rows: 7, srcOffset: 0 }]);
 
     const small = packedSurfaceFromReference(
-      { widthCells: 2, heightCells: 1, bytes: rendered.paintReceipt.bytes.slice(0, 20), sideTable: [] },
+      {
+        widthCells: 2,
+        heightCells: 1,
+        bytes: rendered.paintReceipt.bytes.slice(0, 20),
+        sideTable: rendered.paintReceipt.sideTable,
+      },
       'all',
     );
     canvas.gl.clearCalls();
@@ -432,8 +437,8 @@ describe('createWebGL2SurfacePresenter: textures and uploads', () => {
     expect(atlasUploads(canvas.gl.calls)).toEqual([{ x: 0, y: 0, width: 16, height: 16 }]);
     const generation = atlas.generation;
 
-    // A third glyph overflows the two-slot atlas: new generation, full atlas, full cells.
-    const second = surfaceOf('ABC');
+    // Two new glyphs overflow the two-slot atlas: new generation, full atlas, full cells.
+    const second = surfaceOf('CD');
     canvas.gl.clearCalls();
     presenter.present(first, second, {});
     expect(atlas.generation).toBeGreaterThan(generation);
@@ -563,7 +568,7 @@ describe('createWebGL2SurfacePresenter: resize and cellFromPoint', () => {
     expect(presenter.cellFromPoint(10 + 8, 20 + 16)).toEqual({ col: 1, row: 1 });
     expect(presenter.cellFromPoint(10 + 66, 20 + 116)).toEqual({ col: 7, row: 6 });
 
-    // DPR 2 at 16 x 32 physical cells: the same CSS box addresses the same cells.
+    // DPR 2 with the same 8 x 16 physical cells: the canvas doubles, so each CSS pixel addresses half a cell.
     presenter.resize({ cssWidth: 67, cssHeight: 117, dpr: 2 });
     expect([canvas.width, canvas.height]).toEqual([134, 234]);
     expect(presenter.cellFromPoint(10 + 8, 20 + 16)).toEqual({ col: 2, row: 2 });
@@ -639,6 +644,7 @@ describe('createWebGL2SurfacePresenter: dispose', () => {
     presenter.present(paint, paint, {});
     presenter.setDiagnosticOverlay(true);
     canvas.loseContext();
+    const firstRestored = canvas.gl.objects.length;
     canvas.restoreContext();
     presenter.present(paint, eraseAfter(paint), {});
     expect(canvas.listenerCount()).toBe(2);
@@ -646,7 +652,8 @@ describe('createWebGL2SurfacePresenter: dispose', () => {
 
     presenter.dispose();
     // Objects lost with the context are gone with it; everything created after the restore is deleted.
-    const restoredObjects = canvas.gl.objects.slice(canvas.gl.objects.findIndex((object) => object.kind === 'shader', 1));
+    const restoredObjects = canvas.gl.objects.slice(firstRestored);
+    expect(restoredObjects.length).toBeGreaterThan(0);
     expect(restoredObjects.filter((object) => !object.deleted)).toEqual([]);
     expect(canvas.listenerCount()).toBe(0);
     expect(() => {
