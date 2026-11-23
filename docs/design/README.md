@@ -50,8 +50,8 @@ presenter is claimed as implemented yet.
 
 - [rustybuzz shaping on native hosts and wasm32](./2026-11-rustybuzz-wasm32-determinism.md)
   ([#137](https://github.com/flyingrobots/geordi/issues/137)): identical shaping output for 200
-  Latin strings with Lato Regular on aarch64 macOS, AMD x86-64 Linux, and wasm32 in Node and
-  Chromium, and no float arithmetic in that path, with the limits stated. Input to
+  Latin strings with Lato Regular on aarch64 macOS, AMD and Intel x86-64 Linux, and wasm32 in Node
+  and Chromium, and no float arithmetic in that path, with the limits stated. Input to
   [#142](https://github.com/flyingrobots/geordi/issues/142). The experiment is
   [`../../research/rustybuzz-wasm32/`](../../research/rustybuzz-wasm32/).
 

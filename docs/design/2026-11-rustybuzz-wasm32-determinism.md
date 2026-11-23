@@ -18,8 +18,8 @@ Latin text with the pinned Lato face?
 
 **Yes, for these inputs on these hosts.** All 344,015 output values (glyph ids, clusters,
 `unsafe_to_break` flags, advances and offsets for 200 strings under five configurations) were
-identical on aarch64 macOS, AMD x86-64 Linux, and wasm32 in Node and headless Chromium, in every
-build listed below. The source review found no float arithmetic on the way to an output value
+identical on aarch64 macOS, AMD and Intel x86-64 Linux, and wasm32 in Node and headless Chromium,
+in every build listed below. The source review found no float arithmetic on the way to an output value
 for this face. This is a finding about these inputs, builds, hosts and one face. It does not prove
 that `rustybuzz` never diverges; see [Limits](#limits).
 
@@ -101,8 +101,9 @@ All variants of all runs produced the same stream, SHA-256
 | CI run 45112351770, commit `ec5f0c2` | GitHub Actions `ubuntu-latest` (Linux 7.0.0-1020-azure), AMD EPYC 9V74 | x86_64-unknown-linux-gnu | rustc 1.96.0, LLVM 22.1.2 | native release, native release `-C target-cpu=native`, native debug |
 | the same run | the same runner, Node 22.23.5 (V8 12.4.254.21) | wasm32-unknown-unknown | rustc 1.96.0 | wasm32 release, wasm32 release `+simd128` |
 | the same run | the same runner, headless Chromium 157.0.8103.78 through Playwright | wasm32-unknown-unknown | rustc 1.96.0 | wasm32 release |
+| CI run 45114152181, commit `da1846e` | GitHub Actions `ubuntu-latest` (Linux 7.0.0-1016-aws), Intel Xeon 6975P-C | x86_64-unknown-linux-gnu, and wasm32-unknown-unknown in Node 22.23.5 and headless Chromium 157 | rustc 1.96.0, LLVM 22.1.2 | all six |
 
-The Mac and the CI runner used different compilers (1.100.0 with LLVM 23 on the Mac, 1.96.0 with
+The Mac and the CI runners used different compilers (1.100.0 with LLVM 23 on the Mac, 1.96.0 with
 LLVM 22 in CI) and still agreed.
 
 The wasm32 build could not run on the Mac: Homebrew's rustc ships no wasm32 standard library and no
@@ -143,8 +144,9 @@ reach an output value. With a variable font or a color font, it would.
   were not exercised, apart from what forced right-to-left Latin reaches.
 - **No hinting.** No pixels-per-em was set, so `GPOS` device-table hinting deltas were not applied.
   Lato has no `GDEF`, so they could not have been anyway.
-- **Hosts.** One Apple M5 and one AMD EPYC runner. No Intel x86-64, no 32-bit ARM, no Windows,
-  and only the V8 engine (Node and Chromium both use V8). Firefox and Safari were not tested.
+- **Hosts.** One Apple M5, one AMD EPYC runner and one Intel Xeon runner. No 32-bit ARM, no
+  Windows, and only the V8 engine (Node and Chromium both use V8). Firefox and Safari were not
+  tested.
 - **Flags.** `-C target-cpu=native` and `+simd128` were tested. Fast-math style flags were not.
 - **Versions.** `rustybuzz =0.20.1` with `ttf-parser` 0.25.1, pinned in the experiment's
   `Cargo.toml` and `Cargo.lock`. An update can change the answer.
