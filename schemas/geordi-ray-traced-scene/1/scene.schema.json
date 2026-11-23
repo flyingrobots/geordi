@@ -1,0 +1,438 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-ray-traced-scene/1/scene.schema.json",
+  "title": "geordi-ray-traced-scene/1",
+  "description": "Shape of a geordi-ray-traced-scene/1 artifact, derived from GeordiRayTracedScene in crates/geordi-ir/src/ray_traced_scene.rs and the field rules in docs/ray-traced-scene-profile.md. It is not the whole validator: rules that compare fields with each other or need exact arithmetic are enforced only by validate_geordi_ray_traced_scene; the profile page lists them under \"JSON Schema\". Every integer is limited to the parse range -(2^53 - 1)..=2^53 - 1.",
+  "type": "object",
+  "required": [
+    "camera",
+    "film",
+    "id",
+    "instances",
+    "lights",
+    "materials",
+    "meshes",
+    "numericProfile",
+    "render",
+    "requires",
+    "sceneVersion"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "sceneVersion": {
+      "const": "geordi-ray-traced-scene/1"
+    },
+    "numericProfile": {
+      "const": "geordi-fixed-q32.32/1"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requires": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "geordi/ray-traced-3d/1",
+          "asset.mesh",
+          "mesh.triangle",
+          "instance.affine3",
+          "camera.pinhole",
+          "material.diffuse",
+          "light.directional",
+          "light.uniform-sky"
+        ]
+      }
+    },
+    "meshes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/mesh"
+      }
+    },
+    "materials": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/material"
+      }
+    },
+    "instances": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/instance"
+      }
+    },
+    "camera": {
+      "$ref": "#/$defs/camera"
+    },
+    "lights": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/light"
+      }
+    },
+    "film": {
+      "type": "object",
+      "required": [
+        "height",
+        "width"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16384
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16384
+        }
+      }
+    },
+    "render": {
+      "$ref": "#/$defs/render"
+    }
+  },
+  "$defs": {
+    "q32_32": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991,
+      "description": "A Q32.32 fixed-point raw value: the real value times 2^32."
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "mesh": {
+      "type": "object",
+      "required": [
+        "bounds",
+        "counts",
+        "id",
+        "layout",
+        "path",
+        "sha256"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "description": "Relative fixture-local POSIX path. Its rules are enforced by the validator only."
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "layout": {
+          "const": "bunny-ply-binary-le-f32/1"
+        },
+        "counts": {
+          "type": "object",
+          "required": [
+            "triangles",
+            "vertices"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "vertices": {
+              "$ref": "#/$defs/count"
+            },
+            "triangles": {
+              "$ref": "#/$defs/count"
+            }
+          }
+        },
+        "bounds": {
+          "type": "object",
+          "required": [
+            "max",
+            "min"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "min": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/q32_32"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "max": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/q32_32"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            }
+          }
+        }
+      }
+    },
+    "material": {
+      "type": "object",
+      "required": [
+        "albedo",
+        "id",
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "const": "diffuse"
+        },
+        "albedo": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967296,
+            "description": "Albedo channel, Q32.32 raw, in [0, 4294967296]."
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      }
+    },
+    "instance": {
+      "type": "object",
+      "required": [
+        "id",
+        "material",
+        "mesh",
+        "worldFromMesh"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mesh": {
+          "type": "string",
+          "minLength": 1
+        },
+        "material": {
+          "type": "string",
+          "minLength": 1
+        },
+        "worldFromMesh": {
+          "type": "object",
+          "required": [
+            "linearColumnMajor",
+            "translation"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "linearColumnMajor": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/q32_32"
+              },
+              "minItems": 9,
+              "maxItems": 9
+            },
+            "translation": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/q32_32"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            }
+          }
+        }
+      }
+    },
+    "camera": {
+      "type": "object",
+      "required": [
+        "forward",
+        "kind",
+        "position",
+        "tanHalfFovY",
+        "up"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "pinhole"
+        },
+        "position": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/q32_32"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "forward": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/q32_32"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "up": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/q32_32"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "tanHalfFovY": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 17179869184
+        }
+      }
+    },
+    "light": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "id",
+            "irradiance",
+            "kind",
+            "towardLight"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "directional"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "towardLight": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/q32_32"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "irradiance": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 281474976710656,
+                "description": "Irradiance channel, Q32.32 raw, in [0, 281474976710656]."
+              },
+              "minItems": 3,
+              "maxItems": 3
+            }
+          },
+          "title": "directional light"
+        },
+        {
+          "type": "object",
+          "required": [
+            "id",
+            "kind",
+            "radiance"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "uniformSky"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "radiance": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 281474976710656,
+                "description": "Radiance channel, Q32.32 raw, in [0, 281474976710656]."
+              },
+              "minItems": 3,
+              "maxItems": 3
+            }
+          },
+          "title": "uniform sky"
+        }
+      ]
+    },
+    "render": {
+      "type": "object",
+      "required": [
+        "integrator",
+        "maxBounces",
+        "output",
+        "reconstruction",
+        "sampler",
+        "samplesPerPixel",
+        "seed",
+        "toneCurve"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "integrator": {
+          "const": "geordi-rt-diffuse-path/1"
+        },
+        "samplesPerPixel": {
+          "enum": [
+            1,
+            2,
+            4,
+            8,
+            16,
+            32,
+            64,
+            128,
+            256,
+            512,
+            1024
+          ]
+        },
+        "sampler": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*/[1-9][0-9]*$"
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "maxBounces": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "reconstruction": {
+          "const": "geordi-box-filter/1"
+        },
+        "toneCurve": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*/[1-9][0-9]*$"
+        },
+        "output": {
+          "const": "geordi-rgba8-srgb-opaque/1"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "contract": "geordi-ray-traced-scene/1",
+  "change": "breaking",
+  "summary": "A directional light's value is `irradiance`, not `radiance`; GeordiRayTracedLight.radiance becomes value: GeordiRayTracedLightValue; GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE is new and GEORDI_E_RT_RADIANCE_OUT_OF_RANGE covers the sky only; the reference scene hash changes.",
+  "why": "Replay of flyingrobots/geordi#212 in the contract gate golden test.",
+  "references": [
+    "flyingrobots/geordi#212",
+    "flyingrobots/geordi#161"
+  ]
+}
