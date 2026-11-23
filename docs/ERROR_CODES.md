@@ -457,6 +457,12 @@ in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md), for the dir
 **Message**: An available backend failed while preparing, drawing, or reading back a frame (`RendererFaultError`)
 **Fix**: Investigate the backend failure named in `detail`.
 
+### `GEORDI_E_BIJOU_DRAWING_BUFFER_MISMATCH`
+
+**Severity**: Error
+**Message**: The WebGL2 presenter found `drawingBufferWidth` or `drawingBufferHeight` different from the canvas size, so the browser clamped or altered the drawing buffer (`DrawingBufferMismatchError`)
+**Fix**: Not a renderer fault. Present at a canvas size the browser does not clamp, below `MAX_RENDERBUFFER_SIZE` and the browser's drawing-buffer limits. The presenter draws nothing for that frame.
+
 ### `GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH`
 
 **Severity**: Error

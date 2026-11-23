@@ -98,9 +98,10 @@ resets.
 
 ## Not covered
 
-- No GPU presenter calls the packer, so no texture upload of the reported rows is tested. The
-  Canvas 2D presenter's use of the row spans is covered in
-  [`bijou-gpu-canvas2d-presenter-test-plan.md`](./bijou-gpu-canvas2d-presenter-test-plan.md).
+- Texture uploads of the reported rows are tested by the WebGL2 presenter, in
+  [`bijou-gpu-webgl2-presenter-test-plan.md`](./bijou-gpu-webgl2-presenter-test-plan.md), and the
+  Canvas 2D presenter's use of the row spans in
+  [`bijou-gpu-canvas2d-presenter-test-plan.md`](./bijou-gpu-canvas2d-presenter-test-plan.md), not here.
 - The injected resolver is a test double. The real `GlyphAtlas`
   ([flyingrobots/geordi#172](https://github.com/flyingrobots/geordi/issues/172)) is not
   exercised.

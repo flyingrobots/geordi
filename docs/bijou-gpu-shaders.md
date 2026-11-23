@@ -13,14 +13,14 @@ that assembles it and translates it to GLSL ES 3.00, the checked-in generated fi
 manifest, and the harness that executes the translated GLSL in WebGL2. The design record is the
 normative source for every equation.
 
-> **Not claimed.** Geordi has no browser GPU presenter, and nothing uploads the `GlyphAtlas` to a
-> texture yet. The offscreen native `wgpu` proof
+> **Not claimed.** The shader's fragment stage writes exact integers to an integer target; the
+> display pass that shows them belongs to the presenters. The
+> [WebGL2 presenter](./bijou-gpu-webgl2-presenter.md) executes the generated GLSL and uploads the
+> `GlyphAtlas`. The offscreen native `wgpu` proof
 > ([`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md)) executes `bijou-surface.wgsl`
-> unchanged and uploads the conformance kit's test glyph pack, not a `GlyphAtlas`. Nothing here draws to a screen. The shader's fragment stage writes exact integers to an integer target; the
-> display pass that shows them belongs to the presenters, tracked in
-> [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173),
-> [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175) and
-> [flyingrobots/geordi#58](https://github.com/flyingrobots/geordi/issues/58).
+> unchanged and uploads the conformance kit's test glyph pack, not a `GlyphAtlas`, and draws to
+> no screen. The WebGPU presenter is tracked in
+> [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175).
 
 ## Files
 

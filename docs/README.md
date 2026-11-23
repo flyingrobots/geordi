@@ -25,6 +25,8 @@ that exists on `main`.
 | Find the evidence for each Bijou GPU packer requirement | [`bijou-gpu-surface-damage-test-plan.md`](./bijou-gpu-surface-damage-test-plan.md) |
 | Look up the Bijou GPU glyph atlas: slots, colour detection, dirty rects, overflow and invalidation, and the browser rasterizer and font/DPR watcher | [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md) |
 | Find the evidence for each Bijou GPU glyph atlas requirement | [`bijou-gpu-glyph-atlas-test-plan.md`](./bijou-gpu-glyph-atlas-test-plan.md) |
+| Look up the Bijou GPU WebGL2 presenter: shader pin, textures and uploads, display pass, readback and receipts, context loss | [`bijou-gpu-webgl2-presenter.md`](./bijou-gpu-webgl2-presenter.md) |
+| Find the evidence for each Bijou GPU WebGL2 presenter requirement | [`bijou-gpu-webgl2-presenter-test-plan.md`](./bijou-gpu-webgl2-presenter-test-plan.md) |
 | Look up the Bijou GPU Canvas 2D fallback presenter: pixel path, draw batching, full-redraw triggers and receipt | [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md) |
 | Find the evidence for each Bijou GPU Canvas 2D presenter requirement | [`bijou-gpu-canvas2d-presenter-test-plan.md`](./bijou-gpu-canvas2d-presenter-test-plan.md) |
 | Look up the native Rust `wgpu` offscreen proof: intake, render, evidence levels, receipts and command line | [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md) |

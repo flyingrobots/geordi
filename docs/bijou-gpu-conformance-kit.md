@@ -12,15 +12,13 @@ suite, the endpoint receipt validator, the CPU reference oracle, and the browser
 The design record is the normative source for every equation; this page says how the kit
 exposes them.
 
-> **Not claimed.** Geordi has no browser GPU presenter. The only GPU renderer is the offscreen
-> native `wgpu` proof in [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md), which is
-> checked against this kit. The kit renders on the CPU only. It is the
-> oracle presenters are checked against, tracked in
-> [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173) through
-> [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175), and
-> [flyingrobots/geordi#58](https://github.com/flyingrobots/geordi/issues/58). The Canvas 2D
-> fallback presenter, which also computes its pixels on the CPU, is described in
-> [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md). The dirty-union
+> **Not claimed.** The kit renders on the CPU only. It is the oracle presenters are checked
+> against. The [WebGL2 presenter](./bijou-gpu-webgl2-presenter.md) is the one browser GPU
+> presenter, and the offscreen native `wgpu` proof in
+> [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md) is checked against this kit as well.
+> The Canvas 2D fallback presenter, which also computes its pixels on the CPU, is described in
+> [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md). The WebGPU presenter is
+> tracked in [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175). The dirty-union
 > packer and the glyph atlas that share this package are described in
 > [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md) and
 > [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md). The canonical shader is described
