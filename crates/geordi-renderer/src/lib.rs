@@ -110,6 +110,9 @@ pub struct GeordiRayTracedRuntimeProfile {
     pub reconstructions: &'static [&'static str],
     /// Implemented output encoding identities.
     pub outputs: &'static [&'static str],
+    /// Largest film area, in pixels, the runtime can allocate. The scene profile bounds each film
+    /// side by 16384 but not the product, so this is a runtime property.
+    pub max_film_pixels: u64,
 }
 
 /// Custom error returned when a `RenderedImage` cannot be built from width, height and bytes.

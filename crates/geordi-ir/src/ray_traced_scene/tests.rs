@@ -586,7 +586,8 @@ fn camera_up_must_not_be_parallel_to_forward() -> TestResult {
     for (up, expected) in [
         ([0, ONE / 4, ONE], code),
         ([0, -ONE / 2, -2 * ONE], code),
-        ([0, ONE / 4 + 1, ONE], None),
+        // One raw unit off parallel: the sine is about 2^-32, below the 2^-15 floor.
+        ([0, ONE / 4 + 1, ONE], code),
         ([ONE, 0, 0], None),
     ] {
         check(
@@ -771,4 +772,71 @@ fn receipt_validation_rejects_field_and_shape_violations() -> TestResult {
         .ok_or("unknown receipt field was accepted")?;
     assert_eq!(issue_codes(&error)[0].0, GEORDI_E_RT_RECEIPT_SHAPE);
     Ok(())
+}
+
+#[test]
+fn camera_up_sine_to_forward_is_at_least_two_to_the_minus_15() -> TestResult {
+    // forward = (0, 0, 1) and up = (a, 0, 1) have sine a / sqrt(a^2 + 2^64), so `a = 2^17` is
+    // just below 2^-15 (refused) and `a = 2^17 + 1` is just above it (accepted).
+    let code = Some(GEORDI_E_RT_CAMERA_DEGENERATE);
+    for (a, expected) in [
+        (1_i64 << 17, code),
+        ((1 << 17) + 1, None),
+        (-(1 << 17), code),
+        (-((1 << 17) + 1), None),
+        (1 << 16, code),
+    ] {
+        check(
+            |scene| {
+                scene.camera.forward = [q(0)?, q(0)?, q(ONE)?];
+                scene.camera.up = [q(a)?, q(0)?, q(ONE)?];
+                Ok(())
+            },
+            expected,
+        )?;
+    }
+    // The largest components do not overflow the exact comparison.
+    let max = (1_i64 << 53) - 1;
+    check(
+        |scene| {
+            scene.camera.forward = [q(max)?, q(max)?, q(max)?];
+            scene.camera.up = [q(-max)?, q(-max)?, q(-max)?];
+            Ok(())
+        },
+        code,
+    )?;
+    check(
+        |scene| {
+            scene.camera.forward = [q(max)?, q(0)?, q(0)?];
+            scene.camera.up = [q(0)?, q(max)?, q(0)?];
+            Ok(())
+        },
+        None,
+    )
+}
+
+#[test]
+fn a_scene_needs_at_least_one_triangle() -> TestResult {
+    let code = Some(GEORDI_E_RT_SCENE_EMPTY);
+    check(
+        |scene| {
+            scene.instances.clear();
+            Ok(())
+        },
+        code,
+    )?;
+    check(
+        |scene| {
+            scene.meshes[0].counts.triangles = 0;
+            Ok(())
+        },
+        code,
+    )?;
+    check(
+        |scene| {
+            scene.meshes[0].counts.triangles = 1;
+            Ok(())
+        },
+        None,
+    )
 }

@@ -100,6 +100,14 @@ pub const GEORDI_RAY_TRACED_LIGHT_KIND_UNIFORM_SKY: &str = "uniformSky";
 /// Largest film width or height in pixels.
 pub const GEORDI_RAY_TRACED_FILM_DIMENSION_MAX: i64 = 16_384;
 
+/// The camera `up` is refused when the sine of its angle to `forward` is below `2^-15`.
+///
+/// Bunny's camera basis refuses an `up` whose normalized cross product with `forward` has every
+/// component below `2^-16`, and the largest component can be a factor of `sqrt(3)` below the
+/// vector length. A sine of `2^-15` is the nearest power of two that no runtime built on that
+/// basis accepts below.
+pub const GEORDI_RAY_TRACED_CAMERA_MIN_SINE_LOG2: u32 = 15;
+
 /// Largest samples-per-pixel value.
 pub const GEORDI_RAY_TRACED_SAMPLES_PER_PIXEL_MAX: i64 = 1024;
 
@@ -197,6 +205,8 @@ pub const GEORDI_E_RT_RADIANCE_OUT_OF_RANGE: &str = "GEORDI_E_RT_RADIANCE_OUT_OF
 pub const GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT: &str = "GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT";
 /// Diagnostic: not exactly one uniform sky.
 pub const GEORDI_E_RT_SKY_COUNT: &str = "GEORDI_E_RT_SKY_COUNT";
+/// Diagnostic: the instances contribute no triangle to the scene.
+pub const GEORDI_E_RT_SCENE_EMPTY: &str = "GEORDI_E_RT_SCENE_EMPTY";
 /// Diagnostic: film width or height is outside `1..=16384`.
 pub const GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE: &str = "GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE";
 /// Diagnostic: the integrator identity is not supported.
