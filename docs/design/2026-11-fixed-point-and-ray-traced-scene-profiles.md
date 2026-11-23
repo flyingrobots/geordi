@@ -581,8 +581,8 @@ CPU versus GPU execution.
 
 ### B6. Output
 
-The render result is Geordi's `RenderedImage`: RGBA8, row-major, row 0 at the top, `width * height
-* 4` bytes. Alpha is 255 for every pixel in version 1.
+The render result is Geordi's `RenderedImage`: RGBA8, row-major, row 0 at the top, `width * height * 4`
+bytes. Alpha is 255 for every pixel in version 1.
 
 The image hash is `sha256:` followed by the lowercase hex SHA-256 of exactly those RGBA bytes.
 Width, height, pixel format and encoding are separate receipt fields, covered by the receipt's own
