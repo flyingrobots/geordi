@@ -97,11 +97,22 @@ function expectValidReceipt(receipt: EndpointReceipt): void {
   expect(validation.ok ? [] : validation.issues).toEqual([]);
 }
 
+/**
+ * Skip a positive test on a lane that refused WebGPU, saying so on stdout as a
+ * JSON line, because the default CI reporter prints no skip reasons.
+ */
+function skipRefused(reason: string): void {
+  expect(REQUIRE_WEBGPU, `WebGPU is required but was refused: ${reason}`).toBe(false);
+  process.stdout.write(
+    `${stringifyCanonicalJson({ event: 'webgpu-capability-refused', test: test.info().title, reason })}\n`,
+  );
+  test.skip(true, `capability-refused, not a rendering pass: ${reason}`);
+}
+
 /** Skip, or fail when WebGPU is required, on a lane that refused the backend. */
 function rendered(result: WebGpuProbeResult): Extract<WebGpuProbeResult, { status: 'rendered' }> {
   if (result.status === 'refused') {
-    expect(REQUIRE_WEBGPU, `WebGPU is required but was refused: ${result.reason}`).toBe(false);
-    test.skip(true, `capability-refused, not a rendering pass: ${result.reason}`);
+    skipRefused(result.reason);
     throw new WebGpuProbeMissingError('unreachable after test.skip');
   }
   return result;
@@ -231,8 +242,7 @@ test.describe('WebGPU presenter positive pixel probes (rendering evidence)', () 
     const problems = await openProbe(page);
     const result = present(await page.evaluate(() => window.__geordiWebGpuProbe?.runResizeSequence(24, 0x175) ?? null));
     if (result.status === 'refused') {
-      expect(REQUIRE_WEBGPU, `WebGPU is required but was refused: ${result.reason}`).toBe(false);
-      test.skip(true, `capability-refused, not a rendering pass: ${result.reason}`);
+      skipRefused(result.reason);
       return;
     }
     expect(result.fault).toBeNull();
@@ -252,8 +262,7 @@ test.describe('WebGPU presenter positive pixel probes (rendering evidence)', () 
     await openProbe(page);
     const result = present(await page.evaluate(() => window.__geordiWebGpuProbe?.runShaderFault() ?? null));
     if (result.status === 'refused') {
-      expect(REQUIRE_WEBGPU, `WebGPU is required but was refused: ${result.reason}`).toBe(false);
-      test.skip(true, `capability-refused: ${result.reason}`);
+      skipRefused(result.reason);
       return;
     }
     expect(result).toMatchObject({
