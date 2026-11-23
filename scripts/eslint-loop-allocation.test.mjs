@@ -21,9 +21,11 @@ async function loopAllocationFindings(code, filePath) {
     [],
     `the fixture must parse: ${code}`,
   );
-  return result.messages.filter(
+  const findings = result.messages.filter(
     (message) => message.ruleId === 'no-restricted-syntax' && MESSAGE_PATTERN.test(message.message),
   );
+  findings.all = result.messages.map((message) => `${String(message.ruleId)}: ${message.message}`);
+  return findings;
 }
 
 const MUST_REPORT = {
@@ -59,7 +61,10 @@ for (const { label, filePath } of TARGETS) {
   for (const [name, code] of Object.entries(MUST_REPORT)) {
     test(`reports (${label}): ${name}`, async () => {
       const findings = await loopAllocationFindings(code, filePath);
-      assert.ok(findings.length >= 1, `expected a finding for: ${code}`);
+      assert.ok(
+        findings.length >= 1,
+        `expected a finding for: ${code}; got ${JSON.stringify(findings.all)}`,
+      );
     });
   }
   for (const [name, code] of Object.entries(MUST_NOT_REPORT)) {
