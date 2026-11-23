@@ -49,6 +49,11 @@ const MUST_REPORT = {
   'new Set in a do...while condition': 'let i = 0; do { i += 1; } while (new Set([i]).size < 0);',
   'new Set in a for condition': 'for (let i = 0; new Set([i]).size < 1; i += 1) { i += 0; }',
   'new Set as a bare statement in a loop body': 'for (const a of [1]) new Set([a]);',
+  'new Set as the whole while condition': 'let i = 0; while (new Set()) { i += 1; break; }',
+  'new Map as the whole do...while condition': 'let i = 0; do { i += 1; } while (new Map());',
+  'new Map as the whole for condition': 'for (let i = 0; new Map(); i += 1) { break; }',
+  'new Set as the whole for update': 'for (let i = 0; i < 3; new Set()) { i += 1; }',
+  'new Map as the whole for update': 'for (let i = 0; i < 3; new Map()) { i += 1; }',
 };
 
 const MUST_NOT_REPORT = {

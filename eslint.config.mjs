@@ -8,13 +8,19 @@ const tsconfigRootDir = fileURLToPath(new URL('.', import.meta.url));
 
 // A Set or Map constructed while a loop is running: the loop body, a for/while/do-while
 // condition, or a for update. The for initialiser and the for...of / for...in subject run
-// once, so they are not matched. Descendant matching also covers callbacks and nested loops.
+// once, so they are not matched. Each position is matched twice: as the allocation itself
+// (`while (new Set())`, `for (;; new Map())`) and as any descendant of it, which also covers
+// callbacks and nested loops.
+const LOOP_COLLECTION_ALLOCATION = 'NewExpression[callee.name=/^(Set|Map)$/]';
 const LOOP_COLLECTION_ALLOCATION_SELECTOR = [
   ':matches(ForStatement, ForOfStatement, ForInStatement, WhileStatement, DoWhileStatement) > .body',
   ':matches(ForStatement, WhileStatement, DoWhileStatement) > .test',
   'ForStatement > .update',
 ]
-  .map((position) => `${position} :matches(NewExpression[callee.name=/^(Set|Map)$/])`)
+  .flatMap((position) => [
+    `${position}:matches(${LOOP_COLLECTION_ALLOCATION})`,
+    `${position} :matches(${LOOP_COLLECTION_ALLOCATION})`,
+  ])
   .join(', ');
 
 const restrictedSyntax = [
