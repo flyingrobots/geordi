@@ -178,7 +178,10 @@ function specifiers(file: string): string[] {
   const found: string[] = [];
   for (const pattern of [/\bfrom\s+'([^']+)'/gu, /\bimport\s+'([^']+)'/gu, /\bimport\(\s*'([^']+)'\s*\)/gu]) {
     for (const match of text.matchAll(pattern)) {
-      found.push(match[1] ?? '');
+      const specifier = match.at(1);
+      if (specifier !== undefined) {
+        found.push(specifier);
+      }
     }
   }
   return found;
