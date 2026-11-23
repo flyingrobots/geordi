@@ -365,6 +365,9 @@ importers:
       '@flyingrobots/geordi-compiler-core':
         specifier: workspace:*
         version: link:../compiler-core
+      '@flyingrobots/geordi-core':
+        specifier: workspace:*
+        version: link:../core
       '@flyingrobots/geordi-schema-graphql':
         specifier: workspace:*
         version: link:../schema-graphql

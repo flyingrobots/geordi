@@ -1,4 +1,8 @@
-import type { JsonObject } from '@flyingrobots/geordi-core';
+import {
+  GEORDI_IR_ARTIFACT_KEY,
+  GEORDI_IR_RECEIPT_KEY,
+  type JsonObject,
+} from '@flyingrobots/geordi-core';
 
 export const PROFUNCTOR_PAGE_VERSION = 'profunctor-page/0' as const;
 export const PROFUNCTOR_PAGE_SOURCE_MAP_VERSION = 'profunctor-page-source-map/0' as const;
@@ -8,11 +12,10 @@ export const PROFUNCTOR_PAGE_TARGET_MAP_VERSION =
   'geordi-profunctor-page-map/1' as const;
 export const PROFUNCTOR_PAGE_TARGET_RECEIPT_VERSION =
   'geordi-profunctor-page-receipt/1' as const;
-export const PROFUNCTOR_PAGE_TARGET_IR_PATH = 'scene.geordi.json' as const;
+export const PROFUNCTOR_PAGE_TARGET_IR_PATH = GEORDI_IR_ARTIFACT_KEY;
 export const PROFUNCTOR_PAGE_TARGET_MAP_PATH = 'scene.geordi.map.json' as const;
 export const PROFUNCTOR_PAGE_TARGET_PREVIEW_PATH = 'scene.geordi.preview.svg' as const;
-export const PROFUNCTOR_PAGE_TARGET_RECEIPT_PATH =
-  'scene.geordi.json.receipt' as const;
+export const PROFUNCTOR_PAGE_TARGET_RECEIPT_PATH = GEORDI_IR_RECEIPT_KEY;
 
 export type ProfunctorPageDiagnosticCode =
   | 'GEORDI_PAGE_INPUT_JSON_INVALID'
