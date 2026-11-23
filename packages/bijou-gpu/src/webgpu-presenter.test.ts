@@ -716,13 +716,17 @@ describe('randomized resize sequences', () => {
 
 describe('capability-refused receipts', () => {
   it('records a refusal as capability-refused evidence with no frame digest and no probes', async () => {
-    const refusal = await createWebGPUSurfacePresenter(new FakeCanvas(), presenterOptions(new FakeGpu({ adapters: ['null'] }))).then(
-      () => null,
-      (error: Error) => error,
-    );
-    expect(refusal).toBeInstanceOf(BackendUnavailableError);
+    let refusal: BackendUnavailableError | null = null;
+    try {
+      await createWebGPUSurfacePresenter(new FakeCanvas(), presenterOptions(new FakeGpu({ adapters: ['null'] })));
+    } catch (error) {
+      if (error instanceof BackendUnavailableError) {
+        refusal = error;
+      }
+    }
+    expect(refusal).not.toBeNull();
     const receipt = createWebGpuRefusalReceipt({
-      error: refusal as BackendUnavailableError,
+      error: refusal!,
       shader: { wgsl: WGSL, manifest: MANIFEST },
       atlas: testAtlas(),
       target: PAINT_SURFACE,

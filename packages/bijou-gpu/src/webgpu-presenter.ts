@@ -1211,16 +1211,9 @@ export async function createWebGPUSurfacePresenter(
   try {
     const layout = decodeBijouSurfaceShader(options.shader);
     const format = selectWebGpuCanvasFormat(gpu.getPreferredCanvasFormat());
-    const canvasPx =
-      options.size === undefined
-        ? {
-            canvasPxW: canvas.width,
-            canvasPxH: canvas.height,
-          }
-        : resolvePresenterCanvasPx(options.size);
-    if (options.size === undefined) {
-      resolvePresenterCanvasPx({ cssWidth: canvas.width, cssHeight: canvas.height, dpr: 1 });
-    }
+    const canvasPx = resolvePresenterCanvasPx(
+      options.size ?? { cssWidth: canvas.width, cssHeight: canvas.height, dpr: 1 },
+    );
     const resources = await createDeviceResources(device, layout, format);
     return new WebGpuPresenter(
       canvas,
@@ -1238,4 +1231,60 @@ export async function createWebGPUSurfacePresenter(
     device.destroy();
     throw error;
   }
+}
+
+/** Inputs of {@link createWebGpuRefusalReceipt}. */
+export interface WebGpuRefusalReceiptInput {
+  /** The refusal being recorded. A renderer fault is not a refusal. */
+  readonly error: BackendUnavailableError;
+  readonly shader: BijouSurfaceShaderSource;
+  readonly atlas: PresenterAtlasSource;
+  /** The surface that would have been presented. */
+  readonly target: GpuPackedSurface;
+  readonly size: GpuSurfaceResize;
+  readonly defaultFg?: string;
+  readonly defaultBg?: string;
+  /** Defaults to the SHA-256 of the target's cell bytes. */
+  readonly inputReceiptSha256?: string;
+}
+
+/**
+ * The `capability-refused` receipt of a WebGPU refusal: what would have been
+ * presented, which shader would have run, and no pixels. It witnesses the
+ * refusal only and can never close a rendering claim.
+ *
+ * @throws RendererFaultError when `error` is not a `BackendUnavailableError`.
+ */
+export function createWebGpuRefusalReceipt(input: WebGpuRefusalReceiptInput): EndpointReceipt {
+  if (!(input.error instanceof BackendUnavailableError)) {
+    return shaderFault('only a BackendUnavailableError can be recorded as capability-refused');
+  }
+  const layout = decodeBijouSurfaceShader(input.shader);
+  const canvasPx = resolvePresenterCanvasPx(input.size);
+  const state = createSurfaceDamageState();
+  const packed = packSurfaceDamage(state, input.target, input.target, {
+    resolveSlot: input.atlas.resolveSlot,
+    atlasGeneration: input.atlas.atlasGeneration,
+  });
+  return assemblePresenterReceipt({
+    inputReceiptSha256: input.inputReceiptSha256 ?? sha256Hex(input.target.buffer),
+    preparedBufferSha256: sha256Hex(preparedBufferBytes(packed.staging)),
+    assembledWgslSha256: layout.assembledWgslSha256,
+    generatedGlslSha256: null,
+    shaderSha256: layout.assembledWgslSha256,
+    executedArtifactSha256: webGpuExecutedArtifactSha256(layout.wgsl),
+    backendProfile: WEBGPU_BACKEND_PROFILE,
+    adapter: { backend: 'webgpu', name: '', driver: '' },
+    evidenceLevel: 'capability-refused',
+    widthCells: packed.widthCells,
+    heightCells: packed.heightCells,
+    canvasPxW: canvasPx.canvasPxW,
+    canvasPxH: canvasPx.canvasPxH,
+    dpr: input.size.dpr,
+    defaultFg: hexColor(parseHexColor(input.defaultFg ?? REFERENCE_DEFAULT_FG, 'defaultFg')),
+    defaultBg: hexColor(parseHexColor(input.defaultBg ?? REFERENCE_DEFAULT_BG, 'defaultBg')),
+    atlas: input.atlas.getReceiptAssets(),
+    frameRgbaSha256: null,
+    probes: [],
+  });
 }
