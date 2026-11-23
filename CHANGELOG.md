@@ -2,8 +2,26 @@
 
 ## Unreleased
 
+### Bug Fixes
+
+- **Generated-directory writer** (`scripts/lib/atomic-generated-directory.mjs`): the `<destination>.lock`
+  file now records its owner (`geordi.generated-directory-lock/1`: pid, hostname, process start time,
+  token), and a writer removes it only when it can prove the owner is gone: same host and no such
+  process, or a running pid whose start time differs from the recorded one (a recycled pid). Malformed
+  metadata, a lock from another host, a running owner and an owner whose start time cannot be compared
+  all stay in place and the writer waits out the 10-second timeout, which now throws
+  `GeneratedDirectoryLockTimeoutError`. Only the holder of a recovery lock (`<destination>.lock.recovering`)
+  may remove the main lock, and only if it still carries the token it judged abandoned, so a recoverer
+  can never remove a newer writer's lock; before publishing and before any rollback a writer checks that
+  it still owns its lock and otherwise throws `GeneratedDirectoryLockLostError` without touching the
+  destination. Removing an abandoned recovery lock is not itself serialized: that needs a recoverer crash
+  plus three simultaneous recoverers, and a writer that loses its lock between a check and the rename
+  after it can still end with two complete output sets, last rename wins. A lock directory left by the
+  previous writer is never removed automatically; delete it by hand once no writer runs (flyingrobots/geordi#54)
+
 ### CI
 
+- Typecheck the Profunctor Page test sources: `pnpm typecheck` now also runs `tsc --noEmit -p tsconfig.test.json` in `@flyingrobots/geordi-profunctor-page`, so an invalid type in a `*.test.ts` file fails CI. The build still uses `tsconfig.json` and emits only production files. A node test (`pnpm test:profunctor-page-typecheck-gate`) proves the gate fails on an invalid test type (flyingrobots/geordi#56)
 - Pin the Rust toolchain to 1.96.0 with `rust-toolchain.toml` and install that toolchain in CI instead of floating `stable`, so new compiler lints no longer fail CI on unchanged code (flyingrobots/geordi#158)
 
 ### Fixes
@@ -26,6 +44,14 @@
 
 ### Fixes
 
+- **`geordi-ir`, `geordi-renderer`**: scenes Lumen's `Scene::new` refuses no longer validate and
+  negotiate (flyingrobots/geordi#166). A scene with no triangle is refused with the new
+  `GEORDI_E_RT_SCENE_EMPTY`. A camera `up` whose angle to `forward` has a sine below `2^-15` is
+  refused with `GEORDI_E_RT_CAMERA_DEGENERATE`, checked exactly in 256-bit integers (the previous
+  rule refused only an exactly zero cross product). `GeordiRayTracedRuntimeProfile` gains
+  `max_film_pixels`, and `assert_ray_traced_runtime_profile` refuses a larger film; this is a
+  breaking change for code that constructs the profile. New fixtures: `failures/scene-empty`,
+  `failures/camera-up-nearly-parallel` and `negotiation/film-pixels-above-runtime-cap`.
 - **`@flyingrobots/geordi-bijou-gpu`**: the package now ships its own shaders, behind a port
   (flyingrobots/geordi#185). Before, it published only `dist`, and both GPU presenters required
   the host to pass the package's generated shader text. Now:
