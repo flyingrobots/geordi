@@ -1,3 +1,4 @@
+import { GEORDI_IR_ARTIFACT_KEY } from '@flyingrobots/geordi-core';
 import {
   compile,
   formatDiagnostic,
@@ -64,7 +65,7 @@ export class GeordiGeneratorPlugin {
 
     return {
       artifacts: [
-        { path: 'scene.geordi.json', reason: 'Geordi IR scene' },
+        { path: GEORDI_IR_ARTIFACT_KEY, reason: 'Geordi IR scene' },
         { path: 'scene.geordi.map.json', reason: 'Geordi IR source map' },
         { path: 'types.ts', reason: 'TypeScript types for scene artifacts' },
       ],

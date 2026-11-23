@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import {
   canonicalJsonPort,
   GEORDI_CORE_PROFILE,
+  GEORDI_IR_ARTIFACT_KEY,
+  GEORDI_IR_RECEIPT_KEY,
   GEORDI_IR_VERSION,
   GEORDI_NUMERIC_PROFILE,
   type GeordiFeatureRequirement,
@@ -10,8 +12,8 @@ import {
 
 const GPVUE_SOURCE_FORMAT = 'gpvue' as const;
 const SOURCE_MAP_VERSION = 'geordi-source-map/1' as const;
-const SCENE_ARTIFACT_PATH = 'scene.geordi.json' as const;
-const RECEIPT_ARTIFACT_PATH = 'scene.geordi.json.receipt' as const;
+const SCENE_ARTIFACT_PATH = GEORDI_IR_ARTIFACT_KEY;
+const RECEIPT_ARTIFACT_PATH = GEORDI_IR_RECEIPT_KEY;
 const SOURCE_MAP_ARTIFACT_PATH = 'scene.geordi.map.json' as const;
 const RENDER_FIXTURE_VERSION = 'geordi-render-fixture/1' as const;
 const HASH_PREFIX = 'sha256:' as const;
