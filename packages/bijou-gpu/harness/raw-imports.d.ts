@@ -4,8 +4,3 @@ declare module '*.json?raw' {
   export default text;
 }
 
-// Vite `?raw` import of a shader: the file's exact text, loaded verbatim.
-declare module '*.wgsl?raw' {
-  const text: string;
-  export default text;
-}

@@ -56,11 +56,11 @@ const MANIFEST_SURFACE_SHA = (() => {
   return match[1];
 })();
 
-/** A port over the checked-in WGSL and manifest text, optionally edited. */
-function hostShaderSource(wgsl: string | undefined = WGSL, manifest: string | undefined = MANIFEST_TEXT): ShaderSourcePort {
+/** A port over the checked-in WGSL and manifest text, optionally edited; `null` leaves a file out. */
+function hostShaderSource(wgsl: string | null = WGSL, manifest: string | null = MANIFEST_TEXT): ShaderSourcePort {
   return createInMemoryShaderSource({
-    ...(wgsl === undefined ? {} : { 'bijou-surface.wgsl': wgsl }),
-    ...(manifest === undefined ? {} : { 'bijou-shaders.manifest.json': manifest }),
+    ...(wgsl === null ? {} : { 'bijou-surface.wgsl': wgsl }),
+    ...(manifest === null ? {} : { 'bijou-shaders.manifest.json': manifest }),
   });
 }
 
@@ -218,8 +218,8 @@ describe('createWebGPUSurfacePresenter renderer faults', () => {
   it.each([
     ['tampered shader text', {}, { shaderSource: hostShaderSource(WGSL.replace('fs_main', 'fs_mian')) }],
     ['CRLF-converted shader text', {}, { shaderSource: hostShaderSource(WGSL.replaceAll('\n', '\r\n')) }],
-    ['a shader source without the WGSL', {}, { shaderSource: hostShaderSource(undefined) }],
-    ['a shader source without the manifest', {}, { shaderSource: hostShaderSource(WGSL, undefined) }],
+    ['a shader source without the WGSL', {}, { shaderSource: hostShaderSource(null) }],
+    ['a shader source without the manifest', {}, { shaderSource: hostShaderSource(WGSL, null) }],
     ['a WGSL compile error', { device: { compileErrors: ['bijou-surface.wgsl'] } }, {}],
     ['a display shader compile error', { device: { compileErrors: ['geordi-webgpu-display.wgsl'] } }, {}],
     ['a rejected render pipeline', { device: { pipelineRejections: ['bijou-surface canonical pass'] } }, {}],
@@ -255,7 +255,7 @@ describe('createWebGPUSurfacePresenter shader source port', () => {
   it('names the missing artifact and the port when a shader source lacks it', async () => {
     const attempt = createWebGPUSurfacePresenterCore(new FakeCanvas(), {
       ...presenterOptions(new FakeGpu()),
-      shaderSource: hostShaderSource(WGSL, undefined),
+      shaderSource: hostShaderSource(WGSL, null),
     });
     await expect(attempt).rejects.toMatchObject({ backend: 'webgpu', detail: 'shader source in-memory has no bijou-shaders.manifest.json' });
   });

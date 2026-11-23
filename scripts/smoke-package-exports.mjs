@@ -35,6 +35,8 @@ const checks = [
       'createInMemoryShaderSource',
       'createWebGL2SurfacePresenter',
       'createWebGL2SurfacePresenterCore',
+      'createWebGPUSurfacePresenter',
+      'createWebGPUSurfacePresenterCore',
       'createTestGlyphPack',
       'decodeProceduralGlyphTable',
       'parseEndpointReceipt',

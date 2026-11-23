@@ -229,6 +229,11 @@ describe('module boundaries', () => {
     expect(graph.modules.has('shader-source-webgpu.ts')).toBe(true);
   });
 
+  it.each(['webgl2.ts', 'webgpu.ts'])('the browser harness %s imports no shader file from the repository', (harness) => {
+    const file = fileURLToPath(new URL(`../harness/${harness}`, import.meta.url));
+    expect(specifiers(file).filter((specifier) => specifier.includes('/shaders/'))).toEqual([]);
+  });
+
   it('keeps each bundled adapter to its own backend text, so a bundler drops an unused one', () => {
     expect([...importGraph('shader-source-webgl2.ts').modules].sort()).toEqual([
       'errors.ts',
@@ -245,5 +250,4 @@ describe('module boundaries', () => {
       'shader-source.ts',
     ]);
   });
-});
 });

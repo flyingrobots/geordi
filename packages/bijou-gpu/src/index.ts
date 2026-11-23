@@ -22,4 +22,5 @@ export * from './webgl2-gl.js';
 export * from './webgl2-presenter.js';
 export * from './webgl2-presenter-default.js';
 export * from './webgpu-presenter.js';
+export * from './webgpu-presenter-default.js';
 export * from './webgpu-types.js';

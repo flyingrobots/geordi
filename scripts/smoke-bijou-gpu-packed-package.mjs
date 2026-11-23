@@ -82,7 +82,7 @@ const out = (record) => process.stdout.write(JSON.stringify(record) + '\\n');
 const fail = (message) => { out({ kind: 'probe-failure', message }); process.exitCode = 1; };
 
 const specifiers = {
-  '${PACKAGE_NAME}': ['createWebGL2SurfacePresenter', 'createWebGL2SurfacePresenterCore', 'createInMemoryShaderSource', 'requireShaderText', 'BIJOU_SHADER_ARTIFACT_FILES', 'WEBGL2_SURFACE_SHADER_PIN'],
+  '${PACKAGE_NAME}': ['createWebGL2SurfacePresenter', 'createWebGL2SurfacePresenterCore', 'createWebGPUSurfacePresenter', 'createWebGPUSurfacePresenterCore', 'loadBijouSurfaceShader', 'createInMemoryShaderSource', 'requireShaderText', 'BIJOU_SHADER_ARTIFACT_FILES', 'WEBGL2_SURFACE_SHADER_PIN'],
   '${PACKAGE_NAME}/shader-source/webgl2': ['WEBGL2_BUNDLED_SHADER_SOURCE'],
   '${PACKAGE_NAME}/shader-source/webgpu': ['WEBGPU_BUNDLED_SHADER_SOURCE'],
   '${PACKAGE_NAME}/shader-source/node': ['createFileShaderSource'],
