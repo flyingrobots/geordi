@@ -121,4 +121,5 @@ kinds, generations, that ink arrived), never about exact glyph pixels.
 - In that emulation the `device-pixel-content-box` observer did not report the DPR change, so
   that trigger is exercised only with a fake host.
 - The colour emoji case needs a colour emoji font on the host.
-- No GPU texture upload is tested; none exists.
+- No GPU texture upload is tested here. The WebGPU presenter's atlas upload is in
+  [`bijou-gpu-webgpu-presenter-test-plan.md`](./bijou-gpu-webgpu-presenter-test-plan.md).

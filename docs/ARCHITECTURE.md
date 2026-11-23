@@ -84,6 +84,12 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
   overflow and invalidation; no host API, pixels through an injected rasterizer
 - **Glyph atlas browser adapter** (`src/glyph-atlas-browser.ts`): a 2D-canvas rasterizer and a
   watcher that invalidates the atlas on font arrival and DPR change
+- **WebGPU presenter** (`src/webgpu-presenter.ts`, `src/webgpu-types.ts`):
+  `createWebGPUSurfacePresenter` runs `bijou-surface.wgsl` verbatim into an `rgba8uint` target,
+  uploads the packer's dirty rows and the atlas, reads frames back for receipts, and recovers from
+  `device.lost`; the WebGPU objects it calls are typed structurally
+- **Presenter host helpers** (`src/presenter-host.ts`): canvas size ingress, grid geometry, the
+  atlas source a presenter reads, and receipt assembly, shared by every presenter
 - **Canvas 2D presenter** (`src/canvas2d-presenter.ts`, `src/canvas2d-compose.ts`):
   `createCanvas2DSurfacePresenter` composites changed cells with the pure-integer blend law into a
   retained `ImageData` and blits them with `putImageData`; no WebGL or WebGPU
@@ -92,12 +98,13 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
 
 **Key principle**: Bijou owns cell semantics and Bunny owns the integer primitives. This package
 is the CPU oracle that GPU presenters are compared against, plus the packer and glyph atlas they
-share, the WebGL2 presenter (`src/webgl2-presenter.ts`), and the Canvas 2D fallback presenter
-built on them. References:
+share, the WebGL2 presenter (`src/webgl2-presenter.ts`), the WebGPU presenter
+(`src/webgpu-presenter.ts`), and the Canvas 2D fallback presenter. References:
 [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md),
 [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md),
 [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md),
-[`bijou-gpu-webgl2-presenter.md`](./bijou-gpu-webgl2-presenter.md), and
+[`bijou-gpu-webgl2-presenter.md`](./bijou-gpu-webgl2-presenter.md),
+[`bijou-gpu-webgpu-presenter.md`](./bijou-gpu-webgpu-presenter.md), and
 [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md).
 
 Its `shaders/` directory holds the canonical `bijou-surface.wgsl`, the GLSL ES 3.00 stages that
