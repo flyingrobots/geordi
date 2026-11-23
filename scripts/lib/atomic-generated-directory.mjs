@@ -1,6 +1,44 @@
 /* eslint-disable no-restricted-syntax -- The lock record is a private, flat
    file that must not depend on built workspace packages, which the artifact
    gate has not built yet when this writer's tests run. */
+// Transactional writer for generated directories.
+//
+// Writers are serialized by `<destination>.lock`, a file that appears
+// atomically with its owner record inside it (schema, pid, hostname, process
+// start time, token): the record is written to a private file and hard-linked
+// to the lock path, and `link` fails when the path exists, whatever it holds.
+//
+// Recovery of a lock left by a crashed writer. The main lock is removed only
+// by its owner's release or by the single holder of the recovery lock
+// `<destination>.lock.recovering` (same record format, same exclusive
+// create). The holder re-reads the main lock under the recovery lock and
+// removes it only if it still carries the token it judged abandoned and its
+// owner is still provably gone: same host, and the pid is not running or runs
+// with a different start time (a recycled pid). A malformed record, another
+// host, a running owner and an unreadable start time are never removed;
+// nothing is removed on timeout alone.
+//
+// A writer also checks that the lock at the path still carries its own token
+// before it publishes and before it rolls back. A writer that lost the lock
+// throws GeneratedDirectoryLockLostError and does not touch the destination or
+// restore a backup.
+//
+// Known limits.
+// - A lock directory left by a writer that predates owner records is never
+//   removed automatically. Delete `<destination>.lock` by hand once no writer
+//   runs.
+// - Removing an abandoned recovery lock is not itself serialized: it moves the
+//   file aside, checks its token and puts it back if it was replaced. That
+//   needs a recoverer to crash inside the recovery window, then two writers to
+//   remove the stale recovery lock at the same moment while a third takes the
+//   recovery lock between their steps, and finally a lock holder to be
+//   displaced. The writer's lock checks before publishing and before
+//   rollback then turn that into GeneratedDirectoryLockLostError. A lock lost
+//   in the instants between a check and the rename that follows is not
+//   detected; the outcome is then two complete output sets, last rename wins,
+//   or a rollback that restores the prior set. Closing this would need an
+//   atomic compare-and-remove, which a file system does not offer. It is
+//   accepted because it needs a crash plus three simultaneous recoverers.
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import {
@@ -38,6 +76,16 @@ class GeneratedDirectoryLockTimeoutError extends Error {
   }
 }
 
+class GeneratedDirectoryLockLostError extends Error {
+  constructor(lockPath, options) {
+    super(
+      `Generated-directory lock was lost before the writer finished: ${lockPath}`,
+      options,
+    );
+    this.name = new.target.name;
+  }
+}
+
 class GeneratedDirectoryEntryError extends Error {
   constructor(name) {
     super(`Generated output must be a direct file name: ${name}`);
@@ -59,39 +107,32 @@ export async function replaceGeneratedDirectory(
     await stageOutputs(staging, outputs);
     await withDirectoryLock(
       `${destination}.lock`,
-      async () => {
+      async (assertHeld) => {
         const backup = join(
           parent,
           `.${destinationName}.backup-${randomUUID()}`,
         );
+        await assertHeld();
         let priorMoved = false;
         try {
-          try {
-            await rename(destination, backup);
-            priorMoved = true;
-          } catch (error) {
-            if (!isErrno(error, 'ENOENT')) {
-              throw error;
-            }
-          }
-          await options.lock?.afterPriorMoved?.();
-
-          try {
-            await rename(staging, destination);
-            staging = undefined;
-          } catch (error) {
-            if (priorMoved) {
-              await rename(backup, destination);
-              priorMoved = false;
-            }
+          await rename(destination, backup);
+          priorMoved = true;
+        } catch (error) {
+          if (!isErrno(error, 'ENOENT')) {
             throw error;
           }
+        }
+        await options.lock?.afterPriorMoved?.();
 
+        try {
+          await rename(staging, destination);
+          staging = undefined;
           if (priorMoved) {
             await rm(backup, { recursive: true });
           }
         } catch (error) {
           if (priorMoved) {
+            await assertHeld(error);
             await restoreBackup(backup, destination, error);
           }
           throw error;
@@ -130,15 +171,8 @@ async function stageOutputs(staging, outputs) {
 
 async function withDirectoryLock(lockPath, operation, overrides = {}) {
   const environment = { ...defaultLockEnvironment(), ...overrides };
-  const record = {
-    schema: LOCK_SCHEMA,
-    token: randomUUID(),
-    pid: environment.pid,
-    hostname: environment.hostname,
-    processStartTime:
-      (await environment.processStartTime(environment.pid)) ?? null,
-  };
-  const serialized = `${JSON.stringify(record)}\n`;
+  const record = await newLockRecord(environment);
+  const serialized = serializeRecord(record);
   const deadline = environment.now() + environment.timeoutMilliseconds;
 
   while (!(await tryAcquire(lockPath, serialized))) {
@@ -154,16 +188,38 @@ async function withDirectoryLock(lockPath, operation, overrides = {}) {
 
   try {
     await environment.afterAcquire?.();
-    await operation();
+    await operation(async (cause) => {
+      const held = await readLockRecord(lockPath);
+      if (held?.token !== record.token) {
+        throw new GeneratedDirectoryLockLostError(
+          lockPath,
+          cause === undefined ? undefined : { cause },
+        );
+      }
+    });
   } finally {
     await releaseLock(lockPath, record.token);
   }
 }
 
-// The lock is a file that appears with its owner record already inside it:
-// the record is written to a private file and hard-linked to the lock path.
-// `link` fails with EEXIST when the path exists, whatever it holds, so a
-// writer never replaces another lock and no lock exists without a record.
+async function newLockRecord(environment) {
+  return {
+    schema: LOCK_SCHEMA,
+    token: randomUUID(),
+    pid: environment.pid,
+    hostname: environment.hostname,
+    processStartTime:
+      (await environment.processStartTime(environment.pid)) ?? null,
+  };
+}
+
+function serializeRecord(record) {
+  return `${JSON.stringify(record)}\n`;
+}
+
+// Exclusive create: the path must be absent. The record is written to a
+// private file and hard-linked to the lock path, so no lock exists without
+// its record, and `link` never replaces anything.
 async function tryAcquire(lockPath, serialized) {
   const candidate = `${lockPath}.acquire-${randomUUID()}`;
   await writeFile(candidate, serialized, { encoding: 'utf8', flag: 'wx' });
@@ -180,9 +236,9 @@ async function tryAcquire(lockPath, serialized) {
   }
 }
 
-// Removes the lock only when its owner is provably gone. Anything that
-// cannot be proven stale (malformed record, other host, running owner,
-// unreadable start time) stays in place and the caller keeps waiting.
+// Removes the main lock only while holding the recovery lock, and only if it
+// is still the lock that was judged abandoned. Otherwise it leaves the lock
+// untouched and the caller goes back to waiting.
 async function recoverAbandonedLock(lockPath, environment) {
   const judged = await readLockRecord(lockPath);
   if (
@@ -194,36 +250,59 @@ async function recoverAbandonedLock(lockPath, environment) {
 
   await environment.beforeStaleRemoval?.();
 
-  // Rename is atomic, so only one recoverer takes the stale lock; the others
-  // see ENOENT. The lock may have been replaced after it was judged, so the
-  // claimed file is checked and put back if it is not the one judged.
-  const claimed = `${lockPath}.stale-${randomUUID()}`;
+  const recoveryPath = `${lockPath}.recovering`;
+  const recovery = await newLockRecord(environment);
+  if (!(await tryAcquire(recoveryPath, serializeRecord(recovery)))) {
+    await removeAbandonedRecoveryLock(recoveryPath, environment);
+    return;
+  }
   try {
-    await rename(lockPath, claimed);
+    await environment.afterRecoveryLockAcquired?.();
+    const current = await readLockRecord(lockPath);
+    if (
+      current?.token === judged.token &&
+      (await isProvablyAbandoned(current, environment))
+    ) {
+      await rm(lockPath, { force: true });
+    }
+  } finally {
+    await releaseLock(recoveryPath, recovery.token);
+  }
+}
+
+// Second-level removal, not serialized (see the header). The recovery lock is
+// moved aside, its token is checked and it is put back if it was replaced.
+async function removeAbandonedRecoveryLock(recoveryPath, environment) {
+  const judged = await readLockRecord(recoveryPath);
+  if (
+    judged === undefined ||
+    !(await isProvablyAbandoned(judged, environment))
+  ) {
+    return;
+  }
+
+  const claimed = `${recoveryPath}.stale-${randomUUID()}`;
+  try {
+    await rename(recoveryPath, claimed);
   } catch (error) {
     if (isErrno(error, 'ENOENT')) {
       return;
     }
     throw error;
   }
-  await environment.afterStaleClaimed?.();
   try {
     const taken = await readLockRecord(claimed);
     if (taken?.token !== judged.token) {
-      await restoreClaimedLock(claimed, lockPath);
+      try {
+        await link(claimed, recoveryPath);
+      } catch (error) {
+        if (!isErrno(error, 'EEXIST')) {
+          throw error;
+        }
+      }
     }
   } finally {
     await rm(claimed, { force: true });
-  }
-}
-
-async function restoreClaimedLock(claimed, lockPath) {
-  try {
-    await link(claimed, lockPath);
-  } catch (error) {
-    if (!isErrno(error, 'EEXIST')) {
-      throw error;
-    }
   }
 }
 

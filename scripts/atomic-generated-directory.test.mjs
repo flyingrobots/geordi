@@ -244,7 +244,7 @@ test('two writers that find the same abandoned lock both finish with one complet
   await assertNoLock(destination);
 });
 
-test('puts back a live lock that a rival installed after the abandoned one was judged stale', async () => {
+test('leaves a live lock alone that a rival installed after the abandoned one was judged stale', async () => {
   const destination = join(await scratchDirectory(), 'generated');
   await writeLock(destination, { pid: DEAD_PID });
   let rivalBytes;
@@ -268,7 +268,7 @@ test('releases only a lock that it still owns', async () => {
   await replaceGeneratedDirectory(destination, outputSet('new'), {
     lock: {
       ...liveEnvironment(),
-      afterAcquire: async () => {
+      afterPriorMoved: async () => {
         await rm(`${destination}.lock`);
         rivalBytes = await writeLock(destination, { pid: 888 });
       },
@@ -321,10 +321,10 @@ function lockRecord(overrides) {
   };
 }
 
-async function writeLock(destination, overrides) {
+async function writeLock(destination, overrides, suffix = '.lock') {
   await mkdir(dirname(destination), { recursive: true });
   const bytes = `${JSON.stringify(lockRecord(overrides))}\n`;
-  await writeFile(`${destination}.lock`, bytes, 'utf8');
+  await writeFile(`${destination}${suffix}`, bytes, 'utf8');
   return bytes;
 }
 
@@ -345,17 +345,15 @@ async function assertNoLock(destination) {
 
 test('a recoverer cannot let a newer publisher lose its output to an older one', async () => {
   // Interleaving: A judges lock L0 abandoned; B recovers it and takes the
-  // lock; A removes whatever is at the lock path; C takes the lock; B and C
-  // both publish, and B's rollback restores the older output over C's.
+  // lock; A, holding the recovery lock, looks at the lock path; C wants the
+  // lock too. A must leave B's lock alone, so B and C publish one after the
+  // other and C's output, published last, survives.
   const destination = join(await scratchDirectory(), 'generated');
   await replaceGeneratedDirectory(destination, outputSet('old'));
   await writeLock(destination, { pid: DEAD_PID });
   const bHolds = gate();
   const releaseB = gate();
-  const bMoved = gate();
-  const releaseBMove = gate();
-  const cHolds = gate();
-  const releaseC = gate();
+  const bFinished = gate();
   let bDone;
   let cDone;
 
@@ -368,20 +366,15 @@ test('a recoverer cannot let a newer publisher lose its output to an older one',
           bHolds.open();
           await releaseB.promise;
         },
-        afterPriorMoved: async () => {
-          bMoved.open();
-          await releaseBMove.promise;
-        },
       },
     });
   const writerC = () =>
     replaceGeneratedDirectory(destination, outputSet('C'), {
       lock: {
         ...liveEnvironment(),
-        ...fakeClock(),
-        afterAcquire: async () => {
-          cHolds.open();
-          await releaseC.promise;
+        now: () => 0,
+        sleep: async () => {
+          await bFinished.promise;
         },
       },
     });
@@ -394,28 +387,138 @@ test('a recoverer cannot let a newer publisher lose its output to an older one',
         bDone = settle(writerB());
         await bHolds.promise;
       },
-      afterStaleClaimed: async () => {
+      afterRecoveryLockAcquired: async () => {
         cDone = settle(writerC());
-        await cHolds.promise;
       },
     },
   });
   const aOutcome = await settle(writerA);
+  assert.equal(aOutcome.error?.name, 'GeneratedDirectoryLockTimeoutError');
+  assert.equal(
+    JSON.parse(await readFile(`${destination}.lock`, 'utf8')).pid,
+    process.pid,
+    "B's lock must still be in place",
+  );
 
   releaseB.open();
-  await bMoved.promise;
-  releaseC.open();
-  const cOutcome = await cDone;
-  releaseBMove.open();
   const bOutcome = await bDone;
+  bFinished.open();
+  const cOutcome = await cDone;
 
-  assert.equal(aOutcome.ok, false, 'A must not publish');
-  assert.equal(cOutcome.ok, true, 'C publishes and reports success');
+  assert.equal(bOutcome.ok, true, 'B publishes');
+  assert.equal(cOutcome.ok, true, 'C publishes after B');
+  assert.equal(await readFile(join(destination, 'a.json'), 'utf8'), 'C');
+  await assertNoLock(destination);
+});
+
+test('waits while a live recoverer holds the recovery lock', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
+  const lockBytes = await writeLock(destination, { pid: DEAD_PID });
+  const recoveryBytes = await writeLock(destination, {}, '.lock.recovering');
+
+  await assertLockTimeout(destination, liveEnvironment());
+
+  assert.equal(await readFile(`${destination}.lock`, 'utf8'), lockBytes);
   assert.equal(
-    await readFile(join(destination, 'a.json'), 'utf8'),
-    'C',
-    `C reported success, so its output must survive (B: ${bOutcome.ok ? 'ok' : bOutcome.error.name})`,
+    await readFile(`${destination}.lock.recovering`, 'utf8'),
+    recoveryBytes,
   );
+});
+
+test('removes a recovery lock abandoned by a crashed recoverer, then recovers the lock', async () => {
+  const root = await scratchDirectory();
+  const destination = join(root, 'generated');
+  await writeLock(destination, { pid: DEAD_PID });
+  await writeLock(destination, { pid: DEAD_PID }, '.lock.recovering');
+
+  await replaceGeneratedDirectory(destination, outputSet('new'), {
+    lock: liveEnvironment(),
+  });
+
+  assert.equal(await readFile(join(destination, 'a.json'), 'utf8'), 'new');
+  assert.deepEqual((await readdir(root)).toSorted(), ['generated']);
+});
+
+for (const [label, overrides, content] of [
+  ['another host owns it', { pid: DEAD_PID, hostname: 'some-other-host' }],
+  ['its record is malformed', undefined, 'not json at all'],
+]) {
+  test(`keeps a recovery lock when ${label}`, async () => {
+    const destination = join(await scratchDirectory(), 'generated');
+    await writeLock(destination, { pid: DEAD_PID });
+    let recoveryBytes = content;
+    if (content === undefined) {
+      recoveryBytes = await writeLock(
+        destination,
+        overrides,
+        '.lock.recovering',
+      );
+    } else {
+      await writeFile(`${destination}.lock.recovering`, content, 'utf8');
+    }
+
+    await assertLockTimeout(destination, liveEnvironment());
+
+    assert.equal(
+      await readFile(`${destination}.lock.recovering`, 'utf8'),
+      recoveryBytes,
+    );
+  });
+}
+
+test('aborts before publishing when the lock was lost, leaving the destination alone', async () => {
+  const root = await scratchDirectory();
+  const destination = join(root, 'generated');
+  await replaceGeneratedDirectory(destination, outputSet('old'));
+  let rivalBytes;
+
+  await assert.rejects(
+    replaceGeneratedDirectory(destination, outputSet('new'), {
+      lock: {
+        ...liveEnvironment(),
+        afterAcquire: async () => {
+          await rm(`${destination}.lock`);
+          rivalBytes = await writeLock(destination, { pid: 888 });
+        },
+      },
+    }),
+    (error) => error.name === 'GeneratedDirectoryLockLostError',
+  );
+
+  assert.equal(await readFile(join(destination, 'a.json'), 'utf8'), 'old');
+  assert.equal(await readFile(`${destination}.lock`, 'utf8'), rivalBytes);
+});
+
+test('does not restore a backup over the destination when the lock was lost before rollback', async () => {
+  const root = await scratchDirectory();
+  const destination = join(root, 'generated');
+  await replaceGeneratedDirectory(destination, outputSet('old'));
+  let rivalBytes;
+
+  await assert.rejects(
+    replaceGeneratedDirectory(destination, outputSet('new'), {
+      lock: {
+        ...liveEnvironment(),
+        afterPriorMoved: async () => {
+          // The lock is lost and the staged directory disappears, so the
+          // publish fails and a rollback would normally run.
+          await rm(`${destination}.lock`);
+          rivalBytes = await writeLock(destination, { pid: 888 });
+          const staged = (await readdir(root)).find((name) =>
+            name.startsWith('.generated.stage-'),
+          );
+          await rm(join(root, staged), { recursive: true });
+          // The rival publishes its own output in the meantime.
+          await mkdir(destination);
+          await writeFile(join(destination, 'a.json'), 'rival', 'utf8');
+        },
+      },
+    }),
+    (error) => error.name === 'GeneratedDirectoryLockLostError',
+  );
+
+  assert.equal(await readFile(join(destination, 'a.json'), 'utf8'), 'rival');
+  assert.equal(await readFile(`${destination}.lock`, 'utf8'), rivalBytes);
 });
 
 function gate() {
