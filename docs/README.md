@@ -47,6 +47,8 @@ that exists on `main`.
 - [Wesley common-type generation](./design/2026-05-wesley-common-type-generation.md)
 - [Research: Taffy layout on native hosts and wasm32](./design/2026-11-taffy-wasm32-determinism.md)
   (finding for [#136](https://github.com/flyingrobots/geordi/issues/136))
+- [Research: rustybuzz shaping on native hosts and wasm32](./design/2026-11-rustybuzz-wasm32-determinism.md)
+  (finding for [#137](https://github.com/flyingrobots/geordi/issues/137))
 
 The complete design-record index is
 [`design/README.md`](./design/README.md). Archive posture is tracked in

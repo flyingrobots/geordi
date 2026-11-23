@@ -11,8 +11,9 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "test": "turbo run test && pnpm test:profunctor-page-target:artifacts && pnpm test:profunctor-page-typecheck-gate && pnpm test:lint-rules && pnpm test:research:taffy-wasm32",
+    "test": "turbo run test && pnpm test:profunctor-page-target:artifacts && pnpm test:profunctor-page-typecheck-gate && pnpm test:lint-rules && pnpm test:research:taffy-wasm32 && pnpm test:research:rustybuzz-wasm32",
     "test:research:taffy-wasm32": "cargo fmt --check --manifest-path research/taffy-wasm32/Cargo.toml && cargo clippy --locked --manifest-path research/taffy-wasm32/Cargo.toml --all-targets -- -D warnings && cargo test --locked --manifest-path research/taffy-wasm32/Cargo.toml && node research/taffy-wasm32/run.mjs",
+    "test:research:rustybuzz-wasm32": "cargo fmt --check --manifest-path research/rustybuzz-wasm32/Cargo.toml && cargo clippy --locked --manifest-path research/rustybuzz-wasm32/Cargo.toml --all-targets -- -D warnings && cargo test --locked --manifest-path research/rustybuzz-wasm32/Cargo.toml && node research/rustybuzz-wasm32/run.mjs",
     "test:lint-rules": "node --test scripts/eslint-loop-allocation.test.mjs",
     "test:exports": "pnpm build && node scripts/smoke-package-exports.mjs && node scripts/smoke-bijou-gpu-packed-package.mjs",
     "test:docs": "node scripts/check-doc-hygiene.mjs && node --test scripts/bijou-gpu-procedural-glyphs.test.mjs scripts/rust-toolchain-pin.test.mjs scripts/core-artifact-literals.test.mjs",
