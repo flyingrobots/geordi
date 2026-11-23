@@ -81,7 +81,8 @@ describe('GpuSurfacePresenterFactory', () => {
       expect(presenter.getLastReceipt()).toBeNull();
       presenter.dispose();
       expect(presenter).toBeInstanceOf(FakePresenter);
-      expect((presenter as FakePresenter).calls).toEqual(['present:2x3', 'resize', 'dispose']);
+      const fake = presenter instanceof FakePresenter ? presenter : null;
+      expect(fake?.calls).toEqual(['present:2x3', 'resize', 'dispose']);
     }
   });
 
