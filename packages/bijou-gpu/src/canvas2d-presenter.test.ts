@@ -218,7 +218,7 @@ describe('Canvas 2D presenter bundled procedural table', () => {
   it('refuses a supplied table that is not the pinned one before it asks for a context', () => {
     const canvas = new RecordingCanvas(suite.canvasPxW, suite.canvasPxH);
     const boxGlyphs = Uint32Array.from(table.boxGlyphs);
-    boxGlyphs[3] = (boxGlyphs[3] ?? 0) ^ 4;
+    boxGlyphs[3] ^= 4;
     const create = (): Canvas2DSurfacePresenter =>
       createCanvas2DSurfacePresenter({ canvas, atlas: testGlyphPackAtlas(pack), proceduralTable: { ...table, boxGlyphs } });
     expect(create).toThrow(BijouGpuValidationError);

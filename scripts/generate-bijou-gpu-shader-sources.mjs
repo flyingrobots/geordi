@@ -1,7 +1,9 @@
 // Generates (or, with --check, verifies) the bundled shader-source modules of
 // @flyingrobots/geordi-bijou-gpu: TypeScript modules under
 // packages/bijou-gpu/src/generated/ that embed the exact bytes of the
-// checked-in shader artifacts and manifest in packages/bijou-gpu/shaders/.
+// checked-in shader artifacts and manifest in packages/bijou-gpu/shaders/, and
+// the procedural glyph table fixture; the byte-identical copy of the table in
+// packages/bijou-gpu/procedural/ is the file the package publishes.
 //
 //   node scripts/generate-bijou-gpu-shader-sources.mjs --check
 //   node scripts/generate-bijou-gpu-shader-sources.mjs --write

@@ -2,7 +2,6 @@ import { parseJsonValue, type JsonObject } from '@flyingrobots/geordi-core';
 
 import eraseFrameText from '../../../fixtures/bijou-gpu/width1-erase.packed-bijou-cells.json?raw';
 import paintFrameText from '../../../fixtures/bijou-gpu/width1-paint.packed-bijou-cells.json?raw';
-import proceduralTableText from '../../../fixtures/bijou-gpu/procedural-glyphs.json?raw';
 import suiteText from '../../../fixtures/bijou-gpu/width1-conformance-suite.json?raw';
 import {
   assertBitExactFrameHash,
@@ -12,7 +11,7 @@ import {
   createStaticAtlasSource,
   createTestGlyphPack,
   createWebGL2SurfacePresenter,
-  decodeProceduralGlyphTable,
+  loadBundledProceduralGlyphTable,
   FLAG_BG_SET,
   FLAG_BOLD,
   FLAG_DASHED,
@@ -77,7 +76,7 @@ function suiteSettings(): SuiteSettings {
 
 const settings = suiteSettings();
 const pack = createTestGlyphPack();
-const table = decodeProceduralGlyphTable(parseJsonValue(proceduralTableText));
+const table = loadBundledProceduralGlyphTable();
 const paintReceipt = parsePackedBijouCellsReceipt(parseJsonValue(paintFrameText));
 const eraseReceipt = parsePackedBijouCellsReceipt(parseJsonValue(eraseFrameText));
 const PAINT_SHA = sha256Hex(utf8Bytes(paintFrameText));

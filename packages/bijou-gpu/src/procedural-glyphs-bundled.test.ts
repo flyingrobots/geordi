@@ -54,7 +54,7 @@ describe('bundled procedural glyph table', () => {
       verifyProceduralGlyphTable(bundled);
     }).not.toThrow();
     const box = Uint32Array.from(bundled.boxGlyphs);
-    box[0] = (box[0] ?? 0) ^ 1;
+    box[0] ^= 1;
     expect(() => {
       verifyProceduralGlyphTable({ ...bundled, boxGlyphs: box });
     }).toThrow(/GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE at options\.proceduralTable\.boxGlyphs\[0\]/u);
