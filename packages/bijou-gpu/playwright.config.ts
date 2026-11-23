@@ -7,6 +7,11 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4174',
     channel: 'chrome',
+    // Lets Chrome expose a WebGPU adapter on hosts without a GPU (SwiftShader),
+    // so the WebGPU presenter probes can run there as software-probed evidence.
+    launchOptions: {
+      args: ['--enable-unsafe-webgpu', '--enable-unsafe-swiftshader'],
+    },
     viewport: {
       height: 900,
       width: 1280,
