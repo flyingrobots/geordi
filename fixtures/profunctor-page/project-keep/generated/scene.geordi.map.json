@@ -117,14 +117,14 @@
         {
           "activationResidual": "native-link-activation-unsupported",
           "href": "https://github.com/flyingrobots/keep#readme",
-          "id": "action:page-node:project.keep#project-page.hero:documentation:https://github.com/flyingrobots/keep#readme",
+          "id": "action:v1:page-node%3Aproject.keep#project-page.hero:documentation:https%3A//github.com/flyingrobots/keep#readme",
           "label": "Documentation",
           "role": "documentation"
         },
         {
           "activationResidual": "native-link-activation-unsupported",
           "href": "https://github.com/flyingrobots/keep",
-          "id": "action:page-node:project.keep#project-page.hero:source:https://github.com/flyingrobots/keep",
+          "id": "action:v1:page-node%3Aproject.keep#project-page.hero:source:https%3A//github.com/flyingrobots/keep",
           "label": "Source",
           "role": "source"
         }
@@ -221,7 +221,7 @@
         {
           "activationResidual": "native-link-activation-unsupported",
           "href": "https://github.com/flyingrobots/keep#readme",
-          "id": "action:page-node:project.keep#project-page.documentation:documentation:https://github.com/flyingrobots/keep#readme",
+          "id": "action:v1:page-node%3Aproject.keep#project-page.documentation:documentation:https%3A//github.com/flyingrobots/keep#readme",
           "label": "Documentation",
           "role": "documentation"
         }
@@ -265,21 +265,21 @@
         {
           "activationResidual": "native-link-activation-unsupported",
           "href": "/projects/bunny/",
-          "id": "action:page-node:project.keep#project-page.related:related-project:/projects/bunny/",
+          "id": "action:v1:page-node%3Aproject.keep#project-page.related:related-project:/projects/bunny/",
           "label": "Bunny",
           "role": "related-project"
         },
         {
           "activationResidual": "native-link-activation-unsupported",
           "href": "/projects/geordi/",
-          "id": "action:page-node:project.keep#project-page.related:related-project:/projects/geordi/",
+          "id": "action:v1:page-node%3Aproject.keep#project-page.related:related-project:/projects/geordi/",
           "label": "Geordi",
           "role": "related-project"
         },
         {
           "activationResidual": "native-link-activation-unsupported",
           "href": "/projects/nine-lives/",
-          "id": "action:page-node:project.keep#project-page.related:related-project:/projects/nine-lives/",
+          "id": "action:v1:page-node%3Aproject.keep#project-page.related:related-project:/projects/nine-lives/",
           "label": "Nine Lives",
           "role": "related-project"
         }
