@@ -11,6 +11,12 @@ const TARGETS = [
   { label: 'ts', filePath: resolve(REPO_ROOT, 'packages/core/src/index.ts') },
 ];
 
+// These cases lint in-memory snippets under the path of a real TypeScript file. When `CI` is set,
+// typescript-eslint infers "single-run" mode and builds its first program for a path from the file
+// on disk, not from the text it is given, so the first snippet for that path is never linted. Turn
+// the inference off so the snippet is what gets linted, here and in CI alike.
+process.env.TSESTREE_SINGLE_RUN = 'false';
+
 const eslint = new ESLint({ cwd: REPO_ROOT });
 
 async function loopAllocationFindings(code, filePath) {
