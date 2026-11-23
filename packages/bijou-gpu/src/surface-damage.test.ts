@@ -1192,5 +1192,6 @@ describe('packSurfaceDamage fuzz against the brute-force full-grid packer', () =
     expect(seen.erasures).toBeGreaterThan(1000);
     expect(seen.forced).toBeGreaterThan(5);
     expect(seen.resets).toBeGreaterThan(10);
-  });
+    // 1,000 seeded frame pairs take about 5 s on a hosted CI runner, at vitest's default timeout.
+  }, 30_000);
 });
