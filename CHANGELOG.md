@@ -67,6 +67,12 @@
 
 ### Bug Fixes
 
+- Contract gate: a base tree read from git kept none of its encoder crate, so the gate failed
+  with `GEORDI_E_CONTRACT_GATE_INTERNAL` whenever the base's crate differed from the head's
+  (any pull request changing `crates/geordi-ir`), and in any fresh checkout run with
+  `--base <ref> --head <ref>`. The copy skipped every path with a `target` component, and a
+  git base is extracted under `target/`. It now skips build output inside the crate only, and
+  rebuilds a cached copy that has no manifest (flyingrobots/geordi#225).
 - **Ray-traced scene profile follow-ups** (flyingrobots/geordi#167; `geordi-ir`,
   `examples/native-render-everywhere`, `docs/ray-traced-scene-profile.md`,
   `docs/design/2026-11-fixed-point-and-ray-traced-scene-profiles.md`). No canonical byte changed and no

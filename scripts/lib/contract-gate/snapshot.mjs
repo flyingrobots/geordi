@@ -236,7 +236,7 @@ function digestDirectory(root, rel, hash) {
 }
 
 /** A content-addressed copy of the encoder crate with the tree's root manifest and lock. */
-function copyCrate(tree, crate, cacheRoot) {
+export function copyCrate(tree, crate, cacheRoot) {
   if (tree.bytes(`${crate}/Cargo.toml`) === null) {
     throw snapshotError(`${tree.description}: encoder crate ${crate} has no Cargo.toml`, [`${crate}/Cargo.toml`]);
   }
@@ -250,7 +250,9 @@ function copyCrate(tree, crate, cacheRoot) {
   digestDirectory(tree.dir, crate, hash);
   const digest = hash.digest('hex');
   const dir = join(cacheRoot, 'crates', digest);
-  if (!existsSync(join(dir, '.contract-gate-complete'))) {
+  // A copy without its manifest is not complete, whatever its marker says: copies made before
+  // the crate filter was fixed (flyingrobots/geordi#225) were empty.
+  if (!existsSync(join(dir, '.contract-gate-complete')) || !existsSync(join(dir, ...crate.split('/'), 'Cargo.toml'))) {
     const staging = `${dir}.${String(process.pid)}.partial`;
     rmSync(staging, { recursive: true, force: true });
     mkdirSync(staging, { recursive: true });
@@ -260,9 +262,12 @@ function copyCrate(tree, crate, cacheRoot) {
         writeFileSync(join(staging, root), bytes);
       }
     }
-    cpSync(tree.absolute(crate), join(staging, ...crate.split('/')), {
+    // Skip build output inside the crate. The test is relative to the crate: a git base is
+    // extracted under target/contract-gate/trees/, so every absolute path of it contains `target`.
+    const crateRoot = tree.absolute(crate);
+    cpSync(crateRoot, join(staging, ...crate.split('/')), {
       recursive: true,
-      filter: (source) => !source.split(sep).includes('target'),
+      filter: (source) => !relative(crateRoot, source).split(sep).includes('target'),
     });
     writeFileSync(join(staging, '.contract-gate-complete'), `${digest}\n`);
     rmSync(dir, { recursive: true, force: true });
