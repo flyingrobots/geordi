@@ -1,0 +1,584 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-research-taffy-wasm32/messages.schema.json",
+  "title": "Taffy wasm32 determinism experiment messages",
+  "description": "Every JSON line written by research/taffy-wasm32 (run.mjs and the native binary), version 1.0.0. Each line carries its _schema id and version.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/help"
+    },
+    {
+      "$ref": "#/$defs/dump"
+    },
+    {
+      "$ref": "#/$defs/host"
+    },
+    {
+      "$ref": "#/$defs/variant"
+    },
+    {
+      "$ref": "#/$defs/refusal"
+    },
+    {
+      "$ref": "#/$defs/mismatch"
+    },
+    {
+      "$ref": "#/$defs/tree-dump"
+    },
+    {
+      "$ref": "#/$defs/golden"
+    },
+    {
+      "$ref": "#/$defs/summary"
+    },
+    {
+      "$ref": "#/$defs/error"
+    }
+  ],
+  "$defs": {
+    "help": {
+      "description": "What run.mjs does (from --help).",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "command",
+        "description",
+        "emits",
+        "schemas"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.taffy_wasm32.help"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "help"
+        },
+        "command": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "emits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "schemas": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dump": {
+      "description": "The native binary's only line: the whole TFY1 byte stream as lowercase hex.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "bytes"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.taffy_wasm32.dump"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "dump"
+        },
+        "bytes": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{2})*$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "host": {
+      "description": "The machine and toolchain that produced this run.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "platform",
+        "osRelease",
+        "arch",
+        "cpu",
+        "node",
+        "ci",
+        "taffy",
+        "rustc",
+        "host",
+        "llvm",
+        "wasm32Std"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.taffy_wasm32.host"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "host"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "osRelease": {
+          "type": "string"
+        },
+        "arch": {
+          "type": "string"
+        },
+        "cpu": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "node": {
+          "type": "string"
+        },
+        "ci": {
+          "type": "boolean"
+        },
+        "taffy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rustc": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "llvm": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "wasm32Std": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "variant": {
+      "description": "One build that ran, with the hash of its byte stream.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "variant",
+        "target",
+        "profile",
+        "rustflags",
+        "engine",
+        "treeCount",
+        "failedTrees",
+        "nodeCount",
+        "valueCount",
+        "streamSha256",
+        "nanWords",
+        "negativeZeroWords",
+        "subnormalWords"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.taffy_wasm32.variant"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "variant"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "profile": {
+          "type": "string"
+        },
+        "rustflags": {
+          "type": "string"
+        },
+        "engine": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "treeCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failedTrees": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "nodeCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "valueCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "streamSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "nanWords": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "negativeZeroWords": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "subnormalWords": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "refusal": {
+      "description": "A variant this machine could not build or run. Fatal under CI=true.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "variant",
+        "reason"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.taffy_wasm32.refusal"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "refusal"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "mismatch": {
+      "description": "A tree whose output differs from the native release build of this run.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "against",
+        "variant",
+        "tree",
+        "differingWords",
+        "fields"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.taffy_wasm32.mismatch"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "mismatch"
+        },
+        "against": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "tree": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "differingWords": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "tree-dump": {
+      "description": "The bytes of a tree that differs from golden.json (at most three per variant), as lowercase hex, to diff against a run on the golden host.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "variant",
+        "tree",
+        "bytes"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.taffy_wasm32.tree-dump"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "tree-dump"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "tree": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bytes": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{2})*$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "golden": {
+      "description": "golden.json written, or one variant compared with it.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "action"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.taffy_wasm32.golden"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "golden"
+        },
+        "action": {
+          "enum": [
+            "written",
+            "compared"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "streamSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "against": {
+          "type": "string"
+        },
+        "matches": {
+          "type": "boolean"
+        },
+        "differingTrees": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "summary": {
+      "description": "The last line of a run that did not error.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "ok",
+        "comparedVariants",
+        "referenceStreamSha256"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.taffy_wasm32.summary"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "summary"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "comparedVariants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "referenceStreamSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "description": "An unexpected failure; the run stops.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "code",
+        "message"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.taffy_wasm32.error"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "error"
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
