@@ -126,7 +126,8 @@ This calls the kit's shared `cellFromPoint(geometry, rect, clientX, clientY)` wi
 
 ## Receipt
 
-`getLastReceipt()` returns `null` before the first frame and after `dispose()`. Otherwise it
+`getLastReceipt()` returns `null` before the first frame, after a `present()` that threw, and
+after `dispose()`. Otherwise it
 reads the canvas back with `getImageData(0, 0, canvasPxW, canvasPxH)`. That gives the canonical
 tight top-left row-major RGBA8 frame, hashed into `frameRgbaSha256`. The digests are computed on
 the first call after a present and cached until the next present. The receipt is built through

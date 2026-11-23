@@ -70,7 +70,7 @@ defaults and canvas size. "The goldens" are the frame digests in
 | BG-C2D-23 | Host resize ingress | Non-finite, non-positive and non-integer inputs refused | `rejects non-finite or non-positive host resize input` |
 | BG-C2D-24 | Atlas reset | One whole-canvas blit; oracle on the new generation's bytes | `redraws the whole grid after an atlas reset, bit-exactly against the new atlas bytes` |
 | BG-C2D-25 | Context restoration | One whole-canvas blit from the retained frame without a present | `repaints the retained frame when a lost 2D context is restored, without a new present` |
-| BG-C2D-26 | Grid larger than the canvas | Refused; full redraw after the canvas grows | `refuses a grid larger than the canvas and redraws fully once it fits` |
+| BG-C2D-26 | Grid larger than the canvas | Refused; the previous receipt is dropped; full redraw after the canvas grows | `refuses a grid larger than the canvas, drops the last receipt, and redraws fully once it fits` |
 
 ## Fuzz and stress
 

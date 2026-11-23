@@ -548,12 +548,17 @@ describe('Canvas 2D presenter edges', () => {
     assertBitExactFrameHash(receiptOf(presenter), rendered.paint);
   });
 
-  it('refuses a grid larger than the canvas and redraws fully once it fits', () => {
+  it('refuses a grid larger than the canvas, drops the last receipt, and redraws fully once it fits', () => {
     const { canvas, presenter } = rig({ canvasPxW: 16, canvasPxH: 16 });
+    const narrow = BLANK(2, 1).paint(0, 0, { glyph: 'A' });
+    presenter.present(BLANK(2, 1), narrow, {});
+    expect(presenter.getLastReceipt()).not.toBeNull();
     const wide = BLANK(3, 1).paint(2, 0, { glyph: 'A' });
     expect(() => {
-      presenter.present(BLANK(3, 1), wide, {});
+      presenter.present(narrow, wide, {});
     }).toThrow(BijouGpuValidationError);
+    // A receipt must never describe a frame that was not presented.
+    expect(presenter.getLastReceipt()).toBeNull();
     presenter.resize({ cssWidth: 24, cssHeight: 16, dpr: 1 });
     canvas.takeCalls();
     presenter.present(wide, wide.clone(), {});
