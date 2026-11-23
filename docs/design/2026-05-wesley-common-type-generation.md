@@ -1,6 +1,7 @@
 # Wesley Common Type Generation
 
-**Status**: Drift correction
+**Status**: Drift correction. Blocked on Wesley as of 2026-11-23: see
+[Prerequisite Check](#prerequisite-check-2026-11-23).
 **Date**: 2026-05-25
 **Applies to**: shared Geordi contract DTOs used by TypeScript and Rust
 
@@ -185,6 +186,42 @@ Recommended migration sequence:
 5. Move handwritten validation functions to accept generated DTOs.
 6. Add stale-generation CI.
 7. Remove duplicated handwritten DTO definitions.
+
+## Prerequisite Check, 2026-11-23
+
+flyingrobots/geordi#69 starts the migration with one family, the font-pack manifest DTOs, and
+requires first that Wesley can emit them. It cannot yet, so step 1 of the sequence above has not
+started. The check is recorded on that issue.
+
+What exists in Geordi:
+
+- Geordi has no Wesley dependency. Neither `pnpm-lock.yaml` nor `Cargo.lock` resolves one.
+- `packages/wesley-generator/src/GeordiGeneratorPlugin.ts` has its `@wesley/core` import commented
+  out and uses local stand-in interfaces.
+- The root `wesley` script calls a `wesley` binary that the repository does not install.
+- The `@geordi_common` extension point in [Wesley Extension Shape](#wesley-extension-shape) does not
+  exist. Its request, flyingrobots/wesley#676, is open.
+
+What the latest Wesley release, `v0.3.0-alpha.4`, emits for a schema of the four font-pack types,
+from a trial of `wesley emit rust` and `wesley emit typescript` recorded on flyingrobots/geordi#69:
+
+| Needed for a drop-in replacement | Wesley `v0.3.0-alpha.4` | Tracked in Wesley |
+| --- | --- | --- |
+| Rust structs that reject unknown fields | Accepts and drops them | flyingrobots/wesley#855 |
+| `u32` for `faceIndex` and `weight` | `Int` is `i32`; a custom scalar is `String` in Rust and `unknown` in TypeScript | flyingrobots/wesley#851 |
+| TypeScript fields fixed to one string value | Plain `string` | flyingrobots/wesley#853 |
+| Rust `Eq` on the structs | Not derived; `Serialize` is added | Not tracked |
+| A doc comment on every item and field | None, so the output fails this workspace's missing-docs lint | Not tracked |
+| A different type name in each language | One name, taken from the schema | Not tracked |
+| TypeScript `readonly` fields and arrays | Mutable fields and plain arrays | Not tracked |
+
+The generated Rust parsed the checked-in font-pack fixture. It also accepted a manifest with an
+unknown top-level field and one with `weight: -400`, both of which the handwritten types reject. A
+generated replacement today would therefore loosen validation, change public Rust items and rename
+the TypeScript exports.
+
+Until those gaps close, the handwritten DTOs stay, and the rule in
+[Impact On Current Slices](#impact-on-current-slices) still applies: add no new mirrored DTO shape.
 
 ## Impact On Current Slices
 
