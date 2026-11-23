@@ -1,0 +1,11 @@
+{
+  "$schema": "../../schemas/geordi-contract-registry/change-record.schema.json",
+  "contract": "geordi.contract_registry.change_record/1",
+  "change": "breaking",
+  "summary": "A change record's `contract` may also name a published package's TypeScript API contract, `@scope/name/MAJOR`, where MAJOR may be 0. Every key that matched before still matches. Schema version 1.1.0.",
+  "why": "Package contracts are keyed by the npm package name and its major version (flyingrobots/geordi#219). The gate cannot tell whether a changed pattern widens or narrows, so it reports the change as unknown and treats it as breaking; this pattern only widens.",
+  "references": [
+    "flyingrobots/geordi#219",
+    "flyingrobots/geordi#217"
+  ]
+}

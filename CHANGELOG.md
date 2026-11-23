@@ -36,9 +36,22 @@
   to a `frozen` one needs a version raise. The gate fails closed. Its output is JSON Lines with
   schemas in `schemas/geordi-contract-gate/`, and it is replayed against flyingrobots/geordi#212 in
   `scripts/contract-gate-replay-212.test.mjs`. The registry records every contract as `draft`,
-  because no contract is documented as frozen. Not covered yet: TypeScript APIs, and the contracts
-  listed as `ungated`. The change record for flyingrobots/geordi#212 is retroactive.
-  (flyingrobots/geordi#217)
+  because no contract is documented as frozen. Not covered yet: the contracts listed as `ungated`.
+  The change record for flyingrobots/geordi#212 is retroactive. (flyingrobots/geordi#217)
+- **Contract gate: the public TypeScript API of published packages** (`scripts/lib/contract-gate/typescript-api.mjs`,
+  `typescriptPackages` in `contracts/registry.json`, `docs/contract-gate.md`). Each package under
+  `packages/` that is not `private` is a contract, `<package name>/<major>` (for example
+  `@flyingrobots/geordi-core/0`), compared by the `typescript-api` surface. The TypeScript compiler's
+  type checker reads each `exports` entry point from the tree's own source: export names and kinds,
+  type-only exports, call and construct signatures with inferred types, and the members of interfaces,
+  classes and object types. Workspace imports resolve to the same tree's sources, so the base is
+  never read through the head's code; third-party types come from the dependencies already installed,
+  with no network access. A removed or renamed export, a changed signature or a re-typed member is
+  breaking; a new export, overload or optional member is additive. In CI the gate now runs after
+  `pnpm install`. The gate's `difference` and `coverage` messages are now version 1.1.0, and every
+  message carries its own schema's version. Also fixed: the gate failed with
+  `GEORDI_E_CONTRACT_GATE_INTERNAL` when it had to build an encoder crate from a git base, because
+  the crate copy skipped every path under `target/`. (flyingrobots/geordi#219)
 - **JSON Schema for `geordi-ray-traced-scene/1`** (`schemas/geordi-ray-traced-scene/1/scene.schema.json`).
   Every positive fixture validates against it and every shape-stage failure fixture does not. It
   is not the whole validator: `docs/ray-traced-scene-profile.md` lists the rules it cannot express.

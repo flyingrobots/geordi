@@ -748,8 +748,8 @@ stderr. The gate is described in [`contract-gate.md`](./contract-gate.md).
 ### `GEORDI_E_CONTRACT_GATE_SNAPSHOT`
 
 **Severity**: Error
-**Message**: A contract surface cannot be computed on one of the trees: a file is missing or unreadable, an encoder or the Rust snapshot failed
-**Fix**: Restore the file named in `paths`, or fix the encoder crate or Rust source so it builds and parses. An encoder is `fn(&str) -> Result<String, E: Debug>`.
+**Message**: A contract surface cannot be computed on one of the trees: a file is missing or unreadable, an encoder, the Rust snapshot or the TypeScript snapshot failed (a module that does not resolve within the tree or to an installed dependency, an entry point with no source, or a compiler error)
+**Fix**: Restore the file named in `paths`, or fix the encoder crate or Rust source so it builds and parses. An encoder is `fn(&str) -> Result<String, E: Debug>`. For the TypeScript snapshot, run `pnpm install --frozen-lockfile` first, fix the compiler error the message names, and import workspace packages by their package name.
 
 ### `GEORDI_E_CONTRACT_GATE_FAILED`
 

@@ -3,7 +3,8 @@
 **Command**: `node scripts/contract-gate.mjs` (`pnpm contracts:check`)
 **Registry**: [`contracts/registry.json`](../contracts/registry.json)
 **Change records**: [`contracts/changes/`](../contracts/changes/)
-**Issue**: [flyingrobots/geordi#217](https://github.com/flyingrobots/geordi/issues/217)
+**Issues**: [flyingrobots/geordi#217](https://github.com/flyingrobots/geordi/issues/217),
+[flyingrobots/geordi#219](https://github.com/flyingrobots/geordi/issues/219) (the TypeScript surface)
 **Test plan**: [`contract-gate-test-plan.md`](./contract-gate-test-plan.md)
 
 The contract gate compares the public contracts of a pull request with those of its base. Each
@@ -17,7 +18,7 @@ change to be declared.
 
 `contracts/registry.json` (schema:
 [`schemas/geordi-contract-registry/registry.schema.json`](../schemas/geordi-contract-registry/registry.schema.json))
-lists three kinds of entry:
+lists four kinds of entry:
 
 - **`contracts`**: a serialized contract that the gate compares. An entry has:
   - an identifier and major version, written `name/N`;
@@ -28,6 +29,13 @@ lists three kinds of entry:
   - optionally, the Rust source files that carry its public API.
 - **`messageSchemaFamilies`**: a directory of CLI message schemas. Each `*.schema.json` in the
   directory is one contract, `<x-schema-id>/<major of x-schema-version>`, compared by its schema.
+- **`typescriptPackages`**: the published TypeScript packages. Each `packages/*/package.json`
+  without `"private": true` is one contract, `<package name>/<major version>`, such as
+  `@flyingrobots/geordi-core/0`, compared by its public TypeScript API. The member's status is
+  `draft` and applies to every package; the schema allows nothing else, because no version model
+  for freezing a package API exists yet (flyingrobots/geordi#224). Marking a package `private`, renaming it, raising its major
+  version or removing the member removes the contract, which needs a change record like any other
+  removal.
 - **`ungated`**: a public contract the gate does not compare yet, with its documented status and
   the reason. The gate prints these entries as `coverage` lines with `gated: false`, so the gap
   shows in every run.
@@ -78,6 +86,7 @@ Each surface is computed from source, never read from a stored snapshot.
 | `example` | Each example document hashed by its encoder. `rust-fn`: the named Rust function, built from that tree's own crate. `sha256-bytes`: SHA-256 of the file bytes | A changed, added or removed hash |
 | `diagnostic` | Codes with the entry's prefix: the catalog's level-three headings that name a code in backticks (with their `Severity` and `Message` lines), and the values of `pub const` `&str` items in the source files | An added or removed code, or a changed severity or documented message |
 | `rust-api` | Public items of the listed Rust files, parsed with `syn` by [`crates/geordi-contract-api`](../crates/geordi-contract-api/src/lib.rs). `select: "reexports"` keeps only the `pub use` items from one module | An added, removed or changed item |
+| `typescript-api` | The exports of each entry point of a published package, read by the TypeScript compiler's type checker from the tree's own sources by [`typescript-api.mjs`](../scripts/lib/contract-gate/typescript-api.mjs). See [The TypeScript surface](#the-typescript-surface) | An added, removed or changed entry point, export, signature or member |
 
 On the head, the gate also checks two things:
 
@@ -125,6 +134,92 @@ It does not see:
 - files reached only through `mod name;`, so list each file;
 - blanket and auto-trait implementations (`Send`, `Sync`);
 - whether a public signature names a private type.
+
+## The TypeScript surface
+
+### Entry points
+
+A package's entry points are the subpaths of its `package.json` `exports`, or `.` from `types` and
+`main` when it has no `exports`. An entry point whose `types` (or, without one, its JavaScript
+target) is a file under the package's `outDir` maps back to the source under its `rootDir`, read
+from the package's own `tsconfig.json`: `./dist/node.d.ts` is `src/node.ts`. Any other entry point,
+such as `./shaders/*` or a JSON file, is recorded by its target string. An entry point that names
+a declaration file with no source fails the snapshot.
+
+Each source is compiled with the first tsconfig that includes it: `tsconfig.json`, then the files
+the package's `build` script passes to `tsc -p`, in order. That is how
+`@flyingrobots/geordi-bijou-gpu/shader-source/node` is read with `tsconfig.node.json`. Options
+that only steer emit, or that would redirect resolution (`paths`, `baseUrl`, `rootDirs`), are
+dropped.
+
+### Resolving the base to its own sources
+
+The base tree is extracted from git into `target/contract-gate/trees/<sha>/`. It has no
+`node_modules` and no built `dist/`, and its packages may differ from the head's. The gate
+resolves imports itself:
+
+- An import of a workspace package, by name or subpath, resolves to that package's source in the
+  same tree, through that tree's own `exports`. The base's `@flyingrobots/geordi-bijou-gpu` sees the
+  base's `@flyingrobots/geordi-core`, never the head's and never a `dist/`.
+- Every other bare import (a third-party package, `@types/node`, `vitest/globals`) resolves from
+  the dependencies installed for the repository running the gate. The import is resolved as if from
+  the same package directory there, or from the repository root for a package the install does not
+  have. There is no network access and no second install. The TypeScript compiler is the installed
+  one.
+- A bare import whose installed name links outside `node_modules` fails the snapshot. Such a link
+  is a workspace symlink, and following it would compare against the head's sources.
+
+Any compiler error in a package's program fails the snapshot. An unresolved import would
+otherwise turn every type that depends on it into `any`. Both trees are read by the same code.
+
+### What is compared
+
+For each export of an entry point, the gate compares:
+
+- its name, under the entry point (`compile`, or `./shader-source/node:createFileShaderSource`);
+- its kind (`function`, `class`, `interface`, `type`, `const`, `enum`, `namespace`, or several
+  for a merged declaration);
+- whether it is type-only, which means a value that the entry point lets consumers use only as a
+  type. This covers `export type { X }` and `export type * from`. The gate decides it by asking the
+  compiler whether the value can be used, through a probe file beside the entry source;
+- the call signatures of a function, in order, and the construct signatures of a class;
+- the type parameters of an interface, class or type alias;
+- the members of an interface, a class (instance and static, inherited ones included) or an
+  object type alias: name, optional, `readonly`, `protected`, method or property, and type.
+  Private members are skipped;
+- the type of a constant or variable, and the text of any other type alias;
+- the members of an enum and their values.
+
+Types are printed by the compiler, with inferred types written out, so a return type that changes
+without its declaration text changing is seen. Parameter names are left out of signatures, because
+renaming a parameter breaks no caller. Union members are sorted, because the checker orders them
+by the order it created each type.
+
+| Difference | Classification |
+| --- | --- |
+| An entry point, export or member removed (a rename is a removal and an addition) | breaking |
+| An export's kind changed, or it became type-only | breaking |
+| A signature changed, or an overload removed or changed | breaking |
+| Type parameters, a constant's type or a type alias's text changed | breaking |
+| A member's type, optionality, `readonly` or `protected` changed | breaking |
+| A required member added to an interface or object type | breaking |
+| An entry point, export or overload added | additive |
+| An optional member added, or any member added to a class | additive |
+| A type-only export that can now be used as a value | additive |
+| An enum member added | unknown, treated as breaking |
+| A non-TypeScript entry point that now names a different target | unknown, treated as breaking |
+| A signature added to an item that had none | unknown, treated as breaking |
+
+The surface does not see:
+
+- behaviour. A function whose signature is unchanged may still do something else;
+- two spellings of one type. An alias and its expansion print differently, and a parameter type
+  widened is reported as changed (breaking), like one narrowed;
+- a change in a third-party dependency. Both trees use the head's installed dependencies, so an
+  upgrade is seen only where it changes a type the package prints;
+- deep imports into `dist/` or `src/`, which are not public API;
+- declaration-emit details that the checker's view does not carry, such as JSDoc and parameter
+  names.
 
 ## Classification
 
@@ -256,11 +351,17 @@ node scripts/contract-gate.mjs --help         # what it does, then every output 
 node scripts/contract-gate.mjs --schema       # every message schema; exits 0
 ```
 
-The first run compiles `crates/geordi-contract-api` and the encoder harness. Later runs reuse
-`target/`.
+Run `pnpm install --frozen-lockfile` first: the TypeScript surface needs the installed TypeScript
+compiler and third-party types. Without them it fails with `GEORDI_E_CONTRACT_GATE_SNAPSHOT`. In CI
+the gate step runs after the install. The first run compiles `crates/geordi-contract-api` and the
+encoder harness. Later runs reuse `target/`. Measured locally with a warm `target/`, the ten packages
+here take the gate from about 1.0 seconds to about 3.8 seconds when both trees list
+`typescriptPackages`.
 
-Output is JSON Lines on stdout and stderr. Every line carries `_schema` (an id and version from
-[`schemas/geordi-contract-gate/`](../schemas/geordi-contract-gate/)) and `kind`. The lines come
+Output is JSON Lines on stdout and stderr. Every line carries `_schema` and `kind`. `_schema` is
+an id and the version of that message type's own schema in
+[`schemas/geordi-contract-gate/`](../schemas/geordi-contract-gate/) (`x-schema-version`). Each
+message type is versioned separately. The lines come
 in this order:
 
 1. one `comparison`;
@@ -295,9 +396,6 @@ error GEORDI_E_CONTRACT_GATE_FAILED: 1 contract violation(s); see the violation 
 
 ## What it does not cover
 
-- **TypeScript APIs.** No published package's TypeScript API is compared yet. The tool would
-  normalise and diff `tsc --declaration` output for each tree, but the base tree's workspace
-  dependencies would have to resolve to the base's own sources. That is not built.
 - **Ungated contracts.** The `ungated` entries in the registry have no JSON Schema yet, and
   several are TypeScript-side. Among them are `bijou-surface-gpu/1`, `geordi-bijou-gpu-receipt/1`
   and `geordi-ir/1`. `bijou-surface-gpu/1` is recorded as `draft`, but its design record says both

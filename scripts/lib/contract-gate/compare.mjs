@@ -329,16 +329,140 @@ function diffRust(base, head, out) {
   }
 }
 
+// ---------------------------------------------------------------------------------------------
+// TypeScript API of a published package
+// ---------------------------------------------------------------------------------------------
+
+function tsDifference(item, change, classification, detail, before = null, after = null) {
+  return difference('typescript-api', item, change, classification, detail, before, after);
+}
+
+/** The kind of an export, and whether it is type-only: `class`, `class, type only`. */
+function exportHeadline(item) {
+  return `${item.kind}${item.typeOnly ? ', type only' : ''}`;
+}
+
+/** An export in one line, for an added or removed export: its kind and, where it has one, its type. */
+function exportSummary(item) {
+  return item.text === null ? exportHeadline(item) : `${exportHeadline(item)} ${item.text}`;
+}
+
+function diffEntries(base, head, out) {
+  for (const subpath of [...new Set([...base.keys(), ...head.keys()])].sort()) {
+    const b = base.get(subpath);
+    const a = head.get(subpath);
+    const item = `entry ${subpath}`;
+    if (a === undefined) {
+      out.push(tsDifference(item, 'removed', 'breaking', 'a package.json export was removed: imports of this subpath no longer resolve', b.target, null));
+    } else if (b === undefined) {
+      out.push(tsDifference(item, 'added', 'additive', 'a package.json export was added', null, a.target));
+    } else if (b.target !== a.target) {
+      out.push(tsDifference(item, 'changed', 'unknown', 'a package.json export now names a different kind of target or file; what it serves may have changed', b.target, a.target));
+    }
+  }
+}
+
+/** Overloads: one signature on each side that differs is a changed signature; otherwise a set difference. */
+function diffSignatures(item, before, after, out, what) {
+  if (before.length === 1 && after.length === 1) {
+    if (before[0] !== after[0]) {
+      out.push(tsDifference(item, 'changed', 'breaking', `the ${what} changed`, before[0], after[0]));
+    }
+    return;
+  }
+  for (const signature of before.filter((entry) => !after.includes(entry))) {
+    out.push(tsDifference(item, 'removed', 'breaking', after.length === 0 ? `the ${what} was removed` : `an overload of the ${what} was removed or changed: calls that matched it may no longer compile`, signature, null));
+  }
+  for (const signature of after.filter((entry) => !before.includes(entry))) {
+    out.push(
+      before.length === 0
+        ? tsDifference(item, 'added', 'unknown', `a ${what} was added to an item that had none`, null, signature)
+        : tsDifference(item, 'added', 'additive', `an overload of the ${what} was added`, null, signature),
+    );
+  }
+}
+
+function addedMember(item, member) {
+  if (member.owner === 'enum') {
+    return tsDifference(item, 'added', 'unknown', 'a member was added to an exported enum: exhaustive switches over it may no longer compile', null, member.text);
+  }
+  if (member.owner === 'class' || member.optional) {
+    return tsDifference(item, 'added', 'additive', member.optional ? 'an optional member was added' : 'a member was added to an exported class', null, member.text);
+  }
+  return tsDifference(item, 'added', 'breaking', `a required member was added to an exported ${member.owner}: object literals and implementations of it no longer compile`, null, member.text);
+}
+
+function diffMembers(prefix, before, after, out) {
+  for (const name of [...new Set([...before.keys(), ...after.keys()])].sort()) {
+    const b = before.get(name);
+    const a = after.get(name);
+    const item = `${prefix}.${name}`;
+    if (a === undefined) {
+      out.push(tsDifference(item, 'removed', 'breaking', 'a public member was removed or renamed', b.text, null));
+    } else if (b === undefined) {
+      out.push(addedMember(item, a));
+    } else if (b.text !== a.text) {
+      out.push(tsDifference(item, 'changed', 'breaking', 'the type, optionality or modifiers of a public member changed', b.text, a.text));
+    }
+  }
+}
+
+function diffExport(key, b, a, out) {
+  if (b.kind !== a.kind) {
+    out.push(tsDifference(`export ${key}`, 'changed', 'breaking', 'the kind of an export changed', exportHeadline(b), exportHeadline(a)));
+    return;
+  }
+  if (b.typeOnly !== a.typeOnly) {
+    out.push(
+      a.typeOnly
+        ? tsDifference(`export ${key}`, 'changed', 'breaking', 'the export is now type-only: it can no longer be used as a value', exportHeadline(b), exportHeadline(a))
+        : tsDifference(`export ${key}`, 'changed', 'additive', 'the export can now be used as a value, not only as a type', exportHeadline(b), exportHeadline(a)),
+    );
+  }
+  if (b.typeParameters !== a.typeParameters) {
+    out.push(tsDifference(`type-parameters ${key}`, 'changed', 'breaking', 'the type parameters of an export changed', b.typeParameters || null, a.typeParameters || null));
+  }
+  if (b.text !== a.text) {
+    out.push(tsDifference(`export ${key}`, 'changed', 'breaking', 'the type of an export changed', exportSummary(b), exportSummary(a)));
+  }
+  diffSignatures(`signature ${key}`, b.calls, a.calls, out, 'call signature');
+  diffSignatures(`constructor ${key}`, b.constructs, a.constructs, out, 'construct signature');
+  diffMembers(`member ${key}`, b.members, a.members, out);
+  diffMembers(`static ${key}`, b.statics, a.statics, out);
+}
+
+function diffTypescript(base, head, out) {
+  diffEntries(base?.entries ?? new Map(), head?.entries ?? new Map(), out);
+  const before = base?.exports ?? new Map();
+  const after = head?.exports ?? new Map();
+  for (const key of [...new Set([...before.keys(), ...after.keys()])].sort()) {
+    const b = before.get(key);
+    const a = after.get(key);
+    if (a === undefined) {
+      out.push(tsDifference(`export ${key}`, 'removed', 'breaking', 'a public export was removed or renamed', exportSummary(b), null));
+    } else if (b === undefined) {
+      out.push(tsDifference(`export ${key}`, 'added', 'additive', 'a public export was added', null, exportSummary(a)));
+    } else {
+      diffExport(key, b, a, out);
+    }
+  }
+}
+
 function surfaceDifferences(base, head) {
   const out = [];
-  const unevaluated = [base.schema.document, head.schema.document].some((document) => canonicalJson(document).includes('"unevaluatedProperties"'));
-  diffSchema(base.schema.document, head.schema.document, '', out, { unevaluated });
+  if (base.schema !== null && head.schema !== null) {
+    const unevaluated = [base.schema.document, head.schema.document].some((document) => canonicalJson(document).includes('"unevaluatedProperties"'));
+    diffSchema(base.schema.document, head.schema.document, '', out, { unevaluated });
+  }
   diffExamples(base.examples, head.examples, out);
   if (base.diagnostics !== null || head.diagnostics !== null) {
     diffDiagnostics(base.diagnostics ?? { catalog: new Map(), source: new Set() }, head.diagnostics ?? { catalog: new Map(), source: new Set() }, out);
   }
   if (base.rustApi !== null || head.rustApi !== null) {
     diffRust(base.rustApi ?? new Map(), head.rustApi ?? new Map(), out);
+  }
+  if (base.typescriptApi !== null || head.typescriptApi !== null) {
+    diffTypescript(base.typescriptApi, head.typescriptApi, out);
   }
   return out;
 }

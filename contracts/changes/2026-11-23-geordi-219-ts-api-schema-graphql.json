@@ -1,0 +1,11 @@
+{
+  "$schema": "../../schemas/geordi-contract-registry/change-record.schema.json",
+  "contract": "@flyingrobots/geordi-schema-graphql/0",
+  "change": "additive",
+  "summary": "The public TypeScript API of @flyingrobots/geordi-schema-graphql (every entry point in its package.json exports) is now a contract the gate compares. The API itself did not change; this record starts the contract's history.",
+  "why": "flyingrobots/geordi#219 added the typescript-api surface and registered every published package under typescriptPackages in contracts/registry.json. A contract that is new against the base needs a record.",
+  "references": [
+    "flyingrobots/geordi#219",
+    "flyingrobots/geordi#217"
+  ]
+}

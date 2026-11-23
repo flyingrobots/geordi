@@ -1,0 +1,11 @@
+{
+  "$schema": "../../schemas/geordi-contract-registry/change-record.schema.json",
+  "contract": "geordi.contract_registry.registry/1",
+  "change": "additive",
+  "summary": "The registry has an optional `typescriptPackages` member: `{ directory: \"packages\", status: \"draft\", statusEvidence, notCovered? }`. Each published package under the directory becomes one contract. Schema version 1.1.0.",
+  "why": "flyingrobots/geordi#219: the gate compares the public TypeScript API of published packages, and the registry says which packages those are and with what status.",
+  "references": [
+    "flyingrobots/geordi#219",
+    "flyingrobots/geordi#217"
+  ]
+}

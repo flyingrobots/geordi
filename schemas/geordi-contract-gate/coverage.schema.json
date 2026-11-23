@@ -4,7 +4,7 @@
   "title": "Coverage",
   "description": "Which surfaces of a contract the gate compares, and which it does not. Written to stdout. `gated` is false for a public contract the registry lists but the gate does not yet compare.",
   "x-schema-id": "geordi.contract_gate.coverage",
-  "x-schema-version": "1.0.0",
+  "x-schema-version": "1.1.0",
   "type": "object",
   "required": [
     "_schema",
@@ -30,7 +30,7 @@
           "const": "geordi.contract_gate.coverage"
         },
         "version": {
-          "const": "1.0.0"
+          "const": "1.1.0"
         }
       }
     },
@@ -57,7 +57,8 @@
           "schema",
           "example",
           "diagnostic",
-          "rust-api"
+          "rust-api",
+          "typescript-api"
         ]
       }
     },

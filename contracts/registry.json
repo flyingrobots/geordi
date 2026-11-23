@@ -99,7 +99,7 @@
       "contract": "bijou-surface-gpu/1",
       "status": "draft",
       "statusEvidence": "docs/design/2026-11-bijou-surface-gpu-abi.md says both \"**Status**: Proposed (Option A selected by `@flyingrobots` on 2026-11-21; ...)\" and \"This record freezes the endpoint-prepared GPU ABI (`bijou-surface-gpu/1`)\". The two disagree, so the registry records draft for the maintainer to rule on.",
-      "reason": "Its surfaces are TypeScript (packages/bijou-gpu) and Rust (crates/geordi-bijou-wgpu-proof, crates/geordi-bijou-shadergen) with digests pinned in fixtures/bijou-gpu/width1-conformance-suite.json; it has no JSON Schema and the gate has no TypeScript API surface yet."
+      "reason": "Its surfaces are TypeScript (packages/bijou-gpu) and Rust (crates/geordi-bijou-wgpu-proof, crates/geordi-bijou-shadergen) with digests pinned in fixtures/bijou-gpu/width1-conformance-suite.json; it has no JSON Schema. The public TypeScript API of packages/bijou-gpu is compared as @flyingrobots/geordi-bijou-gpu/0, but the ABI's byte layout and digests are not."
     },
     {
       "contract": "geordi-bijou-gpu-receipt/1",
@@ -227,5 +227,10 @@
       "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
       "reason": "No JSON Schema yet; emitted by packages/compiler-core."
     }
-  ]
+  ],
+  "typescriptPackages": {
+    "directory": "packages",
+    "status": "draft",
+    "statusEvidence": "Every published package is at version 0.1.0 (packages/*/package.json), and CHANGELOG.md says \"Geordi is pre-1.0\"; README.md says \"The TypeScript/Rust DTO mirror is provisional.\" No package API is documented as frozen, so each is recorded as draft for the maintainer to rule on."
+  }
 }

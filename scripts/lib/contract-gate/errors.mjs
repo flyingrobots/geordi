@@ -24,7 +24,7 @@ export const ERROR_MEANINGS = {
   GEORDI_E_CONTRACT_GATE_USAGE: 'Invalid command line.',
   GEORDI_E_CONTRACT_GATE_BASE: 'The base cannot be determined: the base ref does not resolve, the --base-dir is not a directory, or the head and the base share no commit (often a shallow clone).',
   GEORDI_E_CONTRACT_GATE_REGISTRY: 'The head has no contract registry, or it or a message schema family is invalid.',
-  GEORDI_E_CONTRACT_GATE_SNAPSHOT: 'A contract surface cannot be computed on one of the trees: a file is missing or unreadable, an encoder or the Rust snapshot failed.',
+  GEORDI_E_CONTRACT_GATE_SNAPSHOT: 'A contract surface cannot be computed on one of the trees: a file is missing or unreadable, an encoder, the Rust snapshot or the TypeScript snapshot failed (a module that does not resolve within the tree or to an installed dependency, an entry point with no source, or a compiler error).',
   GEORDI_E_CONTRACT_GATE_FAILED: 'The comparison ran and wrote one or more violation lines.',
   GEORDI_E_CONTRACT_GATE_INTERNAL: 'An unexpected failure inside the gate.',
 };
