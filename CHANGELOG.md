@@ -20,6 +20,19 @@
   is "A directional light's value is irradiance." The identifier stays `geordi-ray-traced-scene/1`
   because that artifact is not yet frozen: no released consumer exists. (flyingrobots/geordi#161)
 
+### Added
+
+- **Nondeterminism ban for the canonical paths** (`scripts/ban-nondeterminism.mjs`,
+  `scripts/eslint-plugin-nondeterminism.mjs`, `.ban-nondeterminism-allowlist`, `.githooks/pre-push`,
+  `docs/nondeterminism-rules.md`). Echo's rule IDs and allowlist format, scanning `crates/geordi-ir`
+  and `crates/geordi-renderer` and the canonical TypeScript packages for wall-clock time, unseeded
+  randomness, unordered iteration, floating-point sentinels and operations, environment, filesystem
+  and process access. `host-locale` is Geordi's own rule. Waivers are inline comments with a reason,
+  or rule-scoped allowlist rows. Runs in `pnpm lint`, in CI as `pnpm check:determinism` and in the
+  tracked pre-push hook. Behaviour-preserving: `geordi-renderer` keys its glyph evidence in a
+  `BTreeMap`, `geordi-ir` squares a magnitude with a multiplication, and `segmentGraphemes` passes the
+  locale `en` instead of the host default; no digest changed. (flyingrobots/geordi#162)
+
 ### Changed
 
 - **`@flyingrobots/geordi-compiler-core`** (`src/compile/artifactBuilder.ts`): `compile()` now builds the IR,

@@ -119,6 +119,7 @@ export class GeordiGeneratorPlugin {
 
     // Convert ArtifactMap -> Wesley expected output
     const out: WesleyGenerateResult = {};
+    // ban-nondeterminism: allow(unordered-container) artifact order is the compiler's emission order, a function of the input; the output is keyed by path
     for (const [path, artifact] of Object.entries(result.artifacts)) {
       // Prefer artifact.path if present; fallback to key.
       const outputPath = artifact.path || path;

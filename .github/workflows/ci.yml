@@ -41,6 +41,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Ban nondeterminism in the canonical paths
+        run: pnpm check:determinism
+
       - name: Typecheck
         run: pnpm typecheck
 

@@ -5,6 +5,7 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+// ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 
@@ -1317,6 +1318,7 @@ pub fn parse_geordi_strict_text_outline_evidence_pack(
 /// the rectangle-only Rust MVP subset.
 pub fn load_geordi_ir(path: impl AsRef<Path>) -> Result<GeordiIr, GeordiIrLoadError> {
     let path = path.as_ref();
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let source = fs::read_to_string(path)
         .map_err(|error| GeordiIrLoadError::file(path.to_path_buf(), error))?;
 
@@ -1333,6 +1335,7 @@ pub fn load_geordi_font_pack_manifest(
     path: impl AsRef<Path>,
 ) -> Result<GeordiFontPackManifest, GeordiFontPackLoadError> {
     let path = path.as_ref();
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let source = fs::read_to_string(path)
         .map_err(|error| GeordiFontPackLoadError::file(path.to_path_buf(), error))?;
 
@@ -1350,6 +1353,7 @@ pub fn load_geordi_strict_text_fixture_manifest(
     path: impl AsRef<Path>,
 ) -> Result<GeordiStrictTextFixtureManifest, GeordiStrictTextFixtureLoadError> {
     let path = path.as_ref();
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let source = fs::read_to_string(path)
         .map_err(|error| GeordiStrictTextFixtureLoadError::file(path.to_path_buf(), error))?;
 
@@ -1367,6 +1371,7 @@ pub fn load_geordi_strict_text_outline_evidence_pack(
     path: impl AsRef<Path>,
 ) -> Result<GeordiStrictTextOutlineEvidencePack, GeordiStrictTextOutlineEvidenceLoadError> {
     let path = path.as_ref();
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let source = fs::read_to_string(path).map_err(|error| {
         GeordiStrictTextOutlineEvidenceLoadError::file(path.to_path_buf(), error)
     })?;
@@ -1988,6 +1993,7 @@ fn validate_geordi_font_pack_asset_hash(
 
     let target_path = resolve_fixture_local_path(repository_root, font_id, kind, fixture_path)?;
 
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let bytes = fs::read(target_path)
         .map_err(|error| GeordiFontPackHashError::read(font_id, kind, fixture_path, error))?;
     let actual = geordi_sha256_from_bytes(&bytes);
@@ -2046,6 +2052,7 @@ fn read_receipt_fixture_local_bytes(
         ));
     }
 
+    // ban-nondeterminism: allow-begin(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let canonical_root = fs::canonicalize(repository_root)
         .map_err(|error| GeordiStrictTextFixtureReceiptError::read(fixture_path, error))?;
     let canonical_path = fs::canonicalize(&lexical_path)
@@ -2057,6 +2064,7 @@ fn read_receipt_fixture_local_bytes(
     }
 
     fs::read(canonical_path)
+        // ban-nondeterminism: allow-end(std-fs)
         .map_err(|error| GeordiStrictTextFixtureReceiptError::read(fixture_path, error))
 }
 
@@ -3019,9 +3027,11 @@ fn resolve_fixture_local_path(
         ));
     }
 
+    // ban-nondeterminism: allow-begin(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let canonical_root = fs::canonicalize(repository_root)
         .map_err(|error| GeordiFontPackHashError::read(font_id, kind, fixture_path, error))?;
     let canonical_path = fs::canonicalize(&lexical_path)
+        // ban-nondeterminism: allow-end(std-fs)
         .map_err(|error| GeordiFontPackHashError::read(font_id, kind, fixture_path, error))?;
     if !path_stays_inside_root(&canonical_root, &canonical_path) {
         return Err(GeordiFontPackHashError::escaped_path(
@@ -3526,6 +3536,7 @@ mod tests {
         let temp_root = unique_temp_path("geordi-font-pack-root");
         let external_root = unique_temp_path("geordi-font-pack-external");
         let result = (|| -> Result<(), GeordiIrTestError> {
+            // ban-nondeterminism: allow-begin(std-fs) test fixture I/O only; nothing here reaches a canonical output
             std::fs::create_dir_all(&temp_root)?;
             std::fs::create_dir_all(&external_root)?;
 
@@ -3555,6 +3566,7 @@ mod tests {
 
         drop(std::fs::remove_dir_all(&temp_root));
         drop(std::fs::remove_dir_all(&external_root));
+        // ban-nondeterminism: allow-end(std-fs)
 
         result
     }
@@ -4228,6 +4240,7 @@ mod tests {
     #[test]
     fn hashes_canonical_strict_text_receipt_fragments() -> Result<(), GeordiIrTestError> {
         let source =
+            // ban-nondeterminism: allow(std-fs) test fixture I/O only; nothing here reaches a canonical output
             std::fs::read_to_string(fixture_path("strict-text/geordi.strict-text.geordi.json"))?;
         let value: serde_json::Value = serde_json::from_str(&source)?;
         let glyph_runs = value
@@ -4629,9 +4642,11 @@ mod tests {
     #[test]
     fn rejects_invalid_scene_and_rect_numbers() -> Result<(), GeordiIrTestError> {
         let mut ir = load_geordi_ir(fixture_path("hello-panel/scene.geordi.json"))?;
+        // ban-nondeterminism: allow-begin(float-sentinel) test input that proves validation rejects non-finite numbers
         ir.scene.width = f64::NAN;
         ir.nodes[0].props.width = -1.0;
         ir.nodes[0].props.x = f64::INFINITY;
+        // ban-nondeterminism: allow-end(float-sentinel)
 
         let paths = validation_paths(validate_geordi_ir(&ir));
 
@@ -4693,11 +4708,17 @@ mod tests {
     }
 
     fn unique_temp_path(prefix: &str) -> PathBuf {
+        // ban-nondeterminism: allow-begin(std-process) test fixture temp directory name only; the name never reaches an assertion
+        // ban-nondeterminism: allow-begin(std-env) test fixture temp directory name only; the name never reaches an assertion
+        // ban-nondeterminism: allow-begin(time-system) test fixture temp directory name only; the name never reaches an assertion
         let nanos = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(0, |duration| duration.as_nanos());
 
         std::env::temp_dir().join(format!("{prefix}-{}-{nanos}", std::process::id()))
+        // ban-nondeterminism: allow-end(std-process)
+        // ban-nondeterminism: allow-end(std-env)
+        // ban-nondeterminism: allow-end(time-system)
     }
 
     fn repository_root() -> PathBuf {
