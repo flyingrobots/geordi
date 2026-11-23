@@ -1352,6 +1352,15 @@ fn validate_mesh_projection(
         "Projection vertical FOV",
         issues,
     );
+    if projection.vertical_fov_radians.is_finite()
+        && projection.vertical_fov_radians >= std::f64::consts::PI
+    {
+        push_issue(
+            issues,
+            "$.projection.verticalFovRadians",
+            "Projection vertical FOV must be less than pi",
+        );
+    }
     validate_positive_finite(
         projection.near,
         "$.projection.near",
