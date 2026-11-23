@@ -123,8 +123,11 @@ pub const GEORDI_RAY_TRACED_TAN_HALF_FOV_Y_MAX_RAW: i64 = 4 << 32;
 /// Largest albedo channel raw value (`1.0`).
 pub const GEORDI_RAY_TRACED_ALBEDO_MAX_RAW: i64 = 1 << 32;
 
-/// Largest radiance channel raw value (`65536.0`).
+/// Largest sky radiance channel raw value (`65536.0`).
 pub const GEORDI_RAY_TRACED_RADIANCE_MAX_RAW: i64 = 65_536 << 32;
+
+/// Largest directional-light irradiance channel raw value (`65536.0`), Bunny's `MAX_LIGHT_RAW`.
+pub const GEORDI_RAY_TRACED_IRRADIANCE_MAX_RAW: i64 = 65_536 << 32;
 
 /// Largest total primitive count over all instances (`2^32 - 1`).
 pub const GEORDI_RAY_TRACED_PRIMITIVE_COUNT_MAX: i64 = (1 << 32) - 1;
@@ -199,7 +202,9 @@ pub const GEORDI_E_RT_LIGHT_UNSUPPORTED: &str = "GEORDI_E_RT_LIGHT_UNSUPPORTED";
 pub const GEORDI_E_RT_LIGHT_FIELD_INVALID: &str = "GEORDI_E_RT_LIGHT_FIELD_INVALID";
 /// Diagnostic: the largest `towardLight` component magnitude is not exactly 1.0.
 pub const GEORDI_E_RT_TOWARD_LIGHT_NOT_NORMALIZED: &str = "GEORDI_E_RT_TOWARD_LIGHT_NOT_NORMALIZED";
-/// Diagnostic: a radiance channel is outside `[0, 65536]`.
+/// Diagnostic: a directional light's irradiance channel is outside `[0, 65536]`.
+pub const GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE: &str = "GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE";
+/// Diagnostic: a sky radiance channel is outside `[0, 65536]`.
 pub const GEORDI_E_RT_RADIANCE_OUT_OF_RANGE: &str = "GEORDI_E_RT_RADIANCE_OUT_OF_RANGE";
 /// Diagnostic: more than one directional light.
 pub const GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT: &str = "GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT";
@@ -448,9 +453,21 @@ pub struct GeordiRayTracedCamera {
     pub tan_half_fov_y: GeordiFixedQ32_32,
 }
 
+/// The value a light carries. Which field holds it depends on the light's `kind`.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum GeordiRayTracedLightValue {
+    /// A directional light's `irradiance`: linear light per channel, delivered to a surface
+    /// perpendicular to the light, each in `[0, 65536]`.
+    Irradiance([GeordiFixedQ32_32; 3]),
+    /// A uniform sky's `radiance`: linear light per channel, each in `[0, 65536]`.
+    Radiance([GeordiFixedQ32_32; 3]),
+}
+
 /// One light. `kind` selects which fields apply.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
+///
+/// A `directional` light carries `towardLight` and `irradiance`; a `uniformSky` light carries
+/// `radiance`. The wrong name for the kind is an unknown field and a parse error.
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct GeordiRayTracedLight {
     /// Light kind: `directional` or `uniformSky`.
     pub kind: String,
@@ -458,10 +475,64 @@ pub struct GeordiRayTracedLight {
     pub id: String,
     /// Direction from a surface toward a directional light. Required for `directional`;
     /// forbidden for `uniformSky`.
-    #[serde(default, deserialize_with = "deserialize_present_vec3")]
     pub toward_light: Option<[GeordiFixedQ32_32; 3]>,
-    /// Linear-light radiance per channel, each in `[0, 65536]`.
-    pub radiance: [GeordiFixedQ32_32; 3],
+    /// The light's value, in the field its kind names.
+    pub value: GeordiRayTracedLightValue,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct RawLight {
+    kind: String,
+    id: String,
+    #[serde(default, deserialize_with = "deserialize_present_vec3")]
+    toward_light: Option<[GeordiFixedQ32_32; 3]>,
+    #[serde(default, deserialize_with = "deserialize_present_vec3")]
+    irradiance: Option<[GeordiFixedQ32_32; 3]>,
+    #[serde(default, deserialize_with = "deserialize_present_vec3")]
+    radiance: Option<[GeordiFixedQ32_32; 3]>,
+}
+
+impl<'de> Deserialize<'de> for GeordiRayTracedLight {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::Error;
+        const DIRECTIONAL_FIELDS: &[&str] = &["id", "irradiance", "kind", "towardLight"];
+        const SKY_FIELDS: &[&str] = &["id", "kind", "radiance", "towardLight"];
+
+        let raw = RawLight::deserialize(deserializer)?;
+        let value = match (raw.kind.as_str(), raw.irradiance, raw.radiance) {
+            (GEORDI_RAY_TRACED_LIGHT_KIND_DIRECTIONAL, _, Some(_)) => {
+                return Err(D::Error::unknown_field("radiance", DIRECTIONAL_FIELDS));
+            }
+            (GEORDI_RAY_TRACED_LIGHT_KIND_DIRECTIONAL, None, None) => {
+                return Err(D::Error::missing_field("irradiance"));
+            }
+            (GEORDI_RAY_TRACED_LIGHT_KIND_UNIFORM_SKY, Some(_), _) => {
+                return Err(D::Error::unknown_field("irradiance", SKY_FIELDS));
+            }
+            (GEORDI_RAY_TRACED_LIGHT_KIND_UNIFORM_SKY, None, None) => {
+                return Err(D::Error::missing_field("radiance"));
+            }
+            // An unsupported kind still needs exactly one value so validation can name the kind.
+            (_, Some(_), Some(_)) => {
+                return Err(D::Error::custom(
+                    "a light has either `irradiance` or `radiance`",
+                ));
+            }
+            (_, None, None) => return Err(D::Error::missing_field("radiance")),
+            (_, Some(irradiance), None) => GeordiRayTracedLightValue::Irradiance(irradiance),
+            (_, None, Some(radiance)) => GeordiRayTracedLightValue::Radiance(radiance),
+        };
+        Ok(Self {
+            kind: raw.kind,
+            id: raw.id,
+            toward_light: raw.toward_light,
+            value,
+        })
+    }
 }
 
 /// Output image size.
@@ -1312,14 +1383,24 @@ fn validate_lights(lights: &[GeordiRayTracedLight], issues: &mut Vec<GeordiRayTr
                 "Light kind must be directional or uniformSky",
             ),
         }
-        validate_channels(
-            &light.radiance,
-            GEORDI_RAY_TRACED_RADIANCE_MAX_RAW,
-            &format!("{base}.radiance"),
-            GEORDI_E_RT_RADIANCE_OUT_OF_RANGE,
-            "Radiance channel must be in [0, 65536]",
-            issues,
-        );
+        match &light.value {
+            GeordiRayTracedLightValue::Irradiance(channels) => validate_channels(
+                channels,
+                GEORDI_RAY_TRACED_IRRADIANCE_MAX_RAW,
+                &format!("{base}.irradiance"),
+                GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE,
+                "Irradiance channel must be in [0, 65536]",
+                issues,
+            ),
+            GeordiRayTracedLightValue::Radiance(channels) => validate_channels(
+                channels,
+                GEORDI_RAY_TRACED_RADIANCE_MAX_RAW,
+                &format!("{base}.radiance"),
+                GEORDI_E_RT_RADIANCE_OUT_OF_RANGE,
+                "Radiance channel must be in [0, 65536]",
+                issues,
+            ),
+        }
     }
     if directional_count > 1 {
         push(

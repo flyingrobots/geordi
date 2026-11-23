@@ -8,7 +8,7 @@ const ONE: i64 = GEORDI_FIXED_Q32_32_ONE_RAW;
 /// Independent oracle: `hashlib.sha256` over the committed reference scene bytes, which are the
 /// canonical form (`json.dumps(sort_keys=True, indent=2)` plus a newline).
 const REFERENCE_SCENE_HASH: &str =
-    "sha256:3f245c019731d361dbbdd4c38362e2a2e6d0f725ba799f5d0baaa6d34f482747";
+    "sha256:5ea6b6085b5178fcda09fc966737e44cd5c731ed311e4fcd601ddf935a480a24";
 
 /// Independent oracle: `shasum -a 256 fixtures/ray-traced-scene/meshes/unit-quad.ply`.
 const UNIT_QUAD_HASH: &str =
@@ -301,22 +301,111 @@ fn albedo_channels_are_in_zero_to_one() -> TestResult {
     Ok(())
 }
 
+/// Parse the reference scene with channel 2 of one light's value set to `raw`, then validate it.
+/// Light 0 is the sun (`irradiance`); light 1 is the sky (`radiance`).
+fn light_value_codes(light: usize, field: &str, raw: i64) -> Result<Vec<String>, Box<dyn Error>> {
+    let mut value: Value = serde_json::from_str(&reference_source()?)?;
+    value["lights"][light][field][2] = raw.into();
+    let scene = parse_geordi_ray_traced_scene(&serde_json::to_string(&value)?)?;
+    Ok(validation_codes(&scene))
+}
+
 #[test]
-fn radiance_channels_are_in_zero_to_65536() -> TestResult {
+fn light_values_are_in_zero_to_65536() -> TestResult {
     let max = GEORDI_RAY_TRACED_RADIANCE_MAX_RAW;
     assert_eq!(max, 65_536 * ONE);
-    let code = Some(GEORDI_E_RT_RADIANCE_OUT_OF_RANGE);
-    for light in 0..2 {
-        for (raw, expected) in [(-1, code), (0, None), (max, None), (max + 1, code)] {
-            check(
-                |scene| {
-                    scene.lights[light].radiance[2] = q(raw)?;
-                    Ok(())
-                },
-                expected,
-            )?;
+    assert_eq!(GEORDI_RAY_TRACED_IRRADIANCE_MAX_RAW, max);
+    assert_eq!(
+        GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE,
+        "GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE"
+    );
+    assert_eq!(
+        GEORDI_E_RT_RADIANCE_OUT_OF_RANGE,
+        "GEORDI_E_RT_RADIANCE_OUT_OF_RANGE"
+    );
+    // The sun's value is an irradiance and has its own code; the sky keeps radiance and its code.
+    for (light, field, code) in [
+        (0, "irradiance", GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE),
+        (1, "radiance", GEORDI_E_RT_RADIANCE_OUT_OF_RANGE),
+    ] {
+        for (raw, expected) in [
+            (-1, Some(code)),
+            (0, None),
+            (max, None),
+            (max + 1, Some(code)),
+        ] {
+            let expected: Vec<String> = expected.into_iter().map(str::to_owned).collect();
+            assert_eq!(light_value_codes(light, field, raw)?, expected);
         }
     }
+    Ok(())
+}
+
+#[test]
+fn directional_light_value_is_named_irradiance_and_radiance_is_refused() -> TestResult {
+    let source = reference_source()?;
+    let reference: Value = serde_json::from_str(&source)?;
+    assert!(reference["lights"][0].get("irradiance").is_some());
+    assert!(reference["lights"][0].get("radiance").is_none());
+    assert!(reference["lights"][1].get("radiance").is_some());
+    assert!(reference["lights"][1].get("irradiance").is_none());
+    parse_geordi_ray_traced_scene(&source)?;
+
+    let parse_error = |value: &Value| -> Result<GeordiRayTracedSceneError, Box<dyn Error>> {
+        match parse_geordi_ray_traced_scene(&serde_json::to_string(value)?) {
+            Ok(_) => Err("scene unexpectedly parsed".into()),
+            Err(error) => Ok(error),
+        }
+    };
+
+    // The old name on the sun is an unknown field, and the sun then lacks `irradiance`.
+    let mut old_name = reference.clone();
+    let sun = old_name["lights"][0]
+        .as_object_mut()
+        .ok_or("sun is not an object")?;
+    let moved = sun.remove("irradiance").ok_or("sun has no irradiance")?;
+    sun.insert("radiance".to_owned(), moved);
+    let error = parse_error(&old_name)?;
+    assert_eq!(
+        issue_codes(&error),
+        vec![(GEORDI_E_RT_SCENE_SHAPE.to_owned(), "$".to_owned())]
+    );
+    assert!(error.issues()[0].message.contains("radiance"));
+
+    // The sun with neither name is a missing `irradiance`.
+    let mut missing = reference.clone();
+    missing["lights"][0]
+        .as_object_mut()
+        .ok_or("sun is not an object")?
+        .remove("irradiance");
+    let error = parse_error(&missing)?;
+    assert_eq!(
+        issue_codes(&error),
+        vec![(GEORDI_E_RT_SCENE_SHAPE.to_owned(), "$".to_owned())]
+    );
+    assert!(error.issues()[0].message.contains("irradiance"));
+
+    // Both names on the sun is also refused.
+    let mut both = reference.clone();
+    both["lights"][0]["radiance"] = both["lights"][0]["irradiance"].clone();
+    assert_eq!(
+        issue_codes(&parse_error(&both)?),
+        vec![(GEORDI_E_RT_SCENE_SHAPE.to_owned(), "$".to_owned())]
+    );
+
+    // The sky keeps `radiance`: `irradiance` on the sky is an unknown field.
+    let mut sky = reference;
+    let sky_light = sky["lights"][1]
+        .as_object_mut()
+        .ok_or("sky is not an object")?;
+    let moved = sky_light.remove("radiance").ok_or("sky has no radiance")?;
+    sky_light.insert("irradiance".to_owned(), moved);
+    let error = parse_error(&sky)?;
+    assert_eq!(
+        issue_codes(&error),
+        vec![(GEORDI_E_RT_SCENE_SHAPE.to_owned(), "$".to_owned())]
+    );
+    assert!(error.issues()[0].message.contains("irradiance"));
     Ok(())
 }
 
@@ -679,7 +768,7 @@ const GOLDEN_RECEIPT: &str = r#"{
   },
   "sampler": "fixture-placeholder-sampler/1",
   "samplesPerPixel": 16,
-  "sceneHash": "sha256:3f245c019731d361dbbdd4c38362e2a2e6d0f725ba799f5d0baaa6d34f482747",
+  "sceneHash": "sha256:5ea6b6085b5178fcda09fc966737e44cd5c731ed311e4fcd601ddf935a480a24",
   "scenePath": "fixtures/ray-traced-scene/reference.rt-scene.geordi.json",
   "sceneVersion": "geordi-ray-traced-scene/1",
   "seed": 0,
