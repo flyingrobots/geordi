@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Bug Fixes
+
+- **Generated-directory writer** (`scripts/lib/atomic-generated-directory.mjs`): the `<destination>.lock`
+  file now records its owner (`geordi.generated-directory-lock/1`: pid, hostname, process start time,
+  token), and a writer removes it only when it can prove the owner is gone: same host and no such
+  process, or a running pid whose start time differs from the recorded one (a recycled pid). Malformed
+  metadata, a lock from another host, a running owner and an owner whose start time cannot be compared
+  all stay in place and the writer waits out the 10-second timeout, which now throws
+  `GeneratedDirectoryLockTimeoutError`. Only the holder of a recovery lock (`<destination>.lock.recovering`)
+  may remove the main lock, and only if it still carries the token it judged abandoned, so a recoverer
+  can never remove a newer writer's lock; before publishing and before any rollback a writer checks that
+  it still owns its lock and otherwise throws `GeneratedDirectoryLockLostError` without touching the
+  destination. Removing an abandoned recovery lock is not itself serialized: that needs a recoverer crash
+  plus three simultaneous recoverers, and a writer that loses its lock between a check and the rename
+  after it can still end with two complete output sets, last rename wins. A lock directory left by the
+  previous writer is never removed automatically; delete it by hand once no writer runs (flyingrobots/geordi#54)
+
 ### CI
 
 - Typecheck the Profunctor Page test sources: `pnpm typecheck` now also runs `tsc --noEmit -p tsconfig.test.json` in `@flyingrobots/geordi-profunctor-page`, so an invalid type in a `*.test.ts` file fails CI. The build still uses `tsconfig.json` and emits only production files. A node test (`pnpm test:profunctor-page-typecheck-gate`) proves the gate fails on an invalid test type (flyingrobots/geordi#56)
