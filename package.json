@@ -30,7 +30,8 @@
     "test:repo-sludge": "node scripts/check-repo-sludge.mjs",
     "test:coverage": "turbo run test:coverage",
     "lint": "pnpm lint:root && turbo run lint",
-    "lint:root": "eslint . --max-warnings 0 && node scripts/check-core-artifact-literals.mjs",
+    "lint:md": "markdownlint-cli2",
+    "lint:root": "eslint . --max-warnings 0 && pnpm lint:md && node scripts/check-core-artifact-literals.mjs",
     "typecheck": "turbo run typecheck",
     "wesley": "wesley",
     "clean": "turbo run clean && rm -rf node_modules",
@@ -50,6 +51,7 @@
     "@typescript-eslint/parser": "^8.61.0",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
+    "markdownlint-cli2": "0.24.2",
     "turbo": "^2.9.18",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"

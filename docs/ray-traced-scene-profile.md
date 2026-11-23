@@ -15,7 +15,7 @@ the runtime negotiation check. Geordi contains no ray tracer. Nothing here rende
 > changes to it are recorded in [`CHANGELOG.md`](../CHANGELOG.md) under "BREAKING CHANGES". It becomes
 > a frozen contract, after which any incompatible change requires `/2`, only when a release or a
 > consumer first pins it.
-
+>
 > **Not claimed.** Geordi does not claim `geordi/ray-traced-3d/1`. The design's proof gates
 > (thread invariance, two CPU architectures agreeing, and an artifact render matching lumen's
 > built-in render) have not run. The validator and fixtures exist so that a runtime, planned in
@@ -148,7 +148,7 @@ Q32.32 fields are marked Q. A diagnostic code is listed for each rule; see
 | Sum over instances of the instanced mesh's `counts.triangles` | At most `2^32 - 1` | `GEORDI_E_RT_PRIMITIVE_COUNT_EXCEEDED` |
 | `camera.kind` | Exactly `pinhole` | `GEORDI_E_RT_CAMERA_UNSUPPORTED` |
 | `camera.position` (Q) | Each coordinate below 256 units in magnitude | `GEORDI_E_RT_TRACE_DOMAIN_EXCEEDED` |
-| `camera.forward`, `camera.up` (Q) | Neither zero; the sine of the angle between them is at least `2^-15`, i.e. `|forward x up|^2 * 2^30 >= |forward|^2 * |up|^2`, evaluated exactly in 256-bit integers. Bunny's camera basis refuses a sine below about `2^-16` (by largest cross-product component, which can be `sqrt(3)` below the length), so `2^-15` is the nearest power of two that no such runtime accepts below. A sine in `[2^-16, 2^-15)` may be accepted by Bunny and is still refused here | `GEORDI_E_RT_CAMERA_DEGENERATE` |
+| `camera.forward`, `camera.up` (Q) | Neither zero; the sine of the angle between them is at least `2^-15`, i.e. `\|forward x up\|^2 * 2^30 >= \|forward\|^2 * \|up\|^2`, evaluated exactly in 256-bit integers. Bunny's camera basis refuses a sine below about `2^-16` (by largest cross-product component, which can be `sqrt(3)` below the length), so `2^-15` is the nearest power of two that no such runtime accepts below. A sine in `[2^-16, 2^-15)` may be accepted by Bunny and is still refused here | `GEORDI_E_RT_CAMERA_DEGENERATE` |
 | `camera.tanHalfFovY` (Q) | In `(0, 4]`: raw `1..=17179869184` | `GEORDI_E_RT_TAN_HALF_FOV_Y_OUT_OF_RANGE` |
 | `lights[].kind` | `directional` or `uniformSky` | `GEORDI_E_RT_LIGHT_UNSUPPORTED` |
 | `lights[].towardLight` (Q) | Required on `directional`; forbidden on `uniformSky` | `GEORDI_E_RT_LIGHT_FIELD_INVALID` |
