@@ -959,7 +959,7 @@ fn integer_tokens_by_path(source: &str) -> BTreeMap<String, String> {
     tokens
 }
 
-fn skip_whitespace(source: &str, mut at: usize) -> usize {
+const fn skip_whitespace(source: &str, mut at: usize) -> usize {
     let bytes = source.as_bytes();
     while at < bytes.len() && matches!(bytes[at], b' ' | b'\t' | b'\n' | b'\r') {
         at += 1;
@@ -968,7 +968,7 @@ fn skip_whitespace(source: &str, mut at: usize) -> usize {
 }
 
 /// The index just past the string literal that starts at `at` (which holds the opening quote).
-fn end_of_string(source: &str, at: usize) -> usize {
+const fn end_of_string(source: &str, at: usize) -> usize {
     let bytes = source.as_bytes();
     let mut index = at + 1;
     while index < bytes.len() {
@@ -1022,7 +1022,7 @@ fn scan_integer_tokens(
         Some(b'"') => end_of_string(source, at),
         Some(_) => {
             let end = source[at..]
-                .find(|c: char| matches!(c, ',' | ']' | '}' | ' ' | '\t' | '\n' | '\r'))
+                .find([',', ']', '}', ' ', '\t', '\n', '\r'])
                 .map_or(source.len(), |offset| at + offset);
             let token = &source[at..end];
             let is_number = token.starts_with(|c: char| c == '-' || c.is_ascii_digit());
