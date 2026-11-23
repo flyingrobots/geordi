@@ -119,6 +119,7 @@ test.describe('bijou-surface-gpu/1 WebGL2 presenter in Chrome', () => {
     // Every labelled cell (flags, underlines, procedural glyphs, default-colour fallbacks) probed pixel by pixel.
     expect(mismatchingCells(result.paint, paint.rgba)).toEqual([]);
     expect(mismatchingCells(result.erase, erase.rgba)).toEqual([]);
+    test.info().annotations.push({ type: 'readback', description: String(result.paint.readbackPath) });
     // The erase frame went through the incremental path, not a full refresh.
     expect(result.erase.lastFullRefreshReason).toBeNull();
     expect(result.erase.lastCellUploads).toBeGreaterThan(0);

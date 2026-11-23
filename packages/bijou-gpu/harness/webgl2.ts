@@ -106,6 +106,7 @@ export interface ProbeFrame {
   readonly lastCellUploads: number;
   readonly lastAtlasUploads: number;
   readonly lastFullRefreshReason: string | null;
+  readonly readbackPath: string | null;
 }
 
 export interface WebGL2Probe {
@@ -254,6 +255,7 @@ function probeFrame(
     lastCellUploads: diagnostics.lastCellUploads,
     lastAtlasUploads: diagnostics.lastAtlasUploads.length,
     lastFullRefreshReason: diagnostics.lastFullRefreshReason,
+    readbackPath: diagnostics.readbackPath,
   };
 }
 
