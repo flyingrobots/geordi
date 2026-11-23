@@ -90,16 +90,20 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
   `device.lost`; the WebGPU objects it calls are typed structurally
 - **Presenter host helpers** (`src/presenter-host.ts`): canvas size ingress, grid geometry, the
   atlas source a presenter reads, and receipt assembly, shared by every presenter
+- **Canvas 2D presenter** (`src/canvas2d-presenter.ts`, `src/canvas2d-compose.ts`):
+  `createCanvas2DSurfacePresenter` composites changed cells with the pure-integer blend law into a
+  retained `ImageData` and blits them with `putImageData`; no WebGL or WebGPU
 - **Test glyph pack** (`src/test-glyph-pack.ts`): explicit 8 x 16 bitmaps, no font
 - **Browser probe harness** (`harness/`, `e2e/`): Playwright + Vite
 
 **Key principle**: Bijou owns cell semantics and Bunny owns the integer primitives. This package
 is the CPU oracle that GPU presenters are compared against, plus the packer and glyph atlas they
-share, and the browser WebGPU presenter. References:
+share, the browser WebGPU presenter, and the Canvas 2D fallback presenter. References:
 [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md),
 [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md),
-[`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md), and
-[`bijou-gpu-webgpu-presenter.md`](./bijou-gpu-webgpu-presenter.md).
+[`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md),
+[`bijou-gpu-webgpu-presenter.md`](./bijou-gpu-webgpu-presenter.md), and
+[`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md).
 
 Its `shaders/` directory holds the canonical `bijou-surface.wgsl`, the GLSL ES 3.00 stages that
 `crates/geordi-bijou-shadergen` generates from it with pinned `naga`, and their implementation

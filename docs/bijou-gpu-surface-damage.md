@@ -12,10 +12,9 @@ rows changed. The design record is normative for the cell layout and the damage 
 says how the packer exposes them.
 
 > **Not claimed.** The packer uploads nothing and calls no host API. The
-> [WebGPU presenter](./bijou-gpu-webgpu-presenter.md) uploads the rows it reports; the WebGL2 and
-> Canvas 2D presenters are tracked in
-> [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173) and
-> [flyingrobots/geordi#174](https://github.com/flyingrobots/geordi/issues/174). It contains no
+> [WebGPU presenter](./bijou-gpu-webgpu-presenter.md) uploads the rows it reports, and the
+> [Canvas 2D presenter](./bijou-gpu-canvas2d-presenter.md) uses it; the WebGL2 presenter is
+> tracked in [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173). It contains no
 > glyph atlas; slots come from a callback, which the
 > [glyph atlas](./bijou-gpu-glyph-atlas.md) can supply. No timing has been measured.
 

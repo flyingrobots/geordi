@@ -1,4 +1,6 @@
 export * from './atlas.js';
+export * from './canvas2d-compose.js';
+export * from './canvas2d-presenter.js';
 export * from './errors.js';
 export * from './glyph-atlas.js';
 export * from './glyph-atlas-browser.js';
