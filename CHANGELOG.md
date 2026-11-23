@@ -19,6 +19,17 @@
 
 - Pin the Rust toolchain to 1.96.0 with `rust-toolchain.toml` and install that toolchain in CI instead of floating `stable`, so new compiler lints no longer fail CI on unchanged code (flyingrobots/geordi#158)
 
+### Fixes
+
+- **`@flyingrobots/geordi-profunctor-page`**: derive action identities injectively. The old
+  `action:${pageNodeId}:${role}:${href}` joined unescaped components, so distinct tuples such as
+  `("a:feature:x", "source", "y")` and `("a", "feature", "x:source:y")` collided. IDs are now
+  `action:v1:<escaped pageNodeId>:<role>:<escaped href>` with `%` and `:` percent-escaped in the
+  two free-form components. **Breaking for stored identities:** every action ID changes, so the
+  checked-in Project Keep `scene.geordi.map.json` and `scene.geordi.json.receipt` are regenerated;
+  any consumer that persisted or compared old `action:...` IDs must re-derive them
+  (flyingrobots/geordi#55)
+
 ### Dependencies
 
 - **`native-render-everywhere`** (Rust): depend on `bunny-num`, `bunny-linalg` and `bunny-geom`

@@ -439,6 +439,22 @@ function assertUniqueActions(
   }
 }
 
+export function deriveTargetActionId(
+  pageNodeId: string,
+  role: TargetAction['role'],
+  href: string,
+): string {
+  return `action:v1:${escapeActionIdComponent(pageNodeId)}:${role}:${escapeActionIdComponent(href)}`;
+}
+
+// Percent-escape the escape character and the delimiter so ':' only ever
+// separates components. `role` is a closed vocabulary without either character.
+function escapeActionIdComponent(value: string): string {
+  return value.replace(/[%:]/g, (character) =>
+    character === '%' ? '%25' : '%3A',
+  );
+}
+
 function action(
   pageNodeId: string,
   role: TargetAction['role'],
@@ -448,7 +464,7 @@ function action(
   return {
     activationResidual: 'native-link-activation-unsupported',
     href,
-    id: `action:${pageNodeId}:${role}:${href}`,
+    id: deriveTargetActionId(pageNodeId, role, href),
     label,
     role,
   };
