@@ -439,6 +439,14 @@ function assertUniqueActions(
   }
 }
 
+export function deriveTargetActionId(
+  pageNodeId: string,
+  role: TargetAction['role'],
+  href: string,
+): string {
+  return `action:${pageNodeId}:${role}:${href}`;
+}
+
 function action(
   pageNodeId: string,
   role: TargetAction['role'],
@@ -448,7 +456,7 @@ function action(
   return {
     activationResidual: 'native-link-activation-unsupported',
     href,
-    id: `action:${pageNodeId}:${role}:${href}`,
+    id: deriveTargetActionId(pageNodeId, role, href),
     label,
     role,
   };
