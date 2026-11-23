@@ -74,12 +74,12 @@
   "lights": [
     {
       "id": "sun",
-      "kind": "directional",
-      "radiance": [
+      "irradiance": [
         12884901888,
         12884901888,
         12884901888
       ],
+      "kind": "directional",
       "towardLight": [
         1073741824,
         2147483648,

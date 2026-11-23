@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### BREAKING CHANGES
+
+- **Ray-traced scene: a directional light's value is `irradiance`, not `radiance`**
+  (`geordi-ir`, `fixtures/ray-traced-scene/`, `docs/ray-traced-scene-profile.md`, `docs/ERROR_CODES.md`).
+  A `directional` light now carries `irradiance`; a `uniformSky` light keeps `radiance`. The wrong name
+  for the kind is an unknown field and a `GEORDI_E_RT_SCENE_SHAPE` parse error, and the old name on a
+  directional light is not accepted. `GeordiRayTracedLight.radiance` is replaced by
+  `GeordiRayTracedLight.value: GeordiRayTracedLightValue` (`Irradiance` or `Radiance`).
+  `GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE` is new and covers the light's range, with no alias for the old
+  meaning; `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE` now covers the sky only. The reference scene's canonical
+  bytes changed (the `irradiance` key sorts before `kind`), so its scene hash changed from
+  `sha256:3f245c019731d361dbbdd4c38362e2a2e6d0f725ba799f5d0baaa6d34f482747` to
+  `sha256:5ea6b6085b5178fcda09fc966737e44cd5c731ed311e4fcd601ddf935a480a24`. Why now: Geordi is pre-1.0,
+  no consumer constructs these types yet (Lumen has no dependency on Geordi), and a stale name inside a
+  public error code costs more later than the break costs now. Bunny's convention, which this follows,
+  is "A directional light's value is irradiance." (flyingrobots/geordi#161)
+
 ### Bug Fixes
 
 - **Rust toolchain** (`rust-toolchain.toml`, `Cargo.toml`, CI): the pin now includes the
