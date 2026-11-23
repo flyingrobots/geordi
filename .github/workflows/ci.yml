@@ -36,15 +36,17 @@ jobs:
       - name: Build geordi-ir for wasm32
         run: cargo build -p geordi-ir --target wasm32-unknown-unknown
 
+      - name: Install dependencies
+        run: pnpm install
+
       # Compares every public contract of this commit with its base: the merge base with the pull
       # request's base branch, or the previous tip on a push. Fails closed. See docs/contract-gate.md.
+      # It runs after the install: the TypeScript surface reads both trees with the installed
+      # TypeScript compiler and third-party types, with no network access of its own.
       - name: Contract gate (public contracts against the merge base)
         env:
           CONTRACT_GATE_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event_name == 'push' && github.event.before || 'HEAD^1' }}
         run: node scripts/contract-gate.mjs --base-ref "$CONTRACT_GATE_BASE_REF"
-
-      - name: Install dependencies
-        run: pnpm install
 
       - name: Install Playwright browsers
         run: pnpm --filter @flyingrobots/geordi-example-browser-render-everywhere exec playwright install --with-deps chromium

@@ -2,7 +2,8 @@
 
 Contract ledger for [`contract-gate.md`](./contract-gate.md). Each row names a requirement, the
 case, the oracle that decides it, and the test that is the evidence. Requirements come from
-[flyingrobots/geordi#217](https://github.com/flyingrobots/geordi/issues/217).
+[flyingrobots/geordi#217](https://github.com/flyingrobots/geordi/issues/217) and, for the TypeScript
+surface, [flyingrobots/geordi#219](https://github.com/flyingrobots/geordi/issues/219).
 
 Run them with:
 
@@ -65,6 +66,36 @@ Tests are in `scripts/contract-gate.test.mjs`, over small synthetic trees.
 | CG-EDGE-23 | A head without a registry | One `GEORDI_E_CONTRACT_GATE_REGISTRY` error | `a head without a registry fails closed with a schema-tagged error` |
 | CG-EDGE-24 | A surface that cannot be computed | `GEORDI_E_CONTRACT_GATE_SNAPSHOT` naming the file | `a surface that cannot be computed fails closed` |
 | CG-EDGE-25 | Message schema families | One contract per file; a major version bump is a removal and a new contract | `message schema families are expanded into one contract per schema file` |
+
+## The TypeScript surface
+
+Tests are in `scripts/contract-gate-typescript.test.mjs`, over small synthetic trees with packages
+under `packages/`, except CG-TS-21, which runs over this repository. Requirements come from
+[flyingrobots/geordi#219](https://github.com/flyingrobots/geordi/issues/219).
+
+| ID | Case | Oracle | Test |
+| --- | --- | --- | --- |
+| CG-TS-01 | No change | Exit 0; coverage lists `typescript-api` only | `an unchanged package passes with no record, and its coverage names the typescript-api surface` |
+| CG-TS-02 | Golden: a removed export | `export VERSION` removed, breaking; `RECORD_MISSING`; an additive record understates; a breaking one passes | `golden: a removed export fails without a change record and names the item` |
+| CG-TS-03 | A renamed export | Removed (breaking) and added (additive) | `a renamed export is a removed export and an added one` |
+| CG-TS-04 | A changed signature | `signature render` changed, breaking, with both signatures | `a changed function signature is breaking and shows both signatures` |
+| CG-TS-05 | A renamed and a narrowed parameter | No difference; then breaking | `renaming a parameter is not a difference, but narrowing its type is` |
+| CG-TS-06 | An added export | Additive; an additive record passes | `an added export is additive and passes with an additive record` |
+| CG-TS-07 | Type-only exports | `class, type only`; a value made type-only, or behind `export type *`, is breaking | `a type-only export is recorded as a type, and making a value export type-only is breaking` |
+| CG-TS-08 | Re-exports | Named and `export *` re-exports followed; dropping one is breaking; an unexported helper is not public | `re-exports are followed: a re-exported item is compared, and dropping a re-export is breaking` |
+| CG-TS-09 | Overloads | An added overload is additive; a changed one is removed (breaking) and added | `an overload: adding one is additive, changing one is breaking` |
+| CG-TS-10 | Interface and class members | Optional added: additive; required added, removed or re-typed: breaking; class method added: additive | `interface members: a new optional property is additive; a required, removed or re-typed one is breaking` |
+| CG-TS-11 | An inferred type | `const "1"` to `const "2"`, breaking | `an inferred type is compared, so a change that leaves the declaration text alone is seen` |
+| CG-TS-12 | The base resolves to its own sources | Only `@demo/dep` changes; `@demo/api`'s inferred export differs, so each tree read its own dep | `the base resolves workspace packages to its own sources, not to the head's` |
+| CG-TS-13 | Subpath and non-TypeScript exports | A removed subpath is breaking; a retargeted JSON export is unknown | `a subpath export is its own entry point; removing it is breaking; a non-TypeScript export is recorded by target` |
+| CG-TS-14 | A new package with no base | State `new`; needs a record | `a new package with no base is a new contract that needs a record` |
+| CG-TS-15 | A private package | No contract | `a private package is not published and has no TypeScript contract` |
+| CG-TS-16 | Anti-evasion | An edited pin or stored snapshot does not help; making the package private or dropping `typescriptPackages` removes the contract and needs a record | `anti-evasion: a pin or stored snapshot edited in the head does not satisfy the gate` |
+| CG-TS-17 | Line endings and file order | No differences | `line endings and file creation order do not change the snapshot` |
+| CG-TS-18 | A compiler error | `GEORDI_E_CONTRACT_GATE_SNAPSHOT` naming the package and `TS2322`; no result line | `a package whose program has a compiler error fails closed with a schema-tagged error` |
+| CG-TS-19 | An import that links to workspace sources | `GEORDI_E_CONTRACT_GATE_SNAPSHOT`: resolves outside `node_modules` | `an import that resolves to a workspace symlink outside node_modules fails closed` |
+| CG-TS-20 | A `types` export with no source | `GEORDI_E_CONTRACT_GATE_SNAPSHOT` | `an exported type that maps to no source fails closed` |
+| CG-TS-21 | This repository from git | `--base HEAD --head HEAD`: exit 0, no differences, ten package contracts | `this repository's published packages are snapshotted from a git tree extracted blob by blob` |
 
 ## Base selection
 
@@ -162,7 +193,9 @@ Tests are in `crates/geordi-contract-api/src/tests.rs`.
 | Failure mode | Guard |
 | --- | --- |
 | Comparing with the wrong base (a stale merge base) | CG-BASE-01, CG-BASE-04; CI fetches full history and passes `origin/<base>` |
-| A snapshot that depends on file order or line endings | CG-EDGE-21, CG-API-12, CG-API-13 |
+| A snapshot that depends on file order or line endings | CG-EDGE-21, CG-API-12, CG-API-13, CG-TS-17 |
+| The base's TypeScript resolving to the head's sources | CG-TS-12, CG-TS-19 |
+| A TypeScript type read as `any` because an import did not resolve | CG-TS-18, CG-TS-19 |
 | An API tool that needs network or a nightly toolchain | `crates/geordi-contract-api` builds from the locked workspace on the pinned stable toolchain |
 
 Fuzz and stress testing: not applicable, because the gate is a deterministic comparison.
