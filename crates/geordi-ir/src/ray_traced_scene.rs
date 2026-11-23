@@ -100,6 +100,14 @@ pub const GEORDI_RAY_TRACED_LIGHT_KIND_UNIFORM_SKY: &str = "uniformSky";
 /// Largest film width or height in pixels.
 pub const GEORDI_RAY_TRACED_FILM_DIMENSION_MAX: i64 = 16_384;
 
+/// The camera `up` is refused when the sine of its angle to `forward` is below `2^-15`.
+///
+/// Bunny's camera basis refuses an `up` whose normalized cross product with `forward` has every
+/// component below `2^-16`, and the largest component can be a factor of `sqrt(3)` below the
+/// vector length. A sine of `2^-15` is the nearest power of two that no runtime built on that
+/// basis accepts below.
+pub const GEORDI_RAY_TRACED_CAMERA_MIN_SINE_LOG2: u32 = 15;
+
 /// Largest samples-per-pixel value.
 pub const GEORDI_RAY_TRACED_SAMPLES_PER_PIXEL_MAX: i64 = 1024;
 
@@ -197,6 +205,8 @@ pub const GEORDI_E_RT_RADIANCE_OUT_OF_RANGE: &str = "GEORDI_E_RT_RADIANCE_OUT_OF
 pub const GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT: &str = "GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT";
 /// Diagnostic: not exactly one uniform sky.
 pub const GEORDI_E_RT_SKY_COUNT: &str = "GEORDI_E_RT_SKY_COUNT";
+/// Diagnostic: the instances contribute no triangle to the scene.
+pub const GEORDI_E_RT_SCENE_EMPTY: &str = "GEORDI_E_RT_SCENE_EMPTY";
 /// Diagnostic: film width or height is outside `1..=16384`.
 pub const GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE: &str = "GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE";
 /// Diagnostic: the integrator identity is not supported.
@@ -1114,6 +1124,15 @@ fn validate_instances(scene: &GeordiRayTracedScene, issues: &mut Vec<GeordiRayTr
             }
         }
     }
+    if primitive_count == 0 {
+        push(
+            issues,
+            GEORDI_E_RT_SCENE_EMPTY,
+            "$.instances",
+            "Scene needs at least one triangle: an instance of a mesh with a nonzero triangle \
+             count",
+        );
+    }
     if primitive_count > i128::from(GEORDI_RAY_TRACED_PRIMITIVE_COUNT_MAX) {
         push(
             issues,
@@ -1188,12 +1207,13 @@ fn validate_camera(camera: &GeordiRayTracedCamera, issues: &mut Vec<GeordiRayTra
             "Camera up must not be zero",
         );
     }
-    if forward != [0; 3] && up != [0; 3] && cross_i128(forward, up) == [0; 3] {
+    if forward != [0; 3] && up != [0; 3] && sine_below_floor(forward, up) {
         push(
             issues,
             GEORDI_E_RT_CAMERA_DEGENERATE,
             "$.camera.up",
-            "Camera up must not be parallel to forward",
+            "Camera up must not be parallel to forward: the sine of the angle between them must \
+             be at least 2^-15",
         );
     }
     let tan = camera.tan_half_fov_y.raw();
@@ -1209,6 +1229,45 @@ fn validate_camera(camera: &GeordiRayTracedCamera, issues: &mut Vec<GeordiRayTra
 
 fn vec3_i128(vector: &[GeordiFixedQ32_32; 3]) -> [i128; 3] {
     vector.map(|value| i128::from(value.raw()))
+}
+
+/// Exact test that `sin(angle(a, b)) < 2^-GEORDI_RAY_TRACED_CAMERA_MIN_SINE_LOG2`, for nonzero
+/// vectors with components below `2^53`.
+///
+/// Equivalent to `|a x b|^2 * 2^(2k) < |a|^2 * |b|^2`, evaluated in 256 bits with no rounding. A
+/// zero cross product (exactly parallel) always satisfies it.
+fn sine_below_floor(a: [i128; 3], b: [i128; 3]) -> bool {
+    let cross = cross_i128(a, b);
+    let cross_squared = cross
+        .iter()
+        .map(|component| mul_wide(component.unsigned_abs(), component.unsigned_abs()))
+        .fold((0_u128, 0_u128), add_wide);
+    let norm_squared = |v: [i128; 3]| v.iter().map(|c| c.unsigned_abs().pow(2)).sum::<u128>();
+    let bound = mul_wide(norm_squared(a), norm_squared(b));
+    // `|a x b|^2 < 2^214 * 3` and `2k = 30`, so the shift stays below 2^246.
+    let shift = 2 * GEORDI_RAY_TRACED_CAMERA_MIN_SINE_LOG2;
+    let scaled = (
+        (cross_squared.0 << shift) | (cross_squared.1 >> (128 - shift)),
+        cross_squared.1 << shift,
+    );
+    scaled < bound
+}
+
+/// `a * b` as a `(high, low)` pair of 128-bit halves.
+const fn mul_wide(a: u128, b: u128) -> (u128, u128) {
+    const MASK: u128 = (1 << 64) - 1;
+    let (a_lo, a_hi) = (a & MASK, a >> 64);
+    let (b_lo, b_hi) = (b & MASK, b >> 64);
+    let low_low = a_lo * b_lo;
+    let cross_a = a_hi * b_lo + (low_low >> 64);
+    let cross_b = a_lo * b_hi + (cross_a & MASK);
+    let high = a_hi * b_hi + (cross_a >> 64) + (cross_b >> 64);
+    (high, (cross_b << 64) | (low_low & MASK))
+}
+
+const fn add_wide(x: (u128, u128), y: (u128, u128)) -> (u128, u128) {
+    let (low, carry) = x.1.overflowing_add(y.1);
+    (x.0 + y.0 + carry as u128, low)
 }
 
 /// Exact cross product; inputs are below `2^53`, so every product is below `2^106`.
