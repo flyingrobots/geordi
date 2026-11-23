@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-bijou-shader-sources/result.schema.json",
+  "title": "Run result",
+  "description": "Final line of a successful check or write. Written to stdout.",
+  "x-schema-id": "geordi.bijou_shader_sources.result",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "mode",
+    "ok",
+    "artifacts",
+    "sources"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.bijou_shader_sources.result"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "result"
+    },
+    "mode": {
+      "enum": [
+        "check",
+        "write"
+      ]
+    },
+    "ok": {
+      "const": true
+    },
+    "artifacts": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Generated modules compared or written."
+    },
+    "sources": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Checked-in shader files embedded, each verified against the manifest."
+    }
+  }
+}

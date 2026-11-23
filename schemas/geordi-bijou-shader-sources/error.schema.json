@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-bijou-shader-sources/error.schema.json",
+  "title": "Error",
+  "description": "A failed run. Written to stderr. `paths` lists the files concerned and may be empty.",
+  "x-schema-id": "geordi.bijou_shader_sources.error",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "code",
+    "message",
+    "paths"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.bijou_shader_sources.error"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "error"
+    },
+    "code": {
+      "enum": [
+        "GEORDI_E_BIJOU_SHADER_SOURCES_USAGE",
+        "GEORDI_E_BIJOU_SHADER_SOURCES_IO",
+        "GEORDI_E_BIJOU_SHADER_SOURCES_PIN_MISMATCH",
+        "GEORDI_E_BIJOU_SHADER_SOURCES_DRIFT",
+        "GEORDI_E_BIJOU_SHADER_SOURCES_INTERNAL"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

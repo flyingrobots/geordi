@@ -26,6 +26,36 @@
 - Migrate `pnpm.overrides` from deprecated `package.json` field to `pnpm-workspace.yaml`; regenerate lockfile with pnpm 10.30.0 to match CI version (resolves `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY` on ubuntu-24.04)
 - Bump `vitest` from `^1.3.0` to `^3.2.4` across all packages; add `esbuild >=0.25.0` override (CVE fix)
 
+### Fixes
+
+- **`@flyingrobots/geordi-bijou-gpu`**: the package now ships its own shaders, behind a port
+  (flyingrobots/geordi#185). Before, it published only `dist`, and both GPU presenters required
+  the host to pass the package's generated shader text. Now:
+  - `ShaderSourcePort` (`readText(file)`), `requireShaderText()` and
+    `createInMemoryShaderSource()` are exported from the main entry point. The presenter cores,
+    `createWebGL2SurfacePresenterCore(options)` and `createWebGPUSurfacePresenterCore(canvas,
+    options)`, take a port as `shaderSource` and still refuse any byte that is not the manifest
+    pin with `RendererFaultError`, as is a port that lacks a file. They import no `node:` module
+    and no `?raw` specifier.
+  - `createWebGL2SurfacePresenter(options)` and `createWebGPUSurfacePresenter(canvas, options)`
+    wire the bundled adapter when `shaderSource` is omitted, so a host passes only a canvas and an
+    atlas. Receipts carry the same digests as before.
+  - Adapters: `@flyingrobots/geordi-bijou-gpu/shader-source/webgl2`
+    (`WEBGL2_BUNDLED_SHADER_SOURCE`), `/shader-source/webgpu` (`WEBGPU_BUNDLED_SHADER_SOURCE`) and
+    the Node-only `/shader-source/node` (`createFileShaderSource({ directory? })`). The package
+    publishes `shaders/` (the manifest and the eight generated GLSL and WGSL artifacts, exported
+    as `./shaders/*`) and is marked `sideEffects: false`.
+  - **Breaking (0.1.0, unreleased in practice):** `options.shaders` of the WebGL2 presenter and
+    `options.shader` of the WebGPU presenter are removed; pass a `ShaderSourcePort` as
+    `shaderSource` instead, or nothing. `createWebGpuRefusalReceipt()` takes `shaderSource` in
+    place of `shader`. `loadBijouSurfaceShader(port)` is new.
+  - `scripts/generate-bijou-gpu-shader-sources.mjs` writes the embedded modules in
+    `src/generated/` with a `--check` drift gate (JSON Lines, schemas in
+    `schemas/geordi-bijou-shader-sources/`), run by the package tests and
+    `pnpm test:bijou-gpu:shaders`. `.gitattributes` keeps the shaders LF.
+    `scripts/smoke-bijou-gpu-packed-package.mjs`, run by `pnpm test:exports`, proves the shaders
+    and every subpath export from the packed tarball.
+
 ### Features
 
 - **`@flyingrobots/geordi-bijou-gpu`**: browser WebGPU presenter for the `bijou-surface-gpu/1` ABI

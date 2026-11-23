@@ -10,19 +10,36 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./shader-source/webgl2": {
+      "types": "./dist/shader-source-webgl2.d.ts",
+      "import": "./dist/shader-source-webgl2.js"
+    },
+    "./shader-source/webgpu": {
+      "types": "./dist/shader-source-webgpu.d.ts",
+      "import": "./dist/shader-source-webgpu.js"
+    },
+    "./shader-source/node": {
+      "types": "./dist/shader-source-node.d.ts",
+      "import": "./dist/shader-source-node.js"
+    },
+    "./shaders/*": "./shaders/*"
   },
   "files": [
-    "dist"
+    "dist",
+    "shaders/bijou-shaders.manifest.json",
+    "shaders/*.glsl",
+    "shaders/*.wgsl"
   ],
+  "sideEffects": false,
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.node.json",
     "dev": "tsc --watch",
     "lint": "eslint . --max-warnings 0",
-    "test": "vitest run && node ../../scripts/generate-bijou-gpu-conformance-fixtures.mjs --check",
+    "test": "vitest run && node ../../scripts/generate-bijou-gpu-conformance-fixtures.mjs --check && node ../../scripts/generate-bijou-gpu-shader-sources.mjs --check && node --test ../../scripts/bijou-gpu-shader-sources.test.mjs",
     "test:browser": "pnpm --filter @flyingrobots/geordi-core build && playwright test",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.harness.json"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.harness.json"
   },
   "dependencies": {
     "@flyingrobots/geordi-core": "workspace:*"
