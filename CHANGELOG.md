@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- **`@flyingrobots/geordi-compiler-core`** (`src/compile/artifactBuilder.ts`): `compile()` now builds the IR,
+  source map, receipt and types artifacts with an internal `ArtifactBuilder`. The builder holds the IR and
+  source map artifacts and computes the receipt from them, so the exported `emitReceiptArtifact(input,
+  irContent: string, sourceMapContent: string, ruleIds)` and the `irArtifact.content as string` casts are gone.
+  Behaviour-preserving: every artifact byte and every receipt digest is unchanged (flyingrobots/geordi#3)
+
 ### Bug Fixes
 
 - **`@flyingrobots/geordi-bijou-gpu`**: the package now ships the procedural glyph table, so the Canvas 2D
