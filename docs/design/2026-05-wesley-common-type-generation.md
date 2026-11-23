@@ -200,7 +200,9 @@ What exists in Geordi:
   out and uses local stand-in interfaces.
 - The root `wesley` script calls a `wesley` binary that the repository does not install.
 - The `@geordi_common` extension point in [Wesley Extension Shape](#wesley-extension-shape) does not
-  exist. Its request, flyingrobots/wesley#676, is open.
+  exist, and no Wesley issue requests it. The nearest record is flyingrobots/wesley#676, an open RFC
+  on the extension boundary for Bijou and Bunny DTO generation; it calls for follow-on issues once
+  that boundary is settled.
 
 What the latest Wesley release, `v0.3.0-alpha.4`, emits for a schema of the four font-pack types,
 from a trial of `wesley emit rust` and `wesley emit typescript` recorded on flyingrobots/geordi#69:
@@ -208,7 +210,8 @@ from a trial of `wesley emit rust` and `wesley emit typescript` recorded on flyi
 | Needed for a drop-in replacement | Wesley `v0.3.0-alpha.4` | Tracked in Wesley |
 | --- | --- | --- |
 | Rust structs that reject unknown fields | Accepts and drops them | flyingrobots/wesley#855 |
-| `u32` for `faceIndex` and `weight` | `Int` is `i32`; a custom scalar is `String` in Rust and `unknown` in TypeScript | flyingrobots/wesley#851 |
+| `u32` for `faceIndex` and `weight` | `Int` is `i32`, and there is no unsigned 32-bit mapping | Not tracked |
+| A custom scalar that maps to its wire type | `String` in Rust and `unknown` in TypeScript | flyingrobots/wesley#851 |
 | TypeScript fields fixed to one string value | Plain `string` | flyingrobots/wesley#853 |
 | Rust `Eq` on the structs | Not derived; `Serialize` is added | Not tracked |
 | A doc comment on every item and field | None, so the output fails this workspace's missing-docs lint | Not tracked |

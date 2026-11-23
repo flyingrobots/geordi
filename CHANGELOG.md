@@ -545,7 +545,7 @@
   flyingrobots/geordi#69 found that Geordi has no Wesley dependency and that Wesley
   `v0.3.0-alpha.4` cannot emit the font-pack manifest DTOs as a drop-in: the generated Rust
   accepts unknown fields and a negative `weight`, and has no `u32`. The design record now lists
-  each gap and the Wesley issue that tracks it. No code changed.
+  each gap and, where one exists, the Wesley issue that tracks it. No code changed.
 - **Mesh PLY parsing: one parser per profile** (`docs/design/2026-11-fixed-point-and-ray-traced-scene-profiles.md`,
   `docs/render-everywhere.md`, `crates/geordi-mesh`). No parser was swapped. Geordi keeps
   `parse_ascii_ply_triangle_mesh` for the binary64 profile `geordi-ascii-ply-triangle-mesh/1`, and
