@@ -50,12 +50,21 @@ describe('deriveTargetActionId', () => {
     const seen = new Map<string, string>();
     for (let index = 0; index < 20000; index += 1) {
       const role = ROLES[Math.floor(next() * ROLES.length)] ?? 'source';
-      const tuple = JSON.stringify([randomString(next), role, randomString(next)]);
-      const [pageNodeId, , href] = JSON.parse(tuple) as [string, typeof role, string];
+      const pageNodeId = randomString(next);
+      const href = randomString(next);
+      const tuple = [pageNodeId.length, pageNodeId, role, href].join('|');
       const id = deriveTargetActionId(pageNodeId, role, href);
       const previous = seen.get(id);
       expect(previous === undefined || previous === tuple).toBe(true);
       seen.set(id, tuple);
     }
+  });
+});
+
+describe('deriveTargetActionId encoding', () => {
+  it('escapes the escape character and the delimiter in components', () => {
+    expect(deriveTargetActionId('a:b%c', 'source', 'https://x/y')).toBe(
+      'action:v1:a%3Ab%25c:source:https%3A//x/y',
+    );
   });
 });
