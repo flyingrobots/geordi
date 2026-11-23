@@ -1,0 +1,12 @@
+{
+  "byteLength": 939,
+  "cellFormatId": "bijou-packed-cell-u8x10-le/1",
+  "description": "Byte-identical copy of a Bijou-owned packed-bijou-cells/1 fixture. Do not edit; re-import from the named commit.",
+  "path": "fixtures/bijou-gpu/bijou/packed-bijou-cells.v1.json",
+  "provenanceVersion": "geordi-bijou-fixture-provenance/1",
+  "receiptVersion": "packed-bijou-cells/1",
+  "sha256": "44bdac709151e09a080e5f6966b82f3ce7734f65e35b9ea616fdec989a5a1ded",
+  "sourceCommit": "669d10c79e2f0f4a81659bd5b37bb9e979f54834",
+  "sourcePath": "tests/fixtures/RE-036/packed-bijou-cells.v1.json",
+  "sourceRepository": "flyingrobots/bijou"
+}

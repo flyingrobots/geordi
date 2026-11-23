@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-bijou-wgpu-proof/intake.schema.json",
+  "title": "Intake",
+  "description": "The input passed strict packed-bijou-cells/1 validation. Written to stdout before any preparation. `inputReceiptSha256` is the SHA-256 of the exact input file bytes. `cellProduction` is always `cpu-authored`: the cells were written on the CPU by Bijou, and this host only presents them.",
+  "x-schema-id": "geordi.bijou_wgpu_proof.intake",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "input",
+    "inputReceiptSha256",
+    "cellFormatId",
+    "widthCells",
+    "heightCells",
+    "cellCount",
+    "sideTableEntries",
+    "cellProduction"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.bijou_wgpu_proof.intake"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "intake"
+    },
+    "input": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputReceiptSha256": {
+      "type": "string",
+      "minLength": 64
+    },
+    "cellFormatId": {
+      "const": "bijou-packed-cell-u8x10-le/1"
+    },
+    "widthCells": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "heightCells": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cellCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "sideTableEntries": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cellProduction": {
+      "const": "cpu-authored"
+    }
+  }
+}

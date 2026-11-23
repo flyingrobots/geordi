@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-bijou-wgpu-proof/error.schema.json",
+  "title": "Error",
+  "description": "A failed run. Written to stderr. `path` is the JSON path or file concerned and may be empty.",
+  "x-schema-id": "geordi.bijou_wgpu_proof.error",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "code",
+    "message",
+    "path"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.bijou_wgpu_proof.error"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "error"
+    },
+    "code": {
+      "enum": [
+        "GEORDI_E_BIJOU_INVALID_PACKED_CELLS",
+        "GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH",
+        "GEORDI_E_BIJOU_MISSING_GLYPH_SLOT",
+        "GEORDI_E_BIJOU_INVALID_ATLAS",
+        "GEORDI_E_BIJOU_INVALID_CELL_METRICS",
+        "GEORDI_E_BIJOU_WGPU_RESOURCE_LIMIT",
+        "GEORDI_E_BIJOU_WGPU_SHADER_IDENTITY",
+        "GEORDI_E_BIJOU_BACKEND_UNAVAILABLE",
+        "GEORDI_E_BIJOU_WGPU_HARDWARE_GPU_REQUIRED",
+        "GEORDI_E_BIJOU_RENDERER_FAULT",
+        "GEORDI_E_BIJOU_FRAME_HASH_MISMATCH",
+        "GEORDI_E_BIJOU_WGPU_IO",
+        "GEORDI_E_BIJOU_WGPU_USAGE"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "path": {
+      "type": "string"
+    }
+  }
+}

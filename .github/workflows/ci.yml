@@ -80,5 +80,11 @@ jobs:
       - name: Verify generated GLSL ES 3.00 with glslangValidator
         run: cargo test -p geordi-bijou-shadergen -- --include-ignored
 
+      # Hosted runners usually expose no wgpu adapter: the run then streams a typed
+      # capability-refused result (exit 0, hardwareGpuClaim false), never a pass. A software
+      # adapter is reported as software-probed and must still match the CPU oracle frame digest.
+      - name: Run the native wgpu offscreen proof (typed refusal without an adapter)
+        run: pnpm test:bijou-gpu:native
+
       - name: Verify native strict text smoke gate (geordi fixture)
         run: cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json
