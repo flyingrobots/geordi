@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { test } from 'node:test';
 
 import { parseJsonValue } from '../packages/core/dist/index.js';
@@ -18,6 +18,9 @@ const SCHEMA_DIR = join(REPO_ROOT, 'schemas', 'geordi-bijou-shader-sources');
 const SHADER_DIR = 'packages/bijou-gpu/shaders';
 const GENERATED_DIR = 'packages/bijou-gpu/src/generated';
 const PIN_FILE = 'packages/bijou-gpu/src/surface-shader-pin.ts';
+const TABLE_FIXTURE = 'fixtures/bijou-gpu/procedural-glyphs.json';
+const TABLE_COPY = 'packages/bijou-gpu/procedural/procedural-glyphs.json';
+const TABLE_PIN_FILE = 'packages/bijou-gpu/src/procedural-table.ts';
 const SOURCES = ['bijou-shaders.manifest.json', 'bijou-surface.vert.glsl', 'bijou-surface.frag.glsl', 'bijou-surface.wgsl'];
 
 class SchemaViolationError extends Error {
@@ -114,10 +117,14 @@ function scratchRepo() {
   }
   cpSync(join(REPO_ROOT, GENERATED_DIR), join(root, GENERATED_DIR), { recursive: true });
   cpSync(join(REPO_ROOT, PIN_FILE), join(root, PIN_FILE));
+  for (const file of [TABLE_FIXTURE, TABLE_COPY, TABLE_PIN_FILE]) {
+    mkdirSync(dirname(join(root, file)), { recursive: true });
+    cpSync(join(REPO_ROOT, file), join(root, file));
+  }
   return root;
 }
 
-function snapshot(root, dirs = [SHADER_DIR, GENERATED_DIR]) {
+function snapshot(root, dirs = [SHADER_DIR, GENERATED_DIR, dirname(TABLE_COPY)]) {
   const files = new Map();
   for (const dir of dirs) {
     for (const name of readdirSync(join(root, dir))) {
@@ -138,15 +145,17 @@ test('--check passes on the checked-in tree and ends with a result line', () => 
       [`${GENERATED_DIR}/bijou-shaders-manifest.generated.ts`, 'match'],
       [`${GENERATED_DIR}/bijou-surface-glsl.generated.ts`, 'match'],
       [`${GENERATED_DIR}/bijou-surface-wgsl.generated.ts`, 'match'],
+      [`${GENERATED_DIR}/bijou-procedural-glyphs.generated.ts`, 'match'],
+      [TABLE_COPY, 'match'],
     ],
   );
   assert.deepEqual(run.stdout.at(-1), {
     _schema: { id: 'geordi.bijou_shader_sources.result', version: '1.0.0' },
-    artifacts: 3,
+    artifacts: 5,
     kind: 'result',
     mode: 'check',
     ok: true,
-    sources: 4,
+    sources: 5,
   });
 });
 
@@ -162,7 +171,7 @@ test('--check reports a drifted, a missing and a stray module, exits 1 and write
     assert.equal(run.status, 1);
     assert.deepEqual(
       run.stdout.map((record) => record.state),
-      ['match', 'drift', 'missing'],
+      ['match', 'drift', 'missing', 'match', 'match'],
     );
     assert.equal(run.stderr.length, 1);
     assert.equal(run.stderr[0].code, 'GEORDI_E_BIJOU_SHADER_SOURCES_DRIFT');
@@ -181,17 +190,19 @@ test('--write regenerates byte-identical modules, deterministically', () => {
   const root = scratchRepo();
   try {
     rmSync(join(root, GENERATED_DIR), { recursive: true });
+    rmSync(join(root, TABLE_COPY));
     const first = generate('--write', '--repo-root', root);
     assert.equal(first.status, 0);
     assert.deepEqual(
       first.stdout.filter((record) => record.kind === 'artifact').map((record) => record.state),
-      ['written', 'written', 'written'],
+      ['written', 'written', 'written', 'written', 'written'],
     );
     assert.deepEqual(snapshot(root, [GENERATED_DIR]), snapshot(REPO_ROOT, [GENERATED_DIR]));
+    assert.equal(readFileSync(join(root, TABLE_COPY), 'utf8'), readFileSync(join(REPO_ROOT, TABLE_FIXTURE), 'utf8'));
     const second = generate('--write', '--repo-root', root);
     assert.deepEqual(
       second.stdout.filter((record) => record.kind === 'artifact').map((record) => record.state),
-      ['unchanged', 'unchanged', 'unchanged'],
+      ['unchanged', 'unchanged', 'unchanged', 'unchanged', 'unchanged'],
     );
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -293,4 +304,54 @@ test('--human writes prose, not JSON', () => {
   assert.equal(result.status, 0);
   assert.match(result.stdout, /^match: packages\/bijou-gpu\/src\/generated\//mu);
   assert.doesNotMatch(result.stdout, /^\{/mu);
+});
+
+test('--check reports a drifted published table copy and a missing one, writes nothing, and --write restores it', () => {
+  for (const damage of ['edit', 'remove']) {
+    const root = scratchRepo();
+    try {
+      const copy = join(root, TABLE_COPY);
+      if (damage === 'edit') {
+        writeFileSync(copy, `${readFileSync(copy, 'utf8')} `);
+      } else {
+        rmSync(copy);
+      }
+      const before = snapshot(root);
+      const run = generate('--check', '--repo-root', root);
+      assert.equal(run.status, 1);
+      assert.equal(run.stdout.at(-1).path, TABLE_COPY);
+      assert.equal(run.stdout.at(-1).state, damage === 'edit' ? 'drift' : 'missing');
+      assert.equal(run.stderr[0].code, 'GEORDI_E_BIJOU_SHADER_SOURCES_DRIFT');
+      assert.deepEqual(run.stderr[0].paths, [TABLE_COPY]);
+      assert.deepEqual(snapshot(root), before);
+      assert.equal(generate('--write', '--repo-root', root).status, 0);
+      assert.equal(readFileSync(copy, 'utf8'), readFileSync(join(REPO_ROOT, TABLE_FIXTURE), 'utf8'));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
+test('refuses an edited or CRLF-converted table fixture, and a stale PROCEDURAL_GLYPH_TABLE_SHA256, writing nothing', () => {
+  const edits = [
+    [TABLE_FIXTURE, (text) => text.replaceAll('\n', '\r\n'), TABLE_FIXTURE],
+    [TABLE_FIXTURE, (text) => text.replace('"packedU32": 5', '"packedU32": 6'), TABLE_FIXTURE],
+    [TABLE_PIN_FILE, (text) => text.replace(/'[0-9a-f]{64}'/u, `'${'0'.repeat(64)}'`), TABLE_PIN_FILE],
+  ];
+  for (const [file, edit, flagged] of edits) {
+    const root = scratchRepo();
+    try {
+      const path = join(root, file);
+      writeFileSync(path, edit(readFileSync(path, 'utf8')));
+      const before = snapshot(root);
+      const run = generate('--write', '--repo-root', root);
+      assert.equal(run.status, 1);
+      assert.deepEqual(run.stdout, []);
+      assert.equal(run.stderr[0].code, 'GEORDI_E_BIJOU_SHADER_SOURCES_PIN_MISMATCH');
+      assert.deepEqual(run.stderr[0].paths, [flagged]);
+      assert.deepEqual(snapshot(root), before);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
 });

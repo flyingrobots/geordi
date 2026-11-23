@@ -508,8 +508,8 @@ in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md), for the dir
 ### `GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE`
 
 **Severity**: Error
-**Message**: `procedural-glyphs.json` is malformed or a packed word disagrees with its fields
-**Fix**: Restore the table pinned by the ABI.
+**Message**: `procedural-glyphs.json` is malformed, a packed word disagrees with its fields, its text does not hash to `PROCEDURAL_GLYPH_TABLE_SHA256`, or a table given to `createCanvas2DSurfacePresenter()` differs from the pinned one
+**Fix**: Restore the table pinned by the ABI, or omit `proceduralTable` to use the bundled one. `path` names the first failing field or word.
 
 ### `GEORDI_E_BIJOU_INVALID_RECEIPT`
 
@@ -599,12 +599,12 @@ These come from `scripts/generate-bijou-gpu-shader-sources.mjs`. Each is the `co
 
 ### `GEORDI_E_BIJOU_SHADER_SOURCES_PIN_MISMATCH`
 
-**Message**: A shader file contains a carriage return or does not hash to its manifest pin
+**Message**: A shader file or the procedural glyph table fixture contains a carriage return or does not hash to its pin (the manifest, or `PROCEDURAL_GLYPH_TABLE_SHA256`)
 **Fix**: Check the file out with LF line endings (`.gitattributes` requires them), or regenerate the shader artifacts with `geordi-bijou-shadergen --write`. Never edit a generated file.
 
 ### `GEORDI_E_BIJOU_SHADER_SOURCES_DRIFT`
 
-**Message**: The bundled shader-source modules differ from a fresh generation
+**Message**: The bundled shader-source or procedural-table modules, or the published table copy, differ from a fresh generation
 **Fix**: Run `node scripts/generate-bijou-gpu-shader-sources.mjs --write` and commit the modules with the shader change that caused them.
 
 ### `GEORDI_E_BIJOU_SHADER_SOURCES_INTERNAL`
