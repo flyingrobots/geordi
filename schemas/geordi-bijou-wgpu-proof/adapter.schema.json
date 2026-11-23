@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-bijou-wgpu-proof/adapter.schema.json",
+  "title": "Adapter",
+  "description": "The wgpu adapter that executed the frame, or the reason none did. Written to stdout. When `available` is false every identity member is null and `evidenceLevel` is `capability-refused`. `deviceClass` decides the evidence level: only `discrete-gpu`, `integrated-gpu` and `virtual-gpu` give `gpu-probed`.",
+  "x-schema-id": "geordi.bijou_wgpu_proof.adapter",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "policy",
+    "available",
+    "evidenceLevel",
+    "backend",
+    "name",
+    "driver",
+    "driverInfo",
+    "deviceClass",
+    "vendor",
+    "device",
+    "detail"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.bijou_wgpu_proof.adapter"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "adapter"
+    },
+    "policy": {
+      "enum": [
+        "auto",
+        "deny"
+      ]
+    },
+    "available": {
+      "type": "boolean"
+    },
+    "evidenceLevel": {
+      "enum": [
+        "gpu-probed",
+        "software-probed",
+        "capability-refused"
+      ]
+    },
+    "backend": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "driver": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "driverInfo": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "deviceClass": {
+      "enum": [
+        "discrete-gpu",
+        "integrated-gpu",
+        "virtual-gpu",
+        "cpu",
+        "other",
+        null
+      ]
+    },
+    "vendor": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "device": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "detail": {
+      "type": "string"
+    }
+  }
+}

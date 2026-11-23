@@ -12,7 +12,9 @@ suite, the endpoint receipt validator, the CPU reference oracle, and the browser
 The design record is the normative source for every equation; this page says how the kit
 exposes them.
 
-> **Not claimed.** Geordi has no GPU presenter. The kit renders on the CPU only. It is the
+> **Not claimed.** Geordi has no browser GPU presenter. The only GPU renderer is the offscreen
+> native `wgpu` proof in [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md), which is
+> checked against this kit. The kit renders on the CPU only. It is the
 > oracle presenters are checked against, tracked in
 > [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173) through
 > [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175), and

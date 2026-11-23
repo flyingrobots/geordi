@@ -104,6 +104,13 @@ Its `shaders/` directory holds the canonical `bijou-surface.wgsl`, the GLSL ES 3
 manifest. The npm package does not publish that directory. Reference:
 [`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md).
 
+The Rust crate `crates/geordi-bijou-wgpu-proof` is the native endpoint of the same ABI. It is
+a bounded offscreen `wgpu` proof. It validates one `packed-bijou-cells/1` file, prepares the
+`rgba32uint` cell record, executes the manifest's `bijou-surface.wgsl` byte for byte into an
+`rgba8uint` target, reads the pixels back and writes a `geordi-bijou-gpu-receipt/1` receipt
+that this package's validator accepts. It opens no window. Reference:
+[`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md).
+
 ### `@flyingrobots/geordi-profunctor-page`
 
 **Bounded Profunctor Page structural target**
