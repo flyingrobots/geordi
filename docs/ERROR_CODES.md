@@ -183,7 +183,7 @@ with a JSON path. Field-level detail is in
 
 **Severity**: Error
 **Message**: An integer is outside `-(2^53 - 1)..=2^53 - 1`
-**Fix**: Keep every integer within `-(2^53 - 1)..=2^53 - 1`.
+**Fix**: Keep every integer within `-(2^53 - 1)..=2^53 - 1`. This covers an integer above `2^64 - 1`, such as `18446744073709551616`. A token so long that its value overflows binary64 (about 309 digits) is not valid input to the JSON reader at all and is reported as `GEORDI_E_RT_JSON_INVALID`.
 
 ### `GEORDI_E_RT_SCENE_VERSION_UNSUPPORTED`
 
