@@ -4,6 +4,7 @@
 
 ### CI
 
+- Typecheck the Profunctor Page test sources: `pnpm typecheck` now also runs `tsc --noEmit -p tsconfig.test.json` in `@flyingrobots/geordi-profunctor-page`, so an invalid type in a `*.test.ts` file fails CI. The build still uses `tsconfig.json` and emits only production files. A node test (`pnpm test:profunctor-page-typecheck-gate`) proves the gate fails on an invalid test type (flyingrobots/geordi#56)
 - Pin the Rust toolchain to 1.96.0 with `rust-toolchain.toml` and install that toolchain in CI instead of floating `stable`, so new compiler lints no longer fail CI on unchanged code (flyingrobots/geordi#158)
 
 ### Fixes
