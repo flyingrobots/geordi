@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-bijou-shader-sources/artifact.schema.json",
+  "title": "Generated artifact status",
+  "description": "One generated shader-source module compared with, or written to, the working tree. Written to stdout.",
+  "x-schema-id": "geordi.bijou_shader_sources.artifact",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "mode",
+    "path",
+    "sha256",
+    "state"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.bijou_shader_sources.artifact"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "artifact"
+    },
+    "mode": {
+      "enum": [
+        "check",
+        "write"
+      ]
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    },
+    "state": {
+      "enum": [
+        "match",
+        "drift",
+        "missing",
+        "written",
+        "unchanged"
+      ]
+    }
+  }
+}

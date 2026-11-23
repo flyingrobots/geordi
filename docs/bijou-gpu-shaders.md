@@ -44,6 +44,9 @@ Edit only the authored files. Never edit a generated file or a vendored file: th
 refuses a vendored file whose SHA-256 is not the one the design record pins, and the drift gate
 refuses a generated file that differs from a fresh generation.
 
+`.gitattributes` checks out `shaders/` and `src/generated/` with LF line endings on every
+platform, because the manifest pins the LF bytes.
+
 ## Assembly
 
 `bijou-surface.wgsl` is these parts, in this order:
@@ -229,6 +232,93 @@ use the binding.
 Read the names from the manifest. `naga` derives them from the group and binding numbers, and a
 `naga` upgrade may change them.
 
+## Shader sources
+
+The presenters do not read files. Each takes a `ShaderSourcePort`
+(`packages/bijou-gpu/src/shader-source.ts`), asks it for the artifacts it executes, and checks
+every byte against the manifest pin itself, so a port is a loader and never a source of trust.
+
+```ts
+interface ShaderSourcePort {
+  readonly description: string;
+  readText(file: BijouShaderArtifactFile): string | undefined;
+}
+```
+
+`BijouShaderArtifactFile` is one of the nine names in `BIJOU_SHADER_ARTIFACT_FILES`: the
+manifest and the eight generated artifacts in the table above. `requireShaderText(port, file,
+backend)` returns the text or throws `RendererFaultError` naming the file and the port.
+`createInMemoryShaderSource(texts, description)` wraps texts a host already holds.
+
+The package ships three adapters, each behind its own subpath export:
+
+| Import | Export | Carries | Runs in |
+| --- | --- | --- | --- |
+| `@flyingrobots/geordi-bijou-gpu/shader-source/webgl2` | `WEBGL2_BUNDLED_SHADER_SOURCE` | Manifest, `bijou-surface.vert.glsl`, `bijou-surface.frag.glsl` | Any runtime |
+| `@flyingrobots/geordi-bijou-gpu/shader-source/webgpu` | `WEBGPU_BUNDLED_SHADER_SOURCE` | Manifest, `bijou-surface.wgsl` | Any runtime |
+| `@flyingrobots/geordi-bijou-gpu/shader-source/node` | `createFileShaderSource({ directory? })` | All nine files, read from disk on each call | Node only |
+
+`createWebGL2SurfacePresenter()` and `createWebGPUSurfacePresenter()` wire the matching bundled
+adapter when no `shaderSource` is given. The browser entry point never imports the file adapter.
+The package is marked `sideEffects: false`, and each bundled adapter imports only its own
+backend's text, so a bundler drops the text of a backend the host never creates.
+
+The file adapter defaults to the `shaders/` directory of the installed package. The package
+publishes the manifest and the eight generated artifacts there, and not the authored or vendored
+inputs. The same files resolve through the `./shaders/*` export, for example
+`import.meta.resolve('@flyingrobots/geordi-bijou-gpu/shaders/bijou-shaders.manifest.json')`.
+
+### Bundled modules
+
+The bundled adapters read three generated modules in `packages/bijou-gpu/src/generated/`:
+
+| Module | Embeds |
+| --- | --- |
+| `bijou-shaders-manifest.generated.ts` | `bijou-shaders.manifest.json` |
+| `bijou-surface-glsl.generated.ts` | `bijou-surface.vert.glsl`, `bijou-surface.frag.glsl` |
+| `bijou-surface-wgsl.generated.ts` | `bijou-surface.wgsl` |
+
+Each text is one JSON string literal on one line, so converting a module's line endings cannot
+change the bytes it embeds. `scripts/generate-bijou-gpu-shader-sources.mjs` writes them:
+
+```bash
+node scripts/generate-bijou-gpu-shader-sources.mjs --check
+node scripts/generate-bijou-gpu-shader-sources.mjs --write
+```
+
+| Flag | Behavior |
+| --- | --- |
+| `--check` | Compares a fresh generation with the checked-in modules, and refuses any other file in `src/generated/`. Writes nothing. Exits 1 on any difference. |
+| `--write` | Writes each module that differs from the file on disk. |
+| `--repo-root <dir>` | Repository root. The default is the repository that holds the script. |
+| `--schema` | Prints the JSON Schema of every message type and exits 0. |
+| `--help` | Prints a description, then the schemas of the success and error output. |
+| `--human`, `--humanize` | Writes prose instead of JSON Lines. |
+
+Before it writes or compares anything, the generator checks each embedded shader file against
+the `bijou-surface` entry of the manifest: no carriage return, the stage `sha256` or
+`assembledWgslSha256`, and the framed `generatedGlslSha256`. A mismatch is
+`GEORDI_E_BIJOU_SHADER_SOURCES_PIN_MISMATCH` and nothing is written. It needs
+`packages/core/dist`.
+
+Every line on stdout and stderr is one JSON object with `_schema.id` and `_schema.version`. The
+schemas are in [`schemas/geordi-bijou-shader-sources/`](../schemas/geordi-bijou-shader-sources/).
+
+| `_schema.id` | Stream | When |
+| --- | --- | --- |
+| `geordi.bijou_shader_sources.artifact` | stdout | One line per module, with `state` `match`, `drift` or `missing` for `--check` and `written` or `unchanged` for `--write` |
+| `geordi.bijou_shader_sources.result` | stdout | Last line of a successful `--check` or `--write` |
+| `geordi.bijou_shader_sources.error` | stderr | A failed run. `code` is one of the codes in [`ERROR_CODES.md`](./ERROR_CODES.md#bijou-gpu-shader-sources-generator) |
+| `geordi.bijou_shader_sources.help` | stdout | First line of `--help` |
+| `geordi.bijou_shader_sources.schema` | stdout | One line per schema for `--schema`, and after the help line |
+
+The package `test` script runs `--check` and `scripts/bijou-gpu-shader-sources.test.mjs`, and
+`pnpm test:bijou-gpu:shaders` runs `--check` after the shader drift gate.
+`node scripts/smoke-bijou-gpu-packed-package.mjs`, part of `pnpm test:exports`, packs the package,
+requires every published shader file in the tarball, installs it into a scratch consumer, resolves
+each subpath export by package name, and checks that the file adapter reads each packed artifact
+at its manifest digest, byte-identical to the bundled adapters.
+
 ## Kernel conformance harness
 
 [`scripts/lib/bijou-gpu-shader-harness.mjs`](../scripts/lib/bijou-gpu-shader-harness.mjs) executes
@@ -283,7 +373,8 @@ bytes. The tests use them to diff the shader against reference models.
 pnpm test:bijou-gpu:shaders
 ```
 
-This runs the generator's tests and Clippy, the `--check` drift gate, and
+This runs the generator's tests and Clippy, the `--check` drift gate, the bundled shader-source
+`--check`, and
 `scripts/bijou-gpu-shader-conformance.test.mjs`. The conformance tests start headless Chrome
 through Playwright and need a WebGL2 context; without one they fail. CI also runs the generator
 test that passes every generated stage to `glslangValidator`:
@@ -302,8 +393,10 @@ Set `GEORDI_BIJOU_GPU_E4_EXHAUSTIVE=1` to diff the Option E4 corners at every ce
 
 1. Edit an authored file under `src/`, or the procedural glyph table.
 2. Run `cargo run -p geordi-bijou-shadergen -- --write`.
-3. Run `pnpm test:bijou-gpu:shaders`.
-4. Commit the authored change and every regenerated file together.
+3. Run `node scripts/generate-bijou-gpu-shader-sources.mjs --write`.
+4. Update `WEBGL2_SURFACE_SHADER_PIN` in `src/webgl2-presenter.ts` from the new manifest.
+5. Run `pnpm test:bijou-gpu:shaders`.
+6. Commit the authored change and every regenerated file together.
 
 To adopt a new Bunny revision, replace the vendored helper and vector files, and update the
 commit and digests in the design record and in `BUNNY_PRIMITIVES` in the generator. To change the

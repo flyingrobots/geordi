@@ -3,7 +3,8 @@
 Contract ledger for [`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md). Each row names a
 requirement, the case, the oracle that decides it, and the test that is the evidence.
 Requirements come from
-[flyingrobots/geordi#170](https://github.com/flyingrobots/geordi/issues/170) and the
+[flyingrobots/geordi#170](https://github.com/flyingrobots/geordi/issues/170),
+[flyingrobots/geordi#185](https://github.com/flyingrobots/geordi/issues/185) (shader sources) and the
 [design record](./design/2026-11-bijou-surface-gpu-abi.md).
 
 Run them with:
@@ -84,3 +85,25 @@ Tests are in `scripts/bijou-gpu-shader-conformance.test.mjs`.
 
 `BS-ARC-02` covers all 262,144 instances of `[1..256]^2 x 4` when
 `GEORDI_BIJOU_GPU_E4_EXHAUSTIVE=1` is set. CI runs the listed sizes.
+
+## Shader sources
+
+Tests are in `packages/bijou-gpu/src/shader-source.test.ts` (run by
+`pnpm --filter @flyingrobots/geordi-bijou-gpu test`), `scripts/bijou-gpu-shader-sources.test.mjs`
+(run by the same package script) and `scripts/smoke-bijou-gpu-packed-package.mjs` (run by
+`pnpm test:exports`).
+
+| ID | Case | Oracle | Test |
+| --- | --- | --- | --- |
+| BS-SRC-01 | The artifact list | `BIJOU_SHADER_ARTIFACT_FILES` is the manifest plus every `wgslPath` and stage `path` the manifest names | `lists exactly the eight generated artifacts and the manifest the shader generator checks in` |
+| BS-SRC-02 | Bundled bytes | SHA-256 of each embedded text equals its manifest digest; the embedded manifest equals the file | `embeds the $name artifacts byte for byte: each SHA-256 equals the checked-in manifest` (webgl2, webgpu) |
+| BS-SRC-03 | Bundled GLSL framing | Framed digest of the bundled stages equals `generatedGlslSha256` | `frames the bundled WebGL2 stages to the manifest generatedGlslSha256` |
+| BS-SRC-04 | Line endings | No embedded text holds a carriage return; each text is one single-line literal; the generator refuses a CRLF file | `keeps line feeds in the $name bundle: no carriage return survives a converted checkout`; `embeds each text as one string literal, so converting the module line endings keeps its bytes`; `refuses a CRLF-converted or edited shader file instead of embedding it, and writes nothing` |
+| BS-SRC-05 | Per-backend bundles | Each bundle carries only its backend's text and imports only its own generated modules | `carries only the artifacts of its own backend, so an unused backend costs no text`; `keeps each bundled adapter to its own backend text, so a bundler drops an unused one` |
+| BS-SRC-06 | File adapter | Every manifest-named artifact loads from the package `shaders/` at its digest and equals the bundles; a missing file is `undefined` and refused | `loads every generated artifact the manifest names from the package shaders directory, at its manifest digest`; `loads the same bytes as the bundled $name adapter`; `reads from a given directory, and yields nothing for an artifact missing there` |
+| BS-SRC-07 | Missing artifact | `requireShaderText` throws `RendererFaultError` naming the file and the port | `returns the given text and refuses a missing artifact with a RendererFaultError naming it` |
+| BS-SRC-08 | Module boundaries | The presenter cores and the port reach no `node:` module, no `?raw` specifier and no generated module; the browser entry point never reaches the file adapter | `the core module %s reaches no node: module, no ?raw specifier and no embedded shader text`; `the browser entry point reaches no node: module and no file adapter, and wires both bundled adapters` |
+| BS-SRC-09 | Drift gate | `--check` passes on the tree; it reports a drifted, a missing and a stray module with `GEORDI_E_BIJOU_SHADER_SOURCES_DRIFT`, exits 1 and changes no file | `--check passes on the checked-in tree and ends with a result line`; `--check reports a drifted, a missing and a stray module, exits 1 and writes nothing` |
+| BS-SRC-10 | Deterministic generation | `--write` into an empty directory reproduces the checked-in modules; a second run is `unchanged` | `--write regenerates byte-identical modules, deterministically` |
+| BS-SRC-11 | Output contract | Every stdout and stderr line validates against its declared schema; `--schema`, `--help`, usage errors (exit 2) and `--human` | `--schema and --help emit schema-valid JSON Lines and exit 0; a bad command line exits 2 with an error line`; `--human writes prose, not JSON` |
+| BS-SRC-12 | Packed package | The tarball lists the manifest and all eight artifacts and no authored or vendored input; every subpath export resolves by package name inside the packed copy; the file adapter reads each packed artifact at its digest, equal to the bundles | `scripts/smoke-bijou-gpu-packed-package.mjs` (a script, not a named test) |

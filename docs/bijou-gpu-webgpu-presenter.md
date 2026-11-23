@@ -1,7 +1,8 @@
 # Bijou GPU WebGPU Presenter Reference
 
 **Package**: `@flyingrobots/geordi-bijou-gpu` (`packages/bijou-gpu`)
-**Modules**: `src/webgpu-presenter.ts` (presenter), `src/webgpu-types.ts` (structural WebGPU
+**Modules**: `src/webgpu-presenter.ts` (presenter core), `src/webgpu-presenter-default.ts`
+(composition root), `src/shader-source.ts` (shader source port), `src/webgpu-types.ts` (structural WebGPU
 slice), `src/presenter-host.ts` (host helpers shared by every presenter)
 **ABI**: `bijou-surface-gpu/1`
 **Receipt**: `geordi-bijou-gpu-receipt/1`, `backendProfile` `geordi-webgpu/1`
@@ -26,7 +27,6 @@ design record is normative for every equation; this page says how the presenter 
 
 ```ts
 const presenter = await createWebGPUSurfacePresenter(canvas, {
-  shader: { wgsl, manifest },
   atlas,
   defaultFg: '#E6EDF3',
   defaultBg: '#0D1117',
@@ -36,14 +36,18 @@ const presenter = await createWebGPUSurfacePresenter(canvas, {
 
 | Option | Meaning |
 | --- | --- |
-| `shader.wgsl` | The exact text of `packages/bijou-gpu/shaders/bijou-surface.wgsl`. The npm package does not publish that directory; a host loads the file itself, for example with a Vite `?raw` import. |
-| `shader.manifest` | The parsed `packages/bijou-gpu/shaders/bijou-shaders.manifest.json`. The presenter reads the binding numbers, the uniform byte size and every uniform byte offset from it, and checks the WGSL against its `assembledWgslSha256`. |
+| `shaderSource` | Optional `ShaderSourcePort` that yields `bijou-surface.wgsl` and `bijou-shaders.manifest.json`. Default: `WEBGPU_BUNDLED_SHADER_SOURCE`, which embeds both (see [shader sources](./bijou-gpu-shaders.md#shader-sources)). Required by `createWebGPUSurfacePresenterCore(canvas, options)`. The presenter reads the binding numbers, the uniform byte size and every uniform byte offset from the manifest, and checks the WGSL against its `assembledWgslSha256`. |
 | `atlas` | A `PresenterAtlasSource`. A `GlyphAtlas` is one as is; `staticAtlasSource(createTestGlyphPack())` adapts a fixed bitmap. The presenter owns its dirty rectangles: it calls `takeDirtyRects()` on every draw. Cell metrics come from `atlas.bitmap`. |
 | `gpu` | Defaults to `globalThis.navigator.gpu`. |
 | `defaultFg`, `defaultBg` | Uppercase `#RRGGBB`. Default to `REFERENCE_DEFAULT_FG` and `REFERENCE_DEFAULT_BG`. |
 | `size` | Initial host size. Without it the canvas keeps its pixel size. |
 | `clientRect` | Client rectangle for `cellFromPoint`. Defaults to `canvas.getBoundingClientRect()`. |
 | `powerPreference` | Passed to `requestAdapter()`. |
+
+The host passes no shader: `createWebGPUSurfacePresenter()` is the composition root, which calls
+the core, `createWebGPUSurfacePresenterCore()`, with the bundled adapter.
+`loadBijouSurfaceShader(port)` reads both files from a port and decodes them with
+`decodeBijouSurfaceShader({ wgsl, manifest })`.
 
 `canvas` is an `HTMLCanvasElement` or an `OffscreenCanvas`. The factory returns a promise, as the
 `GpuSurfacePresenterFactory` contract allows.
@@ -58,7 +62,8 @@ The factory checks capability first, then everything else.
 | `requestAdapter()` returns `null` or rejects | `BackendUnavailableError` |
 | `requestDevice()` rejects | `BackendUnavailableError` |
 | The canvas has no `webgpu` context | `BackendUnavailableError` |
-| The WGSL does not hash to the manifest's `assembledWgslSha256`, or the manifest is malformed | `RendererFaultError` |
+| The shader source has no `bijou-surface.wgsl` or no manifest | `RendererFaultError` naming the file and the port |
+| The WGSL does not hash to the manifest's `assembledWgslSha256` (including a CRLF-converted file), or the manifest is malformed | `RendererFaultError` |
 | A shader module reports a compilation error | `RendererFaultError` |
 | A render pipeline rejects, or a validation, out-of-memory or internal error scope catches an error during creation | `RendererFaultError` |
 | The preferred canvas format is not `bgra8unorm` or `rgba8unorm` | `RendererFaultError` |
@@ -165,7 +170,8 @@ Digest fields:
 | `executedArtifactSha256` | SHA-256 of both executed WGSL texts, framed like the manifest's `generatedGlslSha256`: for `bijou-surface.wgsl` then `geordi-webgpu-display.wgsl`, the name, a line feed, the decimal byte length, a line feed, and the bytes |
 | `preparedBufferSha256` | SHA-256 of the little-endian staging buffer |
 
-`createWebGpuRefusalReceipt({ error, shader, atlas, target, size, ... })` takes the
+`createWebGpuRefusalReceipt({ error, shaderSource, atlas, target, size, ... })` reads the shader
+through the port as the presenter does, and takes the
 `BackendUnavailableError` itself and refuses anything else with `RendererFaultError`, so a fault
 cannot be recorded as a refusal. `adapter.name` is empty because no adapter executed.
 
@@ -242,8 +248,8 @@ uses are spec constants in `WEBGPU_BUFFER_USAGE`, `WEBGPU_TEXTURE_USAGE`,
 pnpm --filter @flyingrobots/geordi-bijou-gpu test:browser
 ```
 
-The page `packages/bijou-gpu/harness/webgpu.html` runs the presenter on a real canvas with the
-shader and manifest loaded verbatim, and compares every read-back frame with
+The page `packages/bijou-gpu/harness/webgpu.html` runs the presenter on a real canvas with no shader
+argument, so the bundled WGSL and manifest run, and compares every read-back frame with
 `renderReferenceRgba()` run in the same page. It publishes `window.__geordiWebGpuProbe`.
 
 These tests run in their own Playwright project, `chrome-webgpu`, which launches Chrome with

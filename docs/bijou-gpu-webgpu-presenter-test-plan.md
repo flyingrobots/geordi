@@ -2,7 +2,8 @@
 
 Contract ledger for [`bijou-gpu-webgpu-presenter.md`](./bijou-gpu-webgpu-presenter.md). Each row
 names a requirement, the case, the oracle that decides it, and the test that is the evidence.
-Requirements come from [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175)
+Requirements come from [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175),
+[flyingrobots/geordi#185](https://github.com/flyingrobots/geordi/issues/185) (shader source port)
 and sections 4 to 6 of the [design record](./design/2026-11-bijou-surface-gpu-abi.md). Where the
 issue and the design record differ, the design record wins: the atlas is an `rgba8uint` texture,
 not `rgba8unorm`.
@@ -34,6 +35,10 @@ BG-WGPU-41 is refusal evidence only and never closes a rendering claim.
 | BG-WGPU-01 | The canonical WGSL loaded verbatim | SHA-256 of the file equals the manifest's `assembledWgslSha256`, found independently in the manifest text; bindings `0, 1, 2` in group `0`; the uniform offsets of the shader reference | `accepts the canonical assembled WGSL verbatim and reads the manifest layout` |
 | BG-WGPU-02 | One extra byte, or a manifest without the shader | `RendererFaultError` | `refuses shader text that is not byte-identical to the pinned artifact` |
 | BG-WGPU-03 | Executed-artifact digest | Independent framing of both WGSL texts | `pins every executed WGSL text in executedArtifactSha256` |
+| BG-WGPU-42 | No shader argument | `createWebGPUSurfacePresenter(canvas, { gpu, atlas, size })` presents; the receipt's `assembledWgslSha256` and `shaderSha256` equal the manifest, `executedArtifactSha256` equals the digest over the file on disk, and the file's exact text reaches `createShaderModule` | `creates a presenter with only a canvas and an atlas, and its receipt reports the manifest digest` |
+| BG-WGPU-43 | Port missing a file | `RendererFaultError` with backend `webgpu`, naming the missing manifest and the port | `names the missing artifact and the port when a shader source lacks it` |
+| BG-WGPU-44 | Any port | The core over `createFileShaderSource()` compiles the same shader modules as the default wiring | `takes any ShaderSourcePort: the core over the file adapter compiles the same WGSL as the default` |
+| BG-WGPU-45 | Core boundary | The import graph of `webgpu-presenter.ts` reaches no `node:` module, no `?raw` specifier, no generated module and no adapter; the browser harness imports no shader file | `src/shader-source.test.ts`: `the core module %s reaches no node: module, no ?raw specifier and no embedded shader text`, `the browser harness %s imports no shader file from the repository` |
 
 ## Refusal versus fault
 
@@ -43,7 +48,7 @@ BG-WGPU-41 is refusal evidence only and never closes a rendering claim.
 | BG-WGPU-05 | `requestAdapter()` null or rejected; `requestDevice()` rejected | `BackendUnavailableError` | `throws BackendUnavailableError when %s` (3 cases) |
 | BG-WGPU-06 | Canvas without a `webgpu` context | `BackendUnavailableError`; the device is destroyed | `throws BackendUnavailableError and releases the device when the canvas has no webgpu context` |
 | BG-WGPU-07 | No adapter and a broken shader | The refusal wins | `checks capability before the shader, so a refusal is never hidden behind a fault` |
-| BG-WGPU-08 | Tampered WGSL, compile errors in either shader, a rejected pipeline, a scoped validation error, an `-srgb` preferred format | `RendererFaultError`, not `BackendUnavailableError`; the device is destroyed | `throws RendererFaultError, never BackendUnavailableError, on %s` (6 cases) |
+| BG-WGPU-08 | Tampered or CRLF-converted WGSL, a port without the WGSL or the manifest, compile errors in either shader, a rejected pipeline, a scoped validation error, an `-srgb` preferred format | `RendererFaultError`, not `BackendUnavailableError`; the device is destroyed | `throws RendererFaultError, never BackendUnavailableError, on %s` (9 cases) |
 
 ## Canvas format
 

@@ -22,12 +22,14 @@ import { packedSurfaceFromReference } from '../test/packed-surface.js';
 import type { GpuPackedSurface } from './presenter.js';
 import { preparedBufferBytes } from './prepare.js';
 import { serializeEndpointReceipt, validateEndpointReceipt } from './receipt.js';
+import { createInMemoryShaderSource, type ShaderSourcePort } from './shader-source.js';
+import { createFileShaderSource } from './shader-source-node.js';
 import { sha256Hex, utf8Bytes } from './sha256.js';
 import { createSurfaceDamageState, packSurfaceDamage, resolveSlotFromSlotMap } from './surface-damage.js';
 import {
   alignedBytesPerRow,
   classifyWebGpuAdapter,
-  createWebGPUSurfacePresenter,
+  createWebGPUSurfacePresenterCore,
   createWebGpuRefusalReceipt,
   decodeBijouSurfaceShader,
   planAtlasUploads,
@@ -37,8 +39,8 @@ import {
   WEBGPU_DISPLAY_WGSL,
   webGpuExecutedArtifactSha256,
   type WebGpuSurfacePresenter,
-  type WebGpuSurfacePresenterOptions,
 } from './webgpu-presenter.js';
+import { createWebGPUSurfacePresenter, type WebGpuSurfacePresenterOptions } from './webgpu-presenter-default.js';
 
 const SHADER_DIR = new URL('../shaders/', import.meta.url);
 const WGSL = readFileSync(fileURLToPath(new URL('bijou-surface.wgsl', SHADER_DIR)), 'utf8');
@@ -53,6 +55,14 @@ const MANIFEST_SURFACE_SHA = (() => {
   }
   return match[1];
 })();
+
+/** A port over the checked-in WGSL and manifest text, optionally edited; `null` leaves a file out. */
+function hostShaderSource(wgsl: string | null = WGSL, manifest: string | null = MANIFEST_TEXT): ShaderSourcePort {
+  return createInMemoryShaderSource({
+    ...(wgsl === null ? {} : { 'bijou-surface.wgsl': wgsl }),
+    ...(manifest === null ? {} : { 'bijou-shaders.manifest.json': manifest }),
+  });
+}
 
 const SUITE: RenderedSuite = renderSuite();
 const PAINT = SUITE.paint;
@@ -106,9 +116,9 @@ function presenterOptions(
   gpu: FakeGpu,
   overrides: Partial<WebGpuSurfacePresenterOptions> = {},
 ): WebGpuSurfacePresenterOptions {
+  // No shader source: the composition root wires the bundled WebGPU adapter.
   return {
     gpu,
-    shader: { wgsl: WGSL, manifest: MANIFEST },
     atlas: testAtlas(),
     defaultFg: SUITE.suite.defaultFg,
     defaultBg: SUITE.suite.defaultBg,
@@ -172,10 +182,7 @@ describe('decodeBijouSurfaceShader', () => {
 
 describe('createWebGPUSurfacePresenter capability refusal', () => {
   it('throws BackendUnavailableError, never RendererFaultError, when navigator.gpu is absent', async () => {
-    const attempt = createWebGPUSurfacePresenter(new FakeCanvas(), {
-      shader: { wgsl: WGSL, manifest: MANIFEST },
-      atlas: testAtlas(),
-    });
+    const attempt = createWebGPUSurfacePresenter(new FakeCanvas(), { atlas: testAtlas() });
     await expect(attempt).rejects.toBeInstanceOf(BackendUnavailableError);
     await expect(attempt).rejects.not.toBeInstanceOf(RendererFaultError);
     await expect(attempt).rejects.toMatchObject({ code: 'GEORDI_E_BIJOU_BACKEND_UNAVAILABLE', backend: 'webgpu' });
@@ -201,7 +208,7 @@ describe('createWebGPUSurfacePresenter capability refusal', () => {
   it('checks capability before the shader, so a refusal is never hidden behind a fault', async () => {
     const attempt = createWebGPUSurfacePresenter(
       new FakeCanvas(),
-      presenterOptions(new FakeGpu({ adapters: ['null'] }), { shader: { wgsl: 'broken', manifest: MANIFEST } }),
+      presenterOptions(new FakeGpu({ adapters: ['null'] }), { shaderSource: hostShaderSource('broken') }),
     );
     await expect(attempt).rejects.toBeInstanceOf(BackendUnavailableError);
   });
@@ -209,7 +216,10 @@ describe('createWebGPUSurfacePresenter capability refusal', () => {
 
 describe('createWebGPUSurfacePresenter renderer faults', () => {
   it.each([
-    ['tampered shader text', {}, { shader: { wgsl: WGSL.replace('fs_main', 'fs_mian'), manifest: MANIFEST } }],
+    ['tampered shader text', {}, { shaderSource: hostShaderSource(WGSL.replace('fs_main', 'fs_mian')) }],
+    ['CRLF-converted shader text', {}, { shaderSource: hostShaderSource(WGSL.replaceAll('\n', '\r\n')) }],
+    ['a shader source without the WGSL', {}, { shaderSource: hostShaderSource(null) }],
+    ['a shader source without the manifest', {}, { shaderSource: hostShaderSource(WGSL, null) }],
     ['a WGSL compile error', { device: { compileErrors: ['bijou-surface.wgsl'] } }, {}],
     ['a display shader compile error', { device: { compileErrors: ['geordi-webgpu-display.wgsl'] } }, {}],
     ['a rejected render pipeline', { device: { pipelineRejections: ['bijou-surface canonical pass'] } }, {}],
@@ -225,6 +235,39 @@ describe('createWebGPUSurfacePresenter renderer faults', () => {
       expect(gpu.device.destroyed).toBe(true);
     },
   );
+});
+
+describe('createWebGPUSurfacePresenter shader source port', () => {
+  it('creates a presenter with only a canvas and an atlas, and its receipt reports the manifest digest', async () => {
+    const gpu = new FakeGpu();
+    const presenter = await createWebGPUSurfacePresenter(new FakeCanvas(), { gpu, atlas: testAtlas(), size: SUITE_SIZE });
+    const surface = packedSurfaceFromReference(SUITE.paintReceipt, 'all');
+    presenter.present(surface, surface, {});
+    const receipt = presenter.getLastReceipt();
+    expect(receipt).toMatchObject({
+      assembledWgslSha256: MANIFEST_SURFACE_SHA,
+      shaderSha256: MANIFEST_SURFACE_SHA,
+      executedArtifactSha256: webGpuExecutedArtifactSha256(WGSL),
+    });
+    expect(gpu.device.shaderModules.map((module) => module.code)).toContain(WGSL);
+  });
+
+  it('names the missing artifact and the port when a shader source lacks it', async () => {
+    const attempt = createWebGPUSurfacePresenterCore(new FakeCanvas(), {
+      ...presenterOptions(new FakeGpu()),
+      shaderSource: hostShaderSource(WGSL, null),
+    });
+    await expect(attempt).rejects.toMatchObject({ backend: 'webgpu', detail: 'shader source in-memory has no bijou-shaders.manifest.json' });
+  });
+
+  it('takes any ShaderSourcePort: the core over the file adapter compiles the same WGSL as the default', async () => {
+    const viaFile = new FakeGpu();
+    await createWebGPUSurfacePresenterCore(new FakeCanvas(), { ...presenterOptions(viaFile), shaderSource: createFileShaderSource() });
+    const viaDefault = new FakeGpu();
+    await createWebGPUSurfacePresenter(new FakeCanvas(), presenterOptions(viaDefault));
+    const compiled = (gpu: FakeGpu) => gpu.device.shaderModules.map((module) => module.code);
+    expect(compiled(viaFile)).toEqual(compiled(viaDefault));
+  });
 });
 
 describe('selectWebGpuCanvasFormat', () => {
@@ -727,7 +770,7 @@ describe('capability-refused receipts', () => {
     expect(refusal).not.toBeNull();
     const receipt = createWebGpuRefusalReceipt({
       error: refusal!,
-      shader: { wgsl: WGSL, manifest: MANIFEST },
+      shaderSource: hostShaderSource(),
       atlas: testAtlas(),
       target: PAINT_SURFACE,
       size: SUITE_SIZE,
@@ -754,7 +797,7 @@ describe('capability-refused receipts', () => {
       createWebGpuRefusalReceipt({
         // A caller that ignores the types still cannot turn a fault into a refusal.
         error: new RendererFaultError('webgpu', 'compile error') as never,
-        shader: { wgsl: WGSL, manifest: MANIFEST },
+        shaderSource: hostShaderSource(),
         atlas: testAtlas(),
         target: PAINT_SURFACE,
         size: SUITE_SIZE,
