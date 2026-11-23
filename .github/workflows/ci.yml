@@ -13,7 +13,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Full history: the contract gate compares with the merge base, and its golden test replays
+      # flyingrobots/geordi#212 from its two commits.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
@@ -31,6 +35,13 @@ jobs:
 
       - name: Build geordi-ir for wasm32
         run: cargo build -p geordi-ir --target wasm32-unknown-unknown
+
+      # Compares every public contract of this commit with its base: the merge base with the pull
+      # request's base branch, or the previous tip on a push. Fails closed. See docs/contract-gate.md.
+      - name: Contract gate (public contracts against the merge base)
+        env:
+          CONTRACT_GATE_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event_name == 'push' && github.event.before || 'HEAD^1' }}
+        run: node scripts/contract-gate.mjs --base-ref "$CONTRACT_GATE_BASE_REF"
 
       - name: Install dependencies
         run: pnpm install

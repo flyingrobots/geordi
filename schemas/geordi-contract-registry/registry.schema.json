@@ -1,0 +1,294 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-registry/registry.schema.json",
+  "title": "Contract registry",
+  "description": "contracts/registry.json: every public contract the contract gate compares, the surfaces that define each one, and the public contracts it does not yet compare. Paths are relative to the repository root. See docs/contract-gate.md.",
+  "x-schema-id": "geordi.contract_registry.registry",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "registryVersion",
+    "contracts",
+    "messageSchemaFamilies",
+    "ungated"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "registryVersion": {
+      "const": "geordi-contract-registry/1"
+    },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/contract"
+      }
+    },
+    "messageSchemaFamilies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/family"
+      }
+    },
+    "ungated": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ungated"
+      }
+    }
+  },
+  "$defs": {
+    "contract": {
+      "type": "object",
+      "required": [
+        "contract",
+        "status",
+        "statusEvidence",
+        "schema",
+        "examples"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*/[1-9][0-9]*$"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "frozen",
+            "superseded"
+          ]
+        },
+        "statusEvidence": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the repository documents this status, quoted."
+        },
+        "supersededBy": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*/[1-9][0-9]*$"
+        },
+        "schema": {
+          "type": "string",
+          "pattern": "^[^/.][^\\\\]*$",
+          "minLength": 1
+        },
+        "examples": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/example"
+          }
+        },
+        "diagnostics": {
+          "type": "object",
+          "required": [
+            "catalog",
+            "sources",
+            "prefix"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "catalog": {
+              "type": "string",
+              "pattern": "^[^/.][^\\\\]*$",
+              "minLength": 1
+            },
+            "sources": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "pattern": "^[^/.][^\\\\]*$",
+                "minLength": 1
+              }
+            },
+            "prefix": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]*_$"
+            }
+          }
+        },
+        "rustApi": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/rustApi"
+          }
+        },
+        "notCovered": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "example": {
+      "type": "object",
+      "required": [
+        "path",
+        "encoder"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^[^/.][^\\\\]*$",
+          "minLength": 1
+        },
+        "encoder": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "sha256-bytes"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "required": [
+                "kind",
+                "crate",
+                "function"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "rust-fn"
+                },
+                "crate": {
+                  "type": "string",
+                  "pattern": "^[^/.][^\\\\]*$",
+                  "minLength": 1
+                },
+                "function": {
+                  "type": "string",
+                  "pattern": "^[a-z_][a-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)+$"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "rustApi": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "file",
+            "select"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "file": {
+              "type": "string",
+              "pattern": "^[^/.][^\\\\]*$",
+              "minLength": 1
+            },
+            "select": {
+              "const": "all"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "file",
+            "select",
+            "from"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "file": {
+              "type": "string",
+              "pattern": "^[^/.][^\\\\]*$",
+              "minLength": 1
+            },
+            "select": {
+              "const": "reexports"
+            },
+            "from": {
+              "type": "string",
+              "pattern": "^[a-z_][a-z0-9_]*(::[a-z_][a-z0-9_]*)*$"
+            }
+          }
+        }
+      ]
+    },
+    "family": {
+      "type": "object",
+      "required": [
+        "directory",
+        "status",
+        "statusEvidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "directory": {
+          "type": "string",
+          "pattern": "^[^/.][^\\\\]*$",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "frozen"
+          ]
+        },
+        "statusEvidence": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notCovered": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "ungated": {
+      "type": "object",
+      "required": [
+        "contract",
+        "status",
+        "statusEvidence",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]*/[1-9][0-9]*$"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "frozen"
+          ]
+        },
+        "statusEvidence": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

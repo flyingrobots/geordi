@@ -20,6 +20,30 @@
   is "A directional light's value is irradiance." The identifier stays `geordi-ray-traced-scene/1`
   because that artifact is not yet frozen: no released consumer exists. (flyingrobots/geordi#161)
 
+### Added
+
+- **Contract gate** (`scripts/contract-gate.mjs`, `pnpm contracts:check`, `contracts/`,
+  `crates/geordi-contract-api`, `docs/contract-gate.md`). CI now compares each pull request's public
+  contracts with those of its merge base. It computes each surface from source on both trees with
+  the same code, so editing a pin or a fixture in the same pull request cannot make a change pass.
+  The surfaces are:
+  - the JSON Schema;
+  - the canonical example hashes, each computed by its own tree's encoder;
+  - the diagnostic codes, from `docs/ERROR_CODES.md` and from the source, which must agree;
+  - the public Rust items, parsed with `syn`, because rustdoc JSON needs a nightly compiler.
+
+  Any change to a `draft` contract needs a change record in `contracts/changes/`. A breaking change
+  to a `frozen` one needs a version raise. The gate fails closed. Its output is JSON Lines with
+  schemas in `schemas/geordi-contract-gate/`, and it is replayed against flyingrobots/geordi#212 in
+  `scripts/contract-gate-replay-212.test.mjs`. The registry records every contract as `draft`,
+  because no contract is documented as frozen. Not covered yet: TypeScript APIs, and the contracts
+  listed as `ungated`. The change record for flyingrobots/geordi#212 is retroactive.
+  (flyingrobots/geordi#217)
+- **JSON Schema for `geordi-ray-traced-scene/1`** (`schemas/geordi-ray-traced-scene/1/scene.schema.json`).
+  Every positive fixture validates against it and every shape-stage failure fixture does not. It
+  is not the whole validator: `docs/ray-traced-scene-profile.md` lists the rules it cannot express.
+  (flyingrobots/geordi#217)
+
 ### Changed
 
 - **`@flyingrobots/geordi-compiler-core`** (`src/compile/artifactBuilder.ts`): `compile()` now builds the IR,

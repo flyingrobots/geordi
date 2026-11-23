@@ -654,6 +654,138 @@ The proof also reports the kit codes `GEORDI_E_BIJOU_INVALID_PACKED_CELLS`,
 **Message**: The command line is not valid
 **Fix**: Pass `--render <file>`, `--schema` or `--help`, with the flags in `--help`. Exit code 2.
 
+## Contract Gate
+
+These come from `scripts/contract-gate.mjs`. A `violation` line on stdout carries one of the
+`GEORDI_E_CONTRACT_*` codes below; the gate then fails with `GEORDI_E_CONTRACT_GATE_FAILED`. The
+`GEORDI_E_CONTRACT_GATE_*` codes are the `code` of a `geordi.contract_gate.error` JSON line on
+stderr. The gate is described in [`contract-gate.md`](./contract-gate.md).
+
+### `GEORDI_E_CONTRACT_RECORD_MISSING`
+
+**Severity**: Error
+**Message**: A contract differs from the base (or is new, removed, or changed status) and no new change record names it
+**Fix**: Add a change record to `contracts/changes/` that names the contract, says `breaking` or `additive`, and states what changed and why. For a status change, include `status: { from, to }`.
+
+### `GEORDI_E_CONTRACT_RECORD_STALE`
+
+**Severity**: Error
+**Message**: A new change record names a contract that does not differ from the base
+**Fix**: Remove the record, or name the contract that actually changed.
+
+### `GEORDI_E_CONTRACT_RECORD_UNDERSTATED`
+
+**Severity**: Error
+**Message**: A change record says additive, but a difference is breaking or unknown
+**Fix**: Set `change` to `breaking`. An `unknown` difference counts as breaking.
+
+### `GEORDI_E_CONTRACT_RECORD_INVALID`
+
+**Severity**: Error
+**Message**: A change record does not match its schema, is not JSON, or names a contract in neither registry
+**Fix**: Fix the record against `schemas/geordi-contract-registry/change-record.schema.json` and name a registered contract.
+
+### `GEORDI_E_CONTRACT_HISTORY_REWRITTEN`
+
+**Severity**: Error
+**Message**: A change record that exists on the base was edited or deleted
+**Fix**: Restore the record as it is on the base. Add a new record instead.
+
+### `GEORDI_E_CONTRACT_FROZEN_BREAKING`
+
+**Severity**: Error
+**Message**: A frozen contract changed in a breaking (or unknown) way without a version raise
+**Fix**: Raise the version: add `name/N+1`, mark `name/N` superseded, and keep its schema and examples. See `docs/contract-gate.md`.
+
+### `GEORDI_E_CONTRACT_FROZEN_REMOVED`
+
+**Severity**: Error
+**Message**: A frozen contract was removed from the registry instead of being superseded
+**Fix**: Mark the contract `superseded` by a higher version instead of removing it.
+
+### `GEORDI_E_CONTRACT_STATUS_INVALID`
+
+**Severity**: Error
+**Message**: A status change that is not allowed: frozen to draft, leaving superseded, a new superseded contract, or superseded without a successor
+**Fix**: Allowed: draft to frozen or superseded, frozen to superseded. A superseded contract names a higher version of itself in `supersededBy`.
+
+### `GEORDI_E_CONTRACT_SUPERSEDED_CHANGED`
+
+**Severity**: Error
+**Message**: A superseded contract's schema or example files differ from the base or were deleted
+**Fix**: Restore the superseded version's schema and example files from the base.
+
+### `GEORDI_E_CONTRACT_DIAGNOSTICS_DISAGREE`
+
+**Severity**: Error
+**Message**: On the head, the diagnostic codes in the catalog and in the source disagree
+**Fix**: Document each code in the catalog under a level-three heading that names it in backticks, or remove the code from the source, so the two sets agree.
+
+### `GEORDI_E_CONTRACT_EXAMPLE_INVALID`
+
+**Severity**: Error
+**Message**: On the head, an example document is not JSON or does not validate against its contract's schema
+**Fix**: Fix the example, or the schema, so the example validates.
+
+### `GEORDI_E_CONTRACT_GATE_USAGE`
+
+**Severity**: Error
+**Message**: Invalid command line
+**Fix**: Pass the flags in `--help`. Exit code 2.
+
+### `GEORDI_E_CONTRACT_GATE_BASE`
+
+**Severity**: Error
+**Message**: The base cannot be determined: the base ref does not resolve, or HEAD and the base share no commit (often a shallow clone)
+**Fix**: Fetch the base branch with full history (`git fetch origin`, or `fetch-depth: 0` in CI), or pass `--base` or `--base-dir`.
+
+### `GEORDI_E_CONTRACT_GATE_REGISTRY`
+
+**Severity**: Error
+**Message**: The head has no contract registry, or it or a message schema family is invalid
+**Fix**: Restore `contracts/registry.json`, or fix it against its schema. Each file in a message schema family needs `x-schema-id` and a semantic `x-schema-version`.
+
+### `GEORDI_E_CONTRACT_GATE_SNAPSHOT`
+
+**Severity**: Error
+**Message**: A contract surface cannot be computed on one of the trees: a file is missing or unreadable, an encoder or the Rust snapshot failed
+**Fix**: Restore the file named in `paths`, or fix the encoder crate or Rust source so it builds and parses. An encoder is `fn(&str) -> Result<String, E: Debug>`.
+
+### `GEORDI_E_CONTRACT_GATE_FAILED`
+
+**Severity**: Error
+**Message**: The comparison ran and wrote one or more violation lines
+**Fix**: Read the `violation` lines on stdout and fix each one.
+
+### `GEORDI_E_CONTRACT_GATE_INTERNAL`
+
+**Severity**: Error
+**Message**: An unexpected failure inside the gate
+**Fix**: File a bug with the command line and output.
+
+## Contract API Snapshot
+
+These come from `geordi-contract-api`, which the contract gate runs to read public Rust items. Each
+is the `code` of a `geordi.contract_api.error` JSON line on stderr.
+
+### `GEORDI_E_CONTRACT_API_USAGE`
+
+**Severity**: Error
+**Message**: The command line is not valid
+**Fix**: Pass one or more Rust source files, `--schema` or `--help`. Exit code 2.
+
+### `GEORDI_E_CONTRACT_API_IO`
+
+**Severity**: Error
+**Message**: A source file could not be read
+**Fix**: The `paths` field names the file; restore it or fix the registry entry that lists it.
+
+### `GEORDI_E_CONTRACT_API_PARSE`
+
+**Severity**: Error
+**Message**: A source file is not Rust that `syn` can parse
+**Fix**: Fix the syntax error the message names; `cargo check` reports the same error.
+
 ## Warnings
 
 ### `GEORDI_W_UNUSED_FIELD`

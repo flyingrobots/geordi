@@ -1,0 +1,226 @@
+{
+  "$schema": "../schemas/geordi-contract-registry/registry.schema.json",
+  "registryVersion": "geordi-contract-registry/1",
+  "contracts": [
+    {
+      "contract": "geordi-ray-traced-scene/1",
+      "status": "draft",
+      "statusEvidence": "docs/ray-traced-scene-profile.md, Status: \"`geordi-ray-traced-scene/1` is not yet frozen. No released consumer exists. ... It becomes a frozen contract, after which any incompatible change requires `/2`, only when a release or a consumer first pins it.\"",
+      "schema": "schemas/geordi-ray-traced-scene/1/scene.schema.json",
+      "examples": [
+        {
+          "path": "fixtures/ray-traced-scene/reference.rt-scene.geordi.json",
+          "encoder": {
+            "kind": "rust-fn",
+            "crate": "crates/geordi-ir",
+            "function": "geordi_ir::geordi_ray_traced_scene_hash"
+          }
+        },
+        {
+          "path": "fixtures/ray-traced-scene/negotiation/film-pixels-above-runtime-cap.rt-scene.geordi.json",
+          "encoder": {
+            "kind": "rust-fn",
+            "crate": "crates/geordi-ir",
+            "function": "geordi_ir::geordi_ray_traced_scene_hash"
+          }
+        }
+      ],
+      "diagnostics": {
+        "catalog": "docs/ERROR_CODES.md",
+        "sources": [
+          "crates/geordi-ir/src/ray_traced_scene.rs"
+        ],
+        "prefix": "GEORDI_E_RT_"
+      },
+      "rustApi": [
+        {
+          "file": "crates/geordi-ir/src/ray_traced_scene.rs",
+          "select": "all"
+        },
+        {
+          "file": "crates/geordi-ir/src/lib.rs",
+          "select": "reexports",
+          "from": "ray_traced_scene"
+        }
+      ],
+      "notCovered": [
+        "The JSON Schema expresses the shape, constants, ranges and patterns, not the validator's cross-field and exact-arithmetic rules; docs/ray-traced-scene-profile.md lists them.",
+        "geordi-ray-traced-render-receipt/1 shares crates/geordi-ir/src/ray_traced_scene.rs and the GEORDI_E_RT_ prefix, so changes to its Rust items and codes (GEORDI_E_RT_RECEIPT_*, GEORDI_E_RT_VIEWPORT_MISMATCH) are reported under this contract until the receipt has its own entry.",
+        "Rust items are read from source by crates/geordi-contract-api: no macro expansion, no name resolution, no auto traits.",
+        "The runtime negotiation API in crates/geordi-renderer (GeordiRayTracedRuntimeProfile) is not compared.",
+        "There is no TypeScript API for this contract."
+      ]
+    }
+  ],
+  "messageSchemaFamilies": [
+    {
+      "directory": "schemas/geordi-bijou-shader-sources",
+      "status": "draft",
+      "statusEvidence": "docs/bijou-gpu-shaders.md does not say whether these message schemas are frozen; each declares x-schema-version 1.0.0. Recorded as draft for the maintainer to rule on."
+    },
+    {
+      "directory": "schemas/geordi-bijou-shadergen",
+      "status": "draft",
+      "statusEvidence": "docs/bijou-gpu-shaders.md does not say whether these message schemas are frozen; each declares x-schema-version 1.0.0. Recorded as draft for the maintainer to rule on."
+    },
+    {
+      "directory": "schemas/geordi-bijou-wgpu-proof",
+      "status": "draft",
+      "statusEvidence": "docs/bijou-gpu-native-wgpu.md does not say whether these message schemas are frozen; each declares x-schema-version 1.0.0. Recorded as draft for the maintainer to rule on."
+    },
+    {
+      "directory": "schemas/geordi-contract-api",
+      "status": "draft",
+      "statusEvidence": "docs/contract-gate.md does not say whether these message schemas are frozen; each declares x-schema-version 1.0.0. Recorded as draft for the maintainer to rule on."
+    },
+    {
+      "directory": "schemas/geordi-contract-gate",
+      "status": "draft",
+      "statusEvidence": "docs/contract-gate.md does not say whether these message schemas are frozen; each declares x-schema-version 1.0.0. Recorded as draft for the maintainer to rule on."
+    },
+    {
+      "directory": "schemas/geordi-contract-hash-harness",
+      "status": "draft",
+      "statusEvidence": "docs/contract-gate.md does not say whether these message schemas are frozen; each declares x-schema-version 1.0.0. Recorded as draft for the maintainer to rule on."
+    },
+    {
+      "directory": "schemas/geordi-contract-registry",
+      "status": "draft",
+      "statusEvidence": "docs/contract-gate.md does not say whether these message schemas are frozen; each declares x-schema-version 1.0.0. Recorded as draft for the maintainer to rule on."
+    }
+  ],
+  "ungated": [
+    {
+      "contract": "bijou-surface-gpu/1",
+      "status": "draft",
+      "statusEvidence": "docs/design/2026-11-bijou-surface-gpu-abi.md says both \"**Status**: Proposed (Option A selected by `@flyingrobots` on 2026-11-21; ...)\" and \"This record freezes the endpoint-prepared GPU ABI (`bijou-surface-gpu/1`)\". The two disagree, so the registry records draft for the maintainer to rule on.",
+      "reason": "Its surfaces are TypeScript (packages/bijou-gpu) and Rust (crates/geordi-bijou-wgpu-proof, crates/geordi-bijou-shadergen) with digests pinned in fixtures/bijou-gpu/width1-conformance-suite.json; it has no JSON Schema and the gate has no TypeScript API surface yet."
+    },
+    {
+      "contract": "geordi-bijou-gpu-receipt/1",
+      "status": "draft",
+      "statusEvidence": "Defined in docs/design/2026-11-bijou-surface-gpu-abi.md section 6, under that record's \"Proposed\" status; otherwise silent.",
+      "reason": "No JSON Schema yet (schemas/geordi-bijou-wgpu-proof/receipt.schema.json types the receipt as any object); its validator is validateEndpointReceipt in packages/bijou-gpu/src/receipt.ts."
+    },
+    {
+      "contract": "bijou-procedural-glyphs/1",
+      "status": "draft",
+      "statusEvidence": "docs/design/2026-11-bijou-surface-gpu-abi.md section 7 (status \"Proposed\"); docs/bijou-gpu-conformance-kit.md says the table is \"frozen by the design record\". Recorded as draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet; the table digest is pinned in packages/bijou-gpu/src/procedural-table.ts and checked by scripts/generate-bijou-gpu-shader-sources.mjs."
+    },
+    {
+      "contract": "geordi-ray-traced-render-receipt/1",
+      "status": "draft",
+      "statusEvidence": "docs/design/2026-11-fixed-point-and-ray-traced-scene-profiles.md is \"Accepted\"; Docs are silent on whether the receipt is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema and no receipt fixture yet. Its Rust items and codes are compared under geordi-ray-traced-scene/1."
+    },
+    {
+      "contract": "geordi-ir/1",
+      "status": "draft",
+      "statusEvidence": "docs/V0_DESIGN_LAWS.md (status \"Draft\") calls it \"the public renderer contract\"; README.md says \"The TypeScript/Rust DTO mirror is provisional.\" Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet; types in crates/geordi-ir/src/lib.rs and packages/core."
+    },
+    {
+      "contract": "geordi-strict-text-fixture/1",
+      "status": "draft",
+      "statusEvidence": "fixtures/render-everywhere/strict-text/strict-text-fixture.schema.md: \"It stays outside `geordi-ir/1` until browser and native runtimes prove the contract.\" Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "Described in Markdown, not a JSON Schema."
+    },
+    {
+      "contract": "geordi-strict-text-fixture-receipt/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "Described in Markdown, not a JSON Schema."
+    },
+    {
+      "contract": "geordi-font-pack/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "Described in Markdown (fixtures/render-everywhere/assets/fonts/font-pack.schema.md), not a JSON Schema."
+    },
+    {
+      "contract": "geordi-glyph-evidence-pack/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "Described in Markdown, not a JSON Schema."
+    },
+    {
+      "contract": "geordi-render-fixture/1",
+      "status": "draft",
+      "statusEvidence": "docs/design/2026-05-render-everywhere-demo.md (\"Draft\") gives a \"Proposed shape\". Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet; TypeScript in packages/render-fixture."
+    },
+    {
+      "contract": "geordi-mesh-asset/1",
+      "status": "draft",
+      "statusEvidence": "docs/design/2026-05-bunny-mesh-asset-contract.md is \"Draft\". Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet."
+    },
+    {
+      "contract": "geordi-mesh-render-fixture/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet."
+    },
+    {
+      "contract": "geordi-profunctor-page-map/1",
+      "status": "draft",
+      "statusEvidence": "docs/design/2026-07-profunctor-page-target-proof.md is \"Accepted\". Docs are silent on whether the map format is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet; its bytes are checked by scripts/generate-profunctor-page-target-proof.mjs --check."
+    },
+    {
+      "contract": "geordi-profunctor-page-receipt/1",
+      "status": "draft",
+      "statusEvidence": "docs/design/2026-07-profunctor-page-target-proof.md is \"Accepted\". Docs are silent on whether the receipt is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet; its bytes are checked by scripts/generate-profunctor-page-target-proof.mjs --check."
+    },
+    {
+      "contract": "geordi-bijou-gpu-shader-manifest/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether docs/bijou-gpu-shaders.md's manifest is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet; checked by geordi-bijou-shadergen --check."
+    },
+    {
+      "contract": "geordi-bijou-gpu-kernel-receipt/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema and no fixture yet."
+    },
+    {
+      "contract": "geordi-bijou-gpu-test-glyph-pack/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet."
+    },
+    {
+      "contract": "geordi-bijou-gpu-conformance-suite/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet; generated by scripts/generate-bijou-gpu-conformance-fixtures.mjs."
+    },
+    {
+      "contract": "geordi-text-prep-input/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet; TypeScript in packages/text-prep."
+    },
+    {
+      "contract": "geordi-text-prep-generation-plan/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet; TypeScript in packages/text-prep."
+    },
+    {
+      "contract": "geordi-text-prep-generated-output/1",
+      "status": "draft",
+      "statusEvidence": "fixtures/render-everywhere/strict-text/generated-shaped-output.schema.md calls it the manifest \"emitted by a future text-prep command\". Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No positive instance exists yet."
+    },
+    {
+      "contract": "geordi-source-map/1",
+      "status": "draft",
+      "statusEvidence": "Docs are silent on whether it is frozen, so the registry records draft for the maintainer to rule on.",
+      "reason": "No JSON Schema yet; emitted by packages/compiler-core."
+    }
+  ]
+}

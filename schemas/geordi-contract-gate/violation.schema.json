@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-gate/violation.schema.json",
+  "title": "Violation",
+  "description": "One rule the head breaks. Written to stdout. Any violation fails the gate.",
+  "x-schema-id": "geordi.contract_gate.violation",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "code",
+    "contract",
+    "message",
+    "paths"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_gate.violation"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "violation"
+    },
+    "code": {
+      "enum": [
+        "GEORDI_E_CONTRACT_RECORD_MISSING",
+        "GEORDI_E_CONTRACT_RECORD_STALE",
+        "GEORDI_E_CONTRACT_RECORD_UNDERSTATED",
+        "GEORDI_E_CONTRACT_RECORD_INVALID",
+        "GEORDI_E_CONTRACT_HISTORY_REWRITTEN",
+        "GEORDI_E_CONTRACT_FROZEN_BREAKING",
+        "GEORDI_E_CONTRACT_FROZEN_REMOVED",
+        "GEORDI_E_CONTRACT_STATUS_INVALID",
+        "GEORDI_E_CONTRACT_SUPERSEDED_CHANGED",
+        "GEORDI_E_CONTRACT_DIAGNOSTICS_DISAGREE",
+        "GEORDI_E_CONTRACT_EXAMPLE_INVALID"
+      ]
+    },
+    "contract": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

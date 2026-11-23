@@ -19,6 +19,7 @@ import { dirname, join, resolve } from 'node:path';
 import { after, before, test } from 'node:test';
 
 import { loadSchemaDirectory, validateJsonSchema } from './lib/json-schema-subset.mjs';
+import { parseJson, stringifyJson } from './lib/contract-gate/json.mjs';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
 const GATE = join(REPO_ROOT, 'scripts', 'contract-gate.mjs');
@@ -61,13 +62,13 @@ function overlay(dir, files) {
     if (typeof content === 'object' && content !== null && 'copyFrom' in content) {
       copyFileSync(content.copyFrom, absolute);
     } else {
-      writeFileSync(absolute, typeof content === 'string' ? content : `${JSON.stringify(content, null, 2)}\n`);
+      writeFileSync(absolute, typeof content === 'string' ? content : `${stringifyJson(content, 2)}\n`);
     }
   }
 }
 
 function fixtureJson(name) {
-  return JSON.parse(readFileSync(join(FIXTURE, name), 'utf8'));
+  return parseJson(readFileSync(join(FIXTURE, name), 'utf8'));
 }
 
 function registryWith(status) {
@@ -94,7 +95,7 @@ function parseLines(text) {
     .split('\n')
     .filter((line) => line.length > 0)
     .map((line) => {
-      const record = JSON.parse(line);
+      const record = parseJson(line);
       const schema = SCHEMAS.get(record._schema.id);
       assert.ok(schema !== undefined, line);
       validateJsonSchema(schema, record);
@@ -145,8 +146,8 @@ test('the replay names the renamed field of the serialized format', () => {
   const schema = noRecord.differences.filter((line) => line.surface === 'schema');
   const radiance = schema.find((line) => line.change === 'removed' && line.item.endsWith('/properties/radiance'));
   const irradiance = schema.find((line) => line.change === 'added' && line.item.endsWith('/properties/irradiance'));
-  assert.ok(radiance, JSON.stringify(schema));
-  assert.ok(irradiance, JSON.stringify(schema));
+  assert.ok(radiance, stringifyJson(schema));
+  assert.ok(irradiance, stringifyJson(schema));
   assert.equal(radiance.classification, 'breaking');
   assert.equal(irradiance.classification, 'breaking', 'a new required field is breaking');
   assert.equal(radiance.contract, CONTRACT);
@@ -167,7 +168,7 @@ test('the replay names the added and the narrowed diagnostic codes', () => {
 test('the replay names the changed public Rust type', () => {
   const api = noRecord.differences.filter((line) => line.surface === 'rust-api');
   const items = new Map(api.map((line) => [line.item, line]));
-  assert.equal(items.get('field GeordiRayTracedLight.radiance')?.change, 'removed', JSON.stringify([...items.keys()]));
+  assert.equal(items.get('field GeordiRayTracedLight.radiance')?.change, 'removed', stringifyJson([...items.keys()]));
   assert.equal(items.get('field GeordiRayTracedLight.radiance').classification, 'breaking');
   assert.equal(items.get('field GeordiRayTracedLight.value')?.change, 'added');
   assert.equal(items.get('field GeordiRayTracedLight.value').classification, 'breaking', 'a new field of an exhaustive struct breaks struct literals');

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-gate/coverage.schema.json",
+  "title": "Coverage",
+  "description": "Which surfaces of a contract the gate compares, and which it does not. Written to stdout. `gated` is false for a public contract the registry lists but the gate does not yet compare.",
+  "x-schema-id": "geordi.contract_gate.coverage",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "contract",
+    "gated",
+    "status",
+    "surfaces",
+    "notCovered",
+    "evidence"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_gate.coverage"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "coverage"
+    },
+    "contract": {
+      "type": "string",
+      "minLength": 1
+    },
+    "gated": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "schema",
+          "example",
+          "diagnostic",
+          "rust-api"
+        ]
+      }
+    },
+    "notCovered": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

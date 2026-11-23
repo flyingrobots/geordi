@@ -33,6 +33,8 @@ that exists on `main`.
 | Find the evidence for each Bijou GPU Canvas 2D presenter requirement | [`bijou-gpu-canvas2d-presenter-test-plan.md`](./bijou-gpu-canvas2d-presenter-test-plan.md) |
 | Look up the native Rust `wgpu` offscreen proof: intake, render, evidence levels, receipts and command line | [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md) |
 | Find the evidence for each native `wgpu` proof requirement | [`bijou-gpu-native-wgpu-test-plan.md`](./bijou-gpu-native-wgpu-test-plan.md) |
+| Change a public contract: the contract registry, change records and the gate that compares a pull request with its base | [`contract-gate.md`](./contract-gate.md) |
+| Find the evidence for each contract gate requirement | [`contract-gate-test-plan.md`](./contract-gate-test-plan.md) |
 | Run Rust verification | [`RUST_GATES.md`](./RUST_GATES.md) |
 | Apply documentation policy | [`DOCUMENTATION_STANDARDS.md`](./DOCUMENTATION_STANDARDS.md) |
 

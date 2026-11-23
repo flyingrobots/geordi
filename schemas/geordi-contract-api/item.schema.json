@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-api/item.schema.json",
+  "title": "Public item",
+  "description": "One public item of a Rust source file. Written to stdout, sorted by key within each file. `signature` is the item's tokens without docs or attributes; `stringValue` is the value of a `&str` constant; `reexportFrom` is the path a `pub use` re-exports; `fieldsAllPublic` is present on structs.",
+  "x-schema-id": "geordi.contract_api.item",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "file",
+    "key",
+    "signature",
+    "nonExhaustive"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_api.item"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "item"
+    },
+    "file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signature": {
+      "type": "string"
+    },
+    "nonExhaustive": {
+      "type": "boolean"
+    },
+    "stringValue": {
+      "type": "string"
+    },
+    "reexportFrom": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fieldsAllPublic": {
+      "type": "boolean"
+    }
+  }
+}

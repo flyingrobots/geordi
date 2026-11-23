@@ -3,6 +3,13 @@
 Run `pnpm build`, `pnpm test`, `pnpm lint`, `pnpm typecheck` and `pnpm test:docs` before opening a
 pull request.
 
+## Public contracts
+
+A pull request that changes a public contract (a serialized format's schema or canonical example
+hashes, a public diagnostic code, a public Rust item that carries a contract, or a CLI message
+schema) needs a change record in `contracts/changes/`. `pnpm contracts:check` compares your branch
+with its merge base and lists what it found. See [`docs/contract-gate.md`](docs/contract-gate.md).
+
 ## Shared protocol strings
 
 Do not write string literals for artifact paths, IR versions, or other shared protocol strings.

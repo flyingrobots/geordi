@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-gate/comparison.schema.json",
+  "title": "Comparison",
+  "description": "What is compared with what. Written to stdout first. `base.sha` is the merge base when `base.ref` names a branch. `mode` is `bootstrap` when the base has no contract registry: every contract is then new and needs no change record.",
+  "x-schema-id": "geordi.contract_gate.comparison",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "mode",
+    "registry",
+    "base",
+    "head"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_gate.comparison"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "comparison"
+    },
+    "mode": {
+      "enum": [
+        "compare",
+        "bootstrap"
+      ]
+    },
+    "registry": {
+      "type": "string",
+      "minLength": 1
+    },
+    "base": {
+      "type": "object",
+      "required": [
+        "source",
+        "ref",
+        "sha",
+        "dir"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "enum": [
+            "git",
+            "directory"
+          ]
+        },
+        "ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sha": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{40,64}$"
+        },
+        "dir": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "head": {
+      "type": "object",
+      "required": [
+        "source",
+        "ref",
+        "sha",
+        "dir"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "enum": [
+            "git",
+            "directory"
+          ]
+        },
+        "ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sha": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{40,64}$"
+        },
+        "dir": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -253,7 +253,7 @@ fn run_writes_one_item_line_per_item_and_a_result() -> TestResult {
     let code = run(&[file.display().to_string()], &mut out, &mut err);
     std::fs::remove_dir_all(&dir)?;
     assert_eq!(code, 0, "{}", String::from_utf8_lossy(&err));
-    assert!(err.is_empty());
+    assert_eq!(String::from_utf8_lossy(&err), "");
     let out = lines(&out)?;
     assert_eq!(out.len(), 3);
     assert!(out[..2].iter().all(|line| tagged_with(line, "item")));

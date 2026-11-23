@@ -16,6 +16,7 @@ import { dirname, join, resolve } from 'node:path';
 import { after, test } from 'node:test';
 
 import { loadSchemaDirectory, validateJsonSchema } from './lib/json-schema-subset.mjs';
+import { parseJson, stringifyJson } from './lib/contract-gate/json.mjs';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
 const GATE = join(REPO_ROOT, 'scripts', 'contract-gate.mjs');
@@ -39,7 +40,7 @@ function writeTree(dir, files) {
     }
     const absolute = join(dir, path);
     mkdirSync(dirname(absolute), { recursive: true });
-    writeFileSync(absolute, typeof content === 'string' ? content : `${JSON.stringify(content, null, 2)}\n`);
+    writeFileSync(absolute, typeof content === 'string' ? content : `${stringifyJson(content, 2)}\n`);
   }
   return dir;
 }
@@ -54,7 +55,7 @@ function parseLines(text, stream) {
     .split('\n')
     .filter((line) => line.length > 0)
     .map((line) => {
-      const record = JSON.parse(line);
+      const record = parseJson(line);
       const schema = SCHEMAS.get(record?._schema?.id);
       assert.ok(schema !== undefined, `${stream} line names no declared schema: ${line}`);
       assert.equal(record._schema.version, schema['x-schema-version'], line);
@@ -262,7 +263,7 @@ test('a changed diagnostic meaning is unknown and treated as breaking', () => {
 
 test('diagnostic codes in the catalog and in the source must agree on the head', () => {
   const run = compare(demoTree(), demoTree({ 'docs/ERRORS.md': ERRORS_MD.split('### `DEMO_E_WORSE`')[0] }));
-  assert.ok(codes(run).includes('GEORDI_E_CONTRACT_DIAGNOSTICS_DISAGREE'), JSON.stringify(run.violations));
+  assert.ok(codes(run).includes('GEORDI_E_CONTRACT_DIAGNOSTICS_DISAGREE'), stringifyJson(run.violations));
   const disagreement = run.violations.find((line) => line.code === 'GEORDI_E_CONTRACT_DIAGNOSTICS_DISAGREE');
   assert.match(disagreement.message, /DEMO_E_WORSE/u);
 });
@@ -323,8 +324,8 @@ test('a record that does not match the change-record schema is invalid', () => {
 });
 
 test('editing a pinned hash and the fixture in the same pull request does not pass', () => {
-  const baseDoc = `${JSON.stringify({ name: 'a', size: 1 }, null, 2)}\n`;
-  const headDoc = `${JSON.stringify({ name: 'a', size: 9 }, null, 2)}\n`;
+  const baseDoc = `${stringifyJson({ name: 'a', size: 1 }, 2)}\n`;
+  const headDoc = `${stringifyJson({ name: 'a', size: 9 }, 2)}\n`;
   const run = compare(
     demoTree({ 'tests/pins.txt': sha256(baseDoc) }),
     demoTree({ 'fixtures/demo/a.json': { name: 'a', size: 9 }, 'tests/pins.txt': sha256(headDoc) }),
@@ -340,7 +341,7 @@ test('editing a pinned hash and the fixture in the same pull request does not pa
 
 test('an example that its own schema rejects is a violation on the head', () => {
   const run = compare(demoTree(), demoTree({ 'fixtures/demo/a.json': { name: '' } }));
-  assert.ok(codes(run).includes('GEORDI_E_CONTRACT_EXAMPLE_INVALID'), JSON.stringify(run.violations));
+  assert.ok(codes(run).includes('GEORDI_E_CONTRACT_EXAMPLE_INVALID'), stringifyJson(run.violations));
 });
 
 test('a breaking change to a frozen contract fails even with a record', () => {
@@ -450,7 +451,7 @@ test('line endings and key order do not change a snapshot', () => {
     demoTree({
       'docs/ERRORS.md': crlf(ERRORS_MD),
       'src/demo.rs': crlf(DEMO_RS),
-      'schemas/demo/1/demo.schema.json': crlf(`${JSON.stringify(reordered, null, 2)}\n`),
+      'schemas/demo/1/demo.schema.json': crlf(`${stringifyJson(reordered, 2)}\n`),
     }),
   );
   assert.equal(run.status, 0, run.raw.stdout);
@@ -615,7 +616,7 @@ test('--human writes prose, and an unknown argument is a usage error', () => {
   const prose = runGate(['--help', '--human'], { raw: true });
   assert.equal(prose.status, 0);
   assert.match(prose.stdout, /^contract-gate: /u);
-  assert.throws(() => JSON.parse(prose.stdout.split('\n')[0]));
+  assert.throws(() => parseJson(prose.stdout.split('\n')[0]));
   const usage = runGate(['--frobnicate']);
   assert.equal(usage.status, 2);
   assert.equal(usage.stderr[0].code, 'GEORDI_E_CONTRACT_GATE_USAGE');
@@ -631,11 +632,11 @@ test('the repository registry passes against itself, with every line schema-vali
 test('the checked-in registry and change records validate against their schemas', () => {
   const formats = loadSchemaDirectory(join(REPO_ROOT, 'schemas', 'geordi-contract-registry'));
   const registryText = readFileSync(join(REPO_ROOT, 'contracts', 'registry.json'), 'utf8');
-  validateJsonSchema(formats.get('geordi.contract_registry.registry'), JSON.parse(registryText));
+  validateJsonSchema(formats.get('geordi.contract_registry.registry'), parseJson(registryText));
   const changes = join(REPO_ROOT, 'contracts', 'changes');
   const records = readdirSync(changes).filter((name) => name.endsWith('.json'));
   assert.ok(records.length > 0);
   for (const name of records) {
-    validateJsonSchema(formats.get('geordi.contract_registry.change_record'), JSON.parse(readFileSync(join(changes, name), 'utf8')));
+    validateJsonSchema(formats.get('geordi.contract_registry.change_record'), parseJson(readFileSync(join(changes, name), 'utf8')));
   }
 });

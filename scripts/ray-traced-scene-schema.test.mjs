@@ -12,11 +12,12 @@ import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 
 import { JsonSchemaViolationError, validateJsonSchema } from './lib/json-schema-subset.mjs';
+import { parseJson } from './lib/contract-gate/json.mjs';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
 const FIXTURES = join(REPO_ROOT, 'fixtures', 'ray-traced-scene');
-const SCHEMA = JSON.parse(readFileSync(join(REPO_ROOT, 'schemas', 'geordi-ray-traced-scene', '1', 'scene.schema.json'), 'utf8'));
-const EXPECTED = JSON.parse(readFileSync(join(FIXTURES, 'failures', 'expected-diagnostics.json'), 'utf8'));
+const SCHEMA = parseJson(readFileSync(join(REPO_ROOT, 'schemas', 'geordi-ray-traced-scene', '1', 'scene.schema.json'), 'utf8'));
+const EXPECTED = parseJson(readFileSync(join(FIXTURES, 'failures', 'expected-diagnostics.json'), 'utf8'));
 
 /**
  * Parse-stage failures that are about the JSON text, not its data: JSON Schema sees the
@@ -84,7 +85,7 @@ const NOT_EXPRESSED = new Set([
 ]);
 
 function scene(path) {
-  return JSON.parse(readFileSync(path, 'utf8'));
+  return parseJson(readFileSync(path, 'utf8'));
 }
 
 function rejects(document) {

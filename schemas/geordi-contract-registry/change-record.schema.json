@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-registry/change-record.schema.json",
+  "title": "Contract change record",
+  "description": "contracts/changes/<name>.json: one declared change to one contract. The contract gate requires one for every contract whose surfaces or status differ from the base, and refuses one that names a contract with no observed difference. Records are kept: they are the contract's history. See docs/contract-gate.md.",
+  "x-schema-id": "geordi.contract_registry.change_record",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "contract",
+    "change",
+    "summary",
+    "why",
+    "references"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "contract": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*/[1-9][0-9]*$"
+    },
+    "change": {
+      "enum": [
+        "breaking",
+        "additive"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What changed."
+    },
+    "why": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Why it changed."
+    },
+    "references": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[1-9][0-9]*$"
+      }
+    },
+    "status": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "enum": [
+            "draft",
+            "frozen",
+            "superseded"
+          ]
+        },
+        "to": {
+          "enum": [
+            "draft",
+            "frozen",
+            "superseded"
+          ]
+        }
+      }
+    },
+    "retroactive": {
+      "type": "boolean",
+      "description": "The change merged before this record existed. A retroactive record satisfies no difference and is never stale."
+    }
+  }
+}
