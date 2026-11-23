@@ -75,7 +75,7 @@ Tests are in `scripts/contract-gate.test.mjs`, over temporary git repositories.
 | CG-BASE-01 | The base branch moved after the fork | `--base-ref` compares with the merge base and passes; `--base` at the tip fails | `the base is the merge base, not the moving tip of the base branch` |
 | CG-BASE-02 | Head from the working tree or a commit | An uncommitted change counts by default; `--head HEAD` ignores it | `the head defaults to the working tree, and --head compares a commit` |
 | CG-BASE-03 | An unresolvable base ref | `GEORDI_E_CONTRACT_GATE_BASE` | `an unresolvable base fails closed with a schema-tagged error` |
-| CG-BASE-04 | A shallow clone | `GEORDI_E_CONTRACT_GATE_BASE` mentioning full history | `a shallow clone that cannot reach the merge base fails closed` |
+| CG-BASE-04 | A shallow clone | `GEORDI_E_CONTRACT_GATE_BASE` naming `git fetch --unshallow` | `a shallow clone that cannot reach the merge base fails closed` |
 
 ## Command line and the repository's own registry
 
@@ -86,6 +86,40 @@ Tests are in `scripts/contract-gate.test.mjs`, over temporary git repositories.
 | CG-CLI-03 | `--human`; an unknown argument | Prose; `GEORDI_E_CONTRACT_GATE_USAGE`, exit 2 | `--human writes prose, and an unknown argument is a usage error` |
 | CG-REG-01 | The checked-in registry against itself | Exit 0; includes `geordi-ray-traced-scene/1`; ungated coverage lines | `the repository registry passes against itself, with every line schema-valid` |
 | CG-REG-02 | The checked-in registry and records | Validate against their schemas | `the checked-in registry and change records validate against their schemas` |
+
+## Review findings
+
+Tests are in `scripts/contract-gate.test.mjs`. They were added in answer to the review of
+flyingrobots/geordi#218.
+
+| ID | Case | Oracle | Test |
+| --- | --- | --- | --- |
+| CG-REV-01 | `enum` added or removed | Classified breaking or additive; no crash | `adding or removing an enum restriction is classified, not a crash` |
+| CG-REV-02 | Optional property on an open object | `unknown` | `an optional property on an open object is unknown, because old documents may use it` |
+| CG-REV-03 | A `oneOf` branch widened | `unknown` | `widening a oneOf branch is unknown, because a value may then match two branches` |
+| CG-REV-04 | `$id` changed | `unknown` | `a changed $id is a difference` |
+| CG-REV-05 | Member names in pointers | RFC 6901 escaping | `reported pointers escape member names` |
+| CG-REV-06 | A property named `constructor` | An ordinary added property | `a property named like an Object.prototype member is an ordinary added property` |
+| CG-REV-07 | `additionalProperties` removed beside `unevaluatedProperties` | `unknown` | `removing additionalProperties is unknown when the schema uses unevaluatedProperties` |
+| CG-REV-08 | A schema integer beyond `2^53 - 1` | `GEORDI_E_CONTRACT_GATE_SNAPSHOT` | `a schema number that JavaScript cannot represent exactly fails closed` |
+| CG-REV-09 | `__proto__` and key order in canonical JSON | Kept as a member; order ignored | `canonical JSON keeps an own __proto__ member and ignores key order` |
+| CG-REV-10 | Associated type added to an existing trait | `breaking` | `a required associated type added to an existing public trait is breaking` |
+| CG-REV-11 | A superseded entry repointed | `GEORDI_E_CONTRACT_SUPERSEDED_CHANGED` | `a superseded contract cannot be repointed at other files` |
+| CG-REV-12 | A record stating a status change that did not happen | `GEORDI_E_CONTRACT_RECORD_STALE` | `a record that states a status change that did not happen is stale` |
+| CG-REV-13 | Status and classification split across two records | `GEORDI_E_CONTRACT_RECORD_UNDERSTATED` | `one record must state both the status change and the classification` |
+| CG-REV-14 | Two encoders on one example path | Separate hashes | `examples that share a path but not an encoder keep separate hashes` |
+| CG-REV-15 | A `--base-dir` that does not exist | `GEORDI_E_CONTRACT_GATE_BASE`, not bootstrap | `a --base-dir that does not exist fails closed instead of bootstrapping` |
+| CG-REV-16 | Registry paths with `..` | `GEORDI_E_CONTRACT_GATE_REGISTRY`; `Tree` refuses paths outside | `registry paths may not leave the tree` |
+| CG-REV-17 | `--head <rev>` with `--base-ref` | Merge base of the selected head | `the merge base is computed from the selected head, not the checked-out branch` |
+| CG-REV-18 | A base registry marked `export-ignore` | Still read; not bootstrap | `a base registry marked export-ignore is still read: the base is extracted blob by blob` |
+
+The Rust snapshot gained `an_unsafe_trait_differs_from_a_safe_one`,
+`an_associated_constant_records_its_default`,
+`an_associated_type_records_its_generics_and_constraints`,
+`a_trait_impl_keeps_its_type_arguments_but_not_its_lifetimes`,
+`a_trait_impl_records_its_constraints` and
+`a_method_records_the_constraints_of_its_impl_block` in `crates/geordi-contract-api/src/tests.rs`.
+The scene schema test gained `every subschema of the scene schema uses only implemented keywords`.
 
 ## The scene schema
 

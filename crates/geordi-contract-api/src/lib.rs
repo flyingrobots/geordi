@@ -173,17 +173,18 @@ struct Collector {
     items: BTreeMap<String, ApiItem>,
     /// Public types declared in the file, by name, so trait impls for them can be kept.
     public_types: Vec<String>,
-    /// `(trait, type)` of every trait impl in the file, kept once the public types are known.
-    trait_impls: Vec<(String, String)>,
+    /// `(trait, type, signature)` of every trait impl in the file, kept once the public types
+    /// are known.
+    trait_impls: Vec<(String, String, String)>,
 }
 
 impl Collector {
     fn finish(mut self) -> Vec<ApiItem> {
-        for (trait_name, type_name) in std::mem::take(&mut self.trait_impls) {
+        for (trait_name, type_name, signature) in std::mem::take(&mut self.trait_impls) {
             if self.public_types.contains(&type_name) {
                 self.push(
                     format!("impl {trait_name} for {type_name}"),
-                    String::new(),
+                    signature,
                     ApiItem::default(),
                 );
             }
@@ -306,7 +307,11 @@ impl Collector {
         };
         self.push(
             format!("struct {name}"),
-            format!("{}{shape}", tokens(&item_struct.generics)),
+            format!(
+                "{}{}{shape}",
+                tokens(&item_struct.generics),
+                where_clause(&item_struct.generics)
+            ),
             ApiItem {
                 non_exhaustive: is_non_exhaustive(&item_struct.attrs),
                 fields_all_public: Some(all_public),
@@ -340,7 +345,11 @@ impl Collector {
         }
         self.push(
             format!("enum {name}"),
-            tokens(&item_enum.generics),
+            format!(
+                "{}{}",
+                tokens(&item_enum.generics),
+                where_clause(&item_enum.generics)
+            ),
             ApiItem {
                 non_exhaustive: is_non_exhaustive(&item_enum.attrs),
                 ..ApiItem::default()
@@ -355,9 +364,18 @@ impl Collector {
         } else {
             format!(" : {}", tokens(&item_trait.supertraits))
         };
+        let unsafety = if item_trait.unsafety.is_some() {
+            "unsafe "
+        } else {
+            ""
+        };
         self.push(
             format!("trait {name}"),
-            format!("{}{supertraits}", tokens(&item_trait.generics)),
+            format!(
+                "{unsafety}{}{supertraits}{}",
+                tokens(&item_trait.generics),
+                where_clause(&item_trait.generics)
+            ),
             ApiItem::default(),
         );
         for member in &item_trait.items {
@@ -375,16 +393,35 @@ impl Collector {
                     );
                 }
                 syn::TraitItem::Const(constant) => {
+                    let default = constant
+                        .default
+                        .as_ref()
+                        .map(|(_, expr)| format!(" = {}", tokens(expr)))
+                        .unwrap_or_default();
                     self.push(
                         format!("trait-const {name}::{}", constant.ident),
-                        tokens(&constant.ty),
+                        format!("{}{default}", tokens(&constant.ty)),
                         ApiItem::default(),
                     );
                 }
                 syn::TraitItem::Type(alias) => {
+                    let bounds = if alias.bounds.is_empty() {
+                        String::new()
+                    } else {
+                        format!(" : {}", tokens(&alias.bounds))
+                    };
+                    let default = alias
+                        .default
+                        .as_ref()
+                        .map(|(_, ty)| format!(" = {}", tokens(ty)))
+                        .unwrap_or_default();
                     self.push(
                         format!("trait-type {name}::{}", alias.ident),
-                        tokens(&alias.bounds),
+                        format!(
+                            "{}{bounds}{}{default}",
+                            tokens(&alias.generics),
+                            where_clause(&alias.generics)
+                        ),
                         ApiItem::default(),
                     );
                 }
@@ -405,8 +442,11 @@ impl Collector {
             };
             for path in paths {
                 if let Some(last) = path.segments.last() {
-                    self.trait_impls
-                        .push((last.ident.to_string(), type_name.to_owned()));
+                    self.trait_impls.push((
+                        last.ident.to_string(),
+                        type_name.to_owned(),
+                        String::new(),
+                    ));
                 }
             }
         }
@@ -419,10 +459,25 @@ impl Collector {
         let type_name = format!("{prefix}{type_name}");
         if let Some((_, trait_path, _)) = &item_impl.trait_ {
             if let Some(last) = trait_path.segments.last() {
-                self.trait_impls.push((last.ident.to_string(), type_name));
+                self.trait_impls.push((
+                    tokens(&without_lifetime_arguments(last)),
+                    type_name,
+                    impl_constraints(item_impl),
+                ));
             }
             return;
         }
+        let context =
+            if item_impl.generics.params.is_empty() && item_impl.generics.where_clause.is_none() {
+                String::new()
+            } else {
+                format!(
+                    " [impl {} {}{}]",
+                    tokens(&item_impl.generics),
+                    tokens(&*item_impl.self_ty),
+                    where_clause(&item_impl.generics)
+                )
+            };
         for member in &item_impl.items {
             if let ImplItem::Fn(method) = member
                 && is_public(&method.vis)
@@ -430,7 +485,7 @@ impl Collector {
             {
                 self.push(
                     format!("method {type_name}::{}", method.sig.ident),
-                    tokens(&strip_signature(method.sig.clone())),
+                    format!("{}{context}", tokens(&strip_signature(method.sig.clone()))),
                     ApiItem::default(),
                 );
             } else if let ImplItem::Const(constant) = member
@@ -447,6 +502,63 @@ impl Collector {
             }
         }
     }
+}
+
+fn where_clause(generics: &syn::Generics) -> String {
+    generics
+        .where_clause
+        .as_ref()
+        .map(|clause| format!(" {}", tokens(clause)))
+        .unwrap_or_default()
+}
+
+/// A trait path segment without lifetime arguments: `Deserialize<'de>` is `Deserialize`, and a
+/// derived impl and a hand-written one get the same key. Type and const arguments stay.
+fn without_lifetime_arguments(segment: &syn::PathSegment) -> syn::PathSegment {
+    let mut segment = segment.clone();
+    if let syn::PathArguments::AngleBracketed(arguments) = &mut segment.arguments {
+        arguments.args = arguments
+            .args
+            .iter()
+            .filter(|argument| !matches!(argument, syn::GenericArgument::Lifetime(_)))
+            .cloned()
+            .collect();
+        if arguments.args.is_empty() {
+            segment.arguments = syn::PathArguments::None;
+        }
+    }
+    segment
+}
+
+/// The type and const parameters, self-type arguments and where clause of a trait impl;
+/// empty when it has none of them, as a derive on a non-generic type does.
+fn impl_constraints(item_impl: &syn::ItemImpl) -> String {
+    let mut generics = item_impl.generics.clone();
+    generics.params = generics
+        .params
+        .iter()
+        .filter(|param| !matches!(param, syn::GenericParam::Lifetime(_)))
+        .cloned()
+        .collect();
+    let self_arguments = match &*item_impl.self_ty {
+        Type::Path(path) => path
+            .path
+            .segments
+            .last()
+            .map(|segment| tokens(&without_lifetime_arguments(segment).arguments))
+            .unwrap_or_default(),
+        other => tokens(other),
+    };
+    let parts = [
+        tokens(&generics),
+        self_arguments,
+        where_clause(&generics).trim().to_owned(),
+    ];
+    parts
+        .into_iter()
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 fn tokens(value: &impl ToTokens) -> String {

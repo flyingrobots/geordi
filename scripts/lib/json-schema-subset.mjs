@@ -232,6 +232,29 @@ function validateAt(root, schema, value, path, pointer) {
   }
 }
 
+/** Throw UnsupportedJsonSchemaError if any subschema, reached or not, uses an unknown keyword. */
+export function assertSupportedKeywords(schema, pointer = '#') {
+  if (typeof schema !== 'object' || schema === null) {
+    return;
+  }
+  for (const keyword of Object.keys(schema)) {
+    if (!ANNOTATIONS.has(keyword) && !STRUCTURAL.has(keyword) && !Object.hasOwn(VALIDATORS, keyword) && !keyword.startsWith('x-')) {
+      throw new UnsupportedJsonSchemaError(pointer, keyword);
+    }
+  }
+  for (const key of ['properties', '$defs']) {
+    for (const [name, child] of Object.entries(schema[key] ?? {})) {
+      assertSupportedKeywords(child, `${pointer}/${key}/${name}`);
+    }
+  }
+  for (const key of ['additionalProperties', 'items', 'not']) {
+    assertSupportedKeywords(schema[key], `${pointer}/${key}`);
+  }
+  for (const key of ['prefixItems', 'oneOf', 'anyOf', 'allOf']) {
+    (schema[key] ?? []).forEach((child, index) => assertSupportedKeywords(child, `${pointer}/${key}/${String(index)}`));
+  }
+}
+
 /**
  * Validate `value` against `schema`. Throws JsonSchemaViolationError naming the first
  * violation, or UnsupportedJsonSchemaError when the schema uses a keyword outside the subset.

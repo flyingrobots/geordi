@@ -334,3 +334,89 @@ fn human_output_is_prose() -> TestResult {
     assert!(serde_json::from_str::<Value>(text.lines().next().unwrap_or_default()).is_err());
     Ok(())
 }
+
+#[test]
+fn an_unsafe_trait_differs_from_a_safe_one() -> TestResult {
+    let safe = items("pub trait Marker {}")?;
+    let unsafe_marker = items("pub unsafe trait Marker {}")?;
+    assert_ne!(
+        item(&safe, "trait Marker")?,
+        item(&unsafe_marker, "trait Marker")?
+    );
+    Ok(())
+}
+
+#[test]
+fn an_associated_constant_records_its_default() -> TestResult {
+    let with_default = items("pub trait T { const N: usize = 1; }")?;
+    let without = items("pub trait T { const N: usize; }")?;
+    assert_ne!(
+        item(&with_default, "trait-const T::N")?,
+        item(&without, "trait-const T::N")?
+    );
+    assert!(
+        item(&with_default, "trait-const T::N")?
+            .signature
+            .contains("= 1")
+    );
+    Ok(())
+}
+
+#[test]
+fn an_associated_type_records_its_generics_and_constraints() -> TestResult {
+    let one = items("pub trait T { type Out<'a>; }")?;
+    let two = items("pub trait T { type Out<'a, 'b>; }")?;
+    let bounded = items("pub trait T { type Out<'a> where Self: 'a; }")?;
+    let signature = |map: &BTreeMap<String, ApiItem>| {
+        item(map, "trait-type T::Out").map(|found| found.signature.clone())
+    };
+    assert_ne!(signature(&one)?, signature(&two)?);
+    assert_ne!(signature(&one)?, signature(&bounded)?);
+    Ok(())
+}
+
+#[test]
+fn a_trait_impl_keeps_its_type_arguments_but_not_its_lifetimes() -> TestResult {
+    let from_u8 = items("pub struct S;\nimpl From<u8> for S { fn from(_: u8) -> Self { S } }")?;
+    let from_u16 = items("pub struct S;\nimpl From<u16> for S { fn from(_: u16) -> Self { S } }")?;
+    assert!(
+        from_u8.contains_key("impl From < u8 > for S"),
+        "{from_u8:?}"
+    );
+    assert!(!from_u16.contains_key("impl From < u8 > for S"));
+    Ok(())
+}
+
+#[test]
+fn a_trait_impl_records_its_constraints() -> TestResult {
+    let open = items(
+        "pub struct S<T>(pub T);\nimpl<T> Clone for S<T> { fn clone(&self) -> Self { todo!() } }",
+    )?;
+    let bounded = items(
+        "pub struct S<T>(pub T);\nimpl<T: Copy> Clone for S<T> { fn clone(&self) -> Self { todo!() } }",
+    )?;
+    assert_ne!(
+        item(&open, "impl Clone for S")?,
+        item(&bounded, "impl Clone for S")?
+    );
+    Ok(())
+}
+
+#[test]
+fn a_method_records_the_constraints_of_its_impl_block() -> TestResult {
+    let open =
+        items("pub struct S<T>(pub T);\nimpl<T> S<T> { pub fn get(&self) -> &T { &self.0 } }")?;
+    let bounded = items(
+        "pub struct S<T>(pub T);\nimpl<T: Clone> S<T> { pub fn get(&self) -> &T { &self.0 } }",
+    )?;
+    assert_ne!(
+        item(&open, "method S::get")?,
+        item(&bounded, "method S::get")?
+    );
+    let plain = items("pub struct P;\nimpl P { pub fn get(&self) -> u8 { 0 } }")?;
+    assert_eq!(
+        item(&plain, "method P::get")?.signature,
+        "fn get (& self) -> u8"
+    );
+    Ok(())
+}

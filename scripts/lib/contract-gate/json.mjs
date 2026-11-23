@@ -31,7 +31,8 @@ function sortKeys(value) {
     return value.map(sortKeys);
   }
   if (typeof value === 'object' && value !== null) {
-    const sorted = {};
+    // A null-prototype accumulator keeps an own `__proto__` member as data.
+    const sorted = Object.create(null);
     for (const key of Object.keys(value).sort()) {
       sorted[key] = sortKeys(value[key]);
     }

@@ -106,7 +106,13 @@ It sees every `pub` item in the listed files:
 - statics, type aliases and traits;
 - inline `pub mod` blocks;
 - public inherent methods;
-- trait implementations, derived or hand-written, for public types declared in the same file;
+- trait implementations, derived or hand-written, for public types declared in the same file,
+  keyed by the trait with its type arguments (lifetime arguments are dropped, so a derive and a
+  hand-written `impl<'de> Deserialize<'de>` agree) and recording the impl's type parameters and
+  `where` clause;
+- `unsafe` on a trait, the defaults of associated constants, and the generics, bounds and `where`
+  clauses of associated types;
+- the generics and `where` clause of the `impl` block a public method is declared in;
 - `pub use` re-exports, with their source path.
 
 Doc comments and attributes other than `#[non_exhaustive]` and `#[derive]` do not count.
@@ -137,22 +143,32 @@ These Rust additions are also breaking:
 
 - a field added to a struct whose fields are all public and that is not `#[non_exhaustive]`;
 - a variant added to an exhaustive enum;
-- a required method added to a trait.
+- a required method, associated type or associated constant without a default added to an
+  existing trait.
 
-A difference is **additive** if it adds an optional property, a new code, a new item or a new
-example, or loosens a bound.
+A difference is **additive** if it adds an optional property to an object that refused other
+members (`additionalProperties: false`), a new code, a new item or a new example, or loosens a
+bound.
 
 A difference is **unknown** when the gate cannot tell, and an unknown difference is treated as
 breaking. These are unknown:
 
 - a changed diagnostic message, because the meaning may have narrowed or widened;
 - a changed constant value;
-- a changed `pattern`;
+- a changed `pattern` or `$id`;
+- an optional property added to an object that did not refuse other members, because existing
+  documents may already hold it with a value the new schema rejects;
+- an otherwise additive change inside a `oneOf` branch, because a wider branch can make a value
+  match two branches;
+- loosening or removing `additionalProperties` in a schema that uses `unevaluatedProperties`;
 - `oneOf` or `allOf` branches added or removed;
 - a removed `$defs` entry;
 - any keyword the gate does not model.
 
-Annotations (`title`, `description`, `$comment`, `examples`, `x-*`) are ignored. Line endings in
+Annotations (`title`, `description`, `$comment`, `examples`, `x-*`) are ignored. Item names in
+reported JSON pointers are escaped as RFC 6901 requires (`~0`, `~1`). A schema number that
+JavaScript cannot hold exactly (an integer beyond `2^53 - 1`) fails the snapshot instead of being
+compared rounded. Line endings in
 the schema, the catalog and Rust sources are ignored, and so is the key order of a schema.
 Example documents are hashed exactly as their encoder hashes them.
 
@@ -183,9 +199,8 @@ it observed:
 | Observed | Needs |
 | --- | --- |
 | A contract with differences, a new contract, or a removed contract | At least one new record that names it |
-| A breaking or unknown difference | At least one of those records says `breaking` (`GEORDI_E_CONTRACT_RECORD_UNDERSTATED` otherwise) |
-| A status change | A record whose `status` is `{ "from": ..., "to": ... }` with the observed change |
-| A record that names a contract with no observed difference | Fails as stale (`GEORDI_E_CONTRACT_RECORD_STALE`) |
+| A breaking or unknown difference, a status change, or both | One record that describes the whole change: it says `breaking` when any difference is breaking or unknown (`GEORDI_E_CONTRACT_RECORD_UNDERSTATED` otherwise), and its `status` is `{ "from": ..., "to": ... }` with the observed status change |
+| A record that names a contract with no observed difference, or states a status change that did not happen | Fails as stale (`GEORDI_E_CONTRACT_RECORD_STALE`) |
 | A record that names a contract in neither registry, or does not match its schema | Fails as invalid |
 
 Records are history. They are kept forever and are not folded into the changelog on release. A
@@ -203,17 +218,25 @@ starts the history of `geordi-ray-traced-scene/1`.
   branch (`--base-ref origin/<base>`). On a push to `main` it is the previous `main`
   (`--base-ref HEAD^1`). The checkout fetches full history (`fetch-depth: 0`).
 - **Locally**, the base defaults to the merge base with `origin/main`. Run `git fetch` first:
-  a stale `origin/main` gives a stale merge base. Give a branch with `--base-ref`, an exact
+  a stale `origin/main` gives a stale merge base. In a shallow clone, run
+  `git fetch --unshallow origin`; a plain `git fetch` does not move the shallow boundary. Give a branch with `--base-ref`, an exact
   revision with `--base`, or a directory with `--base-dir`.
 - **The head** is the working tree by default. `--head <rev>` compares a commit, and `--head-dir`
   compares a directory.
 
-A git base is read with `git archive` into `target/contract-gate/trees/<sha>/`, so the comparison
-uses the committed bytes of the merge base and never a file the pull request could have edited.
+A git base is read blob by blob (`git ls-tree` and `git cat-file --batch`) into
+`target/contract-gate/trees/<sha>/`. The comparison therefore uses the exact committed bytes of the
+merge base, never a file the pull request could have edited, and no `git archive` transformation
+(`export-ignore`, `export-subst`) applies. The merge base is taken with the head being compared:
+`--head <rev>` with `--base-ref` uses `<rev>`, not the checked-out branch. Registry paths may not
+contain `.` or `..` segments, and every path is checked to stay inside its tree.
+
+A superseded contract's registry entry must keep naming the same schema and example paths as on
+the base, and those files must keep their bytes.
 
 The gate fails closed with a schema'd `error` line on stderr, and never passes, when it cannot:
 
-- resolve the base ref;
+- resolve the base ref, or find a `--base-dir` directory;
 - find a merge base (for example in a shallow clone);
 - read a registry;
 - compute a surface.

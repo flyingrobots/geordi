@@ -124,6 +124,13 @@ function gate({ base, head }) {
 
 const DRAFT_RECORD = fixtureJson('record.json');
 
+/** The head commit's reference scene, relabelled as version 2 for the version-raise cases. */
+function versionTwo(head) {
+  const text = readFileSync(join(head, REFERENCE), 'utf8');
+  assert.ok(text.includes('"sceneVersion": "geordi-ray-traced-scene/1"'));
+  return text.replace('"sceneVersion": "geordi-ray-traced-scene/1"', '"sceneVersion": "geordi-ray-traced-scene/2"');
+}
+
 let noRecord;
 before(() => {
   noRecord = gate(trees({ 'contracts/registry.json': registryWith('draft') }, { 'contracts/registry.json': registryWith('draft') }));
@@ -216,14 +223,12 @@ test('the frozen replay passes when the version is raised and version 1 is kept'
     {
       'contracts/registry.json': fixtureJson('registry-version-raised.json'),
       [SCHEMA_PATH]: { copyFrom: join(FIXTURE, 'base.scene.schema.json') },
-      'schemas/geordi-ray-traced-scene/2/scene.schema.json': { copyFrom: join(FIXTURE, 'head.scene.schema.json') },
+      'schemas/geordi-ray-traced-scene/2/scene.schema.json': { copyFrom: join(FIXTURE, 'head-v2.scene.schema.json') },
       'contracts/changes/212-version-2.json': fixtureJson('record-version-2.json'),
       'contracts/changes/212-version-1-superseded.json': fixtureJson('record-version-1-superseded.json'),
     },
   );
-  overlay(dirs.head, {
-    [REFERENCE_V2]: { copyFrom: join(dirs.head, REFERENCE) },
-  });
+  overlay(dirs.head, { [REFERENCE_V2]: versionTwo(dirs.head) });
   overlay(dirs.head, {
     [REFERENCE]: { copyFrom: join(dirs.base, REFERENCE) },
   });
@@ -243,12 +248,12 @@ test('the frozen replay fails when the version is raised but version 1 is not ke
     { 'contracts/registry.json': registryWith('frozen') },
     {
       'contracts/registry.json': fixtureJson('registry-version-raised.json'),
-      'schemas/geordi-ray-traced-scene/2/scene.schema.json': { copyFrom: join(FIXTURE, 'head.scene.schema.json') },
+      'schemas/geordi-ray-traced-scene/2/scene.schema.json': { copyFrom: join(FIXTURE, 'head-v2.scene.schema.json') },
       'contracts/changes/212-version-2.json': fixtureJson('record-version-2.json'),
       'contracts/changes/212-version-1-superseded.json': fixtureJson('record-version-1-superseded.json'),
     },
   );
-  overlay(dirs.head, { [REFERENCE_V2]: { copyFrom: join(dirs.head, REFERENCE) } });
+  overlay(dirs.head, { [REFERENCE_V2]: versionTwo(dirs.head) });
   const run = gate(dirs);
   assert.equal(run.status, 1, run.text);
   assert.deepEqual(run.violations.map((line) => line.code), ['GEORDI_E_CONTRACT_SUPERSEDED_CHANGED']);

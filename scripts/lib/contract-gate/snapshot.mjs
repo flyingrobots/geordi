@@ -108,15 +108,7 @@ export function expandContracts(tree, registry, side) {
     }
     for (const name of names) {
       const path = `${family.directory}/${name}`;
-      let schema;
-      try {
-        schema = parseJson(tree.text(path));
-      } catch (error) {
-        if (error instanceof ContractGateJsonError) {
-          throw snapshotError(`${side} ${path} is not JSON: ${error.message}`, [path]);
-        }
-        throw error;
-      }
+      const schema = readJson(tree, path, `${side} message schema`);
       const id = schema['x-schema-id'];
       const version = /^([1-9][0-9]*)\.[0-9]+\.[0-9]+$/u.exec(String(schema['x-schema-version']));
       if (typeof id !== 'string' || version === null) {
@@ -293,7 +285,12 @@ function harnessSource(functions) {
   return HARNESS_TEMPLATE.replace('/*ENCODER_ARMS*/', arms);
 }
 
-/** Hash each example with its Rust encoder, built from this tree. Returns path → hash. */
+/** The key of one example's hash: two contracts may hash the same file with different encoders. */
+export function hashKey(fn, path) {
+  return `${fn}\0${path}`;
+}
+
+/** Hash each example with its Rust encoder, built from this tree. Returns hashKey → hash. */
 function rustHashes(tree, examples, cacheRoot) {
   const hashes = new Map();
   const byCrate = new Map();
@@ -354,10 +351,10 @@ function hashCrate(tree, crate, jobs, cacheRoot, hashes) {
     if (line.kind === 'refusal') {
       throw snapshotError(`${tree.description}: ${functions[Number(line.encoder)]} refuses ${path}: ${line.message}`, [path]);
     }
-    hashes.set(path, line.hash);
+    hashes.set(hashKey(functions[Number(line.encoder)], path), line.hash);
   }
   for (const job of jobs) {
-    if (!hashes.has(job.path)) {
+    if (!hashes.has(hashKey(job.encoder.function, job.path))) {
       throw snapshotError(`${tree.description}: the encoder harness wrote no hash for ${job.path}`, [job.path]);
     }
   }
@@ -396,19 +393,48 @@ export function parseCatalog(text, prefix) {
 // The snapshot of a tree
 // ---------------------------------------------------------------------------------------------
 
+/** The first number a parsed JSON document cannot hold exactly, as a JSON path, or null. */
+function inexactNumber(value, path = '$') {
+  if (typeof value === 'number') {
+    // An integral value beyond 2^53 - 1 may be a rounded spelling of a different integer.
+    return Number.isInteger(value) && !Number.isSafeInteger(value) ? path : null;
+  }
+  const entries = Array.isArray(value)
+    ? value.map((item, index) => [`${path}[${String(index)}]`, item])
+    : typeof value === 'object' && value !== null
+      ? Object.entries(value).map(([key, item]) => [`${path}.${key}`, item])
+      : [];
+  for (const [at, item] of entries) {
+    const found = inexactNumber(item, at);
+    if (found !== null) {
+      return found;
+    }
+  }
+  return null;
+}
+
 function readJson(tree, path, what) {
   const text = tree.text(path);
   if (text === null) {
     throw snapshotError(`${tree.description}: ${what} ${path} does not exist`, [path]);
   }
+  let document;
   try {
-    return parseJson(text);
+    document = parseJson(text);
   } catch (error) {
     if (error instanceof ContractGateJsonError) {
       throw snapshotError(`${tree.description}: ${what} ${path} is not JSON: ${error.message}`, [path]);
     }
     throw error;
   }
+  const inexact = inexactNumber(document);
+  if (inexact !== null) {
+    throw snapshotError(
+      `${tree.description}: ${what} ${path} has a number at ${inexact} beyond 2^53 - 1, which the gate cannot compare exactly; it refuses rather than compare a rounded value`,
+      [path],
+    );
+  }
+  return document;
 }
 
 function rawDigest(tree, path) {
@@ -475,7 +501,7 @@ function snapshotContract(tree, key, entry, itemsByFile, hashes) {
   const examples = new Map();
   for (const example of entry.examples) {
     const bytes = tree.bytes(example.path);
-    const hash = example.encoder.kind === 'sha256-bytes' ? `sha256:${sha256Hex(bytes)}` : hashes.get(example.path);
+    const hash = example.encoder.kind === 'sha256-bytes' ? `sha256:${sha256Hex(bytes)}` : hashes.get(hashKey(example.encoder.function, example.path));
     let document = null;
     let parseError = null;
     try {

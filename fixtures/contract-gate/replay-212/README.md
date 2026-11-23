@@ -29,6 +29,7 @@ had existed then. They are reconstructions, not recorded bytes:
 | `base.scene.schema.json` | base, at the same path | The same schema with the directional light carrying `radiance` instead of `irradiance`, the only difference in shape between the two commits |
 | `registry.json` | both, as `contracts/registry.json` | One contract, `geordi-ray-traced-scene/1`; the test sets its status to `draft` or `frozen` |
 | `registry-version-raised.json` | head | Version 1 `superseded` by a version 2 that carries the new format |
+| `head-v2.scene.schema.json` | head, as `schemas/geordi-ray-traced-scene/2/scene.schema.json` | `head.scene.schema.json` with its `$id`, `title` and `sceneVersion` naming version 2; the test writes the head commit's reference scene with `sceneVersion` set to version 2 as version 2's example |
 | `record.json` | head | A `breaking` change record for version 1 |
 | `record-version-2.json`, `record-version-1-superseded.json` | head | The two records a version raise needs |
 

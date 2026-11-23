@@ -9,7 +9,8 @@ import { compareContractKeys, schemaViolation, sha256Hex, splitContract } from '
 import { canonicalJson, ContractGateJsonError, parseJson } from './json.mjs';
 import { jsonEqual } from '../json-schema-subset.mjs';
 
-const ANNOTATIONS = new Set(['$schema', '$id', '$comment', 'title', 'description', 'examples', 'default']);
+// `$id` is not here: a schema's canonical URI is how other schemas reference it.
+const ANNOTATIONS = new Set(['$schema', '$comment', 'title', 'description', 'examples', 'default']);
 const LOWER_BOUNDS = new Set(['minimum', 'exclusiveMinimum', 'minLength', 'minItems', 'minProperties']);
 const UPPER_BOUNDS = new Set(['maximum', 'exclusiveMaximum', 'maxLength', 'maxItems', 'maxProperties']);
 const SCHEMA_ARRAYS = new Set(['prefixItems', 'oneOf', 'anyOf', 'allOf']);
@@ -44,12 +45,21 @@ function difference(surface, item, change, classification, detail, before = null
 // JSON Schema
 // ---------------------------------------------------------------------------------------------
 
+/** One RFC 6901 reference token. */
+function token(name) {
+  return String(name).replace(/~/gu, '~0').replace(/\//gu, '~1');
+}
+
+function has(object, key) {
+  return Object.hasOwn(object, key);
+}
+
 function schemaKeys(schema) {
   return Object.keys(schema).filter((key) => !ANNOTATIONS.has(key) && !key.startsWith('x-'));
 }
 
 /** Differences between two JSON Schemas, walked in parallel by JSON pointer. */
-export function diffSchema(before, after, pointer = '', out = []) {
+export function diffSchema(before, after, pointer = '', out = [], context = { unevaluated: false }) {
   if (jsonEqual(before, after)) {
     return out;
   }
@@ -60,12 +70,12 @@ export function diffSchema(before, after, pointer = '', out = []) {
   }
   const keys = [...new Set([...schemaKeys(before), ...schemaKeys(after)])].sort();
   for (const key of keys) {
-    diffKeyword(key, before, after, `${pointer}/${key}`, out);
+    diffKeyword(key, before, after, `${pointer}/${token(key)}`, out, context);
   }
   return out;
 }
 
-function diffKeyword(key, before, after, at, out) {
+function diffKeyword(key, before, after, at, out, context) {
   const b = before[key];
   const a = after[key];
   if (jsonEqual(b, a)) {
@@ -74,11 +84,11 @@ function diffKeyword(key, before, after, at, out) {
   const added = b === undefined;
   const removed = a === undefined;
   if (key === 'properties') {
-    diffProperties(before, after, at, out);
+    diffProperties(before, after, at, out, context);
   } else if (key === 'required') {
     diffRequired(before, after, at, out);
   } else if (key === 'enum') {
-    diffValues(b, a, at, out, 'enum value');
+    diffValues(added ? null : b, removed ? null : a, at, out, 'enum value');
   } else if (key === 'const') {
     if (added) {
       out.push(difference('schema', at, 'added', 'breaking', 'a const now restricts the value', b, a));
@@ -93,9 +103,12 @@ function diffKeyword(key, before, after, at, out) {
     diffBound(key, b, a, at, out);
   } else if (key === 'additionalProperties' || key === 'items') {
     if (isObject(b) && isObject(a)) {
-      diffSchema(b, a, at, out);
+      diffSchema(b, a, at, out, context);
     } else if (b === false || a === true || (removed && key === 'additionalProperties') || (removed && key === 'items')) {
-      out.push(difference('schema', at, removed ? 'removed' : added ? 'added' : 'changed', 'additive', `${key} now allows more`, b, a));
+      // Under 2020-12, unevaluatedProperties reads the annotations additionalProperties makes, so
+      // loosening or removing it can change what an enclosing unevaluatedProperties rejects.
+      const classification = key === 'additionalProperties' && context.unevaluated ? 'unknown' : 'additive';
+      out.push(difference('schema', at, removed ? 'removed' : added ? 'added' : 'changed', classification, `${key} now allows more`, b, a));
     } else if (a === false || (added && key === 'additionalProperties' && a === false)) {
       out.push(difference('schema', at, added ? 'added' : 'changed', 'breaking', `${key} now allows less`, b, a));
     } else {
@@ -103,12 +116,21 @@ function diffKeyword(key, before, after, at, out) {
     }
   } else if (SCHEMA_ARRAYS.has(key)) {
     if (Array.isArray(b) && Array.isArray(a) && b.length === a.length) {
-      b.forEach((branch, index) => diffSchema(branch, a[index], `${at}/${String(index)}`, out));
+      const inner = [];
+      b.forEach((branch, index) => diffSchema(branch, a[index], `${at}/${String(index)}`, inner, context));
+      for (const line of inner) {
+        // Widening one oneOf branch can make a value match two branches, and so fail.
+        out.push(
+          key === 'oneOf' && line.classification === 'additive'
+            ? { ...line, classification: 'unknown', treatedAs: 'breaking', detail: `${line.detail}; inside oneOf, a wider branch can make a value match two branches` }
+            : line,
+        );
+      }
     } else {
       out.push(difference('schema', at, added ? 'added' : removed ? 'removed' : 'changed', 'unknown', `${key} changed its branches`, b, a));
     }
   } else if (key === '$defs') {
-    diffDefinitions(b ?? {}, a ?? {}, at, out);
+    diffDefinitions(b ?? {}, a ?? {}, at, out, context);
   } else if (key === 'pattern') {
     const classification = added ? 'breaking' : removed ? 'additive' : 'unknown';
     out.push(difference('schema', at, added ? 'added' : removed ? 'removed' : 'changed', classification, 'the pattern changed', b, a));
@@ -119,22 +141,27 @@ function diffKeyword(key, before, after, at, out) {
   }
 }
 
-function diffProperties(before, after, at, out) {
+function diffProperties(before, after, at, out, context) {
   const b = before.properties ?? {};
   const a = after.properties ?? {};
   const required = new Set(after.required ?? []);
+  // An optional property is additive only when the base refused that member outright; on an open
+  // object, old documents may already carry it with a value the new schema rejects.
+  const closed = before.additionalProperties === false;
   for (const name of [...new Set([...Object.keys(b), ...Object.keys(a)])].sort()) {
-    const path = `${at}/${name}`;
-    if (!(name in a)) {
+    const path = `${at}/${token(name)}`;
+    if (!has(a, name)) {
       out.push(difference('schema', path, 'removed', 'breaking', `property ${name} was removed`, b[name], null));
-    } else if (!(name in b)) {
-      out.push(
-        required.has(name)
-          ? difference('schema', path, 'added', 'breaking', `required property ${name} was added`, null, a[name])
-          : difference('schema', path, 'added', 'additive', `optional property ${name} was added`, null, a[name]),
-      );
+    } else if (!has(b, name)) {
+      if (required.has(name)) {
+        out.push(difference('schema', path, 'added', 'breaking', `required property ${name} was added`, null, a[name]));
+      } else if (closed) {
+        out.push(difference('schema', path, 'added', 'additive', `optional property ${name} was added`, null, a[name]));
+      } else {
+        out.push(difference('schema', path, 'added', 'unknown', `optional property ${name} was added to an object that did not refuse other members, so existing documents may hold it with a value the new schema rejects`, null, a[name]));
+      }
     } else {
-      diffSchema(b[name], a[name], path, out);
+      diffSchema(b[name], a[name], path, out, context);
     }
   }
 }
@@ -145,13 +172,13 @@ function diffRequired(before, after, at, out) {
   const b = new Set(before.required ?? []);
   const a = new Set(after.required ?? []);
   for (const name of [...a].filter((item) => !b.has(item)).sort()) {
-    if (name in beforeProps || !(name in afterProps)) {
-      out.push(difference('schema', `${at}/${name}`, 'added', 'breaking', `${name} is now required`, null, name));
+    if (has(beforeProps, name) || !has(afterProps, name)) {
+      out.push(difference('schema', `${at}/${token(name)}`, 'added', 'breaking', `${name} is now required`, null, name));
     }
   }
   for (const name of [...b].filter((item) => !a.has(item)).sort()) {
-    if (name in afterProps || !(name in beforeProps)) {
-      out.push(difference('schema', `${at}/${name}`, 'removed', 'additive', `${name} is no longer required`, name, null));
+    if (has(afterProps, name) || !has(beforeProps, name)) {
+      out.push(difference('schema', `${at}/${token(name)}`, 'removed', 'additive', `${name} is no longer required`, name, null));
     }
   }
 }
@@ -189,15 +216,15 @@ function diffBound(key, b, a, at, out) {
   }
 }
 
-function diffDefinitions(b, a, at, out) {
+function diffDefinitions(b, a, at, out, context) {
   for (const name of [...new Set([...Object.keys(b), ...Object.keys(a)])].sort()) {
-    const path = `${at}/${name}`;
-    if (!(name in a)) {
+    const path = `${at}/${token(name)}`;
+    if (!has(a, name)) {
       out.push(difference('schema', path, 'removed', 'unknown', `definition ${name} was removed`, b[name], null));
-    } else if (!(name in b)) {
+    } else if (!has(b, name)) {
       out.push(difference('schema', path, 'added', 'additive', `definition ${name} was added`, null, a[name]));
     } else {
-      diffSchema(b[name], a[name], path, out);
+      diffSchema(b[name], a[name], path, out, context);
     }
   }
 }
@@ -254,10 +281,13 @@ function addedRustItem(key, item, base) {
     if (owner !== undefined && !owner.nonExhaustive) {
       return difference('rust-api', key, 'added', 'breaking', 'a variant was added to an exhaustive enum: exhaustive matches no longer compile', null, item.signature);
     }
-  } else if (key.startsWith('trait-fn ') && !item.signature.endsWith('{ default }')) {
+  } else if (
+    (key.startsWith('trait-fn ') && !item.signature.endsWith('{ default }')) ||
+    ((key.startsWith('trait-type ') || key.startsWith('trait-const ')) && !item.signature.includes(' = '))
+  ) {
     const owner = parent('trait', '::');
     if (owner !== undefined) {
-      return difference('rust-api', key, 'added', 'breaking', 'a required method was added to a public trait: implementations no longer compile', null, item.signature);
+      return difference('rust-api', key, 'added', 'breaking', 'a required item was added to a public trait: implementations no longer compile', null, item.signature);
     }
   }
   return difference('rust-api', key, 'added', 'additive', 'a public item was added', null, item.signature || null);
@@ -301,7 +331,8 @@ function diffRust(base, head, out) {
 
 function surfaceDifferences(base, head) {
   const out = [];
-  diffSchema(base.schema.document, head.schema.document, '', out);
+  const unevaluated = [base.schema.document, head.schema.document].some((document) => canonicalJson(document).includes('"unevaluatedProperties"'));
+  diffSchema(base.schema.document, head.schema.document, '', out, { unevaluated });
   diffExamples(base.examples, head.examples, out);
   if (base.diagnostics !== null || head.diagnostics !== null) {
     diffDiagnostics(base.diagnostics ?? { catalog: new Map(), source: new Set() }, head.diagnostics ?? { catalog: new Map(), source: new Set() }, out);
@@ -350,8 +381,14 @@ function headChecks(key, head, violations) {
   }
 }
 
-function keptFiles(key, base, headTree, violations) {
+function keptFiles(key, base, head, headTree, violations) {
   const paths = [base.entry.schema, ...base.entry.examples.map((example) => example.path)];
+  const headPaths = [head.entry.schema, ...head.entry.examples.map((example) => example.path)];
+  if (!jsonEqual(paths, headPaths)) {
+    violations.push(
+      violation('GEORDI_E_CONTRACT_SUPERSEDED_CHANGED', key, `${key} is superseded, so its registry entry must keep naming the base's schema and examples (${paths.join(', ')}); it names ${headPaths.join(', ')}`, headPaths.filter((path) => !paths.includes(path))),
+    );
+  }
   const changed = paths.filter((path) => {
     const bytes = headTree.bytes(path);
     return bytes === null || sha256Hex(bytes) !== base.files.get(path);
@@ -415,7 +452,7 @@ function evaluate(key, base, head, context) {
       if (problem !== null) {
         violations.push(violation('GEORDI_E_CONTRACT_STATUS_INVALID', key, problem, [context.registryPath]));
       }
-      keptFiles(key, base, context.headTree, violations);
+      keptFiles(key, base, head, context.headTree, violations);
       state = baseStatus === 'superseded' ? 'unchanged' : 'superseded';
     } else if (baseStatus !== 'superseded') {
       const surfaces = surfaceDifferences(base, head);
@@ -530,16 +567,28 @@ export function compare({ baseSnapshots, headSnapshots, baseRecords, headRecords
     const result = evaluations.get(key);
     const records = byContract.get(key) ?? [];
     const own = [...result.violations];
+    const statesChange = (line) =>
+      result.statusChange !== null && line.record.status?.from === result.statusChange.from && line.record.status?.to === result.statusChange.to;
+    for (const line of records) {
+      if (line.record.status !== undefined && !statesChange(line)) {
+        line.state = 'stale';
+        own.push(violation('GEORDI_E_CONTRACT_RECORD_STALE', key, `${line.path} states a status change from ${line.record.status.from} to ${line.record.status.to}, which did not happen`, [line.path]));
+      }
+    }
     if (result.needsRecord) {
+      // One record must describe the whole change: the status change, if any, and the class.
+      const fits = (line) => (result.statusChange === null || statesChange(line)) && (result.classification !== 'breaking' || line.change === 'breaking');
       if (records.length === 0) {
         own.push(violation('GEORDI_E_CONTRACT_RECORD_MISSING', key, `${key} is ${result.state} (${result.classification}) and no new change record in contracts/changes/ names it`));
-      } else if (result.statusChange !== null && !records.some((line) => line.record.status?.from === result.statusChange.from && line.record.status?.to === result.statusChange.to)) {
-        own.push(violation('GEORDI_E_CONTRACT_RECORD_MISSING', key, `${key} changed status from ${String(result.statusChange.from)} to ${String(result.statusChange.to)} and no change record states that status change`, records.map((line) => line.path)));
-      } else if (result.classification === 'breaking' && !records.some((line) => line.change === 'breaking')) {
-        own.push(violation('GEORDI_E_CONTRACT_RECORD_UNDERSTATED', key, `${key} changed in a breaking or unknown way, but its change record says additive`, records.map((line) => line.path)));
+      } else if (!records.some(fits)) {
+        if (result.statusChange !== null && !records.some(statesChange)) {
+          own.push(violation('GEORDI_E_CONTRACT_RECORD_MISSING', key, `${key} changed status from ${String(result.statusChange.from)} to ${String(result.statusChange.to)} and no change record states that status change`, records.map((line) => line.path)));
+        } else {
+          own.push(violation('GEORDI_E_CONTRACT_RECORD_UNDERSTATED', key, `${key} changed in a breaking or unknown way, and no single change record both says breaking and states its status change`, records.map((line) => line.path)));
+        }
       }
     } else {
-      for (const line of records) {
+      for (const line of records.filter((entry) => entry.state !== 'stale')) {
         line.state = 'stale';
         own.push(violation('GEORDI_E_CONTRACT_RECORD_STALE', key, `${line.path} names ${key}, which does not differ from the base`, [line.path]));
       }

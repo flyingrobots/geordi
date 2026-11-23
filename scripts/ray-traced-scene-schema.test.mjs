@@ -11,7 +11,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { test } from 'node:test';
 
-import { JsonSchemaViolationError, validateJsonSchema } from './lib/json-schema-subset.mjs';
+import { assertSupportedKeywords, JsonSchemaViolationError, UnsupportedJsonSchemaError, validateJsonSchema } from './lib/json-schema-subset.mjs';
 import { parseJson } from './lib/contract-gate/json.mjs';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
@@ -143,4 +143,11 @@ test('the schema uses only keywords the validator implements', () => {
   // this walks the rest.
   const unknown = { ...SCHEMA, properties: { ...SCHEMA.properties, id: { type: 'string', unevaluatedProperties: false } } };
   assert.throws(() => validateJsonSchema(unknown, scene(join(FIXTURES, 'reference.rt-scene.geordi.json'))), /unevaluatedProperties/u);
+});
+
+test('every subschema of the scene schema uses only implemented keywords', () => {
+  // Walks every subschema, including $defs and every oneOf branch, whether or not a fixture
+  // reaches it.
+  assertSupportedKeywords(SCHEMA);
+  assert.throws(() => assertSupportedKeywords({ $defs: { unused: { if: { type: 'string' } } } }), UnsupportedJsonSchemaError);
 });

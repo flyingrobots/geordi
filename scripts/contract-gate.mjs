@@ -13,6 +13,7 @@
 // scripts/lib/contract-gate/. Every line on stdout and stderr is one JSON object carrying
 // `_schema`; the schemas are in schemas/geordi-contract-gate/. --human writes prose.
 // See docs/contract-gate.md.
+import { existsSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { compare } from './lib/contract-gate/compare.mjs';
@@ -172,13 +173,20 @@ function repoRoot(dir) {
   return gitTopLevel(dir);
 }
 
-function resolveSide(option, repo, side) {
+function resolveSide(option, repo, side, headRevision = 'HEAD') {
   if (option.kind === 'base-dir' || option.kind === 'head-dir') {
     const dir = resolve(option.value);
+    if (!existsSync(dir) || !statSync(dir).isDirectory()) {
+      throw new ContractGateError(
+        side === 'base' ? 'GEORDI_E_CONTRACT_GATE_BASE' : 'GEORDI_E_CONTRACT_GATE_USAGE',
+        `--${option.kind} ${option.value} is not a directory`,
+      );
+    }
     return { tree: new Tree(dir, `${side} (${dir})`), description: { source: 'directory', ref: null, sha: null, dir } };
   }
   const root = repoRoot(repo);
-  const sha = option.kind === 'base-ref' ? mergeBase(root, option.value) : resolveRevision(root, option.value);
+  // The merge base is taken with the head being compared, not with whatever is checked out.
+  const sha = option.kind === 'base-ref' ? mergeBase(root, option.value, headRevision) : resolveRevision(root, option.value);
   const dir = materialiseRevision(root, sha, CACHE_ROOT);
   return { tree: new Tree(dir, `${side} (${sha.slice(0, 12)})`), description: { source: 'git', ref: option.value, sha, dir: null } };
 }
@@ -214,8 +222,8 @@ function humanDifference(difference) {
 }
 
 function run(options) {
-  const base = resolveSide(options.base, options.repo, 'base');
   const head = resolveSide(options.head, options.repo, 'head');
+  const base = resolveSide(options.base, options.repo, 'base', head.description.sha ?? 'HEAD');
 
   const headRegistry = loadRegistry(head.tree, 'head');
   if (headRegistry === null) {

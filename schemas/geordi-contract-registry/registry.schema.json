@@ -73,7 +73,7 @@
         },
         "schema": {
           "type": "string",
-          "pattern": "^[^/.][^\\\\]*$",
+          "pattern": "^(?!/)(?!(?:.*/)?\\.\\.?(?:/|$))[^\\\\]+$",
           "minLength": 1
         },
         "examples": {
@@ -94,7 +94,7 @@
           "properties": {
             "catalog": {
               "type": "string",
-              "pattern": "^[^/.][^\\\\]*$",
+              "pattern": "^(?!/)(?!(?:.*/)?\\.\\.?(?:/|$))[^\\\\]+$",
               "minLength": 1
             },
             "sources": {
@@ -102,7 +102,7 @@
               "minItems": 1,
               "items": {
                 "type": "string",
-                "pattern": "^[^/.][^\\\\]*$",
+                "pattern": "^(?!/)(?!(?:.*/)?\\.\\.?(?:/|$))[^\\\\]+$",
                 "minLength": 1
               }
             },
@@ -138,7 +138,7 @@
       "properties": {
         "path": {
           "type": "string",
-          "pattern": "^[^/.][^\\\\]*$",
+          "pattern": "^(?!/)(?!(?:.*/)?\\.\\.?(?:/|$))[^\\\\]+$",
           "minLength": 1
         },
         "encoder": {
@@ -169,7 +169,7 @@
                 },
                 "crate": {
                   "type": "string",
-                  "pattern": "^[^/.][^\\\\]*$",
+                  "pattern": "^(?!/)(?!(?:.*/)?\\.\\.?(?:/|$))[^\\\\]+$",
                   "minLength": 1
                 },
                 "function": {
@@ -194,7 +194,7 @@
           "properties": {
             "file": {
               "type": "string",
-              "pattern": "^[^/.][^\\\\]*$",
+              "pattern": "^(?!/)(?!(?:.*/)?\\.\\.?(?:/|$))[^\\\\]+$",
               "minLength": 1
             },
             "select": {
@@ -213,7 +213,7 @@
           "properties": {
             "file": {
               "type": "string",
-              "pattern": "^[^/.][^\\\\]*$",
+              "pattern": "^(?!/)(?!(?:.*/)?\\.\\.?(?:/|$))[^\\\\]+$",
               "minLength": 1
             },
             "select": {
@@ -238,7 +238,7 @@
       "properties": {
         "directory": {
           "type": "string",
-          "pattern": "^[^/.][^\\\\]*$",
+          "pattern": "^(?!/)(?!(?:.*/)?\\.\\.?(?:/|$))[^\\\\]+$",
           "minLength": 1
         },
         "status": {

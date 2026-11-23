@@ -670,13 +670,13 @@ stderr. The gate is described in [`contract-gate.md`](./contract-gate.md).
 ### `GEORDI_E_CONTRACT_RECORD_STALE`
 
 **Severity**: Error
-**Message**: A new change record names a contract that does not differ from the base
+**Message**: A new change record names a contract that does not differ from the base, or states a status change that did not happen
 **Fix**: Remove the record, or name the contract that actually changed.
 
 ### `GEORDI_E_CONTRACT_RECORD_UNDERSTATED`
 
 **Severity**: Error
-**Message**: A change record says additive, but a difference is breaking or unknown
+**Message**: No single change record describes the whole change: none says breaking for a breaking or unknown difference while also stating the status change, if any
 **Fix**: Set `change` to `breaking`. An `unknown` difference counts as breaking.
 
 ### `GEORDI_E_CONTRACT_RECORD_INVALID`
@@ -712,7 +712,7 @@ stderr. The gate is described in [`contract-gate.md`](./contract-gate.md).
 ### `GEORDI_E_CONTRACT_SUPERSEDED_CHANGED`
 
 **Severity**: Error
-**Message**: A superseded contract's schema or example files differ from the base or were deleted
+**Message**: A superseded contract's schema or example files differ from the base or were deleted, or its registry entry names other files
 **Fix**: Restore the superseded version's schema and example files from the base.
 
 ### `GEORDI_E_CONTRACT_DIAGNOSTICS_DISAGREE`
@@ -736,8 +736,8 @@ stderr. The gate is described in [`contract-gate.md`](./contract-gate.md).
 ### `GEORDI_E_CONTRACT_GATE_BASE`
 
 **Severity**: Error
-**Message**: The base cannot be determined: the base ref does not resolve, or HEAD and the base share no commit (often a shallow clone)
-**Fix**: Fetch the base branch with full history (`git fetch origin`, or `fetch-depth: 0` in CI), or pass `--base` or `--base-dir`.
+**Message**: The base cannot be determined: the base ref does not resolve, the --base-dir is not a directory, or the head and the base share no commit (often a shallow clone)
+**Fix**: Fetch the base branch (`git fetch origin <branch>`). In a shallow clone, `git fetch --unshallow origin`, because a plain fetch keeps the shallow boundary; in CI, `actions/checkout` with `fetch-depth: 0`. Or pass `--base`, or an existing `--base-dir`.
 
 ### `GEORDI_E_CONTRACT_GATE_REGISTRY`
 

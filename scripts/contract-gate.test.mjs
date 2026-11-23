@@ -16,7 +16,8 @@ import { dirname, join, resolve } from 'node:path';
 import { after, test } from 'node:test';
 
 import { loadSchemaDirectory, validateJsonSchema } from './lib/json-schema-subset.mjs';
-import { parseJson, stringifyJson } from './lib/contract-gate/json.mjs';
+import { canonicalJson, parseJson, stringifyJson } from './lib/contract-gate/json.mjs';
+import { Tree } from './lib/contract-gate/trees.mjs';
 
 const REPO_ROOT = resolve(import.meta.dirname, '..');
 const GATE = join(REPO_ROOT, 'scripts', 'contract-gate.mjs');
@@ -89,9 +90,13 @@ function runGate(args, options = {}) {
   };
 }
 
-function compare(baseFiles, headFiles) {
+function compare(baseFiles, headFiles, options = {}) {
   const base = writeTree(scratchDir('base'), baseFiles);
   const head = writeTree(scratchDir('head'), headFiles);
+  if (options.bigMaximum) {
+    const path = join(head, 'schemas', 'demo', '1', 'demo.schema.json');
+    writeFileSync(path, readFileSync(path, 'utf8').replace('"__BIG__"', '9007199254740993'));
+  }
   return runGate(['--base-dir', base, '--head-dir', head]);
 }
 
@@ -574,6 +579,7 @@ test('an unresolvable base fails closed with a schema-tagged error', () => {
 });
 
 test('a shallow clone that cannot reach the merge base fails closed', () => {
+  // The message names the fix for a shallow clone.
   const upstream = scratchDir('git-upstream');
   git(upstream, 'init', '-q', '-b', 'main');
   commitTree(upstream, demoTree(), 'base');
@@ -587,7 +593,7 @@ test('a shallow clone that cannot reach the merge base fails closed', () => {
   const run = runGate(['--repo', clone, '--base-ref', 'origin/main']);
   assert.equal(run.status, 1);
   assert.equal(run.stderr.at(-1).code, 'GEORDI_E_CONTRACT_GATE_BASE');
-  assert.match(run.stderr.at(-1).message, /fetch-depth|history/u);
+  assert.match(run.stderr.at(-1).message, /--unshallow/u);
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -639,4 +645,180 @@ test('the checked-in registry and change records validate against their schemas'
   for (const name of records) {
     validateJsonSchema(formats.get('geordi.contract_registry.change_record'), parseJson(readFileSync(join(changes, name), 'utf8')));
   }
+});
+
+// ---------------------------------------------------------------------------------------------
+// Review findings on flyingrobots/geordi#218
+// ---------------------------------------------------------------------------------------------
+
+function withSchema(mutate) {
+  const schema = structuredClone(DEMO_SCHEMA);
+  mutate(schema);
+  return demoTree({ 'schemas/demo/1/demo.schema.json': schema });
+}
+
+test('adding or removing an enum restriction is classified, not a crash', () => {
+  const added = compare(demoTree(), withSchema((schema) => { schema.properties.name.enum = ['a']; }));
+  assert.equal(added.stderr.at(-1).code, 'GEORDI_E_CONTRACT_GATE_FAILED', added.raw.stderr);
+  const line = added.differences.find((entry) => entry.item === '/properties/name/enum');
+  assert.equal(line.classification, 'breaking');
+  const removed = compare(withSchema((schema) => { schema.properties.name.enum = ['a']; }), demoTree());
+  assert.equal(removed.differences.find((entry) => entry.item === '/properties/name/enum').classification, 'additive');
+});
+
+test('an optional property on an open object is unknown, because old documents may use it', () => {
+  const open = (schema) => { schema.additionalProperties = true; };
+  const run = compare(withSchema(open), withSchema((schema) => { open(schema); schema.properties.label = { type: 'string' }; }));
+  assert.equal(run.differences.find((entry) => entry.item === '/properties/label').classification, 'unknown');
+});
+
+test('widening a oneOf branch is unknown, because a value may then match two branches', () => {
+  const branches = (second) => (schema) => { schema.properties.mode = { oneOf: [{ enum: ['a'] }, { enum: second }] }; };
+  const run = compare(withSchema(branches(['b'])), withSchema(branches(['a', 'b'])));
+  const line = run.differences.find((entry) => entry.item.startsWith('/properties/mode/oneOf/1'));
+  assert.equal(line.classification, 'unknown', stringifyJson(run.differences));
+});
+
+test('a changed $id is a difference', () => {
+  const run = compare(withSchema((schema) => { schema.$id = 'https://example.invalid/a'; }), withSchema((schema) => { schema.$id = 'https://example.invalid/b'; }));
+  assert.equal(run.differences.find((entry) => entry.item === '/$id').classification, 'unknown');
+});
+
+test('reported pointers escape member names', () => {
+  const run = compare(demoTree(), withSchema((schema) => { schema.properties['a/b~c'] = { type: 'string' }; }));
+  assert.ok(run.differences.some((entry) => entry.item === '/properties/a~1b~0c'), stringifyJson(run.differences));
+});
+
+test('a property named like an Object.prototype member is an ordinary added property', () => {
+  const run = compare(demoTree(), withSchema((schema) => { schema.properties.constructor = { type: 'string' }; }));
+  const line = run.differences.find((entry) => entry.item === '/properties/constructor');
+  assert.equal(line.change, 'added');
+  assert.equal(line.classification, 'additive');
+});
+
+test('removing additionalProperties is unknown when the schema uses unevaluatedProperties', () => {
+  const base = withSchema((schema) => { schema.additionalProperties = true; schema.unevaluatedProperties = false; });
+  const head = withSchema((schema) => { delete schema.additionalProperties; schema.unevaluatedProperties = false; });
+  const run = compare(base, head);
+  assert.equal(run.differences.find((entry) => entry.item === '/additionalProperties').classification, 'unknown', stringifyJson(run.differences));
+});
+
+test('a schema number that JavaScript cannot represent exactly fails closed', () => {
+  const run = compare(demoTree(), withSchema((schema) => { schema.properties.size.maximum = '__BIG__'; }), { bigMaximum: true });
+  assert.equal(run.stderr.at(-1).code, 'GEORDI_E_CONTRACT_GATE_SNAPSHOT', run.raw.stderr);
+  assert.match(run.stderr.at(-1).message, /exactly/u);
+});
+
+test('canonical JSON keeps an own __proto__ member and ignores key order', () => {
+  const withProto = parseJson('{"b":1,"__proto__":{"x":1},"a":2}');
+  assert.equal(canonicalJson(withProto), '{"__proto__":{"x":1},"a":2,"b":1}');
+  assert.equal(canonicalJson(parseJson('{"a":2,"b":1}')), canonicalJson(parseJson('{"b":1,"a":2}')));
+});
+
+test('a required associated type added to an existing public trait is breaking', () => {
+  const traitSource = (extra) => `${DEMO_RS}/// Demo trait.\npub trait Demo {\n    ${extra}\n}\n`;
+  const run = compare(demoTree({ 'src/demo.rs': traitSource('') }), demoTree({ 'src/demo.rs': traitSource('type Output;') }));
+  assert.equal(run.differences.find((entry) => entry.item === 'trait-type Demo::Output').classification, 'breaking');
+});
+
+test('a superseded contract cannot be repointed at other files', () => {
+  const frozen = demoTree({ 'contracts/registry.json': registry([demoContract({ status: 'frozen' }), otherContract()]) });
+  const raised = raisedRegistry();
+  raised.contracts[0].schema = 'schemas/demo/1/moved.schema.json';
+  const run = compare(frozen, {
+    ...frozen,
+    'contracts/registry.json': raised,
+    'schemas/demo/1/moved.schema.json': DEMO_SCHEMA,
+    'schemas/demo/2/demo.schema.json': DEMO_SCHEMA,
+    'fixtures/demo/2/a.json': { name: 'a' },
+    'contracts/changes/v2.json': record('demo-format/2', 'additive'),
+    'contracts/changes/v1-superseded.json': record('demo-format/1', 'breaking', { status: { from: 'frozen', to: 'superseded' } }),
+  });
+  assert.deepEqual(codes(run), ['GEORDI_E_CONTRACT_SUPERSEDED_CHANGED']);
+  assert.match(run.violations[0].message, /moved\.schema\.json/u);
+});
+
+test('a record that states a status change that did not happen is stale', () => {
+  const run = compare(
+    demoTree(),
+    demoTree({ 'fixtures/demo/a.json': { name: 'a', size: 2 }, 'contracts/changes/x.json': record('demo-format/1', 'breaking', { status: { from: 'draft', to: 'frozen' } }) }),
+  );
+  assert.deepEqual(codes(run), ['GEORDI_E_CONTRACT_RECORD_STALE']);
+});
+
+test('one record must state both the status change and the classification', () => {
+  const head = demoTree({
+    'contracts/registry.json': registry([demoContract({ status: 'superseded', supersededBy: 'demo-format/2', diagnostics: undefined, rustApi: undefined }), demoContract({ contract: 'demo-format/2' }), otherContract()]),
+    'contracts/changes/v2.json': record('demo-format/2', 'additive'),
+    'contracts/changes/status-only.json': record('demo-format/1', 'additive', { status: { from: 'draft', to: 'superseded' } }),
+    'contracts/changes/breaking-only.json': record('demo-format/1', 'breaking'),
+  });
+  const run = compare(demoTree(), head);
+  assert.deepEqual(codes(run), ['GEORDI_E_CONTRACT_RECORD_UNDERSTATED']);
+});
+
+test('examples that share a path but not an encoder keep separate hashes', () => {
+  const crate = {
+    'Cargo.toml': '[workspace]\nmembers = ["crates/demo-enc"]\nresolver = "3"\n',
+    'crates/demo-enc/Cargo.toml': '[package]\nname = "demo-enc"\nversion = "0.0.0"\nedition = "2024"\npublish = false\n',
+    'crates/demo-enc/src/lib.rs': [
+      '//! Demo encoders.',
+      '/// First.',
+      '/// # Errors',
+      '/// Never.',
+      'pub fn first(source: &str) -> Result<String, String> { Ok(format!("first:{}", source.len())) }',
+      '/// Second.',
+      '/// # Errors',
+      '/// Never.',
+      'pub fn second(source: &str) -> Result<String, String> { Ok(format!("second:{}", source.trim().len() * 2)) }',
+      '',
+    ].join('\n'),
+  };
+  const encoder = (fn) => ({ kind: 'rust-fn', crate: 'crates/demo-enc', function: `demo_enc::${fn}` });
+  const tree = demoTree({
+    ...crate,
+    'contracts/registry.json': registry([
+      demoContract({ examples: [{ path: 'fixtures/demo/a.json', encoder: encoder('first') }] }),
+      otherContract({ examples: [{ path: 'fixtures/demo/a.json', encoder: encoder('second') }] }),
+    ]),
+  });
+  const run = compare(tree, demoTree({ ...tree, 'crates/demo-enc/src/lib.rs': crate['crates/demo-enc/src/lib.rs'].replace('* 2', '* 3') }));
+  const changed = run.differences.filter((entry) => entry.surface === 'example').map((entry) => entry.contract);
+  assert.deepEqual(changed, ['demo-other/1'], run.raw.stdout + run.raw.stderr);
+});
+
+test('a --base-dir that does not exist fails closed instead of bootstrapping', () => {
+  const head = writeTree(scratchDir('head'), demoTree());
+  const run = runGate(['--base-dir', join(SCRATCH, 'no-such-directory'), '--head-dir', head]);
+  assert.equal(run.status, 1);
+  assert.equal(run.stderr.at(-1).code, 'GEORDI_E_CONTRACT_GATE_BASE');
+});
+
+test('registry paths may not leave the tree', () => {
+  const run = compare(demoTree(), demoTree({ 'contracts/registry.json': registry([demoContract({ schema: 'schemas/../../outside.json' }), otherContract()]) }));
+  assert.equal(run.stderr.at(-1).code, 'GEORDI_E_CONTRACT_GATE_REGISTRY');
+  assert.throws(() => new Tree(SCRATCH, 'test').absolute('a/../../b'), /outside/u);
+});
+
+test('the merge base is computed from the selected head, not the checked-out branch', () => {
+  const repo = scratchDir('git-selected-head');
+  git(repo, 'init', '-q', '-b', 'main');
+  const fork = commitTree(repo, demoTree(), 'base');
+  git(repo, 'checkout', '-q', '-b', 'feature');
+  commitTree(repo, { 'README.md': 'feature\n' }, 'feature');
+  git(repo, 'checkout', '-q', 'main');
+  commitTree(repo, { 'README.md': 'main\n' }, 'main moved');
+  const run = runGate(['--repo', repo, '--base-ref', 'main', '--head', 'feature']);
+  assert.equal(run.stdout[0].base.sha, fork, run.raw.stdout + run.raw.stderr);
+});
+
+test('a base registry marked export-ignore is still read: the base is extracted blob by blob', () => {
+  const repo = scratchDir('git-export-ignore');
+  git(repo, 'init', '-q', '-b', 'main');
+  commitTree(repo, { ...demoTree(), '.gitattributes': 'contracts/registry.json export-ignore\n' }, 'base');
+  git(repo, 'checkout', '-q', '-b', 'feature');
+  writeTree(repo, { 'fixtures/demo/a.json': { name: 'a', size: 7 } });
+  const run = runGate(['--repo', repo, '--base-ref', 'main']);
+  assert.equal(run.stdout[0].mode, 'compare');
+  assert.deepEqual(codes(run), ['GEORDI_E_CONTRACT_RECORD_MISSING']);
 });
