@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-bijou-wgpu-proof/prepared.schema.json",
+  "title": "Prepared frame",
+  "description": "The CPU preparation of the frame: the prepared cell buffer, the frame geometry, and the font, atlas, shader and endpoint-profile identities. Written to stdout before any adapter is requested. `atlasUses` has one entry per atlas slot that a visible cell draws.",
+  "x-schema-id": "geordi.bijou_wgpu_proof.prepared",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "gpuAbiVersion",
+    "backendProfile",
+    "preparedLayout",
+    "preparedBufferSha256",
+    "preparedByteLength",
+    "cellPx",
+    "canvasPxW",
+    "canvasPxH",
+    "defaultFg",
+    "defaultBg",
+    "fontIdentity",
+    "glyphPackSha256",
+    "atlasRgbaSha256",
+    "atlasUses",
+    "assembledWgslSha256",
+    "shaderManifestSha256"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.bijou_wgpu_proof.prepared"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "prepared"
+    },
+    "gpuAbiVersion": {
+      "const": "bijou-surface-gpu/1"
+    },
+    "backendProfile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "preparedLayout": {
+      "type": "string",
+      "minLength": 1
+    },
+    "preparedBufferSha256": {
+      "type": "string",
+      "minLength": 64
+    },
+    "preparedByteLength": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cellPx": {
+      "type": "object",
+      "required": [
+        "width",
+        "height"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "canvasPxW": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "canvasPxH": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "defaultFg": {
+      "type": "string",
+      "minLength": 1
+    },
+    "defaultBg": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fontIdentity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "glyphPackSha256": {
+      "type": "string",
+      "minLength": 64
+    },
+    "atlasRgbaSha256": {
+      "type": "string",
+      "minLength": 64
+    },
+    "atlasUses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "grapheme",
+          "codePoints",
+          "bold",
+          "slot",
+          "kind",
+          "cells"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "grapheme": {
+            "type": "string",
+            "minLength": 1
+          },
+          "codePoints": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bold": {
+            "type": "boolean"
+          },
+          "slot": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "kind": {
+            "enum": [
+              "mono",
+              "color"
+            ]
+          },
+          "cells": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "assembledWgslSha256": {
+      "type": "string",
+      "minLength": 64
+    },
+    "shaderManifestSha256": {
+      "type": "string",
+      "minLength": 64
+    }
+  }
+}

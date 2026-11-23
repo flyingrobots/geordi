@@ -11,6 +11,13 @@ and `crates/geordi-renderer` (runtime profile negotiation, `RenderedImage` const
 This page describes what exists on `main`: the artifact contract, its validator, its receipt and
 the runtime negotiation check. Geordi contains no ray tracer. Nothing here renders a pixel.
 
+> **Status.** `geordi-ray-traced-scene/1` is not yet frozen. No released consumer exists. Breaking
+> changes to it are recorded in [`CHANGELOG.md`](../CHANGELOG.md) under "BREAKING CHANGES". It becomes
+> a frozen contract, after which any incompatible change requires `/2`, only when a release or a
+> consumer first pins it.
+> Every change to its schema, example hashes, diagnostic codes or public Rust items also needs a
+> change record; the [contract gate](./contract-gate.md) compares each pull request with its base.
+>
 > **Not claimed.** Geordi does not claim `geordi/ray-traced-3d/1`. The design's proof gates
 > (thread invariance, two CPU architectures agreeing, and an artifact render matching lumen's
 > built-in render) have not run. The validator and fixtures exist so that a runtime, planned in
@@ -80,7 +87,7 @@ Its top level, abridged (arrays shortened to one element):
     {
       "id": "sun",
       "kind": "directional",
-      "radiance": [12884901888, 12884901888, 12884901888],
+      "irradiance": [12884901888, 12884901888, 12884901888],
       "towardLight": [2147483648, 4294967296, 1073741824]
     }
   ],
@@ -115,6 +122,54 @@ Its top level, abridged (arrays shortened to one element):
 Unknown fields are rejected at every level. `towardLight` must be absent (not `null`) on a
 `uniformSky` light.
 
+### JSON Schema
+
+[`schemas/geordi-ray-traced-scene/1/scene.schema.json`](../schemas/geordi-ray-traced-scene/1/scene.schema.json)
+describes the artifact's shape. The validator is still the authority: the schema is derived from it
+and from the field rules below, and it is not the whole validator. A document can satisfy the
+schema and still be rejected.
+
+The schema expresses:
+
+- every field and its JSON type, with unknown fields refused;
+- the two light kinds, each with its own fields;
+- integers within the parse range `-(2^53 - 1)..=2^53 - 1`;
+- the constants (`sceneVersion`, `numericProfile`, kinds, integrator, layout, reconstruction,
+  output);
+- the requirement vocabulary, with no duplicates;
+- the numeric ranges of albedo, irradiance, radiance, `tanHalfFovY`, film size, seed and
+  `maxBounces`;
+- the allowed `samplesPerPixel` values;
+- the mesh hash and identity patterns;
+- non-empty ids.
+
+It does not express these rules, which only the validator enforces:
+
+- ids unique within a collection;
+- instance references to declared meshes and materials;
+- the requirements that the content implies;
+- at most one `directional` light and exactly one `uniformSky`;
+- `meshes[].path` being fixture-local;
+- `bounds.min <= bounds.max`;
+- `towardLight` normalisation;
+- camera degeneracy;
+- the trace domain;
+- the primitive count sum and the empty scene;
+- anything that reads mesh bytes.
+
+The light counts could be written with `contains`, `minContains` and `maxContains`, but the
+schema does not use those keywords.
+
+Being JSON Schema, it also cannot see how a number is written: `1.779033704e9`, `1779033704.0` and
+`-0` are integers to it.
+
+`scripts/ray-traced-scene-schema.test.mjs` pins this boundary against the fixtures:
+
+- every positive fixture validates;
+- every shape-stage failure fixture is invalid;
+- of the validate-stage failure fixtures, exactly those whose rule is listed above as expressed
+  are invalid.
+
 ## Field rules
 
 Q32.32 fields are marked Q. A diagnostic code is listed for each rule; see
@@ -139,18 +194,20 @@ Q32.32 fields are marked Q. A diagnostic code is listed for each rule; see
 | `instances[].mesh` | Names a declared mesh | `GEORDI_E_RT_MESH_REFERENCE_UNKNOWN` |
 | `instances[].material` | Names a declared material | `GEORDI_E_RT_MATERIAL_REFERENCE_UNKNOWN` |
 | `instances[].worldFromMesh` (Q) | 9 linear entries, column-major (`column * 3 + row`), and 3 translation entries; see [trace domain](#trace-domain-check) | `GEORDI_E_RT_TRACE_DOMAIN_EXCEEDED` |
+| Sum over instances of the instanced mesh's `counts.triangles` | At least 1 (an empty `instances`, or only zero-triangle meshes, is refused; Lumen's `Scene::new` returns `Empty`) | `GEORDI_E_RT_SCENE_EMPTY` |
 | Sum over instances of the instanced mesh's `counts.triangles` | At most `2^32 - 1` | `GEORDI_E_RT_PRIMITIVE_COUNT_EXCEEDED` |
 | `camera.kind` | Exactly `pinhole` | `GEORDI_E_RT_CAMERA_UNSUPPORTED` |
 | `camera.position` (Q) | Each coordinate below 256 units in magnitude | `GEORDI_E_RT_TRACE_DOMAIN_EXCEEDED` |
-| `camera.forward`, `camera.up` (Q) | Neither zero; not parallel (exact 128-bit cross product is non-zero) | `GEORDI_E_RT_CAMERA_DEGENERATE` |
+| `camera.forward`, `camera.up` (Q) | Neither zero; the sine of the angle between them is at least `2^-15`, i.e. `\|forward x up\|^2 * 2^30 >= \|forward\|^2 * \|up\|^2`, evaluated exactly in 256-bit integers. Bunny's camera basis refuses a sine below about `2^-16` (by largest cross-product component, which can be `sqrt(3)` below the length), so `2^-15` is the nearest power of two that no such runtime accepts below. A sine in `[2^-16, 2^-15)` may be accepted by Bunny and is still refused here | `GEORDI_E_RT_CAMERA_DEGENERATE` |
 | `camera.tanHalfFovY` (Q) | In `(0, 4]`: raw `1..=17179869184` | `GEORDI_E_RT_TAN_HALF_FOV_Y_OUT_OF_RANGE` |
 | `lights[].kind` | `directional` or `uniformSky` | `GEORDI_E_RT_LIGHT_UNSUPPORTED` |
 | `lights[].towardLight` (Q) | Required on `directional`; forbidden on `uniformSky` | `GEORDI_E_RT_LIGHT_FIELD_INVALID` |
 | `lights[].towardLight` | Largest component magnitude exactly 1.0 (raw `4294967296`); rejects zero | `GEORDI_E_RT_TOWARD_LIGHT_NOT_NORMALIZED` |
-| `lights[].radiance` (Q, 3 channels) | Each in `[0, 65536]`: raw `0..=281474976710656` | `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE` |
+| `lights[].irradiance` (Q, 3 channels) | Required on `directional`, refused on `uniformSky` (an unknown field, `GEORDI_E_RT_SCENE_SHAPE`): the irradiance on a surface perpendicular to the light, as in Bunny's `DirectionalLight::new`. Each in `[0, 65536]`: raw `0..=281474976710656` | `GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE` |
+| `lights[].radiance` (Q, 3 channels) | Required on `uniformSky`, refused on `directional` (an unknown field, `GEORDI_E_RT_SCENE_SHAPE`; the old name for the sun's value is not accepted). Each in `[0, 65536]`: raw `0..=281474976710656` | `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE` |
 | `lights` | At most one `directional` | `GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT` |
 | `lights` | Exactly one `uniformSky` | `GEORDI_E_RT_SKY_COUNT` |
-| `film.width`, `film.height` | Integer in `1..=16384` | `GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE` |
+| `film.width`, `film.height` | Integer in `1..=16384`. The area is not bounded by the scene profile: a runtime bounds it through `max_film_pixels` at [negotiation](#runtime-profile-negotiation) | `GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE` |
 | `render.integrator` | Exactly `geordi-rt-diffuse-path/1` | `GEORDI_E_RT_INTEGRATOR_UNSUPPORTED` |
 | `render.samplesPerPixel` | Power of two in `1..=1024` | `GEORDI_E_RT_SAMPLES_PER_PIXEL_INVALID` |
 | `render.sampler` | Well-formed versioned identity (see below) | `GEORDI_E_RT_SAMPLER_IDENTITY_INVALID` |
@@ -220,12 +277,42 @@ the decoded counts, bounds and triangle indices against the declaration, is the 
 | `imageHash` | Raw RGBA8 bytes, row-major, top row first | `geordi_ray_traced_image_hash`, `RenderedImage::image_hash` |
 | Receipt hash | Canonical JSON bytes of the receipt | `geordi_ray_traced_render_receipt_hash` |
 
-Every hash is written `sha256:` followed by 64 lowercase hex digits. **Canonical JSON** here is
-the form `geordi_sha256_from_canonical_json_value` already uses: object keys sorted, two-space
-indentation, `": "` between key and value, one array element per line, and a final newline. It
-equals Python's `json.dumps(value, sort_keys=True, indent=2) + "\n"` for these ASCII artifacts.
-Committed scene fixtures are stored in canonical form, so their `sceneHash` equals the SHA-256 of
-the file bytes.
+Every hash is written `sha256:` followed by 64 lowercase hex digits. **Canonical JSON** is the
+byte string a second implementation must produce to reproduce `sceneHash` and the receipt hash from
+the documents alone:
+
+- The document is UTF-8, with no byte order mark.
+- Object keys are sorted by Unicode code point (equivalently, by their UTF-8 bytes) at every depth.
+  A source that repeats a key is a parse error, not a last-wins merge.
+- Two-space indentation, one object member or array element per line, `": "` between a key and its
+  value, and `,` at the end of every line but the last of a container. An empty array is `[]` and
+  an empty object is `{}`.
+- A number is a decimal integer: an optional `-`, no `+`, no leading zeros, no fraction, no
+  exponent. Zero is `0`.
+- A string is written raw, in UTF-8, except for these escapes: `\"` and `\\`; `\b`, `\f`, `\n`, `\r`
+  and `\t`; and `\u00XX` with lower-case hex digits for every other code point below U+0020. The
+  solidus is not escaped, and neither are U+007F, U+2028 or any non-ASCII character. A source may
+  spell a string with any valid JSON escape, including surrogate pairs; the canonical form is the
+  same.
+- The text ends with one `\n` after the closing brace, and nothing follows.
+
+This equals Python's `json.dumps(value, sort_keys=True, indent=2, ensure_ascii=False) + "\n"`.
+Python's default `ensure_ascii=True` is **not** the same: it escapes every non-ASCII character as
+`\uXXXX` and gives a different digest for any scene whose strings are not ASCII. The test
+`canonical_bytes_write_non_ascii_raw_and_escape_only_quote_backslash_and_controls` pins a digest
+computed that way. The reference fixture is stored in canonical form, so its `sceneHash` equals the
+SHA-256 of the file bytes. Failure fixtures are not all canonical (some are not even valid JSON
+numbers), so that shortcut does not apply to them.
+
+**What changes the hash.** The hash is over the canonical bytes of the document as written, and
+nothing is normalized beyond the formatting above. Scenes that would render the same still have
+different hashes when they differ in any of: the order of `lights`, `instances`, `meshes` or
+`materials`; the order of the `requires` list; the spelling of a mesh `path` (`meshes/./unit-quad.ply`,
+`./meshes/unit-quad.ply` and `meshes//unit-quad.ply` all differ from `meshes/unit-quad.ply`, and
+all are valid); the choice of ids; or a requirement declared though unused. Whitespace, key order
+in the source and string escape spelling do not change it. Instance order and light order are
+also visible to a runtime, so a renderer may let them affect pixels; identity here is the document,
+not the image.
 
 The image hash does not cover width, height, pixel format or encoding; the receipt records those,
 and the receipt hash covers them. Two images of different shape with the same bytes have the same
@@ -257,8 +344,11 @@ except `runtime` is equal; equal `imageHash` values then mean the renders agree.
 
 `GeordiRayTracedRuntimeProfile` (in `geordi-renderer`) is what a ray-tracing runtime declares:
 the `(sceneVersion, numericProfile)` pairs it accepts, and the requirements, mesh layouts,
-integrators, samplers, tone curves, reconstructions and outputs it implements.
-`assert_ray_traced_runtime_profile(scene, profile)` checks the artifact pair first, then each
+integrators, samplers, tone curves, reconstructions and outputs it implements, and
+`max_film_pixels`, the largest film area it can allocate (Lumen's cap is `2^27` pixels; a
+`16384 x 16384` film is `2^28` and is valid in the scene profile).
+`assert_ray_traced_runtime_profile(scene, profile)` checks the artifact pair first, then the film
+area (`film=16384x16384 (268435456 pixels)` against `film=at most 134217728 pixels`), then each
 requirement, mesh layout and render identity, and returns `GeordiRuntimeUnsupportedProfileError`
 naming the first unsupported value (for example `sampler=x/1`) and what the profile supports.
 This is the same error type `assert_native_runtime_profile` returns. Geordi defines no ray-tracing

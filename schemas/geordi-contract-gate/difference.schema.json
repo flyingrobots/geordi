@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-gate/difference.schema.json",
+  "title": "Difference",
+  "description": "One observed difference between the base and head snapshot of a contract surface. Written to stdout. `classification` is `unknown` when the gate cannot tell; `treatedAs` is then `breaking`. `before` and `after` are the two values where they are short (a hash, a status, a message, a signature) and null otherwise.",
+  "x-schema-id": "geordi.contract_gate.difference",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "contract",
+    "surface",
+    "item",
+    "change",
+    "classification",
+    "treatedAs",
+    "detail",
+    "before",
+    "after"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_gate.difference"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "difference"
+    },
+    "contract": {
+      "type": "string",
+      "minLength": 1
+    },
+    "surface": {
+      "enum": [
+        "schema",
+        "example",
+        "diagnostic",
+        "rust-api",
+        "status",
+        "registry"
+      ]
+    },
+    "item": {
+      "type": "string",
+      "minLength": 1
+    },
+    "change": {
+      "enum": [
+        "added",
+        "removed",
+        "changed"
+      ]
+    },
+    "classification": {
+      "enum": [
+        "additive",
+        "breaking",
+        "unknown"
+      ]
+    },
+    "treatedAs": {
+      "enum": [
+        "additive",
+        "breaking"
+      ]
+    },
+    "detail": {
+      "type": "string",
+      "minLength": 1
+    },
+    "before": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "after": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

@@ -10,7 +10,7 @@ use geordi_ir::{
     validate_geordi_strict_text_evidence_line_boxes, validate_geordi_strict_text_fixture_manifest,
     validate_geordi_strict_text_outline_evidence_pack,
 };
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
@@ -110,6 +110,9 @@ pub struct GeordiRayTracedRuntimeProfile {
     pub reconstructions: &'static [&'static str],
     /// Implemented output encoding identities.
     pub outputs: &'static [&'static str],
+    /// Largest film area, in pixels, the runtime can allocate. The scene profile bounds each film
+    /// side by 16384 but not the product, so this is a runtime property.
+    pub max_film_pixels: u64,
 }
 
 /// Custom error returned when a `RenderedImage` cannot be built from width, height and bytes.
@@ -523,7 +526,8 @@ pub fn assert_native_runtime_profile(
 
 /// Assert that a ray-traced scene can run on a ray-tracing runtime profile.
 ///
-/// The `(sceneVersion, numericProfile)` pair is checked first, then requirements, mesh layouts
+/// The `(sceneVersion, numericProfile)` pair is checked first, then the film area against
+/// `max_film_pixels`, then requirements, mesh layouts
 /// and the render identities. This is capability negotiation only; validate the scene with
 /// `validate_geordi_ray_traced_scene` as well.
 ///
@@ -551,6 +555,18 @@ pub fn assert_ray_traced_runtime_profile(
                 scene.scene_version, scene.numeric_profile
             ),
             format!("artifacts={supported}"),
+        ));
+    }
+    let pixels = u64::try_from(scene.film.width.max(0))
+        .unwrap_or(0)
+        .saturating_mul(u64::try_from(scene.film.height.max(0)).unwrap_or(0));
+    if pixels > profile.max_film_pixels {
+        return Err(GeordiRuntimeUnsupportedProfileError::new(
+            format!(
+                "film={}x{} ({pixels} pixels)",
+                scene.film.width, scene.film.height
+            ),
+            format!("film=at most {} pixels", profile.max_film_pixels),
         ));
     }
     for requirement in &scene.requires {
@@ -791,7 +807,7 @@ fn build_strict_text_render_paths(
         .glyphs
         .iter()
         .map(|glyph| (glyph.glyph_id, glyph))
-        .collect::<HashMap<_, _>>();
+        .collect::<BTreeMap<_, _>>();
     let mut paths = StrictTextRenderPaths {
         command_count: 0,
         draw_glyph_count: 0,

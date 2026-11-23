@@ -153,6 +153,7 @@ class IssueCollector {
   }
 
   exactFields(value: JsonObject, path: string, fields: readonly string[]): void {
+    // ban-nondeterminism: allow(unordered-container) unknown-field issues are listed in the input document's key order, a function of the input bytes alone
     for (const key of Object.keys(value)) {
       if (!fields.includes(key)) {
         this.add(`${path}.${key}`, 'unknown field');

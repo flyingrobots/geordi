@@ -9,6 +9,12 @@ updates:
       time: "09:00"
       timezone: America/Los_Angeles
     open-pull-requests-limit: 5
+    ignore:
+      # typescript-eslint peers on typescript >=4.8.4 <6.1.0 and throws at load
+      # time on TypeScript 7, which fails `pnpm lint` and so the whole
+      # dev-tooling group. Drop this entry once typescript-eslint supports 7.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     groups:
       dev-tooling:
         dependency-type: development

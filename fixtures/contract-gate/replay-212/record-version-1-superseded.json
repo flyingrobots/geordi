@@ -1,0 +1,14 @@
+{
+  "contract": "geordi-ray-traced-scene/1",
+  "change": "breaking",
+  "summary": "geordi-ray-traced-scene/1 is superseded by geordi-ray-traced-scene/2.",
+  "why": "Replay of flyingrobots/geordi#212 in the contract gate golden test.",
+  "references": [
+    "flyingrobots/geordi#212",
+    "flyingrobots/geordi#161"
+  ],
+  "status": {
+    "from": "frozen",
+    "to": "superseded"
+  }
+}

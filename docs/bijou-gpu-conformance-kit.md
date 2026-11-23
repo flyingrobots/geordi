@@ -12,11 +12,16 @@ suite, the endpoint receipt validator, the CPU reference oracle, and the browser
 The design record is the normative source for every equation; this page says how the kit
 exposes them.
 
-> **Not claimed.** Geordi has no GPU presenter, shader, dirty-union packer, or `GlyphAtlas`. The
-> kit renders on the CPU only. It is the oracle those components are checked against, tracked in
-> [flyingrobots/geordi#170](https://github.com/flyingrobots/geordi/issues/170) through
-> [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175) and
-> [flyingrobots/geordi#58](https://github.com/flyingrobots/geordi/issues/58).
+> **Not claimed.** The kit renders on the CPU only. It is the oracle presenters are checked
+> against. The [WebGL2 presenter](./bijou-gpu-webgl2-presenter.md) and the
+> [WebGPU presenter](./bijou-gpu-webgpu-presenter.md) are the browser GPU presenters, and the offscreen native `wgpu` proof in
+> [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md) is checked against this kit as well.
+> The Canvas 2D fallback presenter, which also computes its pixels on the CPU, is described in
+> [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md). The dirty-union
+> packer and the glyph atlas that share this package are described in
+> [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md) and
+> [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md). The canonical shader is described
+> in [`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md) and is checked against this kit's oracle.
 
 ## Ownership
 
@@ -138,9 +143,8 @@ Behaviour worth knowing:
   given.
 
 `prepareReferenceCells()` and `preparedBufferBytes()` expose the lowering on its own. The
-dirty-union packer
-([flyingrobots/geordi#171](https://github.com/flyingrobots/geordi/issues/171)) must agree with
-it word-for-word.
+[dirty-union packer](./bijou-gpu-surface-damage.md) must agree with it word-for-word, and its
+fuzz test checks that.
 
 Probe helpers: `readPixel(frame, px, py)`, `samplePixelProbes(frame, points)`,
 `findPixelProbeMismatches(frame, probes)`, and `assertPixelProbes(frame, probes)`, which throws

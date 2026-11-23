@@ -183,7 +183,7 @@ with a JSON path. Field-level detail is in
 
 **Severity**: Error
 **Message**: An integer is outside `-(2^53 - 1)..=2^53 - 1`
-**Fix**: Keep every integer within `-(2^53 - 1)..=2^53 - 1`.
+**Fix**: Keep every integer within `-(2^53 - 1)..=2^53 - 1`. This covers an integer above `2^64 - 1`, such as `18446744073709551616`. A token so long that its value overflows binary64 (about 309 digits) is not valid input to the JSON reader at all and is reported as `GEORDI_E_RT_JSON_INVALID`.
 
 ### `GEORDI_E_RT_SCENE_VERSION_UNSUPPORTED`
 
@@ -308,8 +308,8 @@ with a JSON path. Field-level detail is in
 ### `GEORDI_E_RT_CAMERA_DEGENERATE`
 
 **Severity**: Error
-**Message**: The camera `forward` or `up` is zero, or they are parallel
-**Fix**: Give non-zero `forward` and `up` that are not parallel.
+**Message**: The camera `forward` or `up` is zero, or the sine of the angle between them is below `2^-15`
+**Fix**: Give non-zero `forward` and `up` that are clearly not parallel: the sine of the angle between them must be at least `2^-15`.
 
 ### `GEORDI_E_RT_TAN_HALF_FOV_Y_OUT_OF_RANGE`
 
@@ -329,6 +329,12 @@ with a JSON path. Field-level detail is in
 **Message**: The total primitive count exceeds `2^32 - 1`
 **Fix**: Keep the total instanced triangle count at or below `2^32 - 1`.
 
+### `GEORDI_E_RT_SCENE_EMPTY`
+
+**Severity**: Error
+**Message**: The instances contribute no triangle
+**Fix**: Add an instance of a mesh whose `counts.triangles` is at least 1.
+
 ### `GEORDI_E_RT_LIGHT_UNSUPPORTED`
 
 **Severity**: Error
@@ -347,11 +353,17 @@ with a JSON path. Field-level detail is in
 **Message**: The largest `towardLight` component magnitude is not exactly 1.0
 **Fix**: Rescale `towardLight` so its largest component magnitude is raw `4294967296`.
 
+### `GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE`
+
+**Severity**: Error
+**Message**: A directional light's irradiance channel is outside `[0, 65536]`
+**Fix**: Keep each `irradiance` channel within raw `0..=281474976710656` (`[0, 65536]`).
+
 ### `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE`
 
 **Severity**: Error
-**Message**: A radiance channel is outside `[0, 65536]`
-**Fix**: Keep each radiance channel within raw `0..=281474976710656` (`[0, 65536]`).
+**Message**: A uniform sky's radiance channel is outside `[0, 65536]`
+**Fix**: Keep each sky `radiance` channel within raw `0..=281474976710656` (`[0, 65536]`).
 
 ### `GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT`
 
@@ -441,12 +453,14 @@ with a JSON path. Field-level detail is in
 
 These come from `@flyingrobots/geordi-bijou-gpu`. Each is thrown as a named error class with a
 `code` property; validation errors also carry a JSON `path` and a `detail`. Field-level detail is
-in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
+in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md), for the dirty-union packer in
+[`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md), and for the glyph atlas in
+[`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md).
 
 ### `GEORDI_E_BIJOU_BACKEND_UNAVAILABLE`
 
 **Severity**: Error
-**Message**: A presenter backend cannot be created on this host (`BackendUnavailableError`)
+**Message**: A presenter backend cannot be created on this host, or the canvas glyph rasterizer or the glyph atlas watcher found no canvas, 2D context, or browser host (`BackendUnavailableError`)
 **Fix**: Not a defect. Report `capability-refused` evidence and choose another backend.
 
 ### `GEORDI_E_BIJOU_RENDERER_FAULT`
@@ -455,35 +469,41 @@ in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
 **Message**: An available backend failed while preparing, drawing, or reading back a frame (`RendererFaultError`)
 **Fix**: Investigate the backend failure named in `detail`.
 
+### `GEORDI_E_BIJOU_DRAWING_BUFFER_MISMATCH`
+
+**Severity**: Error
+**Message**: The WebGL2 presenter found `drawingBufferWidth` or `drawingBufferHeight` different from the canvas size, so the browser clamped or altered the drawing buffer (`DrawingBufferMismatchError`)
+**Fix**: Not a renderer fault. Present at a canvas size the browser does not clamp, below `MAX_RENDERBUFFER_SIZE` and the browser's drawing-buffer limits. The presenter draws nothing for that frame.
+
 ### `GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH`
 
 **Severity**: Error
-**Message**: A cell or side-table entry holds a width-2 grapheme
-**Fix**: `bijou-surface-gpu/1` presents width-1 cells only. Do not emit wide graphemes into canonical `packed-bijou-cells/1`.
+**Message**: A cell or side-table entry holds a width-2 grapheme, or one was handed to a `GlyphAtlas` in strict canonical mode
+**Fix**: `bijou-surface-gpu/1` presents width-1 cells only. Do not emit wide graphemes into canonical `packed-bijou-cells/1` or into a surface handed to `packSurfaceDamage()`.
 
 ### `GEORDI_E_BIJOU_INVALID_PACKED_CELLS`
 
 **Severity**: Error
-**Message**: A `packed-bijou-cells/1` receipt violates the canonical contract
-**Fix**: Correct the field at `path`; the receipt must pass Bijou's own validator.
+**Message**: A `packed-bijou-cells/1` receipt violates the canonical contract, or a `GlyphAtlas` in strict canonical mode was handed text that is not one terminal-safe width-1 grapheme
+**Fix**: Correct the field at `path`; the receipt must pass Bijou's own validator. For the atlas, pass one grapheme per cell that Bijou's width-1 glyph policy accepts.
 
 ### `GEORDI_E_BIJOU_INVALID_CELL_METRICS`
 
 **Severity**: Error
-**Message**: `cellPxW` or `cellPxH` is not an integer in `1..256`
+**Message**: `cellPxW` or `cellPxH` is not an integer in `1..256`, or a CSS cell size or device pixel ratio given to `snapCellMetrics()` is not finite and positive
 **Fix**: Snap physical cell metrics into `1..256` at the host boundary.
 
 ### `GEORDI_E_BIJOU_INVALID_SURFACE`
 
 **Severity**: Error
-**Message**: A surface, canvas size, theme colour, or probe coordinate is malformed
-**Fix**: Supply `widthCells * heightCells * 10` cell bytes, a canvas at least as large as the grid, uppercase `#RRGGBB` colours, and in-canvas probe coordinates.
+**Message**: A surface, canvas size, theme colour, probe coordinate, or packer state is malformed
+**Fix**: Supply `widthCells * heightCells * 10` cell bytes, a canvas at least as large as the grid, uppercase `#RRGGBB` colours, and in-canvas probe coordinates. For `packSurfaceDamage()`, also supply at least `ceil(width * height / 32)` render-dirty words, a side-table entry for every side-table cell, and a state from `createSurfaceDamageState()`.
 
 ### `GEORDI_E_BIJOU_INVALID_ATLAS`
 
 **Severity**: Error
-**Message**: An atlas bitmap or slot map is malformed, or a cell references a slot beyond the atlas capacity
-**Fix**: Supply `atlasCols * cellPxW * atlasRows * cellPxH * 4` RGBA bytes and unique in-range slots.
+**Message**: An atlas bitmap or slot map is malformed, a cell references a slot beyond the atlas capacity, a slot resolver returned a slot outside `0..65535`, the atlas generation advanced during two consecutive whole-grid packs, a `GlyphAtlas` was given a slot grid over 65536 slots, an empty `fontIdentity`, or an invalid canvas font, or its rasterizer returned a raster of the wrong length or with a non-byte value
+**Fix**: Supply `atlasCols * cellPxW * atlasRows * cellPxH * 4` RGBA bytes and unique in-range slots. A glyph rasterizer returns exactly `cellPxW * cellPxH * 4` bytes. If the generation will not settle, the frame holds more glyphs than one atlas generation can; enlarge the atlas.
 
 ### `GEORDI_E_BIJOU_MISSING_GLYPH_SLOT`
 
@@ -494,8 +514,8 @@ in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
 ### `GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE`
 
 **Severity**: Error
-**Message**: `procedural-glyphs.json` is malformed or a packed word disagrees with its fields
-**Fix**: Restore the table pinned by the ABI.
+**Message**: `procedural-glyphs.json` is malformed, a packed word disagrees with its fields, its text does not hash to `PROCEDURAL_GLYPH_TABLE_SHA256`, or a table given to `createCanvas2DSurfacePresenter()` differs from the pinned one
+**Fix**: Restore the table pinned by the ABI, or omit `proceduralTable` to use the bundled one. `path` names the first failing field or word.
 
 ### `GEORDI_E_BIJOU_INVALID_RECEIPT`
 
@@ -520,6 +540,251 @@ in [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
 **Severity**: Error
 **Message**: An integer primitive received an operand that is not an unsigned 32-bit integer, or a zero divisor where none is permitted
 **Fix**: This is a caller bug. Validate cell metrics before rendering.
+
+## Bijou GPU Shader Generator
+
+These come from `geordi-bijou-shadergen`. Each is the `code` of a
+`geordi.bijou_shadergen.error` JSON line on stderr. The tool is described in
+[`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md).
+
+### `GEORDI_E_BIJOU_SHADERGEN_IO`
+
+**Message**: A generator input or output file could not be read or written
+**Fix**: Run the tool from the repository root or pass `--repo-root`; the message names the file.
+
+### `GEORDI_E_BIJOU_SHADERGEN_BUNNY_DIGEST_MISMATCH`
+
+**Message**: A vendored Bunny helper or vector fixture does not have its pinned SHA-256
+**Fix**: Restore the exact bytes from the Bunny commit the design record pins. To adopt a new Bunny revision, follow [`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md#changing-a-shader).
+
+### `GEORDI_E_BIJOU_SHADERGEN_GLYPH_TABLE_INVALID`
+
+**Message**: `fixtures/bijou-gpu/procedural-glyphs.json` is not a `bijou-procedural-glyphs/1` table with 128 Box-Drawing and 32 Block Element entries in code point order
+**Fix**: Correct the table entry the message names.
+
+### `GEORDI_E_BIJOU_SHADERGEN_WGSL_PARSE`
+
+**Message**: Pinned `naga` could not parse an assembled WGSL module
+**Fix**: Fix the authored WGSL at the location in the `naga` diagnostic.
+
+### `GEORDI_E_BIJOU_SHADERGEN_WGSL_VALIDATION`
+
+**Message**: Pinned `naga` parsed an assembled WGSL module but rejected it
+**Fix**: Fix the authored WGSL at the location in the `naga` diagnostic.
+
+### `GEORDI_E_BIJOU_SHADERGEN_GLSL_WRITE`
+
+**Message**: Pinned `naga` could not translate an entry point to GLSL ES 3.00
+**Fix**: Use only WGSL features that GLSL ES 3.00 for WebGL supports; the message names the entry point.
+
+### `GEORDI_E_BIJOU_SHADERGEN_USAGE`
+
+**Message**: The command line is not valid
+**Fix**: Pass exactly one of `--check`, `--write`, `--schema`, `--help`. Exit code 2.
+
+### `GEORDI_E_BIJOU_SHADERGEN_DRIFT`
+
+**Message**: Checked-in generated shader files differ from a fresh generation
+**Fix**: Run `cargo run -p geordi-bijou-shadergen -- --write` and commit the regenerated files with the change that caused them.
+
+## Bijou GPU Shader Sources Generator
+
+These come from `scripts/generate-bijou-gpu-shader-sources.mjs`. Each is the `code` of a
+`geordi.bijou_shader_sources.error` JSON line on stderr. The tool is described in
+[`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md#shader-sources).
+
+### `GEORDI_E_BIJOU_SHADER_SOURCES_USAGE`
+
+**Message**: The command line is not valid
+**Fix**: Pass exactly one of `--check`, `--write`, `--schema`, `--help`, and a directory after `--repo-root`. Exit code 2.
+
+### `GEORDI_E_BIJOU_SHADER_SOURCES_IO`
+
+**Message**: A shader file to embed does not exist
+**Fix**: Run `cargo run -p geordi-bijou-shadergen -- --write` to regenerate the shader artifacts.
+
+### `GEORDI_E_BIJOU_SHADER_SOURCES_PIN_MISMATCH`
+
+**Message**: A shader file or the procedural glyph table fixture contains a carriage return or does not hash to its pin (the manifest, or `PROCEDURAL_GLYPH_TABLE_SHA256`)
+**Fix**: Check the file out with LF line endings (`.gitattributes` requires them), or regenerate the shader artifacts with `geordi-bijou-shadergen --write`. Never edit a generated file.
+
+### `GEORDI_E_BIJOU_SHADER_SOURCES_DRIFT`
+
+**Message**: The bundled shader-source or procedural-table modules, or the published table copy, differ from a fresh generation
+**Fix**: Run `node scripts/generate-bijou-gpu-shader-sources.mjs --write` and commit the modules with the shader change that caused them.
+
+### `GEORDI_E_BIJOU_SHADER_SOURCES_INTERNAL`
+
+**Message**: An unexpected failure, including a missing `packages/core/dist`
+**Fix**: Build `@flyingrobots/geordi-core` first (`pnpm --filter @flyingrobots/geordi-core build`), then rerun.
+
+## Bijou GPU Native `wgpu` Proof
+
+These come from `geordi-bijou-wgpu-proof`. Each is the `code` of a
+`geordi.bijou_wgpu_proof.error` JSON line on stderr, or of the `obstruction` in a `result` line.
+The proof also reports the kit codes `GEORDI_E_BIJOU_INVALID_PACKED_CELLS`,
+`GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH`, `GEORDI_E_BIJOU_MISSING_GLYPH_SLOT`,
+`GEORDI_E_BIJOU_INVALID_ATLAS`, `GEORDI_E_BIJOU_INVALID_CELL_METRICS`,
+`GEORDI_E_BIJOU_BACKEND_UNAVAILABLE`, `GEORDI_E_BIJOU_RENDERER_FAULT` and
+`GEORDI_E_BIJOU_FRAME_HASH_MISMATCH` with the meanings above. The tool is described in
+[`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md).
+
+### `GEORDI_E_BIJOU_WGPU_RESOURCE_LIMIT`
+
+**Message**: The grid, the atlas or the canvas would need a texture edge above 8,192 texels, or the canvas is smaller than the grid
+**Fix**: Render a smaller grid or canvas. The limit is the WebGPU default `maxTextureDimension2D`.
+
+### `GEORDI_E_BIJOU_WGPU_SHADER_IDENTITY`
+
+**Message**: `bijou-surface.wgsl`, the procedural glyph table or the Bunny pins are not the ones the implementation manifest and `geordi-bijou-shadergen` name
+**Fix**: Restore the generated files with `cargo run -p geordi-bijou-shadergen -- --write` and commit them. Never edit the shader for the native host.
+
+### `GEORDI_E_BIJOU_WGPU_HARDWARE_GPU_REQUIRED`
+
+**Message**: `--require-gpu` was given, and the frame was rendered by a `Cpu` or `Other` adapter, so it is `software-probed`
+**Fix**: Not a defect of the frame. Run on a host with a hardware adapter, or drop `--require-gpu` and report `software-probed` evidence.
+
+### `GEORDI_E_BIJOU_WGPU_IO`
+
+**Message**: An input, the glyph pack, the manifest or the shader could not be read, or the receipt could not be written
+**Fix**: Run from the repository root or pass `--repo-root`; the `path` names the file.
+
+### `GEORDI_E_BIJOU_WGPU_USAGE`
+
+**Message**: The command line is not valid
+**Fix**: Pass `--render <file>`, `--schema` or `--help`, with the flags in `--help`. Exit code 2.
+
+## Contract Gate
+
+These come from `scripts/contract-gate.mjs`. A `violation` line on stdout carries one of the
+`GEORDI_E_CONTRACT_*` codes below; the gate then fails with `GEORDI_E_CONTRACT_GATE_FAILED`. The
+`GEORDI_E_CONTRACT_GATE_*` codes are the `code` of a `geordi.contract_gate.error` JSON line on
+stderr. The gate is described in [`contract-gate.md`](./contract-gate.md).
+
+### `GEORDI_E_CONTRACT_RECORD_MISSING`
+
+**Severity**: Error
+**Message**: A contract differs from the base (or is new, removed, or changed status) and no new change record names it
+**Fix**: Add a change record to `contracts/changes/` that names the contract, says `breaking` or `additive`, and states what changed and why. For a status change, include `status: { from, to }`.
+
+### `GEORDI_E_CONTRACT_RECORD_STALE`
+
+**Severity**: Error
+**Message**: A new change record names a contract that does not differ from the base, or states a status change that did not happen
+**Fix**: Remove the record, or name the contract that actually changed.
+
+### `GEORDI_E_CONTRACT_RECORD_UNDERSTATED`
+
+**Severity**: Error
+**Message**: No single change record describes the whole change: none says breaking for a breaking or unknown difference while also stating the status change, if any
+**Fix**: Set `change` to `breaking`. An `unknown` difference counts as breaking.
+
+### `GEORDI_E_CONTRACT_RECORD_INVALID`
+
+**Severity**: Error
+**Message**: A change record does not match its schema, is not JSON, or names a contract in neither registry
+**Fix**: Fix the record against `schemas/geordi-contract-registry/change-record.schema.json` and name a registered contract.
+
+### `GEORDI_E_CONTRACT_HISTORY_REWRITTEN`
+
+**Severity**: Error
+**Message**: A change record that exists on the base was edited or deleted
+**Fix**: Restore the record as it is on the base. Add a new record instead.
+
+### `GEORDI_E_CONTRACT_FROZEN_BREAKING`
+
+**Severity**: Error
+**Message**: A frozen contract changed in a breaking (or unknown) way without a version raise
+**Fix**: Raise the version: add `name/N+1`, mark `name/N` superseded, and keep its schema and examples. See `docs/contract-gate.md`.
+
+### `GEORDI_E_CONTRACT_FROZEN_REMOVED`
+
+**Severity**: Error
+**Message**: A frozen contract was removed from the registry instead of being superseded
+**Fix**: Mark the contract `superseded` by a higher version instead of removing it.
+
+### `GEORDI_E_CONTRACT_STATUS_INVALID`
+
+**Severity**: Error
+**Message**: A status change that is not allowed: frozen to draft, leaving superseded, a new superseded contract, or superseded without a successor
+**Fix**: Allowed: draft to frozen or superseded, frozen to superseded. A superseded contract names a higher version of itself in `supersededBy`.
+
+### `GEORDI_E_CONTRACT_SUPERSEDED_CHANGED`
+
+**Severity**: Error
+**Message**: A superseded contract's schema or example files differ from the base or were deleted, or its registry entry names other files
+**Fix**: Restore the superseded version's schema and example files from the base.
+
+### `GEORDI_E_CONTRACT_DIAGNOSTICS_DISAGREE`
+
+**Severity**: Error
+**Message**: On the head, the diagnostic codes in the catalog and in the source disagree
+**Fix**: Document each code in the catalog under a level-three heading that names it in backticks, or remove the code from the source, so the two sets agree.
+
+### `GEORDI_E_CONTRACT_EXAMPLE_INVALID`
+
+**Severity**: Error
+**Message**: On the head, an example document is not JSON or does not validate against its contract's schema
+**Fix**: Fix the example, or the schema, so the example validates.
+
+### `GEORDI_E_CONTRACT_GATE_USAGE`
+
+**Severity**: Error
+**Message**: Invalid command line
+**Fix**: Pass the flags in `--help`. Exit code 2.
+
+### `GEORDI_E_CONTRACT_GATE_BASE`
+
+**Severity**: Error
+**Message**: The base cannot be determined: the base ref does not resolve, the --base-dir is not a directory, or the head and the base share no commit (often a shallow clone)
+**Fix**: Fetch the base branch (`git fetch origin <branch>`). In a shallow clone, `git fetch --unshallow origin`, because a plain fetch keeps the shallow boundary; in CI, `actions/checkout` with `fetch-depth: 0`. Or pass `--base`, or an existing `--base-dir`.
+
+### `GEORDI_E_CONTRACT_GATE_REGISTRY`
+
+**Severity**: Error
+**Message**: The head has no contract registry, or it or a message schema family is invalid
+**Fix**: Restore `contracts/registry.json`, or fix it against its schema. Each file in a message schema family needs `x-schema-id` and a semantic `x-schema-version`.
+
+### `GEORDI_E_CONTRACT_GATE_SNAPSHOT`
+
+**Severity**: Error
+**Message**: A contract surface cannot be computed on one of the trees: a file is missing or unreadable, an encoder or the Rust snapshot failed
+**Fix**: Restore the file named in `paths`, or fix the encoder crate or Rust source so it builds and parses. An encoder is `fn(&str) -> Result<String, E: Debug>`.
+
+### `GEORDI_E_CONTRACT_GATE_FAILED`
+
+**Severity**: Error
+**Message**: The comparison ran and wrote one or more violation lines
+**Fix**: Read the `violation` lines on stdout and fix each one.
+
+### `GEORDI_E_CONTRACT_GATE_INTERNAL`
+
+**Severity**: Error
+**Message**: An unexpected failure inside the gate
+**Fix**: File a bug with the command line and output.
+
+## Contract API Snapshot
+
+These come from `geordi-contract-api`, which the contract gate runs to read public Rust items. Each
+is the `code` of a `geordi.contract_api.error` JSON line on stderr.
+
+### `GEORDI_E_CONTRACT_API_USAGE`
+
+**Severity**: Error
+**Message**: The command line is not valid
+**Fix**: Pass one or more Rust source files, `--schema` or `--help`. Exit code 2.
+
+### `GEORDI_E_CONTRACT_API_IO`
+
+**Severity**: Error
+**Message**: A source file could not be read
+**Fix**: The `paths` field names the file; restore it or fix the registry entry that lists it.
+
+### `GEORDI_E_CONTRACT_API_PARSE`
+
+**Severity**: Error
+**Message**: A source file is not Rust that `syn` can parse
+**Fix**: Fix the syntax error the message names; `cargo check` reports the same error.
 
 ## Warnings
 

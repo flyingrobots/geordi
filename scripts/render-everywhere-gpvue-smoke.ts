@@ -3,15 +3,19 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve, sep } from 'node:path';
 
-import { stringifyCanonicalJson } from '@flyingrobots/geordi-core';
+import {
+  GEORDI_IR_ARTIFACT_KEY,
+  GEORDI_IR_RECEIPT_KEY,
+  stringifyCanonicalJson,
+} from '@flyingrobots/geordi-core';
 import { compileGpvueSource } from '@flyingrobots/geordi-gpvue';
 import { parseRenderFixtureManifest } from '@flyingrobots/geordi-render-fixture';
 
 const FIXTURE_DIR = 'fixtures/render-everywhere/hello-panel';
 const MANIFEST_PATH = `${FIXTURE_DIR}/fixture.json`;
 const SOURCE_PATH = `${FIXTURE_DIR}/source.gpvue`;
-const SCENE_ARTIFACT = 'scene.geordi.json';
-const RECEIPT_ARTIFACT = 'scene.geordi.json.receipt';
+const SCENE_ARTIFACT = GEORDI_IR_ARTIFACT_KEY;
+const RECEIPT_ARTIFACT = GEORDI_IR_RECEIPT_KEY;
 const SOURCE_MAP_ARTIFACT = 'scene.geordi.map.json';
 const GPVUE_SOURCE_KIND = 'gpvue';
 

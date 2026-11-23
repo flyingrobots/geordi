@@ -482,6 +482,19 @@ geordi-ascii-ply-triangle-mesh/1
 geordi-fixed-rate-rotation/1
 ```
 
+`geordi-ascii-ply-triangle-mesh/1` reads coordinates as `f64`. Geordi parses it with
+`parse_ascii_ply_triangle_mesh` in `crates/geordi-mesh` (Rust) and with the parser in
+`packages/render-fixture` (TypeScript). `bunny-codec`'s ASCII PLY reader does not replace them.
+
+`bunny-codec`'s reader reads the bunny asset, but it returns Q32.32 positions. Converted to `f64`,
+every one of the asset's 5667 coordinates differs from the profile's values. The parsed bounds would
+then no longer match the bounds pinned in `bunny.mesh.json`. Geordi's values rounded to Q32.32 (ties
+to even) do equal the reader's values: the test
+`rounds_bunny_coordinates_to_the_q32_32_values_bunny_codec_reads` in `crates/geordi-mesh` pins this.
+
+A Q32.32 reading of ASCII PLY gets its own layout identity. The measurements and the decision are in
+the [fixed-point and ray-traced scene profiles design record](./design/2026-11-fixed-point-and-ray-traced-scene-profiles.md#b2-scene-content).
+
 ## Failure Fixture
 
 The negative fixture is:

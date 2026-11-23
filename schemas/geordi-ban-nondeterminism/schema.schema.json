@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-ban-nondeterminism/schema.schema.json",
+  "title": "Message schema",
+  "description": "The JSON Schema of one message type. Written to stdout by --schema and after the help line by --help.",
+  "x-schema-id": "geordi.ban_nondeterminism.schema",
+  "x-schema-version": "1.0.0",
+  "x-stream": "stdout",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "describes",
+    "stream",
+    "schema"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.ban_nondeterminism.schema"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "schema"
+    },
+    "describes": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "stream": {
+      "enum": [
+        "stdout",
+        "stderr"
+      ]
+    },
+    "schema": {
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-gate/contract.schema.json",
+  "title": "Contract",
+  "description": "One contract of the base or head registry and the gate's verdict on it. Written to stdout after its differences. `records` are the new change records that name it.",
+  "x-schema-id": "geordi.contract_gate.contract",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "contract",
+    "baseStatus",
+    "headStatus",
+    "state",
+    "classification",
+    "differences",
+    "records",
+    "verdict"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_gate.contract"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "contract"
+    },
+    "contract": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baseStatus": {
+      "enum": [
+        "draft",
+        "frozen",
+        "superseded",
+        null
+      ]
+    },
+    "headStatus": {
+      "enum": [
+        "draft",
+        "frozen",
+        "superseded",
+        null
+      ]
+    },
+    "state": {
+      "enum": [
+        "unchanged",
+        "changed",
+        "new",
+        "removed",
+        "superseded"
+      ]
+    },
+    "classification": {
+      "enum": [
+        "none",
+        "additive",
+        "breaking"
+      ]
+    },
+    "differences": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "verdict": {
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    }
+  }
+}

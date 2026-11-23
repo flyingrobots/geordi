@@ -1,0 +1,10 @@
+{
+  "contract": "geordi-ray-traced-scene/2",
+  "change": "additive",
+  "summary": "geordi-ray-traced-scene/2: version 1 with a directional light carrying `irradiance`.",
+  "why": "Replay of flyingrobots/geordi#212 in the contract gate golden test.",
+  "references": [
+    "flyingrobots/geordi#212",
+    "flyingrobots/geordi#161"
+  ]
+}

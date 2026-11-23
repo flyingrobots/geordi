@@ -380,8 +380,9 @@ function validateSlots(
   rootNodeId: string,
 ): void {
   const parentByChild = new Map<string, string>();
+  const slotNames = new Set<string>();
   for (const [nodeIndex, node] of nodes.entries()) {
-    const slotNames = new Set<string>();
+    slotNames.clear();
     for (const [slotIndex, slot] of node.slots.entries()) {
       const path = `$page.nodes[${nodeIndex}].slots[${slotIndex}]`;
       if (slotNames.has(slot.name)) {
@@ -470,6 +471,7 @@ function validateTokens(
   const declared = new Set(tokenRefs);
   const used = new Set<string>();
   for (const [nodeIndex, node] of nodes.entries()) {
+    // ban-nondeterminism: allow(unordered-container) iteration follows the input document's key order, a function of the input bytes alone; no host state is involved
     for (const [role, token] of Object.entries(node.tokens)) {
       if (!declared.has(token)) {
         fail(
@@ -529,6 +531,7 @@ function validateSourceMap(
 
   const consumedEntries = new Set<string>();
   for (const [nodeIndex, node] of nodes.entries()) {
+    // ban-nondeterminism: allow(unordered-container) iteration follows the input document's key order, a function of the input bytes alone; no host state is involved
     for (const [binding, sourceOccurrenceId] of Object.entries(
       node.sourceBindings,
     )) {
@@ -725,6 +728,7 @@ function requireStringRecord(
 ): Readonly<Record<string, string>> {
   const object = requireObject(value, path);
   const result: Record<string, string> = {};
+  // ban-nondeterminism: allow(unordered-container) iteration follows the input document's key order, a function of the input bytes alone; no host state is involved
   for (const [key, item] of Object.entries(object)) {
     if (typeof item !== 'string' || item.length === 0) {
       fail(

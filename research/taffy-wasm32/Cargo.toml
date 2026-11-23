@@ -1,0 +1,38 @@
+# Scratch experiment for flyingrobots/geordi#136. It is deliberately outside the
+# Cargo workspace (see the empty [workspace] table): Taffy is not a workspace
+# dependency. run.mjs builds it natively and for wasm32-unknown-unknown.
+[package]
+name = "taffy-wasm32-determinism"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.96"
+license = "Apache-2.0"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+taffy = "=0.15.1"
+
+[profile.release]
+# Keep the defaults explicit: they are part of what was tested.
+opt-level = 3
+debug-assertions = false
+overflow-checks = false
+lto = false
+codegen-units = 16
+
+[lints.rust]
+missing_docs = "deny"
+unsafe_code = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"

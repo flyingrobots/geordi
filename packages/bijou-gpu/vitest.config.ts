@@ -12,5 +12,9 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    // The oracle, packer and presenter tests rasterize and hash whole frames. They take a few
+    // seconds alone and exceeded the 5 s default when the machine was loaded. A test here is
+    // bounded by its assertions, not by wall-clock time.
+    testTimeout: 30_000,
   },
 });

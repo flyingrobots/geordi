@@ -4,7 +4,27 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import prettier from 'eslint-config-prettier';
 
+import { CANONICAL_TS_FILES, CANONICAL_TS_TEST_FILES } from './scripts/lib/nondeterminism.mjs';
+import nondeterminism from './scripts/eslint-plugin-nondeterminism.mjs';
+
 const tsconfigRootDir = fileURLToPath(new URL('.', import.meta.url));
+
+// A Set or Map constructed while a loop is running: the loop body, a for/while/do-while
+// condition, or a for update. The for initialiser and the for...of / for...in subject run
+// once, so they are not matched. Each position is matched twice: as the allocation itself
+// (`while (new Set())`, `for (;; new Map())`) and as any descendant of it, which also covers
+// callbacks and nested loops.
+const LOOP_COLLECTION_ALLOCATION = 'NewExpression[callee.name=/^(Set|Map)$/]';
+const LOOP_COLLECTION_ALLOCATION_SELECTOR = [
+  ':matches(ForStatement, ForOfStatement, ForInStatement, WhileStatement, DoWhileStatement) > .body',
+  ':matches(ForStatement, WhileStatement, DoWhileStatement) > .test',
+  'ForStatement > .update',
+]
+  .flatMap((position) => [
+    `${position}:matches(${LOOP_COLLECTION_ALLOCATION})`,
+    `${position} :matches(${LOOP_COLLECTION_ALLOCATION})`,
+  ])
+  .join(', ');
 
 const restrictedSyntax = [
   {
@@ -19,6 +39,11 @@ const restrictedSyntax = [
     selector:
       "NewExpression[callee.name='Error'], NewExpression[callee.name='TypeError'], NewExpression[callee.name='RangeError'], NewExpression[callee.name='SyntaxError'], NewExpression[callee.name='ReferenceError']",
     message: 'Do not construct built-in error types directly. Throw a named project-specific Error subclass.',
+  },
+  {
+    selector: LOOP_COLLECTION_ALLOCATION_SELECTOR,
+    message:
+      'Do not allocate a Set or Map inside a loop. Hoist the allocation above the loop and clear or reuse it, or add a local disable comment that says why a fresh collection per iteration is required.',
   },
   {
     selector: "CallExpression[callee.object.name='JSON'][callee.property.name='parse']",
@@ -50,6 +75,8 @@ export default [
       '**/coverage/**',
       '**/dist/**',
       '**/node_modules/**',
+      // Cargo build output, including the base trees the contract gate extracts there.
+      '**/target/**',
       '**/.turbo/**',
       '**/.obsidian/**',
       '**/.trash/**',
@@ -98,6 +125,19 @@ export default [
     rules: {
       'no-restricted-syntax': ['error', ...restrictedSyntaxWithoutJsonCalls],
     },
+  },
+  // Canonical TypeScript: the nondeterminism rules, with Echo's rule IDs. Scope and waivers are in
+  // docs/nondeterminism-rules.md; the selectors are in scripts/lib/nondeterminism.mjs.
+  {
+    files: CANONICAL_TS_FILES,
+    plugins: { nondeterminism },
+    rules: { 'nondeterminism/ban': 'error' },
+  },
+  // Tests build NaN and the infinities as inputs to prove that the canonical code rejects them.
+  {
+    files: CANONICAL_TS_TEST_FILES,
+    plugins: { nondeterminism },
+    rules: { 'nondeterminism/ban': ['error', { exempt: ['float-sentinel'] }] },
   },
   {
     files: ['**/*.test.ts'],

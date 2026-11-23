@@ -156,6 +156,8 @@ describe('Option E4 inset-corner rounded arcs', () => {
       { arc: ARC_UP_LEFT, hasRight: false, hasDown: false },
       { arc: ARC_UP_RIGHT, hasRight: true, hasDown: false },
     ];
+    const lit = new Set<number>();
+    const visited = new Set<number>();
     for (const [W, H] of sizes) {
       const lightPx = Math.max(1, Math.floor((W * 10 + 50) / 100));
       const vx0 = Math.floor(Math.max(0, W - lightPx) / 2);
@@ -164,7 +166,7 @@ describe('Option E4 inset-corner rounded arcs', () => {
       const hy1 = Math.min(H, hy0 + lightPx);
       for (const { arc, hasRight, hasDown } of corners) {
         const label = `U+${arc.toString(16)} ${String(W)}x${String(H)}`;
-        const lit = new Set<number>();
+        lit.clear();
         for (let ly = 0; ly < H; ly += 1) {
           for (let lx = 0; lx < W; lx += 1) {
             if (boxPixelLit(boxEntry(arc), lx, ly, W, H)) {
@@ -175,7 +177,8 @@ describe('Option E4 inset-corner rounded arcs', () => {
         expect(lit.size, `${label} vanished`).toBeGreaterThan(0);
 
         const seed = Math.min(...lit);
-        const visited = new Set<number>([seed]);
+        visited.clear();
+        visited.add(seed);
         const queue = [seed];
         while (queue.length > 0) {
           const key = queue.pop() ?? 0;

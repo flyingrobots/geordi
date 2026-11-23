@@ -19,6 +19,23 @@ that exists on `main`.
 | Look up the ray-traced scene artifact, Q32.32 profile and receipt | [`ray-traced-scene-profile.md`](./ray-traced-scene-profile.md) |
 | Look up the Bijou GPU presenter contract, fixtures, receipt validator and CPU reference oracle | [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md) |
 | Find the evidence for each Bijou GPU conformance requirement | [`bijou-gpu-conformance-kit-test-plan.md`](./bijou-gpu-conformance-kit-test-plan.md) |
+| Look up the canonical Bijou GPU shader, its GLSL generator, manifest and kernel harness | [`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md) |
+| Find the evidence for each Bijou GPU shader requirement | [`bijou-gpu-shaders-test-plan.md`](./bijou-gpu-shaders-test-plan.md) |
+| Look up the Bijou GPU dirty-union cell packer: damage law, full-refresh triggers, staging buffer and errors | [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md) |
+| Find the evidence for each Bijou GPU packer requirement | [`bijou-gpu-surface-damage-test-plan.md`](./bijou-gpu-surface-damage-test-plan.md) |
+| Look up the Bijou GPU glyph atlas: slots, colour detection, dirty rects, overflow and invalidation, and the browser rasterizer and font/DPR watcher | [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md) |
+| Find the evidence for each Bijou GPU glyph atlas requirement | [`bijou-gpu-glyph-atlas-test-plan.md`](./bijou-gpu-glyph-atlas-test-plan.md) |
+| Look up the Bijou GPU WebGL2 presenter: shader pin, textures and uploads, display pass, readback and receipts, context loss | [`bijou-gpu-webgl2-presenter.md`](./bijou-gpu-webgl2-presenter.md) |
+| Find the evidence for each Bijou GPU WebGL2 presenter requirement | [`bijou-gpu-webgl2-presenter-test-plan.md`](./bijou-gpu-webgl2-presenter-test-plan.md) |
+| Look up the Bijou GPU WebGPU presenter: refusal versus fault, dirty-row uploads, the two passes, readback, receipts, device loss and resize | [`bijou-gpu-webgpu-presenter.md`](./bijou-gpu-webgpu-presenter.md) |
+| Find the evidence for each Bijou GPU WebGPU presenter requirement | [`bijou-gpu-webgpu-presenter-test-plan.md`](./bijou-gpu-webgpu-presenter-test-plan.md) |
+| Look up the Bijou GPU Canvas 2D fallback presenter: pixel path, draw batching, full-redraw triggers and receipt | [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md) |
+| Find the evidence for each Bijou GPU Canvas 2D presenter requirement | [`bijou-gpu-canvas2d-presenter-test-plan.md`](./bijou-gpu-canvas2d-presenter-test-plan.md) |
+| Look up the native Rust `wgpu` offscreen proof: intake, render, evidence levels, receipts and command line | [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md) |
+| Find the evidence for each native `wgpu` proof requirement | [`bijou-gpu-native-wgpu-test-plan.md`](./bijou-gpu-native-wgpu-test-plan.md) |
+| Change a public contract: the contract registry, change records and the gate that compares a pull request with its base | [`contract-gate.md`](./contract-gate.md) |
+| Find the evidence for each contract gate requirement | [`contract-gate-test-plan.md`](./contract-gate-test-plan.md) |
+| Look up which paths are canonical and which nondeterminism rules (Echo's rule IDs) are banned there, and how to request an exemption | [`nondeterminism-rules.md`](./nondeterminism-rules.md) |
 | Run Rust verification | [`RUST_GATES.md`](./RUST_GATES.md) |
 | Apply documentation policy | [`DOCUMENTATION_STANDARDS.md`](./DOCUMENTATION_STANDARDS.md) |
 
@@ -31,6 +48,10 @@ that exists on `main`.
 - [Portable Bijou UI render endpoints](./design/2026-06-portable-bijou-ui-render-endpoints.md)
 - [TypeScript, Rust, and WASM boundary](./design/2026-05-typescript-rust-wasm-boundary.md)
 - [Wesley common-type generation](./design/2026-05-wesley-common-type-generation.md)
+- [Research: Taffy layout on native hosts and wasm32](./design/2026-11-taffy-wasm32-determinism.md)
+  (finding for [#136](https://github.com/flyingrobots/geordi/issues/136))
+- [Research: rustybuzz shaping on native hosts and wasm32](./design/2026-11-rustybuzz-wasm32-determinism.md)
+  (finding for [#137](https://github.com/flyingrobots/geordi/issues/137))
 
 The complete design-record index is
 [`design/README.md`](./design/README.md). Archive posture is tracked in

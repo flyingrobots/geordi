@@ -64,7 +64,7 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
 
 ### `@flyingrobots/geordi-bijou-gpu`
 
-**Conformance kit for the `bijou-surface-gpu/1` ABI**
+**Conformance kit, cell packer, and glyph atlas for the `bijou-surface-gpu/1` ABI**
 
 - **Presenter contract** (`src/presenter.ts`, `src/errors.ts`): `GpuSurfacePresenter`, the
   sync-or-async `GpuSurfacePresenterFactory`, the shared `cellFromPoint` law, and
@@ -76,12 +76,48 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
   rasteriser `renderReferenceRgba`
 - **Receipt validator** (`src/receipt.ts`): `geordi-bijou-gpu-receipt/1`, the evidence taxonomy,
   and `assertBitExactFrameHash`
+- **Dirty-union cell packer** (`src/surface-damage.ts`): `packSurfaceDamage` and
+  `accumulateSurfaceDamage` lower the union damage of two `PackedSurface` buffers into a retained
+  staging buffer and report changed rows; no host API, glyph slots through an injected callback
+- **Glyph atlas** (`src/glyph-atlas.ts`): `createGlyphAtlas` caches glyphs by `(grapheme, bold)`
+  at integer physical cell metrics, with dirty sub-rects and a `generation` that advances on
+  overflow and invalidation; no host API, pixels through an injected rasterizer
+- **Glyph atlas browser adapter** (`src/glyph-atlas-browser.ts`): a 2D-canvas rasterizer and a
+  watcher that invalidates the atlas on font arrival and DPR change
+- **WebGPU presenter** (`src/webgpu-presenter.ts`, `src/webgpu-types.ts`):
+  `createWebGPUSurfacePresenter` runs `bijou-surface.wgsl` verbatim into an `rgba8uint` target,
+  uploads the packer's dirty rows and the atlas, reads frames back for receipts, and recovers from
+  `device.lost`; the WebGPU objects it calls are typed structurally
+- **Presenter host helpers** (`src/presenter-host.ts`): canvas size ingress, grid geometry, the
+  atlas source a presenter reads, and receipt assembly, shared by every presenter
+- **Canvas 2D presenter** (`src/canvas2d-presenter.ts`, `src/canvas2d-compose.ts`):
+  `createCanvas2DSurfacePresenter` composites changed cells with the pure-integer blend law into a
+  retained `ImageData` and blits them with `putImageData`; no WebGL or WebGPU
 - **Test glyph pack** (`src/test-glyph-pack.ts`): explicit 8 x 16 bitmaps, no font
 - **Browser probe harness** (`harness/`, `e2e/`): Playwright + Vite
 
 **Key principle**: Bijou owns cell semantics and Bunny owns the integer primitives. This package
-is the CPU oracle that GPU presenters are compared against; it contains no presenter, shader,
-packer, or atlas. Reference: [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md).
+is the CPU oracle that GPU presenters are compared against, plus the packer and glyph atlas they
+share, the WebGL2 presenter (`src/webgl2-presenter.ts`), the WebGPU presenter
+(`src/webgpu-presenter.ts`), and the Canvas 2D fallback presenter. References:
+[`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md),
+[`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md),
+[`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md),
+[`bijou-gpu-webgl2-presenter.md`](./bijou-gpu-webgl2-presenter.md),
+[`bijou-gpu-webgpu-presenter.md`](./bijou-gpu-webgpu-presenter.md), and
+[`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md).
+
+Its `shaders/` directory holds the canonical `bijou-surface.wgsl`, the GLSL ES 3.00 stages that
+`crates/geordi-bijou-shadergen` generates from it with pinned `naga`, and their implementation
+manifest. The npm package does not publish that directory. Reference:
+[`bijou-gpu-shaders.md`](./bijou-gpu-shaders.md).
+
+The Rust crate `crates/geordi-bijou-wgpu-proof` is the native endpoint of the same ABI. It is
+a bounded offscreen `wgpu` proof. It validates one `packed-bijou-cells/1` file, prepares the
+`rgba32uint` cell record, executes the manifest's `bijou-surface.wgsl` byte for byte into an
+`rgba8uint` target, reads the pixels back and writes a `geordi-bijou-gpu-receipt/1` receipt
+that this package's validator accepts. It opens no window. Reference:
+[`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md).
 
 ### `@flyingrobots/geordi-profunctor-page`
 
@@ -120,11 +156,13 @@ Artifacts (scene.geordi.json, scene.geordi.map.json, types.ts, etc.)
 ```
 
 ### Phase 1: Parse
+
 - **Input**: SDL string or canonical AST JSON
 - **Output**: Canonical AST (validated structure)
 - **Errors**: Parse errors, directive errors
 
 ### Phase 2: Canonicalization
+
 - **Input**: Canonical AST
 - **Output**: Normalized Canonical AST
 - **Operations**:
@@ -134,6 +172,7 @@ Artifacts (scene.geordi.json, scene.geordi.map.json, types.ts, etc.)
   - Default value materialization
 
 ### Phase 3: Validation
+
 - **Input**: Normalized Canonical AST
 - **Output**: Diagnostics (errors/warnings)
 - **Checks**:
@@ -143,6 +182,7 @@ Artifacts (scene.geordi.json, scene.geordi.map.json, types.ts, etc.)
   - Style applicability
 
 ### Phase 4: Emit
+
 - **Input**: Validated Canonical AST
 - **Output**: ArtifactMap
 - **Emitters**:
@@ -166,6 +206,7 @@ All operations are deterministic:
 **Internal faults** → Throw `InternalCompilerError`
 
 Error codes:
+
 - `GEORDI_E_*` - Errors (compilation fails)
 - `GEORDI_W_*` - Warnings (compilation succeeds unless `failOnWarnings: true`)
 
@@ -192,11 +233,13 @@ All versions are explicit and validated. Unknown versions → hard error.
 ## Migration Path (v0.1 → v0.2)
 
 Current limitations in v0.1:
+
 - GraphQL directive args use JSON strings for complex props (ugly but pragmatic)
 - Single output target (`geordi-ir`)
 - No binary packer (`.geordib` format)
 
 Planned for v0.2:
+
 - Typed input objects for directive args
 - Multiple output targets (prove abstraction)
 - Binary packer as post-step

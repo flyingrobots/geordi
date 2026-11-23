@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-hash-harness/refusal.schema.json",
+  "title": "Encoder refusal",
+  "description": "An encoder function refused one example document (it returned an error, or the file could not be read). Written to stdout by the generated harness; the gate turns it into a GEORDI_E_CONTRACT_GATE_SNAPSHOT error.",
+  "x-schema-id": "geordi.contract_hash_harness.refusal",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "encoder",
+    "path",
+    "message"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_hash_harness.refusal"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "refusal"
+    },
+    "encoder": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "message": {
+      "type": "string"
+    }
+  }
+}

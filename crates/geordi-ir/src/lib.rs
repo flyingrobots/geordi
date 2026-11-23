@@ -5,6 +5,7 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+// ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 
@@ -14,10 +15,10 @@ pub use ray_traced_scene::{
     GEORDI_E_RT_ALBEDO_OUT_OF_RANGE, GEORDI_E_RT_CAMERA_DEGENERATE, GEORDI_E_RT_CAMERA_UNSUPPORTED,
     GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT, GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE,
     GEORDI_E_RT_ID_DUPLICATE, GEORDI_E_RT_ID_EMPTY, GEORDI_E_RT_INTEGRATOR_UNSUPPORTED,
-    GEORDI_E_RT_JSON_INVALID, GEORDI_E_RT_LIGHT_FIELD_INVALID, GEORDI_E_RT_LIGHT_UNSUPPORTED,
-    GEORDI_E_RT_MATERIAL_REFERENCE_UNKNOWN, GEORDI_E_RT_MATERIAL_UNSUPPORTED,
-    GEORDI_E_RT_MAX_BOUNCES_OUT_OF_RANGE, GEORDI_E_RT_MESH_BOUNDS_INVALID,
-    GEORDI_E_RT_MESH_COUNT_INVALID, GEORDI_E_RT_MESH_FILE_MISSING,
+    GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE, GEORDI_E_RT_JSON_INVALID, GEORDI_E_RT_LIGHT_FIELD_INVALID,
+    GEORDI_E_RT_LIGHT_UNSUPPORTED, GEORDI_E_RT_MATERIAL_REFERENCE_UNKNOWN,
+    GEORDI_E_RT_MATERIAL_UNSUPPORTED, GEORDI_E_RT_MAX_BOUNCES_OUT_OF_RANGE,
+    GEORDI_E_RT_MESH_BOUNDS_INVALID, GEORDI_E_RT_MESH_COUNT_INVALID, GEORDI_E_RT_MESH_FILE_MISSING,
     GEORDI_E_RT_MESH_FILE_OUTSIDE_ROOT, GEORDI_E_RT_MESH_HASH_INVALID,
     GEORDI_E_RT_MESH_HASH_MISMATCH, GEORDI_E_RT_MESH_LAYOUT_UNSUPPORTED,
     GEORDI_E_RT_MESH_PATH_INVALID, GEORDI_E_RT_MESH_REFERENCE_UNKNOWN,
@@ -28,17 +29,18 @@ pub use ray_traced_scene::{
     GEORDI_E_RT_RECONSTRUCTION_UNSUPPORTED, GEORDI_E_RT_REQUIREMENT_DUPLICATE,
     GEORDI_E_RT_REQUIREMENT_MISSING, GEORDI_E_RT_REQUIREMENT_UNKNOWN,
     GEORDI_E_RT_SAMPLER_IDENTITY_INVALID, GEORDI_E_RT_SAMPLES_PER_PIXEL_INVALID,
-    GEORDI_E_RT_SCENE_SHAPE, GEORDI_E_RT_SCENE_VERSION_UNSUPPORTED, GEORDI_E_RT_SEED_OUT_OF_RANGE,
-    GEORDI_E_RT_SKY_COUNT, GEORDI_E_RT_TAN_HALF_FOV_Y_OUT_OF_RANGE,
+    GEORDI_E_RT_SCENE_EMPTY, GEORDI_E_RT_SCENE_SHAPE, GEORDI_E_RT_SCENE_VERSION_UNSUPPORTED,
+    GEORDI_E_RT_SEED_OUT_OF_RANGE, GEORDI_E_RT_SKY_COUNT, GEORDI_E_RT_TAN_HALF_FOV_Y_OUT_OF_RANGE,
     GEORDI_E_RT_TONE_CURVE_IDENTITY_INVALID, GEORDI_E_RT_TOWARD_LIGHT_NOT_NORMALIZED,
     GEORDI_E_RT_TRACE_DOMAIN_EXCEEDED, GEORDI_E_RT_VIEWPORT_MISMATCH,
     GEORDI_FIXED_Q32_32_NUMERIC_PROFILE, GEORDI_FIXED_Q32_32_ONE_RAW, GEORDI_FIXED_Q32_32_RAW_MAX,
     GEORDI_FIXED_Q32_32_RAW_MIN, GEORDI_RAY_TRACED_3D_PROFILE, GEORDI_RAY_TRACED_ALBEDO_MAX_RAW,
-    GEORDI_RAY_TRACED_CAMERA_KIND_PINHOLE, GEORDI_RAY_TRACED_FEATURE_ASSET_MESH,
-    GEORDI_RAY_TRACED_FEATURE_CAMERA_PINHOLE, GEORDI_RAY_TRACED_FEATURE_INSTANCE_AFFINE3,
-    GEORDI_RAY_TRACED_FEATURE_LIGHT_DIRECTIONAL, GEORDI_RAY_TRACED_FEATURE_LIGHT_UNIFORM_SKY,
-    GEORDI_RAY_TRACED_FEATURE_MATERIAL_DIFFUSE, GEORDI_RAY_TRACED_FEATURE_MESH_TRIANGLE,
-    GEORDI_RAY_TRACED_FILM_DIMENSION_MAX, GEORDI_RAY_TRACED_INTEGRATOR_DIFFUSE_PATH,
+    GEORDI_RAY_TRACED_CAMERA_KIND_PINHOLE, GEORDI_RAY_TRACED_CAMERA_MIN_SINE_LOG2,
+    GEORDI_RAY_TRACED_FEATURE_ASSET_MESH, GEORDI_RAY_TRACED_FEATURE_CAMERA_PINHOLE,
+    GEORDI_RAY_TRACED_FEATURE_INSTANCE_AFFINE3, GEORDI_RAY_TRACED_FEATURE_LIGHT_DIRECTIONAL,
+    GEORDI_RAY_TRACED_FEATURE_LIGHT_UNIFORM_SKY, GEORDI_RAY_TRACED_FEATURE_MATERIAL_DIFFUSE,
+    GEORDI_RAY_TRACED_FEATURE_MESH_TRIANGLE, GEORDI_RAY_TRACED_FILM_DIMENSION_MAX,
+    GEORDI_RAY_TRACED_INTEGRATOR_DIFFUSE_PATH, GEORDI_RAY_TRACED_IRRADIANCE_MAX_RAW,
     GEORDI_RAY_TRACED_KNOWN_REQUIREMENTS, GEORDI_RAY_TRACED_LIGHT_KIND_DIRECTIONAL,
     GEORDI_RAY_TRACED_LIGHT_KIND_UNIFORM_SKY, GEORDI_RAY_TRACED_MATERIAL_KIND_DIFFUSE,
     GEORDI_RAY_TRACED_MAX_BOUNCES_MAX, GEORDI_RAY_TRACED_MESH_LAYOUT_BUNNY_PLY_BINARY_LE_F32,
@@ -49,11 +51,12 @@ pub use ray_traced_scene::{
     GEORDI_RAY_TRACED_SEED_MAX, GEORDI_RAY_TRACED_TAN_HALF_FOV_Y_MAX_RAW,
     GEORDI_RAY_TRACED_TRACE_DOMAIN_UNITS, GEORDI_RAY_TRACED_VALIDATOR_DOMAIN_UNITS,
     GeordiFixedQ32_32, GeordiRayTracedAffine3, GeordiRayTracedCamera, GeordiRayTracedFilm,
-    GeordiRayTracedInstance, GeordiRayTracedLight, GeordiRayTracedMaterial, GeordiRayTracedMesh,
-    GeordiRayTracedMeshAssetVerification, GeordiRayTracedMeshBounds, GeordiRayTracedMeshCounts,
-    GeordiRayTracedReceiptAsset, GeordiRayTracedReceiptImage, GeordiRayTracedReceiptRuntime,
-    GeordiRayTracedRenderReceipt, GeordiRayTracedRenderSettings, GeordiRayTracedScene,
-    GeordiRayTracedSceneError, GeordiRayTracedSceneIssue, GeordiRayTracedSceneLoadError,
+    GeordiRayTracedInstance, GeordiRayTracedLight, GeordiRayTracedLightValue,
+    GeordiRayTracedMaterial, GeordiRayTracedMesh, GeordiRayTracedMeshAssetVerification,
+    GeordiRayTracedMeshBounds, GeordiRayTracedMeshCounts, GeordiRayTracedReceiptAsset,
+    GeordiRayTracedReceiptImage, GeordiRayTracedReceiptRuntime, GeordiRayTracedRenderReceipt,
+    GeordiRayTracedRenderSettings, GeordiRayTracedScene, GeordiRayTracedSceneError,
+    GeordiRayTracedSceneIssue, GeordiRayTracedSceneLoadError,
     create_geordi_ray_traced_render_receipt, geordi_ray_traced_image_hash,
     geordi_ray_traced_render_receipt_canonical_json, geordi_ray_traced_render_receipt_hash,
     geordi_ray_traced_scene_canonical_json, geordi_ray_traced_scene_hash,
@@ -1315,6 +1318,7 @@ pub fn parse_geordi_strict_text_outline_evidence_pack(
 /// the rectangle-only Rust MVP subset.
 pub fn load_geordi_ir(path: impl AsRef<Path>) -> Result<GeordiIr, GeordiIrLoadError> {
     let path = path.as_ref();
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let source = fs::read_to_string(path)
         .map_err(|error| GeordiIrLoadError::file(path.to_path_buf(), error))?;
 
@@ -1331,6 +1335,7 @@ pub fn load_geordi_font_pack_manifest(
     path: impl AsRef<Path>,
 ) -> Result<GeordiFontPackManifest, GeordiFontPackLoadError> {
     let path = path.as_ref();
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let source = fs::read_to_string(path)
         .map_err(|error| GeordiFontPackLoadError::file(path.to_path_buf(), error))?;
 
@@ -1348,6 +1353,7 @@ pub fn load_geordi_strict_text_fixture_manifest(
     path: impl AsRef<Path>,
 ) -> Result<GeordiStrictTextFixtureManifest, GeordiStrictTextFixtureLoadError> {
     let path = path.as_ref();
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let source = fs::read_to_string(path)
         .map_err(|error| GeordiStrictTextFixtureLoadError::file(path.to_path_buf(), error))?;
 
@@ -1365,6 +1371,7 @@ pub fn load_geordi_strict_text_outline_evidence_pack(
     path: impl AsRef<Path>,
 ) -> Result<GeordiStrictTextOutlineEvidencePack, GeordiStrictTextOutlineEvidenceLoadError> {
     let path = path.as_ref();
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let source = fs::read_to_string(path).map_err(|error| {
         GeordiStrictTextOutlineEvidenceLoadError::file(path.to_path_buf(), error)
     })?;
@@ -1986,6 +1993,7 @@ fn validate_geordi_font_pack_asset_hash(
 
     let target_path = resolve_fixture_local_path(repository_root, font_id, kind, fixture_path)?;
 
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let bytes = fs::read(target_path)
         .map_err(|error| GeordiFontPackHashError::read(font_id, kind, fixture_path, error))?;
     let actual = geordi_sha256_from_bytes(&bytes);
@@ -2044,6 +2052,7 @@ fn read_receipt_fixture_local_bytes(
         ));
     }
 
+    // ban-nondeterminism: allow-begin(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let canonical_root = fs::canonicalize(repository_root)
         .map_err(|error| GeordiStrictTextFixtureReceiptError::read(fixture_path, error))?;
     let canonical_path = fs::canonicalize(&lexical_path)
@@ -2055,6 +2064,7 @@ fn read_receipt_fixture_local_bytes(
     }
 
     fs::read(canonical_path)
+        // ban-nondeterminism: allow-end(std-fs)
         .map_err(|error| GeordiStrictTextFixtureReceiptError::read(fixture_path, error))
 }
 
@@ -3017,9 +3027,11 @@ fn resolve_fixture_local_path(
         ));
     }
 
+    // ban-nondeterminism: allow-begin(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let canonical_root = fs::canonicalize(repository_root)
         .map_err(|error| GeordiFontPackHashError::read(font_id, kind, fixture_path, error))?;
     let canonical_path = fs::canonicalize(&lexical_path)
+        // ban-nondeterminism: allow-end(std-fs)
         .map_err(|error| GeordiFontPackHashError::read(font_id, kind, fixture_path, error))?;
     if !path_stays_inside_root(&canonical_root, &canonical_path) {
         return Err(GeordiFontPackHashError::escaped_path(
@@ -3524,6 +3536,7 @@ mod tests {
         let temp_root = unique_temp_path("geordi-font-pack-root");
         let external_root = unique_temp_path("geordi-font-pack-external");
         let result = (|| -> Result<(), GeordiIrTestError> {
+            // ban-nondeterminism: allow-begin(std-fs) test fixture I/O only; nothing here reaches a canonical output
             std::fs::create_dir_all(&temp_root)?;
             std::fs::create_dir_all(&external_root)?;
 
@@ -3553,6 +3566,7 @@ mod tests {
 
         drop(std::fs::remove_dir_all(&temp_root));
         drop(std::fs::remove_dir_all(&external_root));
+        // ban-nondeterminism: allow-end(std-fs)
 
         result
     }
@@ -4226,6 +4240,7 @@ mod tests {
     #[test]
     fn hashes_canonical_strict_text_receipt_fragments() -> Result<(), GeordiIrTestError> {
         let source =
+            // ban-nondeterminism: allow(std-fs) test fixture I/O only; nothing here reaches a canonical output
             std::fs::read_to_string(fixture_path("strict-text/geordi.strict-text.geordi.json"))?;
         let value: serde_json::Value = serde_json::from_str(&source)?;
         let glyph_runs = value
@@ -4627,9 +4642,11 @@ mod tests {
     #[test]
     fn rejects_invalid_scene_and_rect_numbers() -> Result<(), GeordiIrTestError> {
         let mut ir = load_geordi_ir(fixture_path("hello-panel/scene.geordi.json"))?;
+        // ban-nondeterminism: allow-begin(float-sentinel) test input that proves validation rejects non-finite numbers
         ir.scene.width = f64::NAN;
         ir.nodes[0].props.width = -1.0;
         ir.nodes[0].props.x = f64::INFINITY;
+        // ban-nondeterminism: allow-end(float-sentinel)
 
         let paths = validation_paths(validate_geordi_ir(&ir));
 
@@ -4691,11 +4708,17 @@ mod tests {
     }
 
     fn unique_temp_path(prefix: &str) -> PathBuf {
+        // ban-nondeterminism: allow-begin(std-process) test fixture temp directory name only; the name never reaches an assertion
+        // ban-nondeterminism: allow-begin(std-env) test fixture temp directory name only; the name never reaches an assertion
+        // ban-nondeterminism: allow-begin(time-system) test fixture temp directory name only; the name never reaches an assertion
         let nanos = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(0, |duration| duration.as_nanos());
 
         std::env::temp_dir().join(format!("{prefix}-{}-{nanos}", std::process::id()))
+        // ban-nondeterminism: allow-end(std-process)
+        // ban-nondeterminism: allow-end(std-env)
+        // ban-nondeterminism: allow-end(time-system)
     }
 
     fn repository_root() -> PathBuf {

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-gate/result.schema.json",
+  "title": "Result",
+  "description": "The verdict. Written to stdout last. `ok` is false when any violation was written.",
+  "x-schema-id": "geordi.contract_gate.result",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "ok",
+    "mode",
+    "contracts",
+    "differences",
+    "violations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_gate.result"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "result"
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "mode": {
+      "enum": [
+        "compare",
+        "bootstrap"
+      ]
+    },
+    "contracts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "differences": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "violations": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

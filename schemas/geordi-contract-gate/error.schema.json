@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-gate/error.schema.json",
+  "title": "Error",
+  "description": "The gate failed or could not run. Written to stderr. It fails closed: a base it cannot determine or a surface it cannot compute is an error, never a pass. `paths` lists the files concerned and may be empty.",
+  "x-schema-id": "geordi.contract_gate.error",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "code",
+    "message",
+    "paths"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_gate.error"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "error"
+    },
+    "code": {
+      "enum": [
+        "GEORDI_E_CONTRACT_GATE_USAGE",
+        "GEORDI_E_CONTRACT_GATE_BASE",
+        "GEORDI_E_CONTRACT_GATE_REGISTRY",
+        "GEORDI_E_CONTRACT_GATE_SNAPSHOT",
+        "GEORDI_E_CONTRACT_GATE_FAILED",
+        "GEORDI_E_CONTRACT_GATE_INTERNAL"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

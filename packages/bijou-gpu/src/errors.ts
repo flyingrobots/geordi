@@ -6,6 +6,7 @@
 export const BIJOU_GPU_ERROR_CODES = [
   'GEORDI_E_BIJOU_BACKEND_UNAVAILABLE',
   'GEORDI_E_BIJOU_RENDERER_FAULT',
+  'GEORDI_E_BIJOU_DRAWING_BUFFER_MISMATCH',
   'GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH',
   'GEORDI_E_BIJOU_INVALID_PACKED_CELLS',
   'GEORDI_E_BIJOU_INVALID_CELL_METRICS',
@@ -25,6 +26,7 @@ export type BijouGpuValidationErrorCode = Exclude<
   BijouGpuErrorCode,
   | 'GEORDI_E_BIJOU_BACKEND_UNAVAILABLE'
   | 'GEORDI_E_BIJOU_RENDERER_FAULT'
+  | 'GEORDI_E_BIJOU_DRAWING_BUFFER_MISMATCH'
   | 'GEORDI_E_BIJOU_INVALID_RECEIPT'
   | 'GEORDI_E_BIJOU_FRAME_HASH_MISMATCH'
   | 'GEORDI_E_BIJOU_PIXEL_PROBE_MISMATCH'
@@ -67,6 +69,30 @@ export class RendererFaultError extends Error {
     this.name = new.target.name;
     this.backend = backend;
     this.detail = detail;
+  }
+}
+
+/**
+ * The browser clamped or altered a WebGL2 drawing buffer, so
+ * `drawingBufferWidth` or `drawingBufferHeight` differs from the canvas size
+ * the frame was laid out for. The ABI forbids rendering or reading back such a
+ * frame: its pixels would not be the canonical frame.
+ */
+export class DrawingBufferMismatchError extends Error {
+  public readonly code = 'GEORDI_E_BIJOU_DRAWING_BUFFER_MISMATCH';
+  public readonly expected: { readonly width: number; readonly height: number };
+  public readonly actual: { readonly width: number; readonly height: number };
+
+  constructor(
+    expected: { readonly width: number; readonly height: number },
+    actual: { readonly width: number; readonly height: number },
+  ) {
+    super(
+      `GEORDI_E_BIJOU_DRAWING_BUFFER_MISMATCH: drawing buffer is ${String(actual.width)}x${String(actual.height)}, expected ${String(expected.width)}x${String(expected.height)}`,
+    );
+    this.name = new.target.name;
+    this.expected = expected;
+    this.actual = actual;
   }
 }
 

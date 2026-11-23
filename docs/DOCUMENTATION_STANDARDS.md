@@ -209,6 +209,10 @@ full gates named in `README.md` and the active design plan.
 CI SHOULD block only on deterministic facts, including:
 
 - trailing whitespace;
+- Markdown structure in `CHANGELOG.md` and `docs/**/*.md`, checked by
+  `pnpm lint:md` (`markdownlint-cli2`, configured in
+  `.markdownlint-cli2.jsonc`; `pnpm lint` runs it), including duplicate sibling
+  headings;
 - fenced blocks without a language;
 - `E_*` diagnostics mislabeled as warnings;
 - broken repository paths where an offline checker exists;

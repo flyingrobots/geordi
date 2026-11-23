@@ -13,7 +13,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Full history: the contract gate compares with the merge base, and its golden test replays
+      # flyingrobots/geordi#212 from its two commits.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Install pnpm
         uses: pnpm/action-setup@v6
@@ -27,7 +31,17 @@ jobs:
           cache: 'pnpm'
 
       - name: Set up Rust
-        run: rustup show active-toolchain || rustup toolchain install
+        run: rustup toolchain install
+
+      - name: Build geordi-ir for wasm32
+        run: cargo build -p geordi-ir --target wasm32-unknown-unknown
+
+      # Compares every public contract of this commit with its base: the merge base with the pull
+      # request's base branch, or the previous tip on a push. Fails closed. See docs/contract-gate.md.
+      - name: Contract gate (public contracts against the merge base)
+        env:
+          CONTRACT_GATE_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event_name == 'push' && github.event.before || 'HEAD^1' }}
+        run: node scripts/contract-gate.mjs --base-ref "$CONTRACT_GATE_BASE_REF"
 
       - name: Install dependencies
         run: pnpm install
@@ -37,6 +51,9 @@ jobs:
 
       - name: Lint
         run: pnpm lint
+
+      - name: Ban nondeterminism in the canonical paths
+        run: pnpm check:determinism
 
       - name: Typecheck
         run: pnpm typecheck
@@ -70,6 +87,21 @@ jobs:
 
       - name: Verify bijou-gpu browser probe harness
         run: pnpm --filter @flyingrobots/geordi-bijou-gpu test:browser
+
+      - name: Install glslangValidator
+        run: sudo apt-get update && sudo apt-get install --yes glslang-tools
+
+      - name: Verify bijou-gpu shader drift gate and kernel conformance
+        run: pnpm test:bijou-gpu:shaders
+
+      - name: Verify generated GLSL ES 3.00 with glslangValidator
+        run: cargo test -p geordi-bijou-shadergen -- --include-ignored
+
+      # Hosted runners usually expose no wgpu adapter: the run then streams a typed
+      # capability-refused result (exit 0, hardwareGpuClaim false), never a pass. A software
+      # adapter is reported as software-probed and must still match the CPU oracle frame digest.
+      - name: Run the native wgpu offscreen proof (typed refusal without an adapter)
+        run: pnpm test:bijou-gpu:native
 
       - name: Verify native strict text smoke gate (geordi fixture)
         run: cargo run -p native-render-everywhere -- --strict-text-smoke fixtures/render-everywhere/strict-text/geordi.strict-text.geordi.json

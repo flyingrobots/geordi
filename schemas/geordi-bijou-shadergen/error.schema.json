@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-bijou-shadergen/error.schema.json",
+  "title": "Error",
+  "description": "A failed run. Written to stderr. `paths` lists the files concerned and may be empty.",
+  "x-schema-id": "geordi.bijou_shadergen.error",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "code",
+    "message",
+    "paths"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.bijou_shadergen.error"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "error"
+    },
+    "code": {
+      "enum": [
+        "GEORDI_E_BIJOU_SHADERGEN_IO",
+        "GEORDI_E_BIJOU_SHADERGEN_BUNNY_DIGEST_MISMATCH",
+        "GEORDI_E_BIJOU_SHADERGEN_GLYPH_TABLE_INVALID",
+        "GEORDI_E_BIJOU_SHADERGEN_WGSL_PARSE",
+        "GEORDI_E_BIJOU_SHADERGEN_WGSL_VALIDATION",
+        "GEORDI_E_BIJOU_SHADERGEN_GLSL_WRITE",
+        "GEORDI_E_BIJOU_SHADERGEN_USAGE",
+        "GEORDI_E_BIJOU_SHADERGEN_DRIFT"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

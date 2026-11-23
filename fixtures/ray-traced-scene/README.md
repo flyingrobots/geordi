@@ -11,6 +11,7 @@ been rendered; Geordi has no ray tracer.
 | `reference.rt-scene.geordi.json` | The valid reference scene: one unit-quad mesh, two instances (a ground plane scaled by 8 and a card rotated 90 degrees about x), two diffuse materials, one sun, one sky, a 64x36 film. |
 | `meshes/unit-quad.ply` | Binary little-endian PLY (`bunny-ply-binary-le-f32/1`): 4 `float x, y, z` vertices of the quad `[-1, 1] x {0} x [-1, 1]` and 2 `uchar int` triangle faces. Every coordinate is exactly representable, so the declared Q32.32 bounds are exact. |
 | `failures/*.rt-scene.geordi.json` | One rejected scene per rule. Each is the reference scene with one change. |
+| `negotiation/film-pixels-above-runtime-cap.rt-scene.geordi.json` | A scene that validates (a `16384 x 16384` film) and that a runtime with `max_film_pixels` below `2^28` refuses at negotiation. It is not a validation failure, so it is not under `failures/`. |
 | `failures/expected-diagnostics.json` | For each failure fixture: the stage that rejects it (`parse`, `validate` or `assets`), the diagnostic `code` and the JSON `path`. |
 
 The reference scene names the placeholder identities `fixture-placeholder-sampler/1` and
@@ -32,3 +33,9 @@ yet. The scene therefore validates in Geordi but no runtime implements it.
 
 When you change the reference scene, change each failure fixture the same way and keep the
 expectations file in step; the test above reports any drift.
+
+The reference scene and the negotiation scene are the canonical examples of
+`geordi-ray-traced-scene/1` in the contract registry (`contracts/registry.json`). They validate
+against `schemas/geordi-ray-traced-scene/1/scene.schema.json`, and every shape-stage failure
+fixture does not (`scripts/ray-traced-scene-schema.test.mjs`). Changing either scene changes its
+canonical hash. The contract gate (`docs/contract-gate.md`) then requires a change record.

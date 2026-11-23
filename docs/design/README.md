@@ -31,8 +31,34 @@ for [#168](https://github.com/flyingrobots/geordi/issues/168). Downstream browse
 slices are tracked in [#169](https://github.com/flyingrobots/geordi/issues/169)–[#175](https://github.com/flyingrobots/geordi/issues/175)
 and [#58](https://github.com/flyingrobots/geordi/issues/58). The conformance kit
 ([#169](https://github.com/flyingrobots/geordi/issues/169)) exists and is described in
-[`../bijou-gpu-conformance-kit.md`](../bijou-gpu-conformance-kit.md). No GPU presenter, shader,
-packer, or atlas is claimed as implemented yet.
+[`../bijou-gpu-conformance-kit.md`](../bijou-gpu-conformance-kit.md). The canonical shader and its
+GLSL ES 3.00 generator ([#170](https://github.com/flyingrobots/geordi/issues/170)) exist and are
+described in [`../bijou-gpu-shaders.md`](../bijou-gpu-shaders.md). The dirty-union packer
+([#171](https://github.com/flyingrobots/geordi/issues/171)) exists and is described in
+[`../bijou-gpu-surface-damage.md`](../bijou-gpu-surface-damage.md). The `GlyphAtlas`
+([#172](https://github.com/flyingrobots/geordi/issues/172)) exists and is described in
+[`../bijou-gpu-glyph-atlas.md`](../bijou-gpu-glyph-atlas.md). The WebGL2 presenter
+([#173](https://github.com/flyingrobots/geordi/issues/173)) exists and is described in
+[`../bijou-gpu-webgl2-presenter.md`](../bijou-gpu-webgl2-presenter.md). The Canvas 2D fallback
+presenter ([#174](https://github.com/flyingrobots/geordi/issues/174)) exists and is described in
+[`../bijou-gpu-canvas2d-presenter.md`](../bijou-gpu-canvas2d-presenter.md). The browser WebGPU
+presenter ([#175](https://github.com/flyingrobots/geordi/issues/175)) exists and is described in
+[`../bijou-gpu-webgpu-presenter.md`](../bijou-gpu-webgpu-presenter.md). No windowed native
+presenter is claimed as implemented yet.
+
+## Research Findings
+
+- [Taffy layout on native hosts and wasm32](./2026-11-taffy-wasm32-determinism.md)
+  ([#136](https://github.com/flyingrobots/geordi/issues/136)): bit-identical block and flex layout
+  for 50 generated trees on aarch64 macOS, Intel and AMD x86-64 Linux, and wasm32 in Node and
+  Chromium, with the limits stated. Input to [#141](https://github.com/flyingrobots/geordi/issues/141). The experiment
+  is [`../../research/taffy-wasm32/`](../../research/taffy-wasm32/).
+- [rustybuzz shaping on native hosts and wasm32](./2026-11-rustybuzz-wasm32-determinism.md)
+  ([#137](https://github.com/flyingrobots/geordi/issues/137)): identical shaping output for 200
+  Latin strings with Lato Regular on aarch64 macOS, AMD and Intel x86-64 Linux, and wasm32 in Node
+  and Chromium, and no float arithmetic in that path, with the limits stated. Input to
+  [#142](https://github.com/flyingrobots/geordi/issues/142). The experiment is
+  [`../../research/rustybuzz-wasm32/`](../../research/rustybuzz-wasm32/).
 
 ## Accepted Design: Fixed-Point And Ray-Traced Scene Profiles
 

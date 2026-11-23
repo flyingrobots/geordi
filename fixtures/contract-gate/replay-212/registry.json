@@ -1,0 +1,41 @@
+{
+  "registryVersion": "geordi-contract-registry/1",
+  "contracts": [
+    {
+      "contract": "geordi-ray-traced-scene/1",
+      "status": "draft",
+      "statusEvidence": "Replay fixture for flyingrobots/geordi#217; the test sets the status.",
+      "schema": "schemas/geordi-ray-traced-scene/1/scene.schema.json",
+      "examples": [
+        {
+          "path": "fixtures/ray-traced-scene/reference.rt-scene.geordi.json",
+          "encoder": {
+            "kind": "rust-fn",
+            "crate": "crates/geordi-ir",
+            "function": "geordi_ir::geordi_ray_traced_scene_hash"
+          }
+        }
+      ],
+      "diagnostics": {
+        "catalog": "docs/ERROR_CODES.md",
+        "sources": [
+          "crates/geordi-ir/src/ray_traced_scene.rs"
+        ],
+        "prefix": "GEORDI_E_RT_"
+      },
+      "rustApi": [
+        {
+          "file": "crates/geordi-ir/src/ray_traced_scene.rs",
+          "select": "all"
+        },
+        {
+          "file": "crates/geordi-ir/src/lib.rs",
+          "select": "reexports",
+          "from": "ray_traced_scene"
+        }
+      ]
+    }
+  ],
+  "messageSchemaFamilies": [],
+  "ungated": []
+}

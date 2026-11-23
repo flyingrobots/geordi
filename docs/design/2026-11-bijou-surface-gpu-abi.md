@@ -11,7 +11,7 @@
 
 This record freezes the endpoint-prepared GPU ABI (`bijou-surface-gpu/1`) that lets Geordi present Bijou's canonical `PackedSurface` (`packed-bijou-cells/1` / `bijou-packed-cell-u8x10-le/1`) across browser WebGPU, browser WebGL2, browser Canvas 2D fallback, and native Rust `wgpu` (`#58`) from one single contract, one pure-integer zero-float rendering arithmetic law backed by pinned `flyingrobots/bunny` GPU math primitives, and one single procedural glyph data table.
 
-Statements about what exists today cite the file and revision they come from. Planned contracts in Bijou or Geordi are labeled planned and linked to their issues. `packages/bijou-gpu/` holds the conformance kit ([#169](https://github.com/flyingrobots/geordi/issues/169): presenter contract, fixtures, receipt validator, CPU reference oracle), described in [`../bijou-gpu-conformance-kit.md`](../bijou-gpu-conformance-kit.md). No atlas, packer, shader, or presenter is implemented yet; this ADR defines the load-bearing ABI before that code lands.
+Statements about what exists today cite the file and revision they come from. Planned contracts in Bijou or Geordi are labeled planned and linked to their issues. `packages/bijou-gpu/` holds the conformance kit ([#169](https://github.com/flyingrobots/geordi/issues/169): presenter contract, fixtures, receipt validator, CPU reference oracle), described in [`../bijou-gpu-conformance-kit.md`](../bijou-gpu-conformance-kit.md), and the dirty-union packer ([#171](https://github.com/flyingrobots/geordi/issues/171)), described in [`../bijou-gpu-surface-damage.md`](../bijou-gpu-surface-damage.md), and the `GlyphAtlas` ([#172](https://github.com/flyingrobots/geordi/issues/172)), described in [`../bijou-gpu-glyph-atlas.md`](../bijou-gpu-glyph-atlas.md). The canonical shader, its pinned-`naga` GLSL ES 3.00 generator and the implementation manifest ([#170](https://github.com/flyingrobots/geordi/issues/170)) are in `packages/bijou-gpu/shaders/` and `crates/geordi-bijou-shadergen`, described in [`../bijou-gpu-shaders.md`](../bijou-gpu-shaders.md). The native Rust `wgpu` offscreen proof ([#58](https://github.com/flyingrobots/geordi/issues/58)) is `crates/geordi-bijou-wgpu-proof`, described in [`../bijou-gpu-native-wgpu.md`](../bijou-gpu-native-wgpu.md). The Canvas 2D fallback presenter ([#174](https://github.com/flyingrobots/geordi/issues/174)) is described in [`../bijou-gpu-canvas2d-presenter.md`](../bijou-gpu-canvas2d-presenter.md). The WebGL2 presenter ([#173](https://github.com/flyingrobots/geordi/issues/173)) is in `packages/bijou-gpu/src/webgl2-presenter.ts`, described in [`../bijou-gpu-webgl2-presenter.md`](../bijou-gpu-webgl2-presenter.md). The browser WebGPU presenter ([#175](https://github.com/flyingrobots/geordi/issues/175)) is in `packages/bijou-gpu/src/webgpu-presenter.ts`, described in [`../bijou-gpu-webgpu-presenter.md`](../bijou-gpu-webgpu-presenter.md).
 
 ## Ownership boundary
 
@@ -29,6 +29,7 @@ Following `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md` and `docs/design/
 
 - **Zero floating-point arithmetic inside core rendering:** Every pixel evaluation in Sections 5 and 7—color blending, `DIM`, opacity, underlines, curly underlines, Box-Drawing arms/junctions/dashes/rounded arcs/diagonals, Block Elements, and Braille—uses strictly **unsigned 32-bit integer arithmetic (`u32`)** (with portable 2-limb `u32` unsigned 64-bit arithmetic in `bunny-u32-ellipse-classify/1`) and explicit proven-infallible overflow bounds. No `f32`, `f64`, `sin`, `sqrt`, or platform-dependent transcendental calls may appear in core rendering math.
 - **Canonical rounding (`bunny-u32-div-round-even/1`):** Adopts Bunny's overflow-safe unsigned 32-bit ties-to-even division contract over `n, d ∈ [0..=4,294,967,295]`. Zero divisor (`d == 0`, including `0 / 0`) MUST be handled by a control-flow branch before `/` or `%` and return `[0, 1]` (`DivisionByZero`); valid divisors return `[q_rounded, 0]` using the overflow-safe complement comparison `s = d - r` (never `2 * r`, which wraps in `u32` on adversarial inputs such as `n = 3,000,000,000, d = 4,000,000,000`, whose exact rounded result is `1`):
+
   ```text
   divRoundEven(n, d):
     if (d == 0) return [0, 1]   // DivisionByZero
@@ -37,6 +38,7 @@ Following `flyingrobots/bunny` (`docs/NUMERIC_CONSTITUTION.md` and `docs/design/
     s = d - r
     return [(r > s || (r == s && (q & 1) == 1)) ? (q + 1) : q, 0]
   ```
+
   *(In Sections 5 and 7, where denominators such as `2`, `63`, `252`, `16065`, and validated `cellPxW >= 1` are statically nonzero, `divRoundEven(n, d)` denotes the scalar lane-0 quotient `bunny_u32_div_round_even(n, d).x` with `status == 0`.)*
 - **Exact ellipse classification (`bunny-u32-ellipse-classify/1`):** Adopts Bunny's exact unsigned 64-bit ellipse trichotomy predicate over `dx, dy, semi_x, semi_y ∈ [0..=46,340]` (implemented in portable 2-limb `u32` WGSL with zero floats, zero 64-bit extensions, zero divisions, and zero subtractions). Out-of-domain operands (`> 46,340`) return `[0, 1]` (`OutOfDomain`); degenerate zero-semiaxis inputs (`semi_x == 0 || semi_y == 0`) are handled by an explicit branch **before** the raw polynomial (`(0, 0) -> OnBoundary`, all other points -> `Outside`).
 - **Pinned Bunny primitive artifacts consumed by Geordi:**
@@ -128,6 +130,7 @@ cellLocalPx = (lx, ly) = (px - col * cellPxW, py - row * cellPxH)
 Pixel centers correspond mathematically to exact rationals `(2 * lx + 1) / (2 * cellPxW)` and `(2 * ly + 1) / (2 * cellPxH)`, evaluated without floats by integer cross-multiplication.
 
 In fragment shaders (converting hardware rasterizer position once to integer `(px, py)`):
+
 - **WebGPU / native `wgpu`**: `@builtin(position).xy` is at top-left pixel centers `(px + 0.5, py + 0.5)`, so `(px, py) = (u32(pos.x), u32(pos.y))`.
 - **WebGL2**: `gl_FragCoord.y` has bottom-left origin (`0.5 .. canvasPxH - 0.5`), so `px = uint(gl_FragCoord.x)` and `py = (uCanvasPxH - 1u) - uint(gl_FragCoord.y)`.
 
@@ -207,6 +210,7 @@ lerpU8(a, b, num, den) = divRoundEven(a * (den - num) + b * num, den)
 ```
 
 Channel resolution order (per RGB channel in `0..255`):
+
 1. `fg = (alpha_byte & 0x40) != 0 ? rgb(word1) : uDefaultFg`
 2. `bg = (alpha_byte & 0x80) != 0 ? rgb(word2) : uDefaultBg`
 3. If `(flags & FLAG_INVERSE) != 0`, swap `fg` and `bg`.
@@ -237,6 +241,7 @@ strikeY0 = (cellPxH - decoPx) / 2
 - **`UNDERLINE_DOTDASH` (`0b11 << 4`, `FLAG_DASHED == 0`, dotted):** `ly >= ulY0 && ly < ulY0 + decoPx && ((lx * 8) / cellPxW) % 2 == 0`.
 - **`UNDERLINE_DOTDASH | FLAG_DASHED` (`dashed`):** `ly >= ulY0 && ly < ulY0 + decoPx && ((lx * 10) / cellPxW) % 5 < 3`.
 - **`UNDERLINE_CURLY` (`0b10 << 4`, 2-cycle pure-`u32` triangle wave, zero `sin`, zero signed intermediates):**
+
   ```text
   ampPx = (cellPxH >= 3) ? max(1, (cellPxH * 3 + 50) / 100) : 0
   baseY = min(cellPxH - decoPx, (cellPxH * 90) / 100)
@@ -247,6 +252,7 @@ strikeY0 = (cellPxH - decoPx) / 2
   cy    = (q < 2) ? min(cellPxH - decoPx, baseY + mag) : satSub(baseY, mag)
   lit   = (ly >= cy && ly < cy + decoPx)
   ```
+
   *(where `satSub(a, b) = (a > b) ? (a - b) : 0` is unsigned saturating subtraction, so `cy` never underflows `u32`.)*
 - **`FLAG_STRIKETHROUGH` (`0x04`):** `ly >= strikeY0 && ly < strikeY0 + decoPx`.
 
@@ -380,6 +386,7 @@ Both `#169` (TypeScript CPU reference oracle) and `#170` (canonical WGSL shader 
 ### 7.1 Box-Drawing (`U+2500..U+257F`, 128 entries, 14 bits/entry)
 
 Bit layout per entry in `BOX_GLYPHS[codePoint - 0x2500]`:
+
 - `bits 0..1` = `L` (`left`), `bits 2..3` = `R` (`right`), `bits 4..5` = `U` (`up`), `bits 6..7` = `D` (`down`), each in `{0=none, 1=light, 2=heavy, 3=double}`.
 - `bits 8..10` = `dash` in `{0=solid, 2=double-dash, 3=triple-dash, 4=quadruple-dash}`.
 - `bit 11` = `rounded` (`1` for `U+256D..U+2570`).
@@ -393,6 +400,7 @@ absDiff(a, b) = (a >= b) ? (a - b) : (b - a)
 ```
 
 1. **Integer stroke widths (same pixel thickness in X and Y so corners balance visually; `satSub` guarantees zero `u32` underflow for all `1 <= W, H <= 256`):**
+
    ```text
    lightPx = max(1, (W * 10 + 50) / 100)
    heavyPx = 2 * lightPx
@@ -404,11 +412,13 @@ absDiff(a, b) = (a >= b) ? (a - b) : (b - a)
    hyT0    = satSub(hy0(lightPx), dblGap)
    hyB0    = min(satSub(H, lightPx), hy0(lightPx) + dblGap)
    ```
+
 2. **Pure-`u32` diagonals (`diagSlash == 1 || diagBackslash == 1`, `U+2571..U+2573`):**
    - Exact squared perpendicular distance check without `sqrt`, floats, or signed subtraction, preserving the exact `0.55` (`11/20`) minimum half-thickness when `lightPx == 1` (`1 <= W <= 14`, matching rounded arcs below) and `0.5 * lightPx` when `lightPx >= 2` (`15 <= W <= 256`).
    - **Proven-infallible `u32`/`i32` overflow bound for `1 <= W, H <= 256`:**
      - When `lightPx == 1` (`W <= 14`): `scale = 10`, `halfS = 11`, `(2 * lx + 1) * H + (2 * ly + 1) * W <= 14,066`, `dSlashS, dBackS <= 10 * 6,898 = 68,980 < 2^31`, `bound = 11 * (W + H) <= 2,970`, `bound * bound <= 8,820,900 < 2^31`, `rhs = 121 * (W * W + H * H) <= 7,953,572 < 2^31`.
      - When `lightPx >= 2` (`15 <= W <= 256`): `scale = 1`, `halfS = lightPx <= 26`, `(2 * lx + 1) * H + (2 * ly + 1) * W <= 261,632`, `dSlashS, dBackS <= 130,560 < 2^31`, `bound = lightPx * (W + H) <= 13,312`, `bound * bound <= 177,209,344 < 2^31`, `rhs = lightPx * lightPx * (W * W + H * H) <= 88,604,672 < 2^31`.
+
    ```text
    scale        = (lightPx == 1) ? 10 : 1
    halfS        = (lightPx == 1) ? 11 : lightPx
@@ -419,11 +429,13 @@ absDiff(a, b) = (a >= b) ? (a - b) : (b - a)
    slashLit     = diagSlash     && (dSlashS <= bound) && (dSlashS * dSlashS <= rhs)
    backslashLit = diagBackslash && (dBackS  <= bound) && (dBackS  * dBackS  <= rhs)
    ```
+
 3. **Option E4 rounded quarter-ellipse arcs (`rounded == 1`, `U+256D..U+2570`, consuming `bunny-u32-ellipse-classify/1`):**
    - **Q12 disposition (rejected):** The earlier Q12 fixed-point truncation rule (`nx = (dx * 4096) / W`, `ny = (dy * 4096) / H`) was evaluated against an independent exact-rational reference over `[1..256]^2` and rejected due to **179,000 changed pixels** (26,183 false inclusions, 152,817 false exclusions) and **240 dropped exact boundary ties** (152 inner, 88 outer).
    - **Approved geometry (Option E4 — Inset-Corner Exact Ellipse + 1-px Outgoing Edge Stubs):** Reserves the 1-pixel outgoing edge column/row strictly for the straight-stroke stub, places the quarter-ellipse center on the inner boundary of those stubs (`xIn`, `yIn`), and evaluates exact interior annulus + closed pixel-square centerline straddle via `bunny-u32-ellipse-classify/1`. Bunny returns `res = bunny_u32_ellipse_classify(dx, dy, a, b) = vec2<u32>(class, status)` with `status == 0u` (`Ok`) and unsigned class bijection `0u (Inside) <-> -1`, `1u (OnBoundary) <-> 0`, `2u (Outside) <-> +1`. In pure-`u32` WGSL/GLSL, `classify(...) <= 0` (`Inside || OnBoundary`) MUST be written `res.x <= 1u` (never `res.x <= 0u`) and `classify(...) >= 0` (`OnBoundary || Outside`) MUST be written `res.x >= 1u` (with `res.y == 0u`).
    - **Proven-infallible unsigned 64-bit bound over `[1..256]^2`:** In Case 3, `dx, dy` are odd integers `1 <= dx, dy <= 511`, `dx + 1, dy + 1 <= 512`, and `aOut, aIn, bOut, bIn, aMid, bMid <= 512 <= 46,340`. Even with the straddle `+1` corners, the conservative algebraic bounding box is `2 * (512 * 512)^2 = 137,438,953,472 = 2^37 << 2^64` (realized Option E4 maximum over `[1..256]^2 × 4` is `40,623,900,800`).
    - **Normative equations for all four corners (`╭` `R,D`; `╮` `L,D`; `╰` `R,U`; `╯` `L,U`):**
+
    ```text
    vxStart = vx0(lightPx)
    vxEnd   = min(W, vxStart + lightPx)
@@ -465,6 +477,7 @@ absDiff(a, b) = (a >= b) ? (a - b) : (b - a)
      straddle = (classify(dx - 1, dy - 1, aMid, bMid) <= 0) && (classify(dx + 1, dy + 1, aMid, bMid) >= 0)
      lit      = inBand || straddle
    ```
+
    - **Exhaustive `[1..256]^2 × 4` (`262,144` instances) acceptance invariants:**
      - **Non-vanishing:** `0` empty rasters.
      - **Single-component 8-connectivity:** `0` disconnected rasters across all `262,144` instances (whereas inset `inBand` without `straddle` disconnects on `11,557` instances, first at `2×24 ╭`).
@@ -475,6 +488,7 @@ absDiff(a, b) = (a >= b) ? (a - b) : (b - a)
    - Horizontal (`L > 0 && R > 0`): `w = (L == 2) ? heavyPx : lightPx`; lit iff `ly >= hy0(w) && ly < hy0(w) + w && ((lx * 2 * dash) / W) % 2 == 0`.
    - Vertical (`U > 0 && D > 0`): `w = (U == 2) ? heavyPx : lightPx`; lit iff `lx >= vx0(w) && lx < vx0(w) + w && ((ly * 2 * dash) / H) % 2 == 0`.
 5. **Pure-integer solid single, heavy, mixed, and mitered double-line arms and junctions (`dash == 0 && rounded == 0 && !diag`):**
+
    ```text
    vMax = (U == 2 || D == 2) ? heavyPx : lightPx
    hMax = (L == 2 || R == 2) ? heavyPx : lightPx
@@ -483,6 +497,7 @@ absDiff(a, b) = (a >= b) ? (a - b) : (b - a)
    cy0  = (L == 3 || R == 3) ? hyT0            : hy0(hMax)
    cy1  = (L == 3 || R == 3) ? (hyB0 + lightPx): (cy0 + hMax)
    ```
+
    - Single/heavy arm (`style ∈ {1, 2}`, `w = (style == 2) ? heavyPx : lightPx`):
      - `L ∈ {1, 2}`: `lx < cx1  && ly >= hy0(w) && ly < hy0(w) + w`
      - `R ∈ {1, 2}`: `lx >= cx0 && ly >= hy0(w) && ly < hy0(w) + w`
@@ -497,6 +512,7 @@ absDiff(a, b) = (a >= b) ? (a - b) : (b - a)
 ### 7.2 Block Elements (`U+2580..U+259F`, 32 entries, 18 bits/entry)
 
 Bit layout per entry in `BLOCK_GLYPHS[codePoint - 0x2580]`:
+
 - `bits 16..17` = `kind` (`0` rect, `1` shade, `2` quadrant).
 - `kind == 0` (`rect`): `x0 = b & 15`, `y0 = (b >> 4) & 15`, `x1 = (b >> 8) & 15`, `y1 = (b >> 12) & 15` in integer eighths `[0..8]`. Pure integer pixel-center test:
   `lit = (2 * lx + 1) * 4 >= x0 * W && (2 * lx + 1) * 4 < x1 * W && (2 * ly + 1) * 4 >= y0 * H && (2 * ly + 1) * 4 < y1 * H`.
@@ -535,7 +551,7 @@ lit    = inX && inY && (((m >> bitIdx) & 1) != 0)
 
 ## Nonclaims
 
-- No GPU presenter, shader, packer, atlas, or native `wgpu` implementation exists in Geordi yet. The CPU reference oracle in `packages/bijou-gpu` is the only renderer of this ABI.
+- The WebGL2 presenter (`packages/bijou-gpu/src/webgl2-presenter.ts`, [`../bijou-gpu-webgl2-presenter.md`](../bijou-gpu-webgl2-presenter.md)) and the WebGPU presenter (`packages/bijou-gpu/src/webgpu-presenter.ts`, [`../bijou-gpu-webgpu-presenter.md`](../bijou-gpu-webgpu-presenter.md)) are the browser GPU presenters in Geordi. The native `wgpu` endpoint (`crates/geordi-bijou-wgpu-proof`, [`../bijou-gpu-native-wgpu.md`](../bijou-gpu-native-wgpu.md)) is a bounded offscreen proof: it renders one fixture and reads it back, with no window or display pass. The CPU reference oracle in `packages/bijou-gpu` is the reference renderer of this ABI, and the Canvas 2D fallback presenter computes its pixels on the CPU as well. The dirty-union packer and the `GlyphAtlas` prepare cell records and atlas texels for the presenters, and `bijou-surface.wgsl` itself is executed by its conformance tests, by the WebGPU presenter and by the native proof.
 - No performance figures or frame-time claims are made in this ABI; frame timings must be measured on named hardware and profiles after implementation lands.
 - No wide (width-2) canonical glyph support in `bijou-surface-gpu/1`.
 - No cursor overlay, OSC-8 hyperlink, or window-title side channels in `bijou-surface-gpu/1`.

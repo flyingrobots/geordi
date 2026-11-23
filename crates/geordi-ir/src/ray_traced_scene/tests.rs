@@ -6,9 +6,10 @@ type TestResult = Result<(), Box<dyn Error>>;
 const ONE: i64 = GEORDI_FIXED_Q32_32_ONE_RAW;
 
 /// Independent oracle: `hashlib.sha256` over the committed reference scene bytes, which are the
-/// canonical form (`json.dumps(sort_keys=True, indent=2)` plus a newline).
+/// canonical form (`json.dumps(sort_keys=True, indent=2, ensure_ascii=False)` plus a newline; the
+/// reference scene is ASCII, so `ensure_ascii` does not matter here).
 const REFERENCE_SCENE_HASH: &str =
-    "sha256:3f245c019731d361dbbdd4c38362e2a2e6d0f725ba799f5d0baaa6d34f482747";
+    "sha256:5ea6b6085b5178fcda09fc966737e44cd5c731ed311e4fcd601ddf935a480a24";
 
 /// Independent oracle: `shasum -a 256 fixtures/ray-traced-scene/meshes/unit-quad.ply`.
 const UNIT_QUAD_HASH: &str =
@@ -301,22 +302,111 @@ fn albedo_channels_are_in_zero_to_one() -> TestResult {
     Ok(())
 }
 
+/// Parse the reference scene with channel 2 of one light's value set to `raw`, then validate it.
+/// Light 0 is the sun (`irradiance`); light 1 is the sky (`radiance`).
+fn light_value_codes(light: usize, field: &str, raw: i64) -> Result<Vec<String>, Box<dyn Error>> {
+    let mut value: Value = serde_json::from_str(&reference_source()?)?;
+    value["lights"][light][field][2] = raw.into();
+    let scene = parse_geordi_ray_traced_scene(&serde_json::to_string(&value)?)?;
+    Ok(validation_codes(&scene))
+}
+
 #[test]
-fn radiance_channels_are_in_zero_to_65536() -> TestResult {
+fn light_values_are_in_zero_to_65536() -> TestResult {
     let max = GEORDI_RAY_TRACED_RADIANCE_MAX_RAW;
     assert_eq!(max, 65_536 * ONE);
-    let code = Some(GEORDI_E_RT_RADIANCE_OUT_OF_RANGE);
-    for light in 0..2 {
-        for (raw, expected) in [(-1, code), (0, None), (max, None), (max + 1, code)] {
-            check(
-                |scene| {
-                    scene.lights[light].radiance[2] = q(raw)?;
-                    Ok(())
-                },
-                expected,
-            )?;
+    assert_eq!(GEORDI_RAY_TRACED_IRRADIANCE_MAX_RAW, max);
+    assert_eq!(
+        GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE,
+        "GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE"
+    );
+    assert_eq!(
+        GEORDI_E_RT_RADIANCE_OUT_OF_RANGE,
+        "GEORDI_E_RT_RADIANCE_OUT_OF_RANGE"
+    );
+    // The sun's value is an irradiance and has its own code; the sky keeps radiance and its code.
+    for (light, field, code) in [
+        (0, "irradiance", GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE),
+        (1, "radiance", GEORDI_E_RT_RADIANCE_OUT_OF_RANGE),
+    ] {
+        for (raw, expected) in [
+            (-1, Some(code)),
+            (0, None),
+            (max, None),
+            (max + 1, Some(code)),
+        ] {
+            let expected: Vec<String> = expected.into_iter().map(str::to_owned).collect();
+            assert_eq!(light_value_codes(light, field, raw)?, expected);
         }
     }
+    Ok(())
+}
+
+#[test]
+fn directional_light_value_is_named_irradiance_and_radiance_is_refused() -> TestResult {
+    let source = reference_source()?;
+    let reference: Value = serde_json::from_str(&source)?;
+    assert!(reference["lights"][0].get("irradiance").is_some());
+    assert!(reference["lights"][0].get("radiance").is_none());
+    assert!(reference["lights"][1].get("radiance").is_some());
+    assert!(reference["lights"][1].get("irradiance").is_none());
+    parse_geordi_ray_traced_scene(&source)?;
+
+    let parse_error = |value: &Value| -> Result<GeordiRayTracedSceneError, Box<dyn Error>> {
+        match parse_geordi_ray_traced_scene(&serde_json::to_string(value)?) {
+            Ok(_) => Err("scene unexpectedly parsed".into()),
+            Err(error) => Ok(error),
+        }
+    };
+
+    // The old name on the sun is an unknown field, and the sun then lacks `irradiance`.
+    let mut old_name = reference.clone();
+    let sun = old_name["lights"][0]
+        .as_object_mut()
+        .ok_or("sun is not an object")?;
+    let moved = sun.remove("irradiance").ok_or("sun has no irradiance")?;
+    sun.insert("radiance".to_owned(), moved);
+    let error = parse_error(&old_name)?;
+    assert_eq!(
+        issue_codes(&error),
+        vec![(GEORDI_E_RT_SCENE_SHAPE.to_owned(), "$".to_owned())]
+    );
+    assert!(error.issues()[0].message.contains("radiance"));
+
+    // The sun with neither name is a missing `irradiance`.
+    let mut missing = reference.clone();
+    missing["lights"][0]
+        .as_object_mut()
+        .ok_or("sun is not an object")?
+        .remove("irradiance");
+    let error = parse_error(&missing)?;
+    assert_eq!(
+        issue_codes(&error),
+        vec![(GEORDI_E_RT_SCENE_SHAPE.to_owned(), "$".to_owned())]
+    );
+    assert!(error.issues()[0].message.contains("irradiance"));
+
+    // Both names on the sun is also refused.
+    let mut both = reference.clone();
+    both["lights"][0]["radiance"] = both["lights"][0]["irradiance"].clone();
+    assert_eq!(
+        issue_codes(&parse_error(&both)?),
+        vec![(GEORDI_E_RT_SCENE_SHAPE.to_owned(), "$".to_owned())]
+    );
+
+    // The sky keeps `radiance`: `irradiance` on the sky is an unknown field.
+    let mut sky = reference;
+    let sky_light = sky["lights"][1]
+        .as_object_mut()
+        .ok_or("sky is not an object")?;
+    let moved = sky_light.remove("radiance").ok_or("sky has no radiance")?;
+    sky_light.insert("irradiance".to_owned(), moved);
+    let error = parse_error(&sky)?;
+    assert_eq!(
+        issue_codes(&error),
+        vec![(GEORDI_E_RT_SCENE_SHAPE.to_owned(), "$".to_owned())]
+    );
+    assert!(error.issues()[0].message.contains("irradiance"));
     Ok(())
 }
 
@@ -586,7 +676,8 @@ fn camera_up_must_not_be_parallel_to_forward() -> TestResult {
     for (up, expected) in [
         ([0, ONE / 4, ONE], code),
         ([0, -ONE / 2, -2 * ONE], code),
-        ([0, ONE / 4 + 1, ONE], None),
+        // One raw unit off parallel: the sine is about 2^-32, below the 2^-15 floor.
+        ([0, ONE / 4 + 1, ONE], code),
         ([ONE, 0, 0], None),
     ] {
         check(
@@ -678,7 +769,7 @@ const GOLDEN_RECEIPT: &str = r#"{
   },
   "sampler": "fixture-placeholder-sampler/1",
   "samplesPerPixel": 16,
-  "sceneHash": "sha256:3f245c019731d361dbbdd4c38362e2a2e6d0f725ba799f5d0baaa6d34f482747",
+  "sceneHash": "sha256:5ea6b6085b5178fcda09fc966737e44cd5c731ed311e4fcd601ddf935a480a24",
   "scenePath": "fixtures/ray-traced-scene/reference.rt-scene.geordi.json",
   "sceneVersion": "geordi-ray-traced-scene/1",
   "seed": 0,
@@ -770,5 +861,418 @@ fn receipt_validation_rejects_field_and_shape_violations() -> TestResult {
         .err()
         .ok_or("unknown receipt field was accepted")?;
     assert_eq!(issue_codes(&error)[0].0, GEORDI_E_RT_RECEIPT_SHAPE);
+    Ok(())
+}
+
+#[test]
+fn camera_up_sine_to_forward_is_at_least_two_to_the_minus_15() -> TestResult {
+    // forward = (0, 0, 1) and up = (a, 0, 1) have sine a / sqrt(a^2 + 2^64), so `a = 2^17` is
+    // just below 2^-15 (refused) and `a = 2^17 + 1` is just above it (accepted).
+    let code = Some(GEORDI_E_RT_CAMERA_DEGENERATE);
+    for (a, expected) in [
+        (1_i64 << 17, code),
+        ((1 << 17) + 1, None),
+        (-(1 << 17), code),
+        (-((1 << 17) + 1), None),
+        (1 << 16, code),
+    ] {
+        check(
+            |scene| {
+                scene.camera.forward = [q(0)?, q(0)?, q(ONE)?];
+                scene.camera.up = [q(a)?, q(0)?, q(ONE)?];
+                Ok(())
+            },
+            expected,
+        )?;
+    }
+    // The largest components do not overflow the exact comparison.
+    let max = (1_i64 << 53) - 1;
+    check(
+        |scene| {
+            scene.camera.forward = [q(max)?, q(max)?, q(max)?];
+            scene.camera.up = [q(-max)?, q(-max)?, q(-max)?];
+            Ok(())
+        },
+        code,
+    )?;
+    check(
+        |scene| {
+            scene.camera.forward = [q(max)?, q(0)?, q(0)?];
+            scene.camera.up = [q(0)?, q(max)?, q(0)?];
+            Ok(())
+        },
+        None,
+    )
+}
+
+#[test]
+fn a_scene_needs_at_least_one_triangle() -> TestResult {
+    let code = Some(GEORDI_E_RT_SCENE_EMPTY);
+    check(
+        |scene| {
+            scene.instances.clear();
+            Ok(())
+        },
+        code,
+    )?;
+    check(
+        |scene| {
+            scene.meshes[0].counts.triangles = 0;
+            Ok(())
+        },
+        code,
+    )?;
+    check(
+        |scene| {
+            scene.meshes[0].counts.triangles = 1;
+            Ok(())
+        },
+        None,
+    )
+}
+
+#[test]
+fn an_integer_token_beyond_u64_or_i64_is_out_of_range_not_a_float() -> TestResult {
+    // `serde_json` reads an integer token that fits neither i64 nor u64 as a float, so the
+    // validator must read the token itself to say "out of range" rather than "not an integer".
+    let source = reference_source()?;
+    for token in [
+        "18446744073709551615",
+        "18446744073709551616",
+        "99999999999999999999999999",
+        "-9223372036854775808",
+        "-9223372036854775809",
+        "-99999999999999999999999999",
+    ] {
+        let changed = source.replace("\"seed\": 0", &format!("\"seed\": {token}"));
+        assert_ne!(changed, source);
+        let error = parse_geordi_ray_traced_scene(&changed)
+            .err()
+            .ok_or("an out-of-range integer was accepted")?;
+        assert_eq!(
+            issue_codes(&error),
+            vec![(
+                GEORDI_E_RT_NUMBER_OUT_OF_RANGE.to_owned(),
+                "$.render.seed".to_owned()
+            )],
+            "{token}"
+        );
+    }
+    // Tokens that are not integers stay NOT_INTEGER, however large.
+    for token in [
+        "1e30",
+        "1.0",
+        "-0",
+        "18446744073709551616.0",
+        "18446744073709551616e0",
+    ] {
+        let changed = source.replace("\"seed\": 0", &format!("\"seed\": {token}"));
+        let error = parse_geordi_ray_traced_scene(&changed)
+            .err()
+            .ok_or("a float was accepted")?;
+        assert_eq!(
+            issue_codes(&error),
+            vec![(
+                GEORDI_E_RT_NUMBER_NOT_INTEGER.to_owned(),
+                "$.render.seed".to_owned()
+            )],
+            "{token}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn an_oversized_integer_token_is_found_by_path_among_strings_and_arrays() -> TestResult {
+    // The id holds a quote, a backslash and a digit run, which the token scan must not read as
+    // numbers or as the end of the string. The oversized token sits in an array inside an array
+    // element.
+    let source = reference_source()?
+        .replacen(
+            "\"ground\"",
+            r#""g\"1\\\\2\\u0041 99999999999999999999""#,
+            1,
+        )
+        .replacen(
+            "          0\n        ]\n      }\n    },",
+            "          123456789012345678901234567890\n        ]\n      }\n    },",
+            1,
+        );
+    let error = parse_geordi_ray_traced_scene(&source)
+        .err()
+        .ok_or("an out-of-range integer was accepted")?;
+    assert_eq!(
+        issue_codes(&error),
+        vec![(
+            GEORDI_E_RT_NUMBER_OUT_OF_RANGE.to_owned(),
+            "$.instances[0].worldFromMesh.translation[2]".to_owned()
+        )]
+    );
+    Ok(())
+}
+
+// Each test below kills a validator mutation that the suite did not catch before
+// flyingrobots/geordi#167: the named line of the validator can be removed or neutered and every
+// earlier test still passed.
+
+#[test]
+fn every_used_feature_must_be_required() -> TestResult {
+    // Kills: dropping `mesh.triangle` or `instance.affine3` from `used_features`.
+    let code = Some(GEORDI_E_RT_REQUIREMENT_MISSING);
+    for feature in [
+        GEORDI_RAY_TRACED_3D_PROFILE,
+        GEORDI_RAY_TRACED_FEATURE_ASSET_MESH,
+        GEORDI_RAY_TRACED_FEATURE_MESH_TRIANGLE,
+        GEORDI_RAY_TRACED_FEATURE_INSTANCE_AFFINE3,
+        GEORDI_RAY_TRACED_FEATURE_CAMERA_PINHOLE,
+        GEORDI_RAY_TRACED_FEATURE_MATERIAL_DIFFUSE,
+        GEORDI_RAY_TRACED_FEATURE_LIGHT_DIRECTIONAL,
+        GEORDI_RAY_TRACED_FEATURE_LIGHT_UNIFORM_SKY,
+    ] {
+        check(
+            |scene| {
+                let before = scene.requires.len();
+                scene.requires.retain(|requirement| requirement != feature);
+                assert_eq!(
+                    scene.requires.len() + 1,
+                    before,
+                    "{feature} was not required"
+                );
+                Ok(())
+            },
+            code,
+        )?;
+    }
+    Ok(())
+}
+
+#[test]
+fn light_ids_must_be_unique() -> TestResult {
+    // Kills: skipping the uniqueness check for lights.
+    check(
+        |scene| {
+            let first = scene.lights[0].id.clone();
+            scene.lights[1].id = first;
+            Ok(())
+        },
+        Some(GEORDI_E_RT_ID_DUPLICATE),
+    )
+}
+
+#[test]
+fn instance_ids_must_be_unique() -> TestResult {
+    // Kills: skipping the uniqueness check for instances.
+    check(
+        |scene| {
+            let first = scene.instances[0].id.clone();
+            scene.instances[1].id = first;
+            Ok(())
+        },
+        Some(GEORDI_E_RT_ID_DUPLICATE),
+    )
+}
+
+#[test]
+fn mesh_ids_must_be_unique() -> TestResult {
+    // Kills: skipping the uniqueness check for meshes. With a duplicate id an instance's mesh
+    // lookup would silently pick the first declaration.
+    check(
+        |scene| {
+            let copy = scene.meshes[0].clone();
+            scene.meshes.push(copy);
+            Ok(())
+        },
+        Some(GEORDI_E_RT_ID_DUPLICATE),
+    )
+}
+
+#[test]
+fn receipt_validation_rejects_an_unsupported_asset_layout() -> TestResult {
+    // Kills: removing the receipt's asset-layout check.
+    let mut receipt = reference_receipt()?;
+    receipt.assets[0].layout = "bunny-ply-binary-le-f64/1".to_owned();
+    let error = validate_geordi_ray_traced_render_receipt(&receipt)
+        .err()
+        .ok_or("an unsupported asset layout was accepted")?;
+    assert_eq!(
+        issue_codes(&error),
+        vec![(
+            GEORDI_E_RT_RECEIPT_FIELD_INVALID.to_owned(),
+            "$.assets[0].layout".to_owned()
+        )]
+    );
+    Ok(())
+}
+
+#[test]
+fn receipt_validation_checks_the_seed_range() -> TestResult {
+    // Kills: removing the receipt's seed-range check.
+    let max = GEORDI_RAY_TRACED_SEED_MAX;
+    for (seed, accepted) in [(-1, false), (0, true), (max, true), (max + 1, false)] {
+        let mut receipt = reference_receipt()?;
+        receipt.seed = seed;
+        let result = validate_geordi_ray_traced_render_receipt(&receipt);
+        if accepted {
+            result?;
+        } else {
+            let error = result.err().ok_or("an out-of-range seed was accepted")?;
+            assert_eq!(
+                issue_codes(&error),
+                vec![(
+                    GEORDI_E_RT_RECEIPT_FIELD_INVALID.to_owned(),
+                    "$.seed".to_owned()
+                )],
+                "{seed}"
+            );
+        }
+    }
+    Ok(())
+}
+
+/// Independent oracle for non-ASCII text. Python 3:
+/// `d["id"] = "geordi:ray-traced-scene:é\u0001\"\\/\x7f 😀😀"` on the reference scene, then
+/// `hashlib.sha256((json.dumps(d, sort_keys=True, indent=2, ensure_ascii=False) + "\n").encode())`.
+/// Python's default `ensure_ascii=True` would escape every non-ASCII character and give a different
+/// digest; the profile fixes the raw form.
+const NON_ASCII_SCENE_HASH: &str =
+    "sha256:f9c1feacc27fe04175e332c7a09afca8158fce446afad45430e9a9e450d42dd7";
+
+#[test]
+fn canonical_bytes_write_non_ascii_raw_and_escape_only_quote_backslash_and_controls() -> TestResult
+{
+    let source = reference_source()?;
+    let with_id = |literal: &str| {
+        source.replacen(
+            "\"geordi:ray-traced-scene:reference\"",
+            &format!("\"geordi:ray-traced-scene:{literal}\""),
+            1,
+        )
+    };
+    // The same text spelled with raw characters, with `\u` escapes and with a surrogate pair, and
+    // with the solidus escaped, must give one canonical form.
+    let spellings = [
+        with_id("é\\u0001\\\"\\\\/\u{7f}\u{2028}😀😀"),
+        with_id("\\u00e9\\u0001\\\"\\\\\\/\\u007f\\u2028\\ud83d\\ude00\\ud83d\\ude00"),
+    ];
+    for spelling in &spellings {
+        let canonical = geordi_ray_traced_scene_canonical_json(spelling)?;
+        assert!(
+            canonical.contains(
+                "\"id\": \"geordi:ray-traced-scene:é\\u0001\\\"\\\\/\u{7f}\u{2028}😀😀\""
+            ),
+            "{canonical}"
+        );
+        assert_eq!(
+            geordi_ray_traced_scene_hash(spelling)?,
+            NON_ASCII_SCENE_HASH
+        );
+    }
+    // Short escapes for the five control characters that have them; lower-case hex otherwise.
+    let canonical =
+        geordi_ray_traced_scene_canonical_json(&with_id("\\b\\f\\n\\r\\t\\u001f\\u000B"))?;
+    assert!(canonical.contains("\"geordi:ray-traced-scene:\\b\\f\\n\\r\\t\\u001f\\u000b\""));
+    Ok(())
+}
+
+/// Hash of the reference scene after `mutate` edits its JSON value.
+fn hash_after(mutate: impl FnOnce(&mut Value)) -> Result<String, Box<dyn Error>> {
+    let mut value: Value = serde_json::from_str(&reference_source()?)?;
+    mutate(&mut value);
+    Ok(geordi_ray_traced_scene_hash(&serde_json::to_string(
+        &value,
+    )?)?)
+}
+
+#[test]
+fn scenes_that_render_alike_but_are_written_differently_have_different_hashes() -> TestResult {
+    // The profile states that identity is the canonical bytes and nothing is normalized: array
+    // order, the order of `requires`, and the spelling of a mesh path all change `sceneHash`.
+    let reference = geordi_ray_traced_scene_hash(&reference_source()?)?;
+    assert_eq!(hash_after(|_| {})?, reference);
+    for (name, hash) in [
+        (
+            "lights reversed",
+            hash_after(|v| {
+                if let Some(items) = v["lights"].as_array_mut() {
+                    items.reverse();
+                }
+            })?,
+        ),
+        (
+            "instances reversed",
+            hash_after(|v| {
+                if let Some(items) = v["instances"].as_array_mut() {
+                    items.reverse();
+                }
+            })?,
+        ),
+        (
+            "requires reversed",
+            hash_after(|v| {
+                if let Some(items) = v["requires"].as_array_mut() {
+                    items.reverse();
+                }
+            })?,
+        ),
+        (
+            "mesh path spelled with ./",
+            hash_after(|v| v["meshes"][0]["path"] = Value::from("./meshes/unit-quad.ply"))?,
+        ),
+        (
+            "mesh path spelled with a doubled slash",
+            hash_after(|v| v["meshes"][0]["path"] = Value::from("meshes//unit-quad.ply"))?,
+        ),
+    ] {
+        assert_ne!(hash, reference, "{name}");
+    }
+    // The spelled-differently scenes are still valid scenes: the validator does not normalize.
+    let mut scene = reference_scene()?;
+    scene.meshes[0].path = "./meshes//unit-quad.ply".to_owned();
+    scene.lights.reverse();
+    scene.requires.reverse();
+    validate_geordi_ray_traced_scene(&scene)?;
+    validate_geordi_ray_traced_scene_mesh_assets(&scene, fixture_root())?;
+    Ok(())
+}
+
+#[test]
+fn a_repeated_object_key_is_a_parse_error() -> TestResult {
+    let source = reference_source()?.replacen("\"seed\": 0,", "\"seed\": 0,\n    \"seed\": 1,", 1);
+    let error = parse_geordi_ray_traced_scene(&source)
+        .err()
+        .ok_or("a repeated key was accepted")?;
+    assert_eq!(issue_codes(&error)[0].0, GEORDI_E_RT_SCENE_SHAPE);
+    Ok(())
+}
+
+#[test]
+fn a_repeated_key_does_not_leave_a_stale_integer_token_behind() -> TestResult {
+    // `serde_json::Value` keeps the last value of a repeated key, so the token scan must too:
+    // after `"seed": 0` comes `"seed": 1.5`, which is a fraction, not an out-of-range 0. The same
+    // holds when a later value replaces a whole subtree.
+    let source = reference_source()?;
+    let fraction = source.replace("\"seed\": 0", "\"seed\": 0, \"seed\": 1.5");
+    let subtree = source.replace(
+        "\"seed\": 0",
+        "\"seed\": 0, \"seed\": {\"x\": 18446744073709551616}, \"seed\": 1.5",
+    );
+    let big_then_small =
+        source.replace("\"seed\": 0", "\"seed\": 18446744073709551616, \"seed\": 1");
+    for (name, changed, code) in [
+        ("fraction", fraction, GEORDI_E_RT_NUMBER_NOT_INTEGER),
+        ("subtree", subtree, GEORDI_E_RT_NUMBER_NOT_INTEGER),
+        ("big then small", big_then_small, GEORDI_E_RT_SCENE_SHAPE),
+    ] {
+        let error = parse_geordi_ray_traced_scene(&changed)
+            .err()
+            .ok_or("a repeated key was accepted")?;
+        assert_eq!(issue_codes(&error)[0].0, code, "{name}");
+    }
+    // A number whose value overflows binary64 is refused by the JSON reader before the scan.
+    let huge = source.replace("\"seed\": 0", &format!("\"seed\": {}", "9".repeat(400)));
+    let error = parse_geordi_ray_traced_scene(&huge)
+        .err()
+        .ok_or("a 400-digit integer was accepted")?;
+    assert_eq!(issue_codes(&error)[0].0, GEORDI_E_RT_JSON_INVALID);
     Ok(())
 }

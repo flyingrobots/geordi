@@ -1,0 +1,698 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-research-rustybuzz-wasm32/messages.schema.json",
+  "title": "rustybuzz wasm32 determinism experiment messages",
+  "description": "Every JSON line written by research/rustybuzz-wasm32 (run.mjs and the native binary), version 1.0.0. Each line carries its _schema id and version.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/help"
+    },
+    {
+      "$ref": "#/$defs/dump"
+    },
+    {
+      "$ref": "#/$defs/glyphs"
+    },
+    {
+      "$ref": "#/$defs/host"
+    },
+    {
+      "$ref": "#/$defs/variant"
+    },
+    {
+      "$ref": "#/$defs/coverage"
+    },
+    {
+      "$ref": "#/$defs/refusal"
+    },
+    {
+      "$ref": "#/$defs/mismatch"
+    },
+    {
+      "$ref": "#/$defs/run-dump"
+    },
+    {
+      "$ref": "#/$defs/golden"
+    },
+    {
+      "$ref": "#/$defs/summary"
+    },
+    {
+      "$ref": "#/$defs/error"
+    }
+  ],
+  "$defs": {
+    "help": {
+      "description": "What run.mjs or the native binary does (from --help).",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "description"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.help"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "help"
+        },
+        "command": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "emits": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "schemas": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dump": {
+      "description": "The native binary's default line: the whole RBZ1 byte stream as lowercase hex.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "bytes"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.dump"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "dump"
+        },
+        "bytes": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{2})*$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "glyphs": {
+      "description": "The native binary with --glyphs: one shaped string. Each glyph is [glyph_id, cluster, unsafe_to_break, x_advance, y_advance, x_offset, y_offset] in font units.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "config",
+        "string",
+        "text",
+        "glyphs"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.glyphs"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "glyphs"
+        },
+        "config": {
+          "type": "string"
+        },
+        "string": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text": {
+          "type": "string"
+        },
+        "glyphs": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 7,
+            "maxItems": 7
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "host": {
+      "description": "The machine, toolchain, crate versions and font that produced this run.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "platform",
+        "osRelease",
+        "arch",
+        "cpu",
+        "node",
+        "ci",
+        "rustybuzz",
+        "ttfParser",
+        "fontSha256",
+        "rustc",
+        "host",
+        "llvm",
+        "wasm32Std"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.host"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "host"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "osRelease": {
+          "type": "string"
+        },
+        "arch": {
+          "type": "string"
+        },
+        "cpu": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "node": {
+          "type": "string"
+        },
+        "ci": {
+          "type": "boolean"
+        },
+        "rustybuzz": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ttfParser": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fontSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "rustc": {
+          "type": "string"
+        },
+        "host": {
+          "type": "string"
+        },
+        "llvm": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "wasm32Std": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "variant": {
+      "description": "One build that ran, with the hash of its byte stream.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "variant",
+        "target",
+        "profile",
+        "rustflags",
+        "engine",
+        "runCount",
+        "glyphCount",
+        "valueCount",
+        "streamSha256"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.variant"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "variant"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "profile": {
+          "type": "string"
+        },
+        "rustflags": {
+          "type": "string"
+        },
+        "engine": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "runCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "glyphCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "valueCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "streamSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "coverage": {
+      "description": "What the inputs reach, measured on the reference build.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "variant",
+        "perConfig",
+        "defaultAdvanceDiffersFromNoKernNoLiga"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.coverage"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "coverage"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "perConfig": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "defaultAdvanceDiffersFromNoKernNoLiga": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "refusal": {
+      "description": "A variant this machine could not build or run. Fatal under CI=true.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "variant",
+        "reason"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.refusal"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "refusal"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "mismatch": {
+      "description": "A shaped run that differs from the native release build of this run.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "against",
+        "variant",
+        "config",
+        "string",
+        "text",
+        "differingWords",
+        "fields"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.mismatch"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "mismatch"
+        },
+        "against": {
+          "type": "string"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "config": {
+          "type": "string"
+        },
+        "string": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text": {
+          "type": "string"
+        },
+        "differingWords": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "run-dump": {
+      "description": "The bytes of a run that differs from golden.json (at most five per variant), to diff against a run on the golden host.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "variant",
+        "run",
+        "config",
+        "string",
+        "bytes"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.run-dump"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "run-dump"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "run": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "config": {
+          "type": "string"
+        },
+        "string": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bytes": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{2})*$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "golden": {
+      "description": "golden.json written, not written because the run failed, or one variant compared with it.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "action"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.golden"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "golden"
+        },
+        "action": {
+          "enum": [
+            "written",
+            "not-written",
+            "compared"
+          ]
+        },
+        "path": {
+          "type": "string"
+        },
+        "streamSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "variant": {
+          "type": "string"
+        },
+        "against": {
+          "type": "string"
+        },
+        "matches": {
+          "type": "boolean"
+        },
+        "differingRuns": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "summary": {
+      "description": "The last line of a run that did not error.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "ok",
+        "comparedVariants",
+        "referenceStreamSha256"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.summary"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "summary"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "comparedVariants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "referenceStreamSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "description": "An unexpected failure; the run stops.",
+      "type": "object",
+      "required": [
+        "_schema",
+        "kind",
+        "code",
+        "message"
+      ],
+      "properties": {
+        "_schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "version"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "const": "geordi.research.rustybuzz_wasm32.error"
+            },
+            "version": {
+              "const": "1.0.0"
+            }
+          }
+        },
+        "kind": {
+          "const": "error"
+        },
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

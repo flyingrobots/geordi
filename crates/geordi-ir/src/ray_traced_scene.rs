@@ -11,8 +11,10 @@ use super::{
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+// ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -100,6 +102,14 @@ pub const GEORDI_RAY_TRACED_LIGHT_KIND_UNIFORM_SKY: &str = "uniformSky";
 /// Largest film width or height in pixels.
 pub const GEORDI_RAY_TRACED_FILM_DIMENSION_MAX: i64 = 16_384;
 
+/// The camera `up` is refused when the sine of its angle to `forward` is below `2^-15`.
+///
+/// Bunny's camera basis refuses an `up` whose normalized cross product with `forward` has every
+/// component below `2^-16`, and the largest component can be a factor of `sqrt(3)` below the
+/// vector length. A sine of `2^-15` is the nearest power of two that no runtime built on that
+/// basis accepts below.
+pub const GEORDI_RAY_TRACED_CAMERA_MIN_SINE_LOG2: u32 = 15;
+
 /// Largest samples-per-pixel value.
 pub const GEORDI_RAY_TRACED_SAMPLES_PER_PIXEL_MAX: i64 = 1024;
 
@@ -115,8 +125,11 @@ pub const GEORDI_RAY_TRACED_TAN_HALF_FOV_Y_MAX_RAW: i64 = 4 << 32;
 /// Largest albedo channel raw value (`1.0`).
 pub const GEORDI_RAY_TRACED_ALBEDO_MAX_RAW: i64 = 1 << 32;
 
-/// Largest radiance channel raw value (`65536.0`).
+/// Largest sky radiance channel raw value (`65536.0`).
 pub const GEORDI_RAY_TRACED_RADIANCE_MAX_RAW: i64 = 65_536 << 32;
+
+/// Largest directional-light irradiance channel raw value (`65536.0`), Bunny's `MAX_LIGHT_RAW`.
+pub const GEORDI_RAY_TRACED_IRRADIANCE_MAX_RAW: i64 = 65_536 << 32;
 
 /// Largest total primitive count over all instances (`2^32 - 1`).
 pub const GEORDI_RAY_TRACED_PRIMITIVE_COUNT_MAX: i64 = (1 << 32) - 1;
@@ -191,12 +204,16 @@ pub const GEORDI_E_RT_LIGHT_UNSUPPORTED: &str = "GEORDI_E_RT_LIGHT_UNSUPPORTED";
 pub const GEORDI_E_RT_LIGHT_FIELD_INVALID: &str = "GEORDI_E_RT_LIGHT_FIELD_INVALID";
 /// Diagnostic: the largest `towardLight` component magnitude is not exactly 1.0.
 pub const GEORDI_E_RT_TOWARD_LIGHT_NOT_NORMALIZED: &str = "GEORDI_E_RT_TOWARD_LIGHT_NOT_NORMALIZED";
-/// Diagnostic: a radiance channel is outside `[0, 65536]`.
+/// Diagnostic: a directional light's irradiance channel is outside `[0, 65536]`.
+pub const GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE: &str = "GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE";
+/// Diagnostic: a sky radiance channel is outside `[0, 65536]`.
 pub const GEORDI_E_RT_RADIANCE_OUT_OF_RANGE: &str = "GEORDI_E_RT_RADIANCE_OUT_OF_RANGE";
 /// Diagnostic: more than one directional light.
 pub const GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT: &str = "GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT";
 /// Diagnostic: not exactly one uniform sky.
 pub const GEORDI_E_RT_SKY_COUNT: &str = "GEORDI_E_RT_SKY_COUNT";
+/// Diagnostic: the instances contribute no triangle to the scene.
+pub const GEORDI_E_RT_SCENE_EMPTY: &str = "GEORDI_E_RT_SCENE_EMPTY";
 /// Diagnostic: film width or height is outside `1..=16384`.
 pub const GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE: &str = "GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE";
 /// Diagnostic: the integrator identity is not supported.
@@ -438,9 +455,21 @@ pub struct GeordiRayTracedCamera {
     pub tan_half_fov_y: GeordiFixedQ32_32,
 }
 
+/// The value a light carries. Which field holds it depends on the light's `kind`.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum GeordiRayTracedLightValue {
+    /// A directional light's `irradiance`: linear light per channel, delivered to a surface
+    /// perpendicular to the light, each in `[0, 65536]`.
+    Irradiance([GeordiFixedQ32_32; 3]),
+    /// A uniform sky's `radiance`: linear light per channel, each in `[0, 65536]`.
+    Radiance([GeordiFixedQ32_32; 3]),
+}
+
 /// One light. `kind` selects which fields apply.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[serde(deny_unknown_fields, rename_all = "camelCase")]
+///
+/// A `directional` light carries `towardLight` and `irradiance`; a `uniformSky` light carries
+/// `radiance`. The wrong name for the kind is an unknown field and a parse error.
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct GeordiRayTracedLight {
     /// Light kind: `directional` or `uniformSky`.
     pub kind: String,
@@ -448,10 +477,64 @@ pub struct GeordiRayTracedLight {
     pub id: String,
     /// Direction from a surface toward a directional light. Required for `directional`;
     /// forbidden for `uniformSky`.
-    #[serde(default, deserialize_with = "deserialize_present_vec3")]
     pub toward_light: Option<[GeordiFixedQ32_32; 3]>,
-    /// Linear-light radiance per channel, each in `[0, 65536]`.
-    pub radiance: [GeordiFixedQ32_32; 3],
+    /// The light's value, in the field its kind names.
+    pub value: GeordiRayTracedLightValue,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct RawLight {
+    kind: String,
+    id: String,
+    #[serde(default, deserialize_with = "deserialize_present_vec3")]
+    toward_light: Option<[GeordiFixedQ32_32; 3]>,
+    #[serde(default, deserialize_with = "deserialize_present_vec3")]
+    irradiance: Option<[GeordiFixedQ32_32; 3]>,
+    #[serde(default, deserialize_with = "deserialize_present_vec3")]
+    radiance: Option<[GeordiFixedQ32_32; 3]>,
+}
+
+impl<'de> Deserialize<'de> for GeordiRayTracedLight {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use serde::de::Error;
+        const DIRECTIONAL_FIELDS: &[&str] = &["id", "irradiance", "kind", "towardLight"];
+        const SKY_FIELDS: &[&str] = &["id", "kind", "radiance", "towardLight"];
+
+        let raw = RawLight::deserialize(deserializer)?;
+        let value = match (raw.kind.as_str(), raw.irradiance, raw.radiance) {
+            (GEORDI_RAY_TRACED_LIGHT_KIND_DIRECTIONAL, _, Some(_)) => {
+                return Err(D::Error::unknown_field("radiance", DIRECTIONAL_FIELDS));
+            }
+            (GEORDI_RAY_TRACED_LIGHT_KIND_DIRECTIONAL, None, None) => {
+                return Err(D::Error::missing_field("irradiance"));
+            }
+            (GEORDI_RAY_TRACED_LIGHT_KIND_UNIFORM_SKY, Some(_), _) => {
+                return Err(D::Error::unknown_field("irradiance", SKY_FIELDS));
+            }
+            (GEORDI_RAY_TRACED_LIGHT_KIND_UNIFORM_SKY, None, None) => {
+                return Err(D::Error::missing_field("radiance"));
+            }
+            // An unsupported kind still needs exactly one value so validation can name the kind.
+            (_, Some(_), Some(_)) => {
+                return Err(D::Error::custom(
+                    "a light has either `irradiance` or `radiance`",
+                ));
+            }
+            (_, None, None) => return Err(D::Error::missing_field("radiance")),
+            (_, Some(irradiance), None) => GeordiRayTracedLightValue::Irradiance(irradiance),
+            (_, None, Some(radiance)) => GeordiRayTracedLightValue::Radiance(radiance),
+        };
+        Ok(Self {
+            kind: raw.kind,
+            id: raw.id,
+            toward_light: raw.toward_light,
+            value,
+        })
+    }
 }
 
 /// Output image size.
@@ -624,6 +707,7 @@ pub fn load_geordi_ray_traced_scene(
     path: impl AsRef<Path>,
 ) -> Result<GeordiRayTracedScene, GeordiRayTracedSceneLoadError> {
     let path = path.as_ref();
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let source = fs::read_to_string(path).map_err(|error| GeordiRayTracedSceneLoadError {
         path: path.to_path_buf(),
         source: GeordiRayTracedSceneLoadErrorSource::File(error),
@@ -749,6 +833,7 @@ fn read_mesh_asset(
             format!("Mesh file {mesh_path} cannot be read: {error}"),
         )
     };
+    // ban-nondeterminism: allow-begin(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let canonical_root = fs::canonicalize(fixture_root).map_err(missing)?;
     let canonical_path = fs::canonicalize(fixture_root.join(mesh_path)).map_err(missing)?;
     if !path_stays_inside_root(&canonical_root, &canonical_path) {
@@ -758,6 +843,7 @@ fn read_mesh_asset(
         ));
     }
     fs::read(&canonical_path).map_err(missing)
+    // ban-nondeterminism: allow-end(std-fs)
 }
 
 fn finish(issues: Vec<GeordiRayTracedSceneIssue>) -> Result<(), GeordiRayTracedSceneError> {
@@ -783,7 +869,8 @@ where
         GeordiRayTracedSceneError::single(GEORDI_E_RT_JSON_INVALID, "$", &error.to_string())
     })?;
     let mut issues = Vec::new();
-    collect_number_token_issues(&value, "$", &mut issues);
+    let integer_tokens = integer_tokens_by_path(source);
+    collect_number_token_issues(&value, "$", &integer_tokens, &mut issues);
     finish(issues)?;
     let typed = serde_json::from_str::<T>(source).map_err(|error| {
         let message = error.to_string();
@@ -800,10 +887,13 @@ where
 /// Reject every JSON number that is not an integer token in the safe range.
 ///
 /// `serde_json` reads `1.0`, `1e3` and `-0` as floating-point values and `1` as an integer, so a
-/// float-valued number here is exactly a token with a fraction, an exponent, or a negative zero.
+/// float-valued number here is a token with a fraction, an exponent, a negative zero, or an
+/// integer too large for `u64` (and too small for `i64`). `integer_tokens` holds the source text of
+/// every token written without fraction or exponent, by path, to tell the last kind from the rest.
 fn collect_number_token_issues(
     value: &Value,
     path: &str,
+    integer_tokens: &BTreeMap<String, String>,
     issues: &mut Vec<GeordiRayTracedSceneIssue>,
 ) {
     match value {
@@ -824,6 +914,16 @@ fn collect_number_token_issues(
                     path,
                     &format!("Integer {number} is outside -(2^53 - 1)..=2^53 - 1"),
                 );
+            } else if let Some(token) = integer_tokens
+                .get(path)
+                .filter(|token| token.as_str() != "-0")
+            {
+                push(
+                    issues,
+                    GEORDI_E_RT_NUMBER_OUT_OF_RANGE,
+                    path,
+                    &format!("Integer {token} is outside -(2^53 - 1)..=2^53 - 1"),
+                );
             } else {
                 push(
                     issues,
@@ -835,15 +935,116 @@ fn collect_number_token_issues(
         }
         Value::Array(items) => {
             for (index, item) in items.iter().enumerate() {
-                collect_number_token_issues(item, &format!("{path}[{index}]"), issues);
+                collect_number_token_issues(
+                    item,
+                    &format!("{path}[{index}]"),
+                    integer_tokens,
+                    issues,
+                );
             }
         }
         Value::Object(map) => {
             for (key, item) in map {
-                collect_number_token_issues(item, &format!("{path}.{key}"), issues);
+                collect_number_token_issues(item, &format!("{path}.{key}"), integer_tokens, issues);
             }
         }
         Value::Null | Value::Bool(_) | Value::String(_) => {}
+    }
+}
+
+/// The source text of every number token written without a fraction or exponent, by JSON path.
+///
+/// `source` has already been parsed as JSON, so this scan assumes well-formed input and skips
+/// nothing it cannot read. Paths follow `collect_number_token_issues`; where a key repeats, the
+/// last token wins, as it does in `serde_json::Value`.
+fn integer_tokens_by_path(source: &str) -> BTreeMap<String, String> {
+    let mut tokens = BTreeMap::new();
+    scan_integer_tokens(source, skip_whitespace(source, 0), "$", &mut tokens);
+    tokens
+}
+
+const fn skip_whitespace(source: &str, mut at: usize) -> usize {
+    let bytes = source.as_bytes();
+    while at < bytes.len() && matches!(bytes[at], b' ' | b'\t' | b'\n' | b'\r') {
+        at += 1;
+    }
+    at
+}
+
+/// The index just past the string literal that starts at `at` (which holds the opening quote).
+const fn end_of_string(source: &str, at: usize) -> usize {
+    let bytes = source.as_bytes();
+    let mut index = at + 1;
+    while index < bytes.len() {
+        match bytes[index] {
+            b'\\' => index += 2,
+            b'"' => return index + 1,
+            _ => index += 1,
+        }
+    }
+    bytes.len()
+}
+
+fn is_path_or_descendant(candidate: &str, path: &str) -> bool {
+    candidate
+        .strip_prefix(path)
+        .is_some_and(|rest| rest.is_empty() || rest.starts_with('.') || rest.starts_with('['))
+}
+
+/// Scan the value starting at `at`; return the index just past it.
+fn scan_integer_tokens(
+    source: &str,
+    at: usize,
+    path: &str,
+    tokens: &mut BTreeMap<String, String>,
+) -> usize {
+    let bytes = source.as_bytes();
+    match bytes.get(at) {
+        Some(b'{') => {
+            let mut index = skip_whitespace(source, at + 1);
+            while bytes.get(index).is_some_and(|byte| *byte == b'"') {
+                let key_end = end_of_string(source, index);
+                let key =
+                    serde_json::from_str::<String>(&source[index..key_end]).unwrap_or_default();
+                let colon = skip_whitespace(source, key_end);
+                let value = skip_whitespace(source, colon + 1);
+                let member = format!("{path}.{key}");
+                // A repeated key replaces the earlier value, subtree included, as in `Value`.
+                tokens.retain(|known, _| !is_path_or_descendant(known, &member));
+                index = scan_integer_tokens(source, value, &member, tokens);
+                index = skip_whitespace(source, index);
+                if bytes.get(index) == Some(&b',') {
+                    index = skip_whitespace(source, index + 1);
+                }
+            }
+            index + 1
+        }
+        Some(b'[') => {
+            let mut index = skip_whitespace(source, at + 1);
+            let mut element = 0_usize;
+            while bytes.get(index).is_some_and(|byte| *byte != b']') {
+                index = scan_integer_tokens(source, index, &format!("{path}[{element}]"), tokens);
+                index = skip_whitespace(source, index);
+                if bytes.get(index) == Some(&b',') {
+                    index = skip_whitespace(source, index + 1);
+                }
+                element += 1;
+            }
+            index + 1
+        }
+        Some(b'"') => end_of_string(source, at),
+        Some(_) => {
+            let end = source[at..]
+                .find([',', ']', '}', ' ', '\t', '\n', '\r'])
+                .map_or(source.len(), |offset| at + offset);
+            let token = &source[at..end];
+            let is_number = token.starts_with(|c: char| c == '-' || c.is_ascii_digit());
+            if is_number && !token.contains(['.', 'e', 'E']) {
+                tokens.insert(path.to_owned(), token.to_owned());
+            }
+            end
+        }
+        None => at,
     }
 }
 
@@ -1114,6 +1315,15 @@ fn validate_instances(scene: &GeordiRayTracedScene, issues: &mut Vec<GeordiRayTr
             }
         }
     }
+    if primitive_count == 0 {
+        push(
+            issues,
+            GEORDI_E_RT_SCENE_EMPTY,
+            "$.instances",
+            "Scene needs at least one triangle: an instance of a mesh with a nonzero triangle \
+             count",
+        );
+    }
     if primitive_count > i128::from(GEORDI_RAY_TRACED_PRIMITIVE_COUNT_MAX) {
         push(
             issues,
@@ -1188,12 +1398,13 @@ fn validate_camera(camera: &GeordiRayTracedCamera, issues: &mut Vec<GeordiRayTra
             "Camera up must not be zero",
         );
     }
-    if forward != [0; 3] && up != [0; 3] && cross_i128(forward, up) == [0; 3] {
+    if forward != [0; 3] && up != [0; 3] && sine_below_floor(forward, up) {
         push(
             issues,
             GEORDI_E_RT_CAMERA_DEGENERATE,
             "$.camera.up",
-            "Camera up must not be parallel to forward",
+            "Camera up must not be parallel to forward: the sine of the angle between them must \
+             be at least 2^-15",
         );
     }
     let tan = camera.tan_half_fov_y.raw();
@@ -1209,6 +1420,52 @@ fn validate_camera(camera: &GeordiRayTracedCamera, issues: &mut Vec<GeordiRayTra
 
 fn vec3_i128(vector: &[GeordiFixedQ32_32; 3]) -> [i128; 3] {
     vector.map(|value| i128::from(value.raw()))
+}
+
+/// Exact test that `sin(angle(a, b)) < 2^-GEORDI_RAY_TRACED_CAMERA_MIN_SINE_LOG2`, for nonzero
+/// vectors with components below `2^53`.
+///
+/// Equivalent to `|a x b|^2 * 2^(2k) < |a|^2 * |b|^2`, evaluated in 256 bits with no rounding. A
+/// zero cross product (exactly parallel) always satisfies it.
+fn sine_below_floor(a: [i128; 3], b: [i128; 3]) -> bool {
+    let cross = cross_i128(a, b);
+    let cross_squared = cross
+        .iter()
+        .map(|component| mul_wide(component.unsigned_abs(), component.unsigned_abs()))
+        .fold((0_u128, 0_u128), add_wide);
+    let norm_squared = |v: [i128; 3]| {
+        v.iter()
+            .map(|c| {
+                let m = c.unsigned_abs();
+                m * m
+            })
+            .sum::<u128>()
+    };
+    let bound = mul_wide(norm_squared(a), norm_squared(b));
+    // `|a x b|^2 < 2^214 * 3` and `2k = 30`, so the shift stays below 2^246.
+    let shift = 2 * GEORDI_RAY_TRACED_CAMERA_MIN_SINE_LOG2;
+    let scaled = (
+        (cross_squared.0 << shift) | (cross_squared.1 >> (128 - shift)),
+        cross_squared.1 << shift,
+    );
+    scaled < bound
+}
+
+/// `a * b` as a `(high, low)` pair of 128-bit halves.
+const fn mul_wide(a: u128, b: u128) -> (u128, u128) {
+    const MASK: u128 = (1 << 64) - 1;
+    let (a_lo, a_hi) = (a & MASK, a >> 64);
+    let (b_lo, b_hi) = (b & MASK, b >> 64);
+    let low_low = a_lo * b_lo;
+    let cross_a = a_hi * b_lo + (low_low >> 64);
+    let cross_b = a_lo * b_hi + (cross_a & MASK);
+    let high = a_hi * b_hi + (cross_a >> 64) + (cross_b >> 64);
+    (high, (cross_b << 64) | (low_low & MASK))
+}
+
+const fn add_wide(x: (u128, u128), y: (u128, u128)) -> (u128, u128) {
+    let (low, carry) = x.1.overflowing_add(y.1);
+    (x.0 + y.0 + carry as u128, low)
 }
 
 /// Exact cross product; inputs are below `2^53`, so every product is below `2^106`.
@@ -1253,14 +1510,24 @@ fn validate_lights(lights: &[GeordiRayTracedLight], issues: &mut Vec<GeordiRayTr
                 "Light kind must be directional or uniformSky",
             ),
         }
-        validate_channels(
-            &light.radiance,
-            GEORDI_RAY_TRACED_RADIANCE_MAX_RAW,
-            &format!("{base}.radiance"),
-            GEORDI_E_RT_RADIANCE_OUT_OF_RANGE,
-            "Radiance channel must be in [0, 65536]",
-            issues,
-        );
+        match &light.value {
+            GeordiRayTracedLightValue::Irradiance(channels) => validate_channels(
+                channels,
+                GEORDI_RAY_TRACED_IRRADIANCE_MAX_RAW,
+                &format!("{base}.irradiance"),
+                GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE,
+                "Irradiance channel must be in [0, 65536]",
+                issues,
+            ),
+            GeordiRayTracedLightValue::Radiance(channels) => validate_channels(
+                channels,
+                GEORDI_RAY_TRACED_RADIANCE_MAX_RAW,
+                &format!("{base}.radiance"),
+                GEORDI_E_RT_RADIANCE_OUT_OF_RANGE,
+                "Radiance channel must be in [0, 65536]",
+                issues,
+            ),
+        }
     }
     if directional_count > 1 {
         push(
