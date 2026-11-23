@@ -929,3 +929,48 @@ fn a_scene_needs_at_least_one_triangle() -> TestResult {
         None,
     )
 }
+
+#[test]
+fn an_integer_token_beyond_u64_or_i64_is_out_of_range_not_a_float() -> TestResult {
+    // `serde_json` reads an integer token that fits neither i64 nor u64 as a float, so the
+    // validator must read the token itself to say "out of range" rather than "not an integer".
+    let source = reference_source()?;
+    for token in [
+        "18446744073709551615",
+        "18446744073709551616",
+        "99999999999999999999999999",
+        "-9223372036854775808",
+        "-9223372036854775809",
+        "-99999999999999999999999999",
+    ] {
+        let changed = source.replace("\"seed\": 0", &format!("\"seed\": {token}"));
+        assert_ne!(changed, source);
+        let error = parse_geordi_ray_traced_scene(&changed)
+            .err()
+            .ok_or("an out-of-range integer was accepted")?;
+        assert_eq!(
+            issue_codes(&error),
+            vec![(
+                GEORDI_E_RT_NUMBER_OUT_OF_RANGE.to_owned(),
+                "$.render.seed".to_owned()
+            )],
+            "{token}"
+        );
+    }
+    // Tokens that are not integers stay NOT_INTEGER, however large.
+    for token in ["1e30", "1.0", "-0", "18446744073709551616.0", "18446744073709551616e0"] {
+        let changed = source.replace("\"seed\": 0", &format!("\"seed\": {token}"));
+        let error = parse_geordi_ray_traced_scene(&changed)
+            .err()
+            .ok_or("a float was accepted")?;
+        assert_eq!(
+            issue_codes(&error),
+            vec![(
+                GEORDI_E_RT_NUMBER_NOT_INTEGER.to_owned(),
+                "$.render.seed".to_owned()
+            )],
+            "{token}"
+        );
+    }
+    Ok(())
+}
