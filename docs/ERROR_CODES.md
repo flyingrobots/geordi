@@ -353,11 +353,17 @@ with a JSON path. Field-level detail is in
 **Message**: The largest `towardLight` component magnitude is not exactly 1.0
 **Fix**: Rescale `towardLight` so its largest component magnitude is raw `4294967296`.
 
+### `GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE`
+
+**Severity**: Error
+**Message**: A directional light's irradiance channel is outside `[0, 65536]`
+**Fix**: Keep each `irradiance` channel within raw `0..=281474976710656` (`[0, 65536]`).
+
 ### `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE`
 
 **Severity**: Error
-**Message**: A radiance channel is outside `[0, 65536]`
-**Fix**: Keep each radiance channel within raw `0..=281474976710656` (`[0, 65536]`).
+**Message**: A uniform sky's radiance channel is outside `[0, 65536]`
+**Fix**: Keep each sky `radiance` channel within raw `0..=281474976710656` (`[0, 65536]`).
 
 ### `GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT`
 
