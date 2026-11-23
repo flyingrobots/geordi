@@ -69,6 +69,16 @@
     "path": "$.render.integrator",
     "stage": "validate"
   },
+  "irradiance-above-cap.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE",
+    "path": "$.lights[0].irradiance[1]",
+    "stage": "validate"
+  },
+  "irradiance-negative.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE",
+    "path": "$.lights[0].irradiance[2]",
+    "stage": "validate"
+  },
   "json-invalid.rt-scene.geordi.json": {
     "code": "GEORDI_E_RT_JSON_INVALID",
     "path": "$",
@@ -186,7 +196,7 @@
   },
   "radiance-above-cap.rt-scene.geordi.json": {
     "code": "GEORDI_E_RT_RADIANCE_OUT_OF_RANGE",
-    "path": "$.lights[0].radiance[1]",
+    "path": "$.lights[1].radiance[1]",
     "stage": "validate"
   },
   "radiance-negative.rt-scene.geordi.json": {
@@ -254,6 +264,11 @@
     "path": "$.render.seed",
     "stage": "validate"
   },
+  "sky-irradiance-field.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SCENE_SHAPE",
+    "path": "$",
+    "stage": "parse"
+  },
   "sky-missing.rt-scene.geordi.json": {
     "code": "GEORDI_E_RT_SKY_COUNT",
     "path": "$.lights",
@@ -268,6 +283,11 @@
     "code": "GEORDI_E_RT_LIGHT_FIELD_INVALID",
     "path": "$.lights[1].towardLight",
     "stage": "validate"
+  },
+  "sun-radiance-field.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_SCENE_SHAPE",
+    "path": "$",
+    "stage": "parse"
   },
   "tan-half-fov-y-above-four.rt-scene.geordi.json": {
     "code": "GEORDI_E_RT_TAN_HALF_FOV_Y_OUT_OF_RANGE",

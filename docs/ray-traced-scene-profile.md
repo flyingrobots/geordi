@@ -11,6 +11,11 @@ and `crates/geordi-renderer` (runtime profile negotiation, `RenderedImage` const
 This page describes what exists on `main`: the artifact contract, its validator, its receipt and
 the runtime negotiation check. Geordi contains no ray tracer. Nothing here renders a pixel.
 
+> **Status.** `geordi-ray-traced-scene/1` is not yet frozen. No released consumer exists. Breaking
+> changes to it are recorded in [`CHANGELOG.md`](../CHANGELOG.md) under "BREAKING CHANGES". It becomes
+> a frozen contract, after which any incompatible change requires `/2`, only when a release or a
+> consumer first pins it.
+>
 > **Not claimed.** Geordi does not claim `geordi/ray-traced-3d/1`. The design's proof gates
 > (thread invariance, two CPU architectures agreeing, and an artifact render matching lumen's
 > built-in render) have not run. The validator and fixtures exist so that a runtime, planned in
@@ -80,7 +85,7 @@ Its top level, abridged (arrays shortened to one element):
     {
       "id": "sun",
       "kind": "directional",
-      "radiance": [12884901888, 12884901888, 12884901888],
+      "irradiance": [12884901888, 12884901888, 12884901888],
       "towardLight": [2147483648, 4294967296, 1073741824]
     }
   ],
@@ -148,7 +153,8 @@ Q32.32 fields are marked Q. A diagnostic code is listed for each rule; see
 | `lights[].kind` | `directional` or `uniformSky` | `GEORDI_E_RT_LIGHT_UNSUPPORTED` |
 | `lights[].towardLight` (Q) | Required on `directional`; forbidden on `uniformSky` | `GEORDI_E_RT_LIGHT_FIELD_INVALID` |
 | `lights[].towardLight` | Largest component magnitude exactly 1.0 (raw `4294967296`); rejects zero | `GEORDI_E_RT_TOWARD_LIGHT_NOT_NORMALIZED` |
-| `lights[].radiance` (Q, 3 channels) | Each in `[0, 65536]`: raw `0..=281474976710656` | `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE` |
+| `lights[].irradiance` (Q, 3 channels) | Required on `directional`, refused on `uniformSky` (an unknown field, `GEORDI_E_RT_SCENE_SHAPE`): the irradiance on a surface perpendicular to the light, as in Bunny's `DirectionalLight::new`. Each in `[0, 65536]`: raw `0..=281474976710656` | `GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE` |
+| `lights[].radiance` (Q, 3 channels) | Required on `uniformSky`, refused on `directional` (an unknown field, `GEORDI_E_RT_SCENE_SHAPE`; the old name for the sun's value is not accepted). Each in `[0, 65536]`: raw `0..=281474976710656` | `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE` |
 | `lights` | At most one `directional` | `GEORDI_E_RT_DIRECTIONAL_LIGHT_COUNT` |
 | `lights` | Exactly one `uniformSky` | `GEORDI_E_RT_SKY_COUNT` |
 | `film.width`, `film.height` | Integer in `1..=16384`. The area is not bounded by the scene profile: a runtime bounds it through `max_film_pixels` at [negotiation](#runtime-profile-negotiation) | `GEORDI_E_RT_FILM_SIZE_OUT_OF_RANGE` |
