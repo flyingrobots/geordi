@@ -37,7 +37,9 @@ described in [`../bijou-gpu-shaders.md`](../bijou-gpu-shaders.md). The dirty-uni
 ([#171](https://github.com/flyingrobots/geordi/issues/171)) exists and is described in
 [`../bijou-gpu-surface-damage.md`](../bijou-gpu-surface-damage.md). The browser WebGPU presenter
 ([#175](https://github.com/flyingrobots/geordi/issues/175)) exists and is described in
-[`../bijou-gpu-webgpu-presenter.md`](../bijou-gpu-webgpu-presenter.md). No WebGL2, Canvas 2D, or
+[`../bijou-gpu-webgpu-presenter.md`](../bijou-gpu-webgpu-presenter.md). The native `wgpu` offscreen
+proof ([#58](https://github.com/flyingrobots/geordi/issues/58)) is described in
+[`../bijou-gpu-native-wgpu.md`](../bijou-gpu-native-wgpu.md). No WebGL2, Canvas 2D, or windowed
 native presenter is claimed as implemented yet.
 
 ## Accepted Design: Fixed-Point And Ray-Traced Scene Profiles

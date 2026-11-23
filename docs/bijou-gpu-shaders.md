@@ -16,8 +16,10 @@ normative source for every equation.
 > **Not claimed.** Nothing on this page draws to a screen. The shader's fragment stage writes
 > exact integers to an integer target; the display pass that shows them belongs to the presenters.
 > The [WebGPU presenter](./bijou-gpu-webgpu-presenter.md) executes `bijou-surface.wgsl` verbatim
-> and uploads the `GlyphAtlas`. The WebGL2 and native presenters are tracked in
-> [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173) and
+> and uploads the `GlyphAtlas`. The offscreen native `wgpu` proof
+> ([`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md)) executes it unchanged and uploads the
+> conformance kit's test glyph pack, not a `GlyphAtlas`. The WebGL2 presenter and the native host
+> are tracked in [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173) and
 > [flyingrobots/geordi#58](https://github.com/flyingrobots/geordi/issues/58).
 
 ## Files

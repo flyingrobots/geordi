@@ -27,6 +27,8 @@ that exists on `main`.
 | Find the evidence for each Bijou GPU glyph atlas requirement | [`bijou-gpu-glyph-atlas-test-plan.md`](./bijou-gpu-glyph-atlas-test-plan.md) |
 | Look up the Bijou GPU WebGPU presenter: refusal versus fault, dirty-row uploads, the two passes, readback, receipts, device loss and resize | [`bijou-gpu-webgpu-presenter.md`](./bijou-gpu-webgpu-presenter.md) |
 | Find the evidence for each Bijou GPU WebGPU presenter requirement | [`bijou-gpu-webgpu-presenter-test-plan.md`](./bijou-gpu-webgpu-presenter-test-plan.md) |
+| Look up the native Rust `wgpu` offscreen proof: intake, render, evidence levels, receipts and command line | [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md) |
+| Find the evidence for each native `wgpu` proof requirement | [`bijou-gpu-native-wgpu-test-plan.md`](./bijou-gpu-native-wgpu-test-plan.md) |
 | Run Rust verification | [`RUST_GATES.md`](./RUST_GATES.md) |
 | Apply documentation policy | [`DOCUMENTATION_STANDARDS.md`](./DOCUMENTATION_STANDARDS.md) |
 

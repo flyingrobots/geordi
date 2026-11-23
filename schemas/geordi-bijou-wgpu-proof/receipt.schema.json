@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-bijou-wgpu-proof/receipt.schema.json",
+  "title": "Endpoint receipt",
+  "description": "The geordi-bijou-gpu-receipt/1 endpoint receipt of the run. Written to stdout. `receipt` follows the receipt contract in docs/design/2026-11-bijou-surface-gpu-abi.md and is validated by validateEndpointReceipt in @flyingrobots/geordi-bijou-gpu. `receiptPath` is the file it was also written to, or null. `probeBindings` repeats each probe with the cell it falls in and the hexadecimal source and prepared bytes of that cell; it is empty when no frame was read back.",
+  "x-schema-id": "geordi.bijou_wgpu_proof.receipt",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "receipt",
+    "receiptPath",
+    "probeBindings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.bijou_wgpu_proof.receipt"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "receipt"
+    },
+    "receipt": {
+      "type": "object"
+    },
+    "receiptPath": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "probeBindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "px",
+          "py",
+          "rgba",
+          "cell",
+          "sourceCellHex",
+          "preparedCellHex"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "px": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "py": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rgba": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "cell": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "required": [
+              "col",
+              "row"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "col": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "row": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "sourceCellHex": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "preparedCellHex": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

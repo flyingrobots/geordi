@@ -1,0 +1,106 @@
+{
+  "adapter": {
+    "backend": "wgpu",
+    "driver": "metal",
+    "name": "Apple M5"
+  },
+  "assembledWgslSha256": "241e1392c446866b331e9992046ef599cc3fd5c83c01bb4f3674f26979a06c53",
+  "atlasGeneration": 1,
+  "atlasStats": {
+    "capacity": 8,
+    "colorEmojiCount": 2,
+    "monoCount": 6,
+    "usedSlots": 8
+  },
+  "backendProfile": "geordi-wgpu-offscreen/1",
+  "bunnyPrimitives": [
+    {
+      "bunnyCommit": "3b7fbad",
+      "contractId": "bunny-u32-div-round-even/1",
+      "vectorsSha256": "df265cc7233772e33347b04fa1f7a3e71f34566e4aa6af5cf3fecf23e2b044a6",
+      "wgslSha256": "ed93a26df071da13e8d8514c42a8dcfb5cbc5969d6ab4397d26b147fc5dc2e7f"
+    },
+    {
+      "bunnyCommit": "292a2c3",
+      "contractId": "bunny-u32-ellipse-classify/1",
+      "vectorsSha256": "5f0ec6422de185e2ce7e832a7c1bce7ccde9b6f33e92b399f7c547191ef205e4",
+      "wgslSha256": "1b11121932031e2f1266087dded59e9c6f921bed7db1e9ed2ba4cf9b9c261e99"
+    }
+  ],
+  "canvasPxH": 32,
+  "canvasPxW": 16,
+  "cellFormatId": "bijou-packed-cell-u8x10-le/1",
+  "cellPx": {
+    "height": 16,
+    "width": 8
+  },
+  "defaultBg": "#0D1117",
+  "defaultFg": "#E6EDF3",
+  "dpr": 1,
+  "evidenceLevel": "gpu-probed",
+  "executedArtifactSha256": "241e1392c446866b331e9992046ef599cc3fd5c83c01bb4f3674f26979a06c53",
+  "fontIdentity": "geordi-bijou-gpu-test-glyph-pack/1 sha256:ffcba4daa4e814ba5b2f69c1c3f15514fbc6e13144061bcfebbc6eb9cfe692d7",
+  "frameRgbaSha256": "8a6bd4eeef43bd9575c90ce74d5eaae559cea1e0995362b87aa3f8b5facf7982",
+  "generatedGlslSha256": null,
+  "gpuAbiVersion": "bijou-surface-gpu/1",
+  "heightCells": 2,
+  "inputReceiptSha256": "44bdac709151e09a080e5f6966b82f3ce7734f65e35b9ea616fdec989a5a1ded",
+  "preparedBufferSha256": "9793f9d49024d20543f96c3b0db147e23ec27c12f0db2930f205586789f0ee48",
+  "probePolicy": "integer-canonical-exact",
+  "probes": [
+    {
+      "px": 4,
+      "py": 8,
+      "rgba": [
+        255,
+        64,
+        32,
+        255
+      ]
+    },
+    {
+      "px": 12,
+      "py": 8,
+      "rgba": [
+        230,
+        237,
+        243,
+        255
+      ]
+    },
+    {
+      "px": 4,
+      "py": 24,
+      "rgba": [
+        1,
+        52,
+        22,
+        255
+      ]
+    },
+    {
+      "px": 12,
+      "py": 24,
+      "rgba": [
+        13,
+        17,
+        23,
+        255
+      ]
+    },
+    {
+      "px": 15,
+      "py": 31,
+      "rgba": [
+        13,
+        17,
+        23,
+        255
+      ]
+    }
+  ],
+  "proceduralTableSha256": "7ebc92f74a57ec7744fc7ada20c886d76b4ea96c09b5005efbf0883562d62e46",
+  "receiptVersion": "geordi-bijou-gpu-receipt/1",
+  "shaderSha256": "241e1392c446866b331e9992046ef599cc3fd5c83c01bb4f3674f26979a06c53",
+  "widthCells": 2
+}
