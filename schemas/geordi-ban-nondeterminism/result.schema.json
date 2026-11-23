@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-ban-nondeterminism/result.schema.json",
+  "title": "Result",
+  "description": "The verdict of a scan. Written to stdout after the findings.",
+  "x-schema-id": "geordi.ban_nondeterminism.result",
+  "x-schema-version": "1.0.0",
+  "x-stream": "stdout",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "status",
+    "paths",
+    "findings",
+    "waived"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.ban_nondeterminism.result"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "result"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "findings": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "waived": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "rule",
+          "count"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "rule": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}
