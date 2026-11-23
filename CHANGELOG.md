@@ -23,9 +23,9 @@
   after it can still end with two complete output sets, last rename wins. A lock directory left by the
   previous writer is never removed automatically; delete it by hand once no writer runs (flyingrobots/geordi#54)
 
-### Tests
+### Refactoring
 
-- Pin the node order of the Terminal SDL end-to-end path in `packages/schema-graphql/test/e2e.terminal.test.ts` (flyingrobots/geordi#67). The Terminal fixture never has equal `zIndex` values (the default is field order plus one), so a new case compiles eight nodes that share `zIndex: 0` with explicit ids and scrambled declaration order, and asserts the hand-written order `zIndex`, then `kind`, then `id`, bytewise. Reversing the `kind` or `id` comparison in `emitIr.ts` makes it fail. No production change: the sort already ends in a total order on unique ids
+- **`@flyingrobots/geordi-gpvue`, `-profunctor-page`, `-wesley-generator`** and the GPVue smoke script use the core-owned `GEORDI_IR_ARTIFACT_KEY`, `GEORDI_IR_RECEIPT_KEY` and `GEORDI_IR_VERSION` instead of restated literals. `wesley-generator` gains a direct `@flyingrobots/geordi-core` dependency (no cycle: compiler-core already depends on core). `CONTRIBUTING.md` states the rule and `pnpm lint` enforces it through `scripts/check-core-artifact-literals.mjs` (flyingrobots/geordi#65)
 
 ### CI
 
@@ -325,6 +325,7 @@
 
 ### Tests
 
+- Pin the node order of the Terminal SDL end-to-end path in `packages/schema-graphql/test/e2e.terminal.test.ts` (flyingrobots/geordi#67). The Terminal fixture never has equal `zIndex` values (the default is field order plus one), so a new case compiles eight nodes that share `zIndex: 0` with explicit ids and scrambled declaration order, and asserts the hand-written order `zIndex`, then `kind`, then `id`, bytewise. Reversing the `kind` or `id` comparison in `emitIr.ts` makes it fail. No production change: the sort already ends in a total order on unique ids
 - `@flyingrobots/geordi-bijou-gpu` unit tests have a 30 s default timeout. Tests that rasterize and
   hash whole frames (`procedural.test.ts` among them) exceeded vitest's 5 s default on a loaded
   machine; no assertion changed.
