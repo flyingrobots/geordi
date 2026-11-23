@@ -19,6 +19,10 @@
   after it can still end with two complete output sets, last rename wins. A lock directory left by the
   previous writer is never removed automatically; delete it by hand once no writer runs (flyingrobots/geordi#54)
 
+### Tests
+
+- Property-based tests for `validateCanonicalAst` (`packages/compiler-core/test/validateAst.fuzz.test.ts`, flyingrobots/geordi#4) using `fast-check`, a new dev dependency of `@flyingrobots/geordi-compiler-core`. Nine properties with fixed seed `20260101` and 200 runs each (about one second): valid ASTs produce no diagnostic, dimension errors match finite-and-positive exactly, cycle reports match an independent oracle, duplicate ids and multi-parent nodes never cause a false cycle, omitted required props give exactly one diagnostic each, validation never throws on a well-typed AST with arbitrary ids, kinds, numbers and JSON props, and results are stable and non-mutating. The properties found no bug in the validator
+
 ### CI
 
 - Make the toolchain ready for the open Dependabot groups (flyingrobots/geordi#73). Root cause of the failing `Test` job on the dev-tooling group: `typescript-eslint` 8.x peers on `typescript <6.1.0` and throws at load time on TypeScript 7, so `pnpm lint` fails. `.github/dependabot.yml` now ignores TypeScript major updates until typescript-eslint supports 7. The newer `typescript-eslint` also reports nine new lint findings in three test sources (`no-meaningless-void-operator`, `no-unsafe-class-instance-assignment`) are fixed without suppressions (the randomized resize test timeout was fixed separately on main)
