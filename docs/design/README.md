@@ -46,6 +46,14 @@ presenter ([#175](https://github.com/flyingrobots/geordi/issues/175)) exists and
 [`../bijou-gpu-webgpu-presenter.md`](../bijou-gpu-webgpu-presenter.md). No windowed native
 presenter is claimed as implemented yet.
 
+## Research Findings
+
+- [Taffy layout on native hosts and wasm32](./2026-11-taffy-wasm32-determinism.md)
+  ([#136](https://github.com/flyingrobots/geordi/issues/136)): bit-identical block and flex layout
+  for 50 generated trees on aarch64 macOS, Intel and AMD x86-64 Linux, and wasm32 in Node and
+  Chromium, with the limits stated. Input to [#141](https://github.com/flyingrobots/geordi/issues/141). The experiment
+  is [`../../research/taffy-wasm32/`](../../research/taffy-wasm32/).
+
 ## Accepted Design: Fixed-Point And Ray-Traced Scene Profiles
 
 [`2026-11-fixed-point-and-ray-traced-scene-profiles.md`](./2026-11-fixed-point-and-ray-traced-scene-profiles.md)

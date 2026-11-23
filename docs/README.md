@@ -45,6 +45,8 @@ that exists on `main`.
 - [Portable Bijou UI render endpoints](./design/2026-06-portable-bijou-ui-render-endpoints.md)
 - [TypeScript, Rust, and WASM boundary](./design/2026-05-typescript-rust-wasm-boundary.md)
 - [Wesley common-type generation](./design/2026-05-wesley-common-type-generation.md)
+- [Research: Taffy layout on native hosts and wasm32](./design/2026-11-taffy-wasm32-determinism.md)
+  (finding for [#136](https://github.com/flyingrobots/geordi/issues/136))
 
 The complete design-record index is
 [`design/README.md`](./design/README.md). Archive posture is tracked in
