@@ -1,6 +1,5 @@
 import type { CanonicalSceneAst } from '../types/ast.js';
-import type { CompilerInput } from '../types/compiler.js';
-import type { Artifact } from '../types/artifacts.js';
+import type { TextArtifact } from './textArtifact.js';
 import {
   GEORDI_BASELINE_FEATURES,
   GEORDI_IR_ARTIFACT_KEY,
@@ -10,7 +9,6 @@ import {
   GEORDI_NUMERIC_PROFILE,
 } from '@flyingrobots/geordi-core';
 import { stringifyCanonicalJson } from '../ports/json.js';
-import { hashString } from '../canonical/hashing.js';
 import { cmpStr } from '../util/identifiers.js';
 
 export const COMPARATOR_VERSION = '1' as const;
@@ -29,7 +27,7 @@ export const SOURCE_MAP_VERSION = 'geordi-source-map/1' as const;
  * Nodes without parentId are roots and enter the ready queue first.
  * sourceRef and __typename are stripped.
  */
-export function emitGeordiIrArtifact(ast: CanonicalSceneAst): Artifact {
+export function emitGeordiIrArtifact(ast: CanonicalSceneAst): TextArtifact {
   const sorted = topoSortNodes(ast).map((node) => sanitize(node));
 
   const content = stringifyCanonicalJson(
@@ -53,7 +51,7 @@ export function emitGeordiIrArtifact(ast: CanonicalSceneAst): Artifact {
   };
 }
 
-export function emitSourceMapArtifact(ast: CanonicalSceneAst): Artifact {
+export function emitSourceMapArtifact(ast: CanonicalSceneAst): TextArtifact {
   const nodes = topoSortNodes(ast)
     .filter((node) => node.sourceRef !== undefined)
     .map((node) => ({
@@ -80,44 +78,6 @@ export function emitSourceMapArtifact(ast: CanonicalSceneAst): Artifact {
 }
 
 export const IR_HASH_ALG = GEORDI_IR_HASH_ALGORITHM;
-
-export function emitReceiptArtifact(
-  input: CompilerInput,
-  irContent: string,
-  sourceMapContent: string,
-  ruleIds: readonly string[],
-): Artifact {
-  const inputHash = hashString(input.source);
-  const irHash = hashString(irContent);
-  const sourceMapHash = hashString(sourceMapContent);
-  const featureRequirementsHash = hashString(FEATURE_REQUIREMENTS.join('\n'));
-  const rulesetFingerprint = hashString([...ruleIds].sort().join('\n'));
-
-  const content = stringifyCanonicalJson(
-    {
-      comparatorVersion: COMPARATOR_VERSION,
-      featureRequirements: [...FEATURE_REQUIREMENTS],
-      featureRequirementsHash,
-      featureRequirementsHashAlg: IR_HASH_ALG,
-      inputHash,
-      irHash,
-      irHashAlg: IR_HASH_ALG,
-      irVersion: IR_VERSION,
-      numericProfile: NUMERIC_PROFILE,
-      rulesetFingerprint,
-      sourceMapHash,
-      sourceMapHashAlg: IR_HASH_ALG,
-    },
-    { space: 2 },
-  );
-
-  return {
-    path: IR_RECEIPT_KEY,
-    content,
-    mediaType: 'application/json',
-    encoding: 'utf8',
-  };
-}
 
 // ─── Internals ───────────────────────────────────────────────────────────────
 

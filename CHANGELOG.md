@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- **`@flyingrobots/geordi-compiler-core`** (`src/compile/artifactBuilder.ts`): `compile()` now builds the IR,
+  source map, receipt and types artifacts with an internal `ArtifactBuilder`. The builder holds the IR and
+  source map artifacts and computes the receipt from them, so the exported `emitReceiptArtifact(input,
+  irContent: string, sourceMapContent: string, ruleIds)` and the `irArtifact.content as string` casts are gone.
+  Behaviour-preserving: every artifact byte and every receipt digest is unchanged (flyingrobots/geordi#3)
+
 ### Bug Fixes
 
 - **Rust toolchain** (`rust-toolchain.toml`, `Cargo.toml`, CI): the pin now includes the
