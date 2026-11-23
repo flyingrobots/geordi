@@ -720,6 +720,10 @@ describe('resize, zero-size guard and cellFromPoint', () => {
   });
 });
 
+// 120 hashed readbacks take about 4 s on Vitest 4 and 5 to 9 s on Vitest 5 under
+// a loaded machine, so the 5 s default makes this test flaky rather than wrong.
+const RANDOMIZED_RESIZE_TIMEOUT_MS = 60_000;
+
 describe('randomized resize sequences', () => {
   it('keep every write and readback stride valid with zero validation errors', async () => {
     let seed = 0x175;
@@ -754,7 +758,7 @@ describe('randomized resize sequences', () => {
       expect(write.layout.bytesPerRow).toBe(write.texture.width * bytesPerTexel);
     }
     expect(device.validationErrors).toEqual([]);
-  });
+  }, RANDOMIZED_RESIZE_TIMEOUT_MS);
 });
 
 describe('capability-refused receipts', () => {

@@ -101,6 +101,13 @@ function textureOfView(view: WebGpuTexture | WebGpuTextureView): FakeTexture {
   return view instanceof FakeTexture ? view : (view as WebGpuTextureView & { texture: FakeTexture }).texture;
 }
 
+function bufferOf(buffer: WebGpuBuffer): FakeBuffer {
+  if (buffer instanceof FakeBuffer) {
+    return buffer;
+  }
+  throw new FakeWebGpuRejection('the fake device only accepts buffers it created');
+}
+
 function extent2d(size: WebGpuExtent): [number, number] {
   if (Array.isArray(size)) {
     return [size[0] ?? 0, size[1] ?? 1];
@@ -233,7 +240,7 @@ export class FakeDevice implements WebGpuDevice {
         layout: WebGpuTexelCopyBufferLayout,
         size: WebGpuExtent,
       ): undefined => {
-        const texture = destination.texture as FakeTexture;
+        const texture = textureOfView(destination.texture);
         const [ox, oy] = origin2d(destination.origin);
         const [width, height] = extent2d(size);
         this.writes.push({
@@ -397,8 +404,8 @@ export class FakeDevice implements WebGpuDevice {
         };
       },
       copyTextureToBuffer: (source, destination, copySize): undefined => {
-        const texture = source.texture as FakeTexture;
-        const buffer = destination.buffer as FakeBuffer;
+        const texture = textureOfView(source.texture);
+        const buffer = bufferOf(destination.buffer);
         const [width, height] = extent2d(copySize);
         const bytesPerRow = destination.bytesPerRow ?? 0;
         this.copies.push({

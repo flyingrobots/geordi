@@ -4,6 +4,7 @@
 
 ### CI
 
+- Make the toolchain ready for the open Dependabot groups (flyingrobots/geordi#73). Root cause of the failing `Test` job on the dev-tooling group: `typescript-eslint` 8.x peers on `typescript <6.1.0` and throws at load time on TypeScript 7, so `pnpm lint` fails. `.github/dependabot.yml` now ignores TypeScript major updates until typescript-eslint supports 7. With the newer `typescript-eslint` and `vitest` 5 the suite also needed fixes: nine lint findings in three test sources (`no-meaningless-void-operator`, `no-unsafe-class-instance-assignment`) are fixed without suppressions, and the 120-step randomized resize test in `bijou-gpu` gets an explicit 60 s timeout because Vitest 5 runs it close to the 5 s default
 - Pin the Rust toolchain to 1.96.0 with `rust-toolchain.toml` and install that toolchain in CI instead of floating `stable`, so new compiler lints no longer fail CI on unchanged code (flyingrobots/geordi#158)
 
 ### Dependencies
