@@ -547,7 +547,7 @@
       "additionalProperties": false
     },
     "golden": {
-      "description": "golden.json written, or one variant compared with it.",
+      "description": "golden.json written, not written because the run failed, or one variant compared with it.",
       "type": "object",
       "required": [
         "_schema",
@@ -577,6 +577,7 @@
         "action": {
           "enum": [
             "written",
+            "not-written",
             "compared"
           ]
         },
@@ -602,6 +603,9 @@
             "type": "integer",
             "minimum": 0
           }
+        },
+        "reason": {
+          "type": "string"
         }
       },
       "additionalProperties": false

@@ -46,7 +46,7 @@ fn main() -> std::io::Result<()> {
     if args.iter().any(|arg| arg == "--help") {
         writeln!(
             out,
-            r#"{{{SCHEMA}help","version":"1.0.0"}},"kind":"help","description":"Prints the rustybuzz shaping dump of flyingrobots/geordi#137 as one JSON line; --glyphs prints one line per shaped string. Run research/rustybuzz-wasm32/run.mjs to compare targets."}}"#
+            r#"{{{SCHEMA}help","version":"1.0.0"}},"kind":"help","command":"rustybuzz-wasm32-determinism [--glyphs] [--help]","description":"Prints the whole rustybuzz shaping byte stream of flyingrobots/geordi#137 as one JSON line; --glyphs prints one line per shaped string instead. Run research/rustybuzz-wasm32/run.mjs to compare targets.","emits":["help","dump","glyphs"],"schemas":"schemas/geordi-research-rustybuzz-wasm32/"}}"#
         )?;
         return Ok(());
     }
