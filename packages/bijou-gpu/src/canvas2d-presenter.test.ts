@@ -193,6 +193,40 @@ describe('Canvas 2D presenter contract', () => {
   });
 });
 
+describe('Canvas 2D presenter bundled procedural table', () => {
+  it('renders from only a canvas and an atlas, hashing to the suite goldens with the same receipts', () => {
+    const explicit = rig();
+    const canvas = new RecordingCanvas(suite.canvasPxW, suite.canvasPxH);
+    const presenter = createCanvas2DSurfacePresenter({
+      canvas,
+      atlas: testGlyphPackAtlas(pack),
+      defaultFg: suite.defaultFg,
+      defaultBg: suite.defaultBg,
+    });
+    const paint = liveFromReceipt(rendered.paintReceipt);
+    const erase = liveFromReceipt(rendered.eraseReceipt);
+    explicit.presenter.present(BLANK(paint.width, paint.height), paint, {});
+    presenter.present(BLANK(paint.width, paint.height), paint, {});
+    expect(receiptOf(presenter).frameRgbaSha256).toBe(suiteFrame(suite, 'paint').frameRgbaSha256);
+    expect(serializeEndpointReceipt(receiptOf(presenter))).toBe(serializeEndpointReceipt(receiptOf(explicit.presenter)));
+    explicit.presenter.present(paint, erase, {});
+    presenter.present(paint, erase, {});
+    expect(receiptOf(presenter).frameRgbaSha256).toBe(suiteFrame(suite, 'erase').frameRgbaSha256);
+    expect(serializeEndpointReceipt(receiptOf(presenter))).toBe(serializeEndpointReceipt(receiptOf(explicit.presenter)));
+  });
+
+  it('refuses a supplied table that is not the pinned one before it asks for a context', () => {
+    const canvas = new RecordingCanvas(suite.canvasPxW, suite.canvasPxH);
+    const boxGlyphs = Uint32Array.from(table.boxGlyphs);
+    boxGlyphs[3] = (boxGlyphs[3] ?? 0) ^ 4;
+    const create = (): Canvas2DSurfacePresenter =>
+      createCanvas2DSurfacePresenter({ canvas, atlas: testGlyphPackAtlas(pack), proceduralTable: { ...table, boxGlyphs } });
+    expect(create).toThrow(BijouGpuValidationError);
+    expect(create).toThrow(/GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE at options\.proceduralTable\.boxGlyphs\[3\]/u);
+    expect(canvas.contextRequests).toEqual([]);
+  });
+});
+
 describe('Canvas 2D presenter golden frames', () => {
   it('presents the paint frame bit-exactly to the oracle and the suite golden frame digest', () => {
     const { canvas, presenter } = rig();
