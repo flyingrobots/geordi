@@ -526,7 +526,8 @@ pub fn assert_native_runtime_profile(
 
 /// Assert that a ray-traced scene can run on a ray-tracing runtime profile.
 ///
-/// The `(sceneVersion, numericProfile)` pair is checked first, then requirements, mesh layouts
+/// The `(sceneVersion, numericProfile)` pair is checked first, then the film area against
+/// `max_film_pixels`, then requirements, mesh layouts
 /// and the render identities. This is capability negotiation only; validate the scene with
 /// `validate_geordi_ray_traced_scene` as well.
 ///
@@ -554,6 +555,18 @@ pub fn assert_ray_traced_runtime_profile(
                 scene.scene_version, scene.numeric_profile
             ),
             format!("artifacts={supported}"),
+        ));
+    }
+    let pixels = u64::try_from(scene.film.width.max(0))
+        .unwrap_or(0)
+        .saturating_mul(u64::try_from(scene.film.height.max(0)).unwrap_or(0));
+    if pixels > profile.max_film_pixels {
+        return Err(GeordiRuntimeUnsupportedProfileError::new(
+            format!(
+                "film={}x{} ({pixels} pixels)",
+                scene.film.width, scene.film.height
+            ),
+            format!("film=at most {} pixels", profile.max_film_pixels),
         ));
     }
     for requirement in &scene.requires {

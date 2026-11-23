@@ -13,6 +13,17 @@
 - Migrate `pnpm.overrides` from deprecated `package.json` field to `pnpm-workspace.yaml`; regenerate lockfile with pnpm 10.30.0 to match CI version (resolves `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY` on ubuntu-24.04)
 - Bump `vitest` from `^1.3.0` to `^3.2.4` across all packages; add `esbuild >=0.25.0` override (CVE fix)
 
+### Bug Fixes
+
+- **`geordi-ir`, `geordi-renderer`**: scenes Lumen's `Scene::new` refuses no longer validate and
+  negotiate (flyingrobots/geordi#166). A scene with no triangle is refused with the new
+  `GEORDI_E_RT_SCENE_EMPTY`. A camera `up` whose angle to `forward` has a sine below `2^-15` is
+  refused with `GEORDI_E_RT_CAMERA_DEGENERATE`, checked exactly in 256-bit integers (the previous
+  rule refused only an exactly zero cross product). `GeordiRayTracedRuntimeProfile` gains
+  `max_film_pixels`, and `assert_ray_traced_runtime_profile` refuses a larger film; this is a
+  breaking change for code that constructs the profile. New fixtures: `failures/scene-empty`,
+  `failures/camera-up-nearly-parallel` and `negotiation/film-pixels-above-runtime-cap`.
+
 ### Features
 
 - **`@flyingrobots/geordi-bijou-gpu`**: browser WebGPU presenter for the `bijou-surface-gpu/1` ABI
