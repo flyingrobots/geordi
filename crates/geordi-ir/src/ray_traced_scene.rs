@@ -14,6 +14,7 @@ use serde_json::Value;
 use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+// ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -706,6 +707,7 @@ pub fn load_geordi_ray_traced_scene(
     path: impl AsRef<Path>,
 ) -> Result<GeordiRayTracedScene, GeordiRayTracedSceneLoadError> {
     let path = path.as_ref();
+    // ban-nondeterminism: allow(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let source = fs::read_to_string(path).map_err(|error| GeordiRayTracedSceneLoadError {
         path: path.to_path_buf(),
         source: GeordiRayTracedSceneLoadErrorSource::File(error),
@@ -831,6 +833,7 @@ fn read_mesh_asset(
             format!("Mesh file {mesh_path} cannot be read: {error}"),
         )
     };
+    // ban-nondeterminism: allow-begin(std-fs) artifact loader: reads the bytes the caller names and returns a value that is a function of them; paths stay confined to the repository root
     let canonical_root = fs::canonicalize(fixture_root).map_err(missing)?;
     let canonical_path = fs::canonicalize(fixture_root.join(mesh_path)).map_err(missing)?;
     if !path_stays_inside_root(&canonical_root, &canonical_path) {
@@ -840,6 +843,7 @@ fn read_mesh_asset(
         ));
     }
     fs::read(&canonical_path).map_err(missing)
+    // ban-nondeterminism: allow-end(std-fs)
 }
 
 fn finish(issues: Vec<GeordiRayTracedSceneIssue>) -> Result<(), GeordiRayTracedSceneError> {
@@ -1429,7 +1433,14 @@ fn sine_below_floor(a: [i128; 3], b: [i128; 3]) -> bool {
         .iter()
         .map(|component| mul_wide(component.unsigned_abs(), component.unsigned_abs()))
         .fold((0_u128, 0_u128), add_wide);
-    let norm_squared = |v: [i128; 3]| v.iter().map(|c| c.unsigned_abs().pow(2)).sum::<u128>();
+    let norm_squared = |v: [i128; 3]| {
+        v.iter()
+            .map(|c| {
+                let m = c.unsigned_abs();
+                m * m
+            })
+            .sum::<u128>()
+    };
     let bound = mul_wide(norm_squared(a), norm_squared(b));
     // `|a x b|^2 < 2^214 * 3` and `2k = 30`, so the shift stays below 2^246.
     let shift = 2 * GEORDI_RAY_TRACED_CAMERA_MIN_SINE_LOG2;

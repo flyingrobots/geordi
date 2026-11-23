@@ -20,6 +20,19 @@
   is "A directional light's value is irradiance." The identifier stays `geordi-ray-traced-scene/1`
   because that artifact is not yet frozen: no released consumer exists. (flyingrobots/geordi#161)
 
+### Added
+
+- **Nondeterminism ban for the canonical paths** (`scripts/ban-nondeterminism.mjs`,
+  `scripts/eslint-plugin-nondeterminism.mjs`, `.ban-nondeterminism-allowlist`, `.githooks/pre-push`,
+  `docs/nondeterminism-rules.md`). Echo's rule IDs and allowlist format, scanning `crates/geordi-ir`
+  and `crates/geordi-renderer` and the canonical TypeScript packages for wall-clock time, unseeded
+  randomness, unordered iteration, floating-point sentinels and operations, environment, filesystem
+  and process access. `host-locale` is Geordi's own rule. Waivers are inline comments with a reason,
+  or rule-scoped allowlist rows. Runs in `pnpm lint`, in CI as `pnpm check:determinism` and in the
+  tracked pre-push hook. Behaviour-preserving: `geordi-renderer` keys its glyph evidence in a
+  `BTreeMap`, `geordi-ir` squares a magnitude with a multiplication, and `segmentGraphemes` passes the
+  locale `en` instead of the host default; no digest changed. (flyingrobots/geordi#162)
+
 ### Changed
 
 - **`@flyingrobots/geordi-compiler-core`** (`src/compile/artifactBuilder.ts`): `compile()` now builds the IR,
@@ -496,6 +509,17 @@
   and `60`.
 
 ### Documentation
+
+- **Mesh PLY parsing: one parser per profile** (`docs/design/2026-11-fixed-point-and-ray-traced-scene-profiles.md`,
+  `docs/render-everywhere.md`, `crates/geordi-mesh`). No parser was swapped. Geordi keeps
+  `parse_ascii_ply_triangle_mesh` for the binary64 profile `geordi-ascii-ply-triangle-mesh/1`, and
+  `bunny-codec`'s ASCII reader is reserved for a Q32.32 layout with its own identity. Measured at
+  Bunny `36da048`: the reader reads the bunny asset with the same counts and faces, but its Q32.32
+  coordinates, converted to `f64`, differ from all 5667 of the profile's `f64` coordinates, which
+  would break the pinned bounds. The new test
+  `rounds_bunny_coordinates_to_the_q32_32_values_bunny_codec_reads` pins a digest showing that the
+  profile's values, rounded to Q32.32 (ties to even), equal the reader's. No behaviour changed.
+  (flyingrobots/geordi#155)
 
 - Add the accepted design for a fixed-point numeric profile (`geordi-fixed-q32.32/1`) and a
   ray-traced 3D scene profile (`geordi-ray-traced-scene/1`) for the lumen ray tracer, with the

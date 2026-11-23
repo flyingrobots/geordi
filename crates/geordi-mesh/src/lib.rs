@@ -500,6 +500,7 @@ mod tests {
         MeshAssetHashMismatchError, PlyMeshParseError, assert_mesh_asset_sha256,
         mesh_asset_sha256_from_bytes, parse_ascii_ply_triangle_mesh,
     };
+    use sha2::{Digest, Sha256};
     use std::error::Error;
     use std::fs;
     use std::path::PathBuf;
@@ -619,6 +620,46 @@ mod tests {
             }
         }
 
+        Ok(())
+    }
+
+    /// SHA-256 of the raw Q32.32 value of every Stanford bunny coordinate, `x`, `y`, `z` per vertex
+    /// in vertex order, each raw value as eight little-endian bytes.
+    ///
+    /// Recorded from `bunny_codec::parse_ascii_ply` at Bunny commit `36da048`, which converts the
+    /// decimal text straight to Q32.32. The test below rounds this crate's binary64 values to
+    /// Q32.32 instead; the two agreeing is the measured basis for keeping this parser for
+    /// `geordi-ascii-ply-triangle-mesh/1` (see
+    /// `docs/design/2026-11-fixed-point-and-ray-traced-scene-profiles.md`).
+    const BUNNY_CODEC_Q32_32_DIGEST: &str =
+        "b4a27df2117e6e51833244d12aaa87b19fab30fca84048fb305c00d23eebb69d";
+
+    #[test]
+    fn rounds_bunny_coordinates_to_the_q32_32_values_bunny_codec_reads()
+    -> Result<(), Box<dyn Error>> {
+        let source = fs::read_to_string(bunny_path())?;
+        let mesh = parse_ascii_ply_triangle_mesh(&source)?;
+        let mut digest = Sha256::new();
+
+        for vertex in &mesh.vertices {
+            for coordinate in vertex.position {
+                // Multiplying by 2^32 is exact, so `round_ties_even` is the only rounding step.
+                let scaled = (coordinate * 4_294_967_296.0).round_ties_even();
+                assert!(scaled.abs() <= 9_007_199_254_740_991.0);
+                #[expect(
+                    clippy::cast_possible_truncation,
+                    reason = "scaled is an integer with magnitude at most 2^53 - 1, so the cast is exact"
+                )]
+                let raw = scaled as i64;
+                digest.update(raw.to_le_bytes());
+            }
+        }
+
+        assert_eq!(mesh.vertices.len() * 3, 5667);
+        assert_eq!(
+            format!("{:x}", digest.finalize()),
+            BUNNY_CODEC_Q32_32_DIGEST
+        );
         Ok(())
     }
 
