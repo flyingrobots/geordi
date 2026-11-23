@@ -4,6 +4,10 @@
 
 ### Bug Fixes
 
+- **Rust toolchain** (`rust-toolchain.toml`, `Cargo.toml`, CI): the pin now includes the
+  `wasm32-unknown-unknown` target, the workspace `rust-version` is 1.96 (was 1.93), and CI installs the
+  toolchain unconditionally from the file and builds `geordi-ir` for wasm32. A contract test,
+  `scripts/rust-toolchain-pin.test.mjs`, runs in `pnpm test:docs`.
 - **Generated-directory writer** (`scripts/lib/atomic-generated-directory.mjs`): the `<destination>.lock`
   file now records its owner (`geordi.generated-directory-lock/1`: pid, hostname, process start time,
   token), and a writer removes it only when it can prove the owner is gone: same host and no such
