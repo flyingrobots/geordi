@@ -23,6 +23,10 @@
   after it can still end with two complete output sets, last rename wins. A lock directory left by the
   previous writer is never removed automatically; delete it by hand once no writer runs (flyingrobots/geordi#54)
 
+### Refactoring
+
+- **`@flyingrobots/geordi-gpvue`, `-profunctor-page`, `-wesley-generator`** and the GPVue smoke script use the core-owned `GEORDI_IR_ARTIFACT_KEY`, `GEORDI_IR_RECEIPT_KEY` and `GEORDI_IR_VERSION` instead of restated literals. `wesley-generator` gains a direct `@flyingrobots/geordi-core` dependency (no cycle: compiler-core already depends on core). `CONTRIBUTING.md` states the rule and `pnpm lint` enforces it through `scripts/check-core-artifact-literals.mjs` (flyingrobots/geordi#65)
+
 ### CI
 
 - Make the toolchain ready for the open Dependabot groups (flyingrobots/geordi#73). Root cause of the failing `Test` job on the dev-tooling group: `typescript-eslint` 8.x peers on `typescript <6.1.0` and throws at load time on TypeScript 7, so `pnpm lint` fails. `.github/dependabot.yml` now ignores TypeScript major updates until typescript-eslint supports 7. The newer `typescript-eslint` also reports nine new lint findings in three test sources (`no-meaningless-void-operator`, `no-unsafe-class-instance-assignment`) are fixed without suppressions (the randomized resize test timeout was fixed separately on main)
