@@ -9,9 +9,11 @@ import { arr, int, obj, renderSuite, str } from '../test/support.js';
 import { FakeCanvas, type FakeCall, type FakeWebGL2Options } from '../test/webgl2-fake.js';
 import {
   BackendUnavailableError,
+  createInMemoryShaderSource,
   createGlyphAtlas,
   createStaticAtlasSource,
   createWebGL2SurfacePresenter,
+  createWebGL2SurfacePresenterCore,
   DrawingBufferMismatchError,
   RendererFaultError,
   serializeEndpointReceipt,
@@ -28,8 +30,10 @@ import {
   type GlyphRasterizer,
   type GpuPackedSurface,
   type PresenterAtlasSource,
+  type ShaderSourcePort,
   type WebGL2SurfacePresenterOptions,
 } from './index.js';
+import { createFileShaderSource } from './shader-source-node.js';
 
 const SHADER_DIR = new URL('../shaders/', import.meta.url);
 
@@ -125,10 +129,10 @@ function makeCanvas(options: FakeWebGL2Options = {}): FakeCanvas {
   return new FakeCanvas(rendered.suite.canvasPxW, rendered.suite.canvasPxH, options);
 }
 
+/** Options with no shader source: the composition root wires the bundled WebGL2 adapter. */
 function presenterOptions(canvas: FakeCanvas, extra: Partial<WebGL2SurfacePresenterOptions> = {}): WebGL2SurfacePresenterOptions {
   return {
     canvas,
-    shaders: SHADERS,
     atlas: staticAtlas(),
     defaultFg: rendered.suite.defaultFg,
     defaultBg: rendered.suite.defaultBg,
@@ -197,7 +201,7 @@ describe('createWebGL2SurfacePresenter: shader identity', () => {
     ]);
   });
 
-  it('compiles the injected generated GLSL text unmodified, with zero hand-edited forks', () => {
+  it('compiles the bundled generated GLSL text unmodified, with zero hand-edited forks', () => {
     const canvas = makeCanvas();
     createWebGL2SurfacePresenter(presenterOptions(canvas));
     const sources = canvas.gl.callsNamed('shaderSource').map((call) => call.args[1]);
@@ -210,17 +214,61 @@ describe('createWebGL2SurfacePresenter: shader identity', () => {
   });
 
   it('refuses GLSL whose bytes differ from the manifest pin with a RendererFaultError, before touching GL', () => {
-    for (const shaders of [
-      { vertex: SHADERS.vertex, fragment: `${SHADERS.fragment}\n` },
-      { vertex: SHADERS.vertex.replace('void main', 'void  main'), fragment: SHADERS.fragment },
-    ]) {
+    for (const [vertex, fragment] of [
+      [SHADERS.vertex, `${SHADERS.fragment}\n`],
+      [SHADERS.vertex.replace('void main', 'void  main'), SHADERS.fragment],
+      // A checkout that converted line endings to CRLF.
+      [SHADERS.vertex.replaceAll('\n', '\r\n'), SHADERS.fragment],
+    ] as const) {
       const canvas = makeCanvas();
-      const thrown = captureError(() => createWebGL2SurfacePresenter(presenterOptions(canvas, { shaders })));
+      const shaderSource = createInMemoryShaderSource({ 'bijou-surface.vert.glsl': vertex, 'bijou-surface.frag.glsl': fragment });
+      const thrown = captureError(() => createWebGL2SurfacePresenter(presenterOptions(canvas, { shaderSource })));
       expect(thrown).toBeInstanceOf(RendererFaultError);
       expect(thrown).not.toBeInstanceOf(BackendUnavailableError);
       expect((thrown as RendererFaultError).detail).toMatch(/SHA-256/u);
       expect(canvas.gl.objects).toEqual([]);
     }
+  });
+
+  it('refuses a shader source that is missing a stage with a RendererFaultError, before touching GL', () => {
+    for (const shaderSource of [
+      createInMemoryShaderSource({ 'bijou-surface.vert.glsl': SHADERS.vertex }),
+      createInMemoryShaderSource({ 'bijou-surface.frag.glsl': SHADERS.fragment }),
+      createInMemoryShaderSource({ 'bijou-surface.wgsl': SHADERS.vertex }),
+    ]) {
+      const canvas = makeCanvas();
+      const thrown = captureError(() => createWebGL2SurfacePresenterCore({ ...presenterOptions(canvas), shaderSource }));
+      expect(thrown).toBeInstanceOf(RendererFaultError);
+      expect((thrown as RendererFaultError).detail).toMatch(/has no bijou-surface\.(vert|frag)\.glsl/u);
+      expect(canvas.gl.objects).toEqual([]);
+    }
+  });
+
+  it('creates a presenter with only a canvas and an atlas, and its receipt reports the manifest digests', () => {
+    const shader = loadManifestShader();
+    const canvas = makeCanvas();
+    const presenter = createWebGL2SurfacePresenter({ canvas, atlas: staticAtlas() });
+    const paint = paintSurface();
+    presenter.present(paint, paint, {});
+    const receipt = presenter.getLastReceipt();
+    expect(revalidate(receipt)).toBe(true);
+    expect(receipt).toMatchObject({
+      assembledWgslSha256: shader.assembledWgslSha256,
+      generatedGlslSha256: shader.generatedGlslSha256,
+      shaderSha256: shader.generatedGlslSha256,
+      executedArtifactSha256: webgl2ExecutedArtifactSha256(SHADERS),
+    });
+  });
+
+  it('takes any ShaderSourcePort: the core over the file adapter compiles the same bytes as the default', () => {
+    const viaFile: ShaderSourcePort = createFileShaderSource();
+    const fileCanvas = makeCanvas();
+    createWebGL2SurfacePresenterCore({ ...presenterOptions(fileCanvas), shaderSource: viaFile });
+    const defaultCanvas = makeCanvas();
+    createWebGL2SurfacePresenter(presenterOptions(defaultCanvas));
+    const compiled = (canvas: FakeCanvas) => canvas.gl.callsNamed('shaderSource').map((call) => call.args[1]);
+    expect(compiled(fileCanvas)).toEqual(compiled(defaultCanvas));
+    expect(compiled(fileCanvas)).toContain(SHADERS.vertex);
   });
 });
 
