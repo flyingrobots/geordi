@@ -12,7 +12,7 @@ execution slices. It is intentionally specific: every remaining slice must prese
 boundary that strict Geordi text is positioned glyph evidence, not strings, CSS text, platform text,
 host font fallback, or runtime shaping.
 
-## 1. Feature Overview & Objectives:
+## 1. Feature Overview & Objectives
 
 ### Problem Statement
 
@@ -45,7 +45,7 @@ render-everywhere proof while preventing feature creep into general text renderi
 | Browser/native proof coverage | 2 canonical strict text fixtures produce validated metadata reports, nonblank text bounds, and scoped visual probes in both runtimes. | Browser Playwright smoke, native smoke, parity report, and probe assertions. |
 | Claim hygiene | 0 broad or unsupported public claims for general text, CSS text, host fallback, runtime shaping, or pixel-identical text rasterization. | Docs hygiene, grep-based claim audit, PR review checklist, and final drift audit. |
 
-## 2. Scope Definition:
+## 2. Scope Definition
 
 ### In Scope
 
@@ -88,7 +88,7 @@ The remaining strict positioned glyph-run milestone does not build:
 | Text editing, selection, caret, or accessibility tree semantics | These need separate product scope and runtime contracts. |
 | Variable font axes | Rejected until a future profile fingerprints axes and generated outputs. |
 
-## 3. Detailed User Stories:
+## 3. Detailed User Stories
 
 Each story maps directly to one remaining slice. The story ID is the slice ID and the acceptance
 criteria in section 4 are binding for that story.
@@ -145,7 +145,7 @@ criteria in section 4 are binding for that story.
 | S099 | As a maintainer, I want a CI native text smoke gate so that native strict text proof remains exercised automatically. |
 | S100 | As a release reviewer, I want a final drift and claim audit so that docs, tests, DAG state, and public claims are synchronized before the milestone is called complete. |
 
-## 4. Acceptance Criteria (BDD Format):
+## 4. Acceptance Criteria (BDD Format)
 
 Every acceptance criterion below is technical and testable. Slices may add stricter criteria, but
 they must not weaken these.
@@ -220,7 +220,7 @@ they must not weaken these.
 | S099 | Given CI runs native text smoke | When native rendering regresses | Then CI fails with native-specific strict text diagnostics. |
 | S100 | Given all prior slices are complete | When final audit runs | Then docs, checklist, DOT, SVG, README, CI gates, fixtures, receipts, reports, and claims agree with no broad unsupported text claim. |
 
-## 5. Detailed Test Plan:
+## 5. Detailed Test Plan
 
 ### Test Scenarios
 

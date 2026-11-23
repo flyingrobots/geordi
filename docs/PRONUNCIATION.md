@@ -22,7 +22,7 @@ The official capitalization is **Geordi**.
 ## Usage in Conversation
 
 > "Geordi compiles our UI blueprints into GPU-native scenes."
-
+>
 > "The Geordi IR is powered by the Wesley framework."
-
+>
 > "Is that a Geordi-optimized component?"
