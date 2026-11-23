@@ -19,7 +19,13 @@ Each decision states the recommendation, the alternatives, and the evidence that
 The maintainer accepted the recommendations with the amendments recorded in
 [Decisions](#decisions); where the two differ, Decisions governs. Statements about what exists
 today cite the file they come from. Anything planned is labelled planned and linked to its issue.
-Nothing in this document is implemented yet.
+What exists on `main` today is described in
+the [reference page](../ray-traced-scene-profile.md): the Rust DTOs, the validator
+(`validate_geordi_ray_traced_scene` in `geordi-ir`), the runtime-profile negotiation, the receipt type,
+`RenderedImage::from_rgba8` and a fixture set. What does not exist: any renderer, rendered image or
+ray-traced output, the written definition of `geordi-rt-diffuse-path/1`, recognition of any Bunny
+sampler or tone curve identity, a TypeScript reader or validator, compiler normalization to Q32.32,
+and any run of the proof gates; the profile is not claimed.
 
 ## Terms
 
