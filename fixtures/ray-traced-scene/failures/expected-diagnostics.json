@@ -169,6 +169,11 @@
     "path": "$",
     "stage": "parse"
   },
+  "number-above-u64.rt-scene.geordi.json": {
+    "code": "GEORDI_E_RT_NUMBER_OUT_OF_RANGE",
+    "path": "$.render.seed",
+    "stage": "parse"
+  },
   "number-out-of-range.rt-scene.geordi.json": {
     "code": "GEORDI_E_RT_NUMBER_OUT_OF_RANGE",
     "path": "$.camera.tanHalfFovY",

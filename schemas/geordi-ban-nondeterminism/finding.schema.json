@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-ban-nondeterminism/finding.schema.json",
+  "title": "Finding",
+  "description": "One banned construct no waiver covers. Written to stdout.",
+  "x-schema-id": "geordi.ban_nondeterminism.finding",
+  "x-schema-version": "1.0.0",
+  "x-stream": "stdout",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "rule",
+    "file",
+    "line",
+    "text"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.ban_nondeterminism.finding"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "finding"
+    },
+    "rule": {
+      "type": "string",
+      "minLength": 1
+    },
+    "file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "line": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "text": {
+      "type": "string"
+    }
+  }
+}

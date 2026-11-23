@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Tracked pre-push hook. Enable it once per clone:
+#   git config core.hooksPath .githooks
+# It runs the nondeterminism ban for Geordi's canonical paths (docs/nondeterminism-rules.md),
+# the same check CI runs as `pnpm check:determinism`.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+exec pnpm --silent check:determinism

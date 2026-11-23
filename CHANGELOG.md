@@ -43,6 +43,16 @@
   Every positive fixture validates against it and every shape-stage failure fixture does not. It
   is not the whole validator: `docs/ray-traced-scene-profile.md` lists the rules it cannot express.
   (flyingrobots/geordi#217)
+- **Nondeterminism ban for the canonical paths** (`scripts/ban-nondeterminism.mjs`,
+  `scripts/eslint-plugin-nondeterminism.mjs`, `.ban-nondeterminism-allowlist`, `.githooks/pre-push`,
+  `docs/nondeterminism-rules.md`). Echo's rule IDs and allowlist format, scanning `crates/geordi-ir`
+  and `crates/geordi-renderer` and the canonical TypeScript packages for wall-clock time, unseeded
+  randomness, unordered iteration, floating-point sentinels and operations, environment, filesystem
+  and process access. `host-locale` is Geordi's own rule. Waivers are inline comments with a reason,
+  or rule-scoped allowlist rows. Runs in `pnpm lint`, in CI as `pnpm check:determinism` and in the
+  tracked pre-push hook. Behaviour-preserving: `geordi-renderer` keys its glyph evidence in a
+  `BTreeMap`, `geordi-ir` squares a magnitude with a multiplication, and `segmentGraphemes` passes the
+  locale `en` instead of the host default; no digest changed. (flyingrobots/geordi#162)
 
 ### Changed
 
@@ -53,6 +63,31 @@
   Behaviour-preserving: every artifact byte and every receipt digest is unchanged (flyingrobots/geordi#3)
 
 ### Bug Fixes
+
+- **Ray-traced scene profile follow-ups** (flyingrobots/geordi#167; `geordi-ir`,
+  `examples/native-render-everywhere`, `docs/ray-traced-scene-profile.md`,
+  `docs/design/2026-11-fixed-point-and-ray-traced-scene-profiles.md`). No canonical byte changed and no
+  pinned digest changed; `geordi-ray-traced-scene/1` stays not yet frozen.
+  - An integer token above `2^64 - 1` (or below `-2^63`), such as a `seed` of `18446744073709551616`, is now
+    reported as `GEORDI_E_RT_NUMBER_OUT_OF_RANGE` with its JSON path. It was
+    `GEORDI_E_RT_NUMBER_NOT_INTEGER` because `serde_json` reads such a token as a float. Fractions,
+    exponents and `-0` are still `GEORDI_E_RT_NUMBER_NOT_INTEGER`. New fixture
+    `failures/number-above-u64.rt-scene.geordi.json`.
+  - Decision 8 of the design record said all five render identities are checked by form only. The code and
+    the profile page require exact strings for the integrator, reconstruction and output identities; the
+    record is corrected, not the code.
+  - The profile page now specifies canonical JSON byte for byte (UTF-8 written raw, the escapes used,
+    number form, key order, separators, empty containers, final newline), says it equals Python's
+    `json.dumps(..., sort_keys=True, indent=2, ensure_ascii=False) + "\n"` (not the default
+    `ensure_ascii=True`),
+    and states which differences between equivalent scenes change `sceneHash`. A test pins a non-ASCII
+    digest computed with Python.
+  - Seven validator mutations that no test caught now fail a named test: dropping the `instance.affine3` or
+    `mesh.triangle` used-feature requirement, allowing duplicate light, instance or mesh ids, removing the
+    receipt's asset-layout check, and removing its seed-range check.
+  - The native demo's manifest validation refuses a vertical field of view of `pi` or more
+    (`$.projection.verticalFovRadians`). Before, only values in `[pi, 2 pi)` were refused, by the fixed-point
+    projection; `7.0` and `2 pi + 0.5` were accepted, the latter drawing exactly like `0.5`.
 
 - **`@flyingrobots/geordi-bijou-gpu`**: the package now ships the procedural glyph table, so the Canvas 2D
   presenter works from the packed package alone. `createCanvas2DSurfacePresenter({ canvas, atlas })`

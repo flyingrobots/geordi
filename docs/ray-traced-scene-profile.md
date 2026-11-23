@@ -277,12 +277,42 @@ the decoded counts, bounds and triangle indices against the declaration, is the 
 | `imageHash` | Raw RGBA8 bytes, row-major, top row first | `geordi_ray_traced_image_hash`, `RenderedImage::image_hash` |
 | Receipt hash | Canonical JSON bytes of the receipt | `geordi_ray_traced_render_receipt_hash` |
 
-Every hash is written `sha256:` followed by 64 lowercase hex digits. **Canonical JSON** here is
-the form `geordi_sha256_from_canonical_json_value` already uses: object keys sorted, two-space
-indentation, `": "` between key and value, one array element per line, and a final newline. It
-equals Python's `json.dumps(value, sort_keys=True, indent=2) + "\n"` for these ASCII artifacts.
-Committed scene fixtures are stored in canonical form, so their `sceneHash` equals the SHA-256 of
-the file bytes.
+Every hash is written `sha256:` followed by 64 lowercase hex digits. **Canonical JSON** is the
+byte string a second implementation must produce to reproduce `sceneHash` and the receipt hash from
+the documents alone:
+
+- The document is UTF-8, with no byte order mark.
+- Object keys are sorted by Unicode code point (equivalently, by their UTF-8 bytes) at every depth.
+  A source that repeats a key is a parse error, not a last-wins merge.
+- Two-space indentation, one object member or array element per line, `": "` between a key and its
+  value, and `,` at the end of every line but the last of a container. An empty array is `[]` and
+  an empty object is `{}`.
+- A number is a decimal integer: an optional `-`, no `+`, no leading zeros, no fraction, no
+  exponent. Zero is `0`.
+- A string is written raw, in UTF-8, except for these escapes: `\"` and `\\`; `\b`, `\f`, `\n`, `\r`
+  and `\t`; and `\u00XX` with lower-case hex digits for every other code point below U+0020. The
+  solidus is not escaped, and neither are U+007F, U+2028 or any non-ASCII character. A source may
+  spell a string with any valid JSON escape, including surrogate pairs; the canonical form is the
+  same.
+- The text ends with one `\n` after the closing brace, and nothing follows.
+
+This equals Python's `json.dumps(value, sort_keys=True, indent=2, ensure_ascii=False) + "\n"`.
+Python's default `ensure_ascii=True` is **not** the same: it escapes every non-ASCII character as
+`\uXXXX` and gives a different digest for any scene whose strings are not ASCII. The test
+`canonical_bytes_write_non_ascii_raw_and_escape_only_quote_backslash_and_controls` pins a digest
+computed that way. The reference fixture is stored in canonical form, so its `sceneHash` equals the
+SHA-256 of the file bytes. Failure fixtures are not all canonical (some are not even valid JSON
+numbers), so that shortcut does not apply to them.
+
+**What changes the hash.** The hash is over the canonical bytes of the document as written, and
+nothing is normalized beyond the formatting above. Scenes that would render the same still have
+different hashes when they differ in any of: the order of `lights`, `instances`, `meshes` or
+`materials`; the order of the `requires` list; the spelling of a mesh `path` (`meshes/./unit-quad.ply`,
+`./meshes/unit-quad.ply` and `meshes//unit-quad.ply` all differ from `meshes/unit-quad.ply`, and
+all are valid); the choice of ids; or a requirement declared though unused. Whitespace, key order
+in the source and string escape spelling do not change it. Instance order and light order are
+also visible to a runtime, so a renderer may let them affect pixels; identity here is the document,
+not the image.
 
 The image hash does not cover width, height, pixel format or encoding; the receipt records those,
 and the receipt hash covers them. Two images of different shape with the same bytes have the same

@@ -137,7 +137,8 @@ let cachedSegmenter: Intl.Segmenter | undefined;
 
 /** Split a string into extended grapheme clusters. */
 export function segmentGraphemes(value: string): string[] {
-  cachedSegmenter ??= new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  // ban-nondeterminism: allow(host-locale) the locale is pinned to en; grapheme boundaries still come from the host's Unicode tables, so two hosts with different ICU versions can disagree on newly assigned sequences (docs/nondeterminism-rules.md)
+  cachedSegmenter ??= new Intl.Segmenter('en', { granularity: 'grapheme' });
   return Array.from(cachedSegmenter.segment(value), (part) => part.segment);
 }
 

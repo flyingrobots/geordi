@@ -4,6 +4,9 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import prettier from 'eslint-config-prettier';
 
+import { CANONICAL_TS_FILES, CANONICAL_TS_TEST_FILES } from './scripts/lib/nondeterminism.mjs';
+import nondeterminism from './scripts/eslint-plugin-nondeterminism.mjs';
+
 const tsconfigRootDir = fileURLToPath(new URL('.', import.meta.url));
 
 // A Set or Map constructed while a loop is running: the loop body, a for/while/do-while
@@ -122,6 +125,19 @@ export default [
     rules: {
       'no-restricted-syntax': ['error', ...restrictedSyntaxWithoutJsonCalls],
     },
+  },
+  // Canonical TypeScript: the nondeterminism rules, with Echo's rule IDs. Scope and waivers are in
+  // docs/nondeterminism-rules.md; the selectors are in scripts/lib/nondeterminism.mjs.
+  {
+    files: CANONICAL_TS_FILES,
+    plugins: { nondeterminism },
+    rules: { 'nondeterminism/ban': 'error' },
+  },
+  // Tests build NaN and the infinities as inputs to prove that the canonical code rejects them.
+  {
+    files: CANONICAL_TS_TEST_FILES,
+    plugins: { nondeterminism },
+    rules: { 'nondeterminism/ban': ['error', { exempt: ['float-sentinel'] }] },
   },
   {
     files: ['**/*.test.ts'],

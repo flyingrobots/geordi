@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-ban-nondeterminism/help.schema.json",
+  "title": "Help",
+  "description": "What the command does. Written to stdout by --help, followed by one schema line per message type.",
+  "x-schema-id": "geordi.ban_nondeterminism.help",
+  "x-schema-version": "1.0.0",
+  "x-stream": "stdout",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "command",
+    "summary",
+    "options",
+    "errors"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.ban_nondeterminism.help"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "help"
+    },
+    "command": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

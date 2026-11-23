@@ -15,11 +15,14 @@ describe('canonical JSON port', () => {
 
   it('sorts keys in deeply nested objects', () => {
     const parsed = parseJsonValue('{"z":{"y":1,"b":2},"a":{"x":3,"c":4}}') as JsonObject;
+    // ban-nondeterminism: allow(unordered-container) asserts the canonical key order itself
     expect(Object.keys(parsed)).toEqual(['a', 'z']);
 
     const a = parsed.a as JsonObject;
     const z = parsed.z as JsonObject;
+    // ban-nondeterminism: allow(unordered-container) asserts the canonical key order itself
     expect(Object.keys(a)).toEqual(['c', 'x']);
+    // ban-nondeterminism: allow(unordered-container) asserts the canonical key order itself
     expect(Object.keys(z)).toEqual(['b', 'y']);
   });
 

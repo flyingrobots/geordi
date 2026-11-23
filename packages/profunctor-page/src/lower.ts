@@ -308,6 +308,7 @@ function sourcesFor(
 }
 
 function tokenBindingsFor(node: ParsedPageNode): readonly JsonObject[] {
+  // ban-nondeterminism: allow(unordered-container) binding order is the source document's key order and is pinned in the lowered digests; it is a function of the input bytes alone
   return Object.entries(node.tokens).map(([role, reference]) => ({
     reference,
     role,
