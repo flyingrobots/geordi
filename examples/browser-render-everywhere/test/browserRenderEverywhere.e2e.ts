@@ -426,32 +426,27 @@ test('renders the shared hello-panel fixture with exact browser pixel probes', a
     const canvasPrototype = CanvasRenderingContext2D.prototype;
     canvasPrototype.fillText = function fillTextSpy(
       this: CanvasRenderingContext2D,
-      text: string,
+      _text: string,
       _x: number,
       _y: number,
-      maxWidth?: number,
+      _maxWidth?: number,
     ): void {
       textApiCalls.push('CanvasRenderingContext2D.fillText');
-      void text;
-      void maxWidth;
     };
     canvasPrototype.strokeText = function strokeTextSpy(
       this: CanvasRenderingContext2D,
-      text: string,
+      _text: string,
       _x: number,
       _y: number,
-      maxWidth?: number,
+      _maxWidth?: number,
     ): void {
       textApiCalls.push('CanvasRenderingContext2D.strokeText');
-      void text;
-      void maxWidth;
     };
     canvasPrototype.measureText = function measureTextSpy(
       this: CanvasRenderingContext2D,
-      text: string,
+      _text: string,
     ): TextMetrics {
       textApiCalls.push('CanvasRenderingContext2D.measureText');
-      void text;
       return { width: 0 } as TextMetrics;
     };
 
