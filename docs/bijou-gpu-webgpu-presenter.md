@@ -246,12 +246,14 @@ The page `packages/bijou-gpu/harness/webgpu.html` runs the presenter on a real c
 shader and manifest loaded verbatim, and compares every read-back frame with
 `renderReferenceRgba()` run in the same page. It publishes `window.__geordiWebGpuProbe`.
 
-The Playwright config launches Chrome with `--enable-unsafe-webgpu --enable-unsafe-swiftshader`.
-On Linux it also passes `--use-angle=swiftshader` and
+These tests run in their own Playwright project, `chrome-webgpu`, which launches Chrome with
+`--enable-unsafe-webgpu --enable-unsafe-swiftshader`. On Linux it also passes `--use-angle=swiftshader` and
 `--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan`. Without them, headless Chrome on
 Linux exposes a SwiftShader adapter whose device is destroyed on the first draw into a WebGPU
 canvas. With them, Playwright's bundled Chromium 149 draws and reads back a canvas, but Chrome
-158, the browser the hosted runner uses, exposes no adapter at all. Positive tests and the
+158, the browser the hosted runner uses, exposes no adapter at all. On the hosted runner these
+flags also leave `getContext('webgl2')` returning `null`, which is why the other harnesses run in
+the separate `chrome` project without them. Positive tests and the
 refusal test are separate:
 
 - On a host that refuses WebGPU, the positive tests are skipped, never passed, and each skip
