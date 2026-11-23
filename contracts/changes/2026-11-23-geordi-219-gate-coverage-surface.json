@@ -1,0 +1,11 @@
+{
+  "$schema": "../../schemas/geordi-contract-registry/change-record.schema.json",
+  "contract": "geordi.contract_gate.coverage/1",
+  "change": "breaking",
+  "summary": "A coverage line's `surfaces` may include `typescript-api`, and a package contract lists only that surface (no `schema`). The message schema moved to version 1.1.0, so `_schema.version` on a coverage line is now \"1.1.0\".",
+  "why": "The gate covers the public TypeScript API of published packages (flyingrobots/geordi#219). The gate classifies the changed `_schema.version` const as breaking; the enum value is additive.",
+  "references": [
+    "flyingrobots/geordi#219",
+    "flyingrobots/geordi#217"
+  ]
+}

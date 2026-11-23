@@ -4,7 +4,7 @@
   "title": "Contract change record",
   "description": "contracts/changes/<name>.json: one declared change to one contract. The contract gate requires one for every contract whose surfaces or status differ from the base, and refuses one that names a contract with no observed difference. Records are kept: they are the contract's history. See docs/contract-gate.md.",
   "x-schema-id": "geordi.contract_registry.change_record",
-  "x-schema-version": "1.0.0",
+  "x-schema-version": "1.1.0",
   "type": "object",
   "required": [
     "contract",
@@ -20,7 +20,8 @@
     },
     "contract": {
       "type": "string",
-      "pattern": "^[a-z0-9][a-z0-9._-]*/[1-9][0-9]*$"
+      "description": "A registry contract (`name/N`), or a published package's TypeScript API (`@scope/name/MAJOR`, where MAJOR may be 0).",
+      "pattern": "^(?:[a-z0-9][a-z0-9._-]*/[1-9][0-9]*|(?:@[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*/(?:0|[1-9][0-9]*))$"
     },
     "change": {
       "enum": [

@@ -4,7 +4,7 @@
   "title": "Contract registry",
   "description": "contracts/registry.json: every public contract the contract gate compares, the surfaces that define each one, and the public contracts it does not yet compare. Paths are relative to the repository root. See docs/contract-gate.md.",
   "x-schema-id": "geordi.contract_registry.registry",
-  "x-schema-version": "1.0.0",
+  "x-schema-version": "1.1.0",
   "type": "object",
   "required": [
     "registryVersion",
@@ -37,6 +37,9 @@
       "items": {
         "$ref": "#/$defs/ungated"
       }
+    },
+    "typescriptPackages": {
+      "$ref": "#/$defs/typescriptPackages"
     }
   },
   "$defs": {
@@ -246,6 +249,35 @@
             "draft",
             "frozen"
           ]
+        },
+        "statusEvidence": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notCovered": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "typescriptPackages": {
+      "type": "object",
+      "description": "The published TypeScript packages: every packages/*/package.json without \"private\": true is one contract, `<package name>/<major version>`, compared by its public TypeScript API. Only draft is allowed: no version model for freezing a package API exists yet.",
+      "required": [
+        "directory",
+        "status",
+        "statusEvidence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "directory": {
+          "const": "packages"
+        },
+        "status": {
+          "const": "draft"
         },
         "statusEvidence": {
           "type": "string",

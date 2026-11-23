@@ -4,7 +4,7 @@
   "title": "Difference",
   "description": "One observed difference between the base and head snapshot of a contract surface. Written to stdout. `classification` is `unknown` when the gate cannot tell; `treatedAs` is then `breaking`. `before` and `after` are the two values where they are short (a hash, a status, a message, a signature) and null otherwise.",
   "x-schema-id": "geordi.contract_gate.difference",
-  "x-schema-version": "1.0.0",
+  "x-schema-version": "1.1.0",
   "type": "object",
   "required": [
     "_schema",
@@ -33,7 +33,7 @@
           "const": "geordi.contract_gate.difference"
         },
         "version": {
-          "const": "1.0.0"
+          "const": "1.1.0"
         }
       }
     },
@@ -50,6 +50,7 @@
         "example",
         "diagnostic",
         "rust-api",
+        "typescript-api",
         "status",
         "registry"
       ]

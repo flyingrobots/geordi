@@ -24,7 +24,6 @@ import { gitTopLevel, isGitWorkTree, materialiseRevision, mergeBase, resolveRevi
 import { loadSchemaDirectory } from './lib/json-schema-subset.mjs';
 
 const COMMAND = 'contract-gate';
-const SCHEMA_VERSION = '1.0.0';
 const SCHEMA_PREFIX = 'geordi.contract_gate.';
 const SCRIPT_REPO_ROOT = resolve(import.meta.dirname, '..');
 const CACHE_ROOT = resolve(SCRIPT_REPO_ROOT, 'target', 'contract-gate');
@@ -57,8 +56,10 @@ const OPTIONS = [
 
 let human = false;
 
+/** Each message type carries its own version: the `x-schema-version` of its schema file. */
 function schemaRef(name) {
-  return { id: `${SCHEMA_PREFIX}${name}`, version: SCHEMA_VERSION };
+  const id = `${SCHEMA_PREFIX}${name}`;
+  return { id, version: SCHEMAS.get(id)['x-schema-version'] };
 }
 
 function line(stream, kind, body) {
@@ -86,7 +87,7 @@ function emitSchemas() {
   for (const [name, stream] of SCHEMA_STREAMS) {
     const schema = SCHEMAS.get(`${SCHEMA_PREFIX}${name}`);
     if (human) {
-      prose('stdout', `${SCHEMA_PREFIX}${name} ${SCHEMA_VERSION} (${stream}): ${schema.description}`);
+      prose('stdout', `${SCHEMA_PREFIX}${name} ${schema['x-schema-version']} (${stream}): ${schema.description}`);
     } else {
       line('stdout', 'schema', { describes: schemaRef(name), stream, schema });
     }
@@ -97,7 +98,7 @@ function emitHelp() {
   const help = {
     command: COMMAND,
     summary:
-      'Compare the public contracts of the head with those of the base (by default the merge base with origin/main), surface by surface, each computed from source on both trees by the same code: the JSON Schema, the canonical hashes of example documents, the public diagnostic codes, and the public Rust items. A difference needs a change record in contracts/changes/; a breaking change to a frozen contract needs a version raise. Fails closed.',
+      'Compare the public contracts of the head with those of the base (by default the merge base with origin/main), surface by surface, each computed from source on both trees by the same code: the JSON Schema, the canonical hashes of example documents, the public diagnostic codes, the public Rust items, and the public TypeScript API of each published package (read by the TypeScript compiler from the sources of each tree, with workspace packages resolved within that tree). A difference needs a change record in contracts/changes/; a breaking change to a frozen contract needs a version raise. Fails closed.',
     usage: 'node scripts/contract-gate.mjs [--base-ref <ref> | --base <rev> | --base-dir <dir>] [--head <rev> | --head-dir <dir>] [--repo <dir>] [--human] | --schema | --help',
     options: OPTIONS,
     exitCodes: [
@@ -197,7 +198,9 @@ function coverageLines(headRegistry, headContracts, headSnapshots) {
     const snapshot = headSnapshots.get(key);
     const surfaces = [];
     if (!snapshot.superseded) {
-      surfaces.push('schema');
+      if (entry.schema !== null) {
+        surfaces.push('schema');
+      }
       if (entry.examples.length > 0) {
         surfaces.push('example');
       }
@@ -206,6 +209,9 @@ function coverageLines(headRegistry, headContracts, headSnapshots) {
       }
       if (entry.rustApi !== undefined) {
         surfaces.push('rust-api');
+      }
+      if (entry.typescriptApi !== undefined) {
+        surfaces.push('typescript-api');
       }
     }
     lines.push({ contract: key, gated: true, status: entry.status, surfaces, notCovered: entry.notCovered ?? [], evidence: entry.statusEvidence });
