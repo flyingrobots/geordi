@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { parseJsonValue, type JsonValue } from '@flyingrobots/geordi-core';
+import { parseJsonValue, stringifyCanonicalJson, type JsonObject, type JsonValue } from '@flyingrobots/geordi-core';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -17,12 +17,16 @@ import {
   RendererFaultError,
 } from './errors.js';
 import type { GlyphAtlasDirtyRect } from './glyph-atlas.js';
+import { isJsonArray, isJsonObject } from './json-decode.js';
 import { createStaticAtlasSource, type PresenterAtlasSource } from './presenter-atlas.js';
 import { packedSurfaceFromReference } from '../test/packed-surface.js';
 import type { GpuPackedSurface } from './presenter.js';
 import { preparedBufferBytes } from './prepare.js';
 import { serializeEndpointReceipt, validateEndpointReceipt } from './receipt.js';
 import { createInMemoryShaderSource, type ShaderSourcePort } from './shader-source.js';
+import { BIJOU_SURFACE_SHADER_PIN } from './surface-shader-pin.js';
+import { WEBGL2_SURFACE_SHADER_PIN } from './webgl2-presenter.js';
+import { WEBGPU_BUNDLED_SHADER_SOURCE } from './shader-source-webgpu.js';
 import { createFileShaderSource } from './shader-source-node.js';
 import { sha256Hex, utf8Bytes } from './sha256.js';
 import { createSurfaceDamageState, packSurfaceDamage, resolveSlotFromSlotMap } from './surface-damage.js';
@@ -30,6 +34,7 @@ import {
   alignedBytesPerRow,
   classifyWebGpuAdapter,
   createWebGPUSurfacePresenterCore,
+  createWebGPUSurfacePresenterWithUnpinnedShaderForTesting,
   createWebGpuRefusalReceipt,
   decodeBijouSurfaceShader,
   planAtlasUploads,
@@ -177,6 +182,148 @@ describe('decodeBijouSurfaceShader', () => {
     expect(() => decodeBijouSurfaceShader({ wgsl: WGSL, manifest: { shaders: [] } })).toThrow(
       RendererFaultError,
     );
+  });
+});
+
+/** The manifest text with every occurrence of `from` replaced by `to`. */
+function replaceInManifest(from: string, to: string): string {
+  return MANIFEST_TEXT.split(from).join(to);
+}
+
+/** The manifest text with each `bijou-surface` binding that `matches` replaced by `change(binding)`. */
+function editedSurfaceBindings(
+  matches: (binding: JsonObject) => boolean,
+  change: (binding: JsonObject) => JsonObject,
+): string {
+  if (!isJsonObject(MANIFEST) || !isJsonArray(MANIFEST.shaders)) {
+    throw new BijouGpuValidationError('GEORDI_E_BIJOU_INVALID_SURFACE', 'manifest', 'no shaders');
+  }
+  const shaders = MANIFEST.shaders.map((entry) => {
+    if (!isJsonObject(entry) || entry.id !== 'bijou-surface' || !isJsonArray(entry.bindings)) {
+      return entry;
+    }
+    return { ...entry, bindings: entry.bindings.map((binding) => (isJsonObject(binding) && matches(binding) ? change(binding) : binding)) };
+  });
+  return stringifyCanonicalJson({ ...MANIFEST, shaders });
+}
+
+const ALTERED_WGSL = `${WGSL}// altered by a port\n`;
+const ALTERED_WGSL_SHA = sha256Hex(utf8Bytes(ALTERED_WGSL));
+
+describe('the pinned canonical WGSL digest', () => {
+  it('is the digest of the checked-in, the bundled and the file-adapter WGSL, and the manifest pin', () => {
+    expect(BIJOU_SURFACE_SHADER_PIN.assembledWgslSha256).toBe(MANIFEST_SURFACE_SHA);
+    expect(sha256Hex(utf8Bytes(WGSL))).toBe(BIJOU_SURFACE_SHADER_PIN.assembledWgslSha256);
+    expect(sha256Hex(utf8Bytes(WEBGPU_BUNDLED_SHADER_SOURCE.readText('bijou-surface.wgsl') ?? ''))).toBe(
+      BIJOU_SURFACE_SHADER_PIN.assembledWgslSha256,
+    );
+    expect(sha256Hex(utf8Bytes(createFileShaderSource().readText('bijou-surface.wgsl') ?? ''))).toBe(
+      BIJOU_SURFACE_SHADER_PIN.assembledWgslSha256,
+    );
+  });
+
+  it('pins the binding map and uniform layout the checked-in manifest declares', () => {
+    const layout = decodeBijouSurfaceShader({ wgsl: WGSL, manifest: MANIFEST });
+    expect(BIJOU_SURFACE_SHADER_PIN).toMatchObject({
+      group: layout.group,
+      uniformBinding: layout.uniformBinding,
+      cellsBinding: layout.cellsBinding,
+      atlasBinding: layout.atlasBinding,
+      uniformByteSize: layout.uniformByteSize,
+      uniformOffsets: layout.uniformOffsets,
+      cellsTextureFormat: 'rgba32uint',
+      atlasTextureFormat: 'rgba8uint',
+    });
+  });
+
+  it('is the same pinned source of truth for the WebGL2 and the WebGPU presenters', () => {
+    expect(WEBGL2_SURFACE_SHADER_PIN.assembledWgslSha256).toBe(BIJOU_SURFACE_SHADER_PIN.assembledWgslSha256);
+    expect(WEBGL2_SURFACE_SHADER_PIN.uniformByteSize).toBe(BIJOU_SURFACE_SHADER_PIN.uniformByteSize);
+    expect(WEBGL2_SURFACE_SHADER_PIN.uniformOffsets).toEqual(BIJOU_SURFACE_SHADER_PIN.uniformOffsets);
+  });
+});
+
+describe('WebGPU shader verification against the pinned digest', () => {
+  const altered = [
+    [
+      'altered WGSL with a manifest altered to match',
+      hostShaderSource(ALTERED_WGSL, replaceInManifest(MANIFEST_SURFACE_SHA, ALTERED_WGSL_SHA)),
+    ],
+    [
+      'canonical WGSL with a manifest that pins another digest',
+      hostShaderSource(WGSL, replaceInManifest(MANIFEST_SURFACE_SHA, ALTERED_WGSL_SHA)),
+    ],
+    [
+      'canonical WGSL with a manifest whose binding map differs',
+      hostShaderSource(
+        WGSL,
+        editedSurfaceBindings(
+          (binding) => binding.wgslName === 'cells',
+          (binding) => ({ ...binding, binding: 5 }),
+        ),
+      ),
+    ],
+    [
+      'canonical WGSL with a manifest whose uniform layout differs',
+      hostShaderSource(
+        WGSL,
+        editedSurfaceBindings(
+          (binding) => binding.wgslName === 'surface',
+          (binding) => ({ ...binding, byteSize: 80 }),
+        ),
+      ),
+    ],
+  ] as const;
+
+  it.each(altered)('refuses %s with a RendererFaultError before any shader module exists', async (_label, shaderSource) => {
+    for (const create of [
+      (gpu: FakeGpu) => createWebGPUSurfacePresenter(new FakeCanvas(), presenterOptions(gpu, { shaderSource })),
+      (gpu: FakeGpu) => createWebGPUSurfacePresenterCore(new FakeCanvas(), { ...presenterOptions(gpu), shaderSource }),
+    ]) {
+      const gpu = new FakeGpu();
+      const attempt = create(gpu);
+      await expect(attempt).rejects.toBeInstanceOf(RendererFaultError);
+      await expect(attempt).rejects.toMatchObject({ code: 'GEORDI_E_BIJOU_RENDERER_FAULT', backend: 'webgpu' });
+      expect(gpu.device.shaderModules).toEqual([]);
+      expect(gpu.device.destroyed).toBe(true);
+    }
+  });
+
+  it.each(altered)('does not let %s name a shader in a refusal receipt', (_label, shaderSource) => {
+    const surface = packedSurfaceFromReference(SUITE.paintReceipt, 'all');
+    expect(() =>
+      createWebGpuRefusalReceipt({
+        error: new BackendUnavailableError('webgpu', 'navigator.gpu is undefined'),
+        shaderSource,
+        atlas: testAtlas(),
+        target: surface,
+        size: SUITE_SIZE,
+      }),
+    ).toThrow(RendererFaultError);
+  });
+
+  it('accepts the bundled and the file adapters and reports the same digests as before', async () => {
+    for (const shaderSource of [WEBGPU_BUNDLED_SHADER_SOURCE, createFileShaderSource()]) {
+      const gpu = new FakeGpu();
+      const presenter = await createWebGPUSurfacePresenterCore(new FakeCanvas(), { ...presenterOptions(gpu), shaderSource });
+      const surface = packedSurfaceFromReference(SUITE.paintReceipt, 'all');
+      presenter.present(surface, surface, {});
+      expect(presenter.getLastReceipt()).toMatchObject({
+        assembledWgslSha256: MANIFEST_SURFACE_SHA,
+        shaderSha256: MANIFEST_SURFACE_SHA,
+        executedArtifactSha256: webGpuExecutedArtifactSha256(WGSL),
+      });
+    }
+  });
+
+  it('keeps the unpinned test seam apart: it compiles an altered pair, and the default factory still refuses it', async () => {
+    const shaderSource = hostShaderSource(ALTERED_WGSL, replaceInManifest(MANIFEST_SURFACE_SHA, ALTERED_WGSL_SHA));
+    const gpu = new FakeGpu();
+    await createWebGPUSurfacePresenterWithUnpinnedShaderForTesting(new FakeCanvas(), { ...presenterOptions(gpu), shaderSource });
+    expect(gpu.device.shaderModules.map((module) => module.code)).toContain(ALTERED_WGSL);
+    await expect(
+      createWebGPUSurfacePresenter(new FakeCanvas(), presenterOptions(new FakeGpu(), { shaderSource })),
+    ).rejects.toBeInstanceOf(RendererFaultError);
   });
 });
 

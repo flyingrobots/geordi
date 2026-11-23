@@ -27,6 +27,8 @@ const SCHEMA_DIR = resolve(SCRIPT_REPO_ROOT, 'schemas', 'geordi-bijou-shader-sou
 const SHADER_DIR = 'packages/bijou-gpu/shaders';
 const GENERATED_DIR = 'packages/bijou-gpu/src/generated';
 const MANIFEST_FILE = 'bijou-shaders.manifest.json';
+/** Hand-written pin of the canonical WebGPU shader, which the presenters verify against. */
+const PIN_FILE = 'packages/bijou-gpu/src/surface-shader-pin.ts';
 
 /** The generated modules, each the named exports of the files it embeds. */
 const MODULES = [
@@ -285,7 +287,57 @@ function verifiedSources(repoRoot) {
       stageFiles.map((file) => `${SHADER_DIR}/${file}`),
     );
   }
+  verifyPinFile(repoRoot, manifestText);
   return texts;
+}
+
+/** The value the pin file declares for `key`: a number or a quoted string, or `undefined`. */
+function pinFileValue(text, key) {
+  const match = new RegExp(`\\b${key}: (?:'([^']*)'|(\\d+))`, 'u').exec(text);
+  if (match === null) {
+    return undefined;
+  }
+  return match[1] ?? Number(match[2]);
+}
+
+/**
+ * Check the pin the presenters verify against, hand-written in
+ * packages/bijou-gpu/src/surface-shader-pin.ts, against the manifest: the
+ * assembled WGSL digest, the binding map, the uniform layout and the texture
+ * formats. A stale pin would make the WebGPU presenter refuse the shader it
+ * ships, or accept one it should not, so the gate fails until it is updated.
+ */
+function verifyPinFile(repoRoot, manifestText) {
+  const fail = (detail) => {
+    throw new ShaderSourcesError('GEORDI_E_BIJOU_SHADER_SOURCES_PIN_MISMATCH', `${PIN_FILE}: ${detail}`, [PIN_FILE]);
+  };
+  const absolute = resolve(repoRoot, PIN_FILE);
+  if (!existsSync(absolute)) {
+    throw new ShaderSourcesError('GEORDI_E_BIJOU_SHADER_SOURCES_IO', `${PIN_FILE} does not exist`, [PIN_FILE]);
+  }
+  const text = readFileSync(absolute, 'utf8');
+  const surface = parseJson(manifestText).shaders.find((entry) => entry?.id === 'bijou-surface');
+  const bindingOf = (wgslName) => surface.bindings?.find((binding) => binding?.wgslName === wgslName);
+  const uniforms = bindingOf('surface');
+  const cells = bindingOf('cells');
+  const atlas = bindingOf('glyph_atlas');
+  const expected = {
+    assembledWgslSha256: surface.assembledWgslSha256,
+    group: uniforms?.group,
+    uniformBinding: uniforms?.binding,
+    cellsBinding: cells?.binding,
+    atlasBinding: atlas?.binding,
+    uniformByteSize: uniforms?.byteSize,
+    cellsTextureFormat: cells?.textureFormat,
+    atlasTextureFormat: atlas?.textureFormat,
+    ...Object.fromEntries((uniforms?.members ?? []).map((member) => [member.name, member.byteOffset])),
+  };
+  for (const [key, value] of Object.entries(expected)) {
+    const pinned = pinFileValue(text, key);
+    if (pinned !== value) {
+      fail(`${key} is ${String(pinned)}, but the manifest says ${String(value)}`);
+    }
+  }
 }
 
 function renderModule(module, texts) {

@@ -25,6 +25,7 @@ import type { EndpointReceipt, EndpointReceiptAdapter, EndpointReceiptProbe } fr
 import { parseHexColor, REFERENCE_DEFAULT_BG, REFERENCE_DEFAULT_FG } from './reference.js';
 import { sha256Hex, utf8Bytes } from './sha256.js';
 import { BIJOU_SHADER_MANIFEST_FILE, requireShaderText, type ShaderSourcePort } from './shader-source.js';
+import { BIJOU_SURFACE_SHADER_PIN } from './surface-shader-pin.js';
 import {
   createSurfaceDamageState,
   packSurfaceDamage,
@@ -138,6 +139,8 @@ export interface BijouSurfaceShaderLayout {
   readonly atlasBinding: number;
   readonly uniformByteSize: number;
   readonly uniformOffsets: Readonly<Record<UniformMember, number>>;
+  readonly cellsTextureFormat: string;
+  readonly atlasTextureFormat: string;
 }
 
 function shaderFault(detail: string): never {
@@ -157,12 +160,11 @@ function manifestInteger(value: JsonValue | undefined, path: string): number {
 /**
  * Read the assembled WGSL and the manifest from `port` and decode them with
  * {@link decodeBijouSurfaceShader}, which refuses any WGSL byte the manifest
- * does not pin.
- *
- * @throws RendererFaultError when the port lacks either file, the manifest is
- *   not JSON, or {@link decodeBijouSurfaceShader} refuses them.
+ * does not pin. This is the unpinned read: it trusts the digest in the
+ * manifest the port supplies. {@link loadBijouSurfaceShader} adds the check
+ * against the package's own pin.
  */
-export function loadBijouSurfaceShader(port: ShaderSourcePort): BijouSurfaceShaderLayout {
+function readBijouSurfaceShader(port: ShaderSourcePort): BijouSurfaceShaderLayout {
   const wgsl = requireShaderText(port, SURFACE_WGSL_NAME, 'webgpu');
   const manifestText = requireShaderText(port, BIJOU_SHADER_MANIFEST_FILE, 'webgpu');
   let manifest: JsonValue;
@@ -172,6 +174,60 @@ export function loadBijouSurfaceShader(port: ShaderSourcePort): BijouSurfaceShad
     return shaderFault(`shader manifest from ${port.description} is not JSON: ${error instanceof Error ? error.message : String(error)}`);
   }
   return decodeBijouSurfaceShader({ wgsl, manifest });
+}
+
+/**
+ * Refuse a decoded shader that is not the canonical one the package ships:
+ * the WGSL must hash to the pinned digest and the manifest must declare the
+ * pinned binding map, uniform layout and texture formats. Neither the port nor
+ * its manifest is trusted for either.
+ */
+function verifyAgainstPin(layout: BijouSurfaceShaderLayout, origin: string): void {
+  const pin = BIJOU_SURFACE_SHADER_PIN;
+  const actual = sha256Hex(utf8Bytes(layout.wgsl));
+  if (actual !== pin.assembledWgslSha256) {
+    shaderFault(
+      `${SURFACE_WGSL_NAME} from ${origin} hashes to ${actual}, which is not the canonical shader ${pin.assembledWgslSha256} pinned in this package`,
+    );
+  }
+  if (layout.assembledWgslSha256 !== pin.assembledWgslSha256) {
+    shaderFault(
+      `shader manifest from ${origin} pins ${layout.assembledWgslSha256}, not the canonical shader ${pin.assembledWgslSha256} pinned in this package`,
+    );
+  }
+  for (const key of ['group', 'uniformBinding', 'cellsBinding', 'atlasBinding', 'uniformByteSize'] as const) {
+    if (layout[key] !== pin[key]) {
+      shaderFault(
+        `shader manifest from ${origin} declares ${key} ${String(layout[key])}, not the pinned ${String(pin[key])}`,
+      );
+    }
+  }
+  for (const member of UNIFORM_MEMBERS) {
+    if (layout.uniformOffsets[member] !== pin.uniformOffsets[member]) {
+      shaderFault(
+        `shader manifest from ${origin} places uniform ${member} at ${String(layout.uniformOffsets[member])}, not the pinned ${String(pin.uniformOffsets[member])}`,
+      );
+    }
+  }
+  if (layout.cellsTextureFormat !== pin.cellsTextureFormat || layout.atlasTextureFormat !== pin.atlasTextureFormat) {
+    shaderFault(`shader manifest from ${origin} declares texture formats that are not the pinned ones`);
+  }
+}
+
+/**
+ * Read the assembled WGSL and the manifest from `port`, decode them, and check
+ * them against the canonical shader pinned in this package
+ * ({@link BIJOU_SURFACE_SHADER_PIN}), so a port cannot vouch for its own
+ * shader.
+ *
+ * @throws RendererFaultError when the port lacks either file, the manifest is
+ *   not JSON, the manifest is malformed, or the WGSL or the manifest fields the
+ *   presenter relies on are not the pinned canonical ones.
+ */
+export function loadBijouSurfaceShader(port: ShaderSourcePort): BijouSurfaceShaderLayout {
+  const layout = readBijouSurfaceShader(port);
+  verifyAgainstPin(layout, port.description);
+  return layout;
 }
 
 /**
@@ -250,6 +306,8 @@ export function decodeBijouSurfaceShader(source: BijouSurfaceShaderSource): Bijo
     atlasBinding: manifestInteger(atlas.binding, 'glyph_atlas.binding'),
     uniformByteSize,
     uniformOffsets: offsets as Record<UniformMember, number>,
+    cellsTextureFormat: 'rgba32uint',
+    atlasTextureFormat: 'rgba8uint',
   };
 }
 
@@ -435,7 +493,9 @@ export function classifyWebGpuAdapter(adapter: WebGpuAdapter): WebGpuAdapterClas
 export interface WebGpuSurfacePresenterCoreOptions {
   /**
    * Where `bijou-surface.wgsl` and the shader manifest come from. The WGSL is
-   * refused unless it hashes to the manifest's `assembledWgslSha256`.
+   * refused unless it hashes to the canonical digest pinned in this package
+   * (`BIJOU_SURFACE_SHADER_PIN`), and the manifest unless it declares the
+   * pinned binding map. The port is a loader, not a source of trust.
    */
   readonly shaderSource: ShaderSourcePort;
   /**
@@ -1234,13 +1294,38 @@ async function readTexture(
  * Capability is checked first: a missing `navigator.gpu`, no adapter, a
  * rejected `requestDevice()`, or a canvas without a `webgpu` context reject
  * with {@link BackendUnavailableError}. Once a device exists, a shader text
- * that does not match the manifest, a compile error, a pipeline error, or a
+ * that is not the pinned canonical shader, a compile error, a pipeline error, or a
  * `-srgb` preferred format reject with {@link RendererFaultError}; they are
  * never reported as unavailability.
  */
-export async function createWebGPUSurfacePresenterCore(
+export function createWebGPUSurfacePresenterCore(
   canvas: WebGpuPresenterCanvas,
   options: WebGpuSurfacePresenterCoreOptions,
+): Promise<WebGpuSurfacePresenter> {
+  return createPresenterWithShaderLoader(canvas, options, loadBijouSurfaceShader);
+}
+
+/**
+ * TEST ONLY. Like {@link createWebGPUSurfacePresenterCore}, but the shader is
+ * verified against the manifest the port supplies instead of the canonical
+ * digest pinned in this package. It exists so a test can hand the real device
+ * a deliberately broken WGSL, behind a manifest that pins the broken text, and
+ * observe the compile error as a `RendererFaultError`. No production factory
+ * calls it: `createWebGPUSurfacePresenter()` and
+ * `createWebGPUSurfacePresenterCore()` always check the pin. A receipt from a
+ * presenter made here must never be treated as evidence of the canonical shader.
+ */
+export function createWebGPUSurfacePresenterWithUnpinnedShaderForTesting(
+  canvas: WebGpuPresenterCanvas,
+  options: WebGpuSurfacePresenterCoreOptions,
+): Promise<WebGpuSurfacePresenter> {
+  return createPresenterWithShaderLoader(canvas, options, readBijouSurfaceShader);
+}
+
+async function createPresenterWithShaderLoader(
+  canvas: WebGpuPresenterCanvas,
+  options: WebGpuSurfacePresenterCoreOptions,
+  loadShader: (port: ShaderSourcePort) => BijouSurfaceShaderLayout,
 ): Promise<WebGpuSurfacePresenter> {
   const gpu = options.gpu ?? defaultGpu();
   if (gpu === undefined) {
@@ -1253,7 +1338,7 @@ export async function createWebGPUSurfacePresenterCore(
     throw new BackendUnavailableError('webgpu', 'the canvas has no webgpu context');
   }
   try {
-    const layout = loadBijouSurfaceShader(options.shaderSource);
+    const layout = loadShader(options.shaderSource);
     const format = selectWebGpuCanvasFormat(gpu.getPreferredCanvasFormat());
     const canvasPx = resolvePresenterCanvasPx(
       options.size ?? { cssWidth: canvas.width, cssHeight: canvas.height, dpr: 1 },

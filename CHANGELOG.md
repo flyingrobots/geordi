@@ -45,6 +45,17 @@
 
 ### Fixes
 
+- **`@flyingrobots/geordi-bijou-gpu`**: the WebGPU presenter verifies the shader against a pin
+  compiled into the package (flyingrobots/geordi#189). Before, it checked the WGSL against the
+  digest in the manifest that the same `ShaderSourcePort` supplied, so a port could ship altered
+  WGSL with a manifest altered to match, and the receipt reported the altered digest as canonical.
+  Now `BIJOU_SURFACE_SHADER_PIN` (the WGSL digest, binding map, uniform layout and texture
+  formats) is checked before any shader module is created, by the presenter and by
+  `createWebGpuRefusalReceipt()`, with the existing `RendererFaultError`; the WebGL2 pin takes its
+  WGSL digest and uniform layout from the same module. The bundled and file adapters are accepted
+  and receipts carry the same digests. `createWebGPUSurfacePresenterWithUnpinnedShaderForTesting()`
+  is a test-only seam that keeps the real-device compile-error test possible; no factory calls it.
+  `generate-bijou-gpu-shader-sources.mjs --check` now fails when the pin differs from the manifest.
 - **`geordi-ir`, `geordi-renderer`**: scenes Lumen's `Scene::new` refuses no longer validate and
   negotiate (flyingrobots/geordi#166). A scene with no triangle is refused with the new
   `GEORDI_E_RT_SCENE_EMPTY`. A camera `up` whose angle to `forward` has a sine below `2^-15` is
