@@ -211,7 +211,7 @@ function importGraph(root: string): { modules: Set<string>; specifiers: Set<stri
 }
 
 describe('module boundaries', () => {
-  it.each(['webgl2-presenter.ts', 'shader-source.ts'])(
+  it.each(['webgl2-presenter.ts', 'webgpu-presenter.ts', 'shader-source.ts'])(
     'the core module %s reaches no node: module, no ?raw specifier and no embedded shader text',
     (root) => {
       const graph = importGraph(root);
@@ -220,13 +220,30 @@ describe('module boundaries', () => {
     },
   );
 
-  it('the browser entry point reaches no node: module, no file adapter and no WGSL text', () => {
+  it('the browser entry point reaches no node: module and no file adapter, and wires both bundled adapters', () => {
     const graph = importGraph('index.ts');
     expect([...graph.specifiers].filter((specifier) => specifier.startsWith('node:') || specifier.includes('?raw'))).toEqual([]);
     expect(graph.modules.has('shader-source-node.ts')).toBe(false);
-    expect(graph.modules.has('shader-source-webgpu.ts')).toBe(false);
-    expect(graph.modules.has('generated/bijou-surface-wgsl.generated.ts')).toBe(false);
-    // The composition root wires the bundled WebGL2 adapter into the main entry point.
+    // The composition roots wire the bundled adapters into the main entry point.
     expect(graph.modules.has('shader-source-webgl2.ts')).toBe(true);
+    expect(graph.modules.has('shader-source-webgpu.ts')).toBe(true);
   });
+
+  it('keeps each bundled adapter to its own backend text, so a bundler drops an unused one', () => {
+    expect([...importGraph('shader-source-webgl2.ts').modules].sort()).toEqual([
+      'errors.ts',
+      'generated/bijou-shaders-manifest.generated.ts',
+      'generated/bijou-surface-glsl.generated.ts',
+      'shader-source-webgl2.ts',
+      'shader-source.ts',
+    ]);
+    expect([...importGraph('shader-source-webgpu.ts').modules].sort()).toEqual([
+      'errors.ts',
+      'generated/bijou-shaders-manifest.generated.ts',
+      'generated/bijou-surface-wgsl.generated.ts',
+      'shader-source-webgpu.ts',
+      'shader-source.ts',
+    ]);
+  });
+});
 });
