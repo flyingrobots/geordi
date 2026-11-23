@@ -279,6 +279,9 @@
 
 ### Tests
 
+- `@flyingrobots/geordi-bijou-gpu` unit tests have a 30 s default timeout. Tests that rasterize and
+  hash whole frames (`procedural.test.ts` among them) exceeded vitest's 5 s default on a loaded
+  machine; no assertion changed.
 - The WebGPU presenter's randomized resize test has an explicit 60 s timeout. It takes about
   2 s alone and exceeded the 5 s default on a loaded machine; no assertion changed.
 - **Profunctor Page target**: Pin the three upstream conformance artifacts by
