@@ -74,6 +74,7 @@ export async function replaceGeneratedDirectory(
               throw error;
             }
           }
+          await options.lock?.afterPriorMoved?.();
 
           try {
             await rename(staging, destination);
@@ -205,6 +206,7 @@ async function recoverAbandonedLock(lockPath, environment) {
     }
     throw error;
   }
+  await environment.afterStaleClaimed?.();
   try {
     const taken = await readLockRecord(claimed);
     if (taken?.token !== judged.token) {

@@ -342,3 +342,95 @@ async function assertLockTimeout(destination, environment) {
 async function assertNoLock(destination) {
   await assert.rejects(readFile(`${destination}.lock`), { code: 'ENOENT' });
 }
+
+test('a recoverer cannot let a newer publisher lose its output to an older one', async () => {
+  // Interleaving: A judges lock L0 abandoned; B recovers it and takes the
+  // lock; A removes whatever is at the lock path; C takes the lock; B and C
+  // both publish, and B's rollback restores the older output over C's.
+  const destination = join(await scratchDirectory(), 'generated');
+  await replaceGeneratedDirectory(destination, outputSet('old'));
+  await writeLock(destination, { pid: DEAD_PID });
+  const bHolds = gate();
+  const releaseB = gate();
+  const bMoved = gate();
+  const releaseBMove = gate();
+  const cHolds = gate();
+  const releaseC = gate();
+  let bDone;
+  let cDone;
+
+  const writerB = () =>
+    replaceGeneratedDirectory(destination, outputSet('B'), {
+      lock: {
+        ...liveEnvironment(),
+        ...fakeClock(),
+        afterAcquire: async () => {
+          bHolds.open();
+          await releaseB.promise;
+        },
+        afterPriorMoved: async () => {
+          bMoved.open();
+          await releaseBMove.promise;
+        },
+      },
+    });
+  const writerC = () =>
+    replaceGeneratedDirectory(destination, outputSet('C'), {
+      lock: {
+        ...liveEnvironment(),
+        ...fakeClock(),
+        afterAcquire: async () => {
+          cHolds.open();
+          await releaseC.promise;
+        },
+      },
+    });
+
+  const writerA = replaceGeneratedDirectory(destination, outputSet('A'), {
+    lock: {
+      ...liveEnvironment(),
+      ...fakeClock(),
+      beforeStaleRemoval: async () => {
+        bDone = settle(writerB());
+        await bHolds.promise;
+      },
+      afterStaleClaimed: async () => {
+        cDone = settle(writerC());
+        await cHolds.promise;
+      },
+    },
+  });
+  const aOutcome = await settle(writerA);
+
+  releaseB.open();
+  await bMoved.promise;
+  releaseC.open();
+  const cOutcome = await cDone;
+  releaseBMove.open();
+  const bOutcome = await bDone;
+
+  assert.equal(aOutcome.ok, false, 'A must not publish');
+  assert.equal(cOutcome.ok, true, 'C publishes and reports success');
+  assert.equal(
+    await readFile(join(destination, 'a.json'), 'utf8'),
+    'C',
+    `C reported success, so its output must survive (B: ${bOutcome.ok ? 'ok' : bOutcome.error.name})`,
+  );
+});
+
+function gate() {
+  let open;
+  const promise = new Promise((resolve) => {
+    open = resolve;
+  });
+  return { promise, open };
+}
+
+async function settle(promise) {
+  try {
+    await promise;
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error };
+  }
+}
