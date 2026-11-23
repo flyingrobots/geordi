@@ -4,7 +4,7 @@
 
 ### CI
 
-- Make the toolchain ready for the open Dependabot groups (flyingrobots/geordi#73). Root cause of the failing `Test` job on the dev-tooling group: `typescript-eslint` 8.x peers on `typescript <6.1.0` and throws at load time on TypeScript 7, so `pnpm lint` fails. `.github/dependabot.yml` now ignores TypeScript major updates until typescript-eslint supports 7. With the newer `typescript-eslint` and `vitest` 5 nine new lint findings in three test sources (`no-meaningless-void-operator`, `no-unsafe-class-instance-assignment`) are fixed without suppressions (the randomized resize test timeout was fixed separately on main)
+- Make the toolchain ready for the open Dependabot groups (flyingrobots/geordi#73). Root cause of the failing `Test` job on the dev-tooling group: `typescript-eslint` 8.x peers on `typescript <6.1.0` and throws at load time on TypeScript 7, so `pnpm lint` fails. `.github/dependabot.yml` now ignores TypeScript major updates until typescript-eslint supports 7. The newer `typescript-eslint` also reports nine new lint findings in three test sources (`no-meaningless-void-operator`, `no-unsafe-class-instance-assignment`) are fixed without suppressions (the randomized resize test timeout was fixed separately on main)
 - Pin the Rust toolchain to 1.96.0 with `rust-toolchain.toml` and install that toolchain in CI instead of floating `stable`, so new compiler lints no longer fail CI on unchanged code (flyingrobots/geordi#158)
 
 ### Fixes
