@@ -517,14 +517,23 @@ function pushErrorScopes(device: WebGpuDevice): void {
   }
 }
 
+/**
+ * Pop the scopes {@link pushErrorScopes} pushed. Every pop is issued before
+ * the first one resolves: the scope stack belongs to the whole device, so a
+ * pop issued later could take a scope that other work pushed meanwhile.
+ */
 async function popErrorScopes(device: WebGpuDevice): Promise<string | null> {
-  const messages: string[] = [];
-  for (const _filter of ERROR_FILTERS) {
-    const error = await device.popErrorScope();
-    if (error !== null) {
-      messages.push(error.message);
+  // An async callback runs synchronously up to its first await, so all the
+  // pops are issued inside map().
+  const pops = ERROR_FILTERS.map(async () => {
+    const pending = device.popErrorScope();
+    try {
+      return (await pending)?.message ?? null;
+    } catch (rejection) {
+      return `popErrorScope rejected: ${String(rejection)}`;
     }
-  }
+  });
+  const messages = (await Promise.all(pops)).filter((message) => message !== null);
   return messages.length === 0 ? null : messages.join('; ');
 }
 
@@ -800,6 +809,13 @@ class WebGpuPresenter implements WebGpuSurfacePresenter {
     const bytesPerRow = alignedBytesPerRow(frame.canvasPxW * WEBGPU_RGBA8_TEXEL_BYTES);
     const padded = await readTexture(device, this.resources.target, frame.canvasPxW, frame.canvasPxH, bytesPerRow);
     const rgba = stripRowPadding(padded, frame.canvasPxW, frame.canvasPxH, bytesPerRow);
+    const translucent = rgba.findIndex((value, index) => index % 4 === 3 && value !== 255);
+    if (translucent >= 0) {
+      const pixel = (translucent - 3) / 4;
+      return shaderFault(
+        `readback pixel (${String(pixel % frame.canvasPxW)}, ${String(Math.floor(pixel / frame.canvasPxW))}) has alpha ${String(rgba[translucent])}; the canonical frame is opaque`,
+      );
+    }
     const points = options.probes ?? [
       [0, 0],
       [frame.canvasPxW - 1, 0],
