@@ -11,6 +11,11 @@ and `crates/geordi-renderer` (runtime profile negotiation, `RenderedImage` const
 This page describes what exists on `main`: the artifact contract, its validator, its receipt and
 the runtime negotiation check. Geordi contains no ray tracer. Nothing here renders a pixel.
 
+> **Status.** `geordi-ray-traced-scene/1` is not yet frozen. No released consumer exists. Breaking
+> changes to it are recorded in [`CHANGELOG.md`](../CHANGELOG.md) under "BREAKING CHANGES". It becomes
+> a frozen contract, after which any incompatible change requires `/2`, only when a release or a
+> consumer first pins it.
+
 > **Not claimed.** Geordi does not claim `geordi/ray-traced-3d/1`. The design's proof gates
 > (thread invariance, two CPU architectures agreeing, and an artifact render matching lumen's
 > built-in render) have not run. The validator and fixtures exist so that a runtime, planned in

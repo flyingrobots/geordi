@@ -844,7 +844,10 @@ The maintainer settled the open questions on 2026-11-13 ([#152](https://github.c
     `radiance`, which is what it is. The Rust DTO, the validator, the reference page and the
     fixtures follow: a directional light with `radiance` is refused as an unknown field, and the
     diagnostic for the light's range is `GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE`, with no alias for
-    the old name. `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE` now covers the sky only.
+    the old name. `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE` now covers the sky only. This is allowed
+    inside `/1` because `geordi-ray-traced-scene/1` is not yet frozen: no released consumer exists,
+    and it becomes a frozen contract, after which any incompatible change requires `/2`, only when a
+    release or a consumer first pins it.
 11. **Self-intersection follows Bunny.** Amended 2026-11-22
     ([#161](https://github.com/flyingrobots/geordi/issues/161)). The text above proposed excluding
     the primitive just hit with no offset. Bunny's "Alternatives not chosen" records that this

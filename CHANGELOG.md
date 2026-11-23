@@ -17,7 +17,8 @@
   `sha256:5ea6b6085b5178fcda09fc966737e44cd5c731ed311e4fcd601ddf935a480a24`. Why now: Geordi is pre-1.0,
   no consumer constructs these types yet (Lumen has no dependency on Geordi), and a stale name inside a
   public error code costs more later than the break costs now. Bunny's convention, which this follows,
-  is "A directional light's value is irradiance." (flyingrobots/geordi#161)
+  is "A directional light's value is irradiance." The identifier stays `geordi-ray-traced-scene/1`
+  because that artifact is not yet frozen: no released consumer exists. (flyingrobots/geordi#161)
 
 ### Bug Fixes
 
