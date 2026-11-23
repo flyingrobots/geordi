@@ -70,7 +70,7 @@ for (const { label, filePath } of TARGETS) {
   for (const [name, code] of Object.entries(MUST_NOT_REPORT)) {
     test(`does not report (${label}): ${name}`, async () => {
       const findings = await loopAllocationFindings(code, filePath);
-      assert.deepEqual(findings, [], `unexpected finding for: ${code}`);
+      assert.deepEqual([...findings], [], `unexpected finding for: ${code}`);
     });
   }
 }
