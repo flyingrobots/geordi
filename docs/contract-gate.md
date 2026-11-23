@@ -33,7 +33,7 @@ lists four kinds of entry:
   without `"private": true` is one contract, `<package name>/<major version>`, such as
   `@flyingrobots/geordi-core/0`, compared by its public TypeScript API. The member's status is
   `draft` and applies to every package; the schema allows nothing else, because no version model
-  for freezing a package API exists yet. Marking a package `private`, renaming it, raising its major
+  for freezing a package API exists yet (flyingrobots/geordi#224). Marking a package `private`, renaming it, raising its major
   version or removing the member removes the contract, which needs a change record like any other
   removal.
 - **`ungated`**: a public contract the gate does not compare yet, with its documented status and

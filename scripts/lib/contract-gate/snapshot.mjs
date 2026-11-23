@@ -294,7 +294,9 @@ function copyCrate(tree, crate, cacheRoot) {
   digestDirectory(tree.dir, crate, hash);
   const digest = hash.digest('hex');
   const dir = join(cacheRoot, 'crates', digest);
-  if (!existsSync(join(dir, '.contract-gate-complete'))) {
+  // A copy without its manifest is not complete, whatever its marker says: copies made before
+  // the crate filter was fixed (flyingrobots/geordi#219) were empty.
+  if (!existsSync(join(dir, '.contract-gate-complete')) || !existsSync(join(dir, ...crate.split('/'), 'Cargo.toml'))) {
     const staging = `${dir}.${String(process.pid)}.partial`;
     rmSync(staging, { recursive: true, force: true });
     mkdirSync(staging, { recursive: true });
