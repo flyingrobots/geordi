@@ -415,7 +415,7 @@ fn adapter_message(request: &RenderRequest, outcome: &RenderOutcome) -> (Value, 
                 "vendor": adapter.vendor,
                 "device": adapter.device,
                 "detail": format!(
-                    "frame executed by a {} adapter",
+                    "frame executed by an adapter of device class {}",
                     adapter.device_class.name()
                 ),
             }),
