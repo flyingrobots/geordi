@@ -1,4 +1,4 @@
-import type { JsonObject, JsonValue } from '@flyingrobots/geordi-core';
+import { parseJsonValue, type JsonObject, type JsonValue } from '@flyingrobots/geordi-core';
 
 import { assertCellMetrics, type AtlasBitmap } from './atlas.js';
 import { BackendUnavailableError, BijouGpuValidationError, RendererFaultError } from './errors.js';
@@ -24,6 +24,7 @@ import { preparedBufferBytes } from './prepare.js';
 import type { EndpointReceipt, EndpointReceiptAdapter, EndpointReceiptProbe } from './receipt.js';
 import { parseHexColor, REFERENCE_DEFAULT_BG, REFERENCE_DEFAULT_FG } from './reference.js';
 import { sha256Hex, utf8Bytes } from './sha256.js';
+import { BIJOU_SHADER_MANIFEST_FILE, requireShaderText, type ShaderSourcePort } from './shader-source.js';
 import {
   createSurfaceDamageState,
   packSurfaceDamage,
@@ -151,6 +152,26 @@ function manifestInteger(value: JsonValue | undefined, path: string): number {
   return typeof value === 'number' && Number.isInteger(value) && value >= 0
     ? value
     : shaderFault(`shader manifest ${path} is not a non-negative integer`);
+}
+
+/**
+ * Read the assembled WGSL and the manifest from `port` and decode them with
+ * {@link decodeBijouSurfaceShader}, which refuses any WGSL byte the manifest
+ * does not pin.
+ *
+ * @throws RendererFaultError when the port lacks either file, the manifest is
+ *   not JSON, or {@link decodeBijouSurfaceShader} refuses them.
+ */
+export function loadBijouSurfaceShader(port: ShaderSourcePort): BijouSurfaceShaderLayout {
+  const wgsl = requireShaderText(port, SURFACE_WGSL_NAME, 'webgpu');
+  const manifestText = requireShaderText(port, BIJOU_SHADER_MANIFEST_FILE, 'webgpu');
+  let manifest: JsonValue;
+  try {
+    manifest = parseJsonValue(manifestText);
+  } catch (error) {
+    return shaderFault(`shader manifest from ${port.description} is not JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return decodeBijouSurfaceShader({ wgsl, manifest });
 }
 
 /**
@@ -410,9 +431,13 @@ export function classifyWebGpuAdapter(adapter: WebGpuAdapter): WebGpuAdapterClas
   };
 }
 
-/** Options of {@link createWebGPUSurfacePresenter}. */
-export interface WebGpuSurfacePresenterOptions {
-  readonly shader: BijouSurfaceShaderSource;
+/** Options of {@link createWebGPUSurfacePresenterCore}. */
+export interface WebGpuSurfacePresenterCoreOptions {
+  /**
+   * Where `bijou-surface.wgsl` and the shader manifest come from. The WGSL is
+   * refused unless it hashes to the manifest's `assembledWgslSha256`.
+   */
+  readonly shaderSource: ShaderSourcePort;
   /**
    * The atlas to read. The presenter owns its dirty rectangles: it calls
    * `takeDirtyRects()` on every present.
@@ -544,7 +569,7 @@ function defaultGpu(): WebGpuGpu | undefined {
 
 async function requestDevice(
   gpu: WebGpuGpu,
-  powerPreference: WebGpuSurfacePresenterOptions['powerPreference'],
+  powerPreference: WebGpuSurfacePresenterCoreOptions['powerPreference'],
 ): Promise<{ adapter: WebGpuAdapter; device: WebGpuDevice }> {
   let adapter: WebGpuAdapter | null;
   try {
@@ -680,7 +705,7 @@ class WebGpuPresenter implements WebGpuSurfacePresenter {
     private readonly gpu: WebGpuGpu,
     public readonly canvasFormat: WebGpuDisplayFormat,
     private readonly layout: BijouSurfaceShaderLayout,
-    private readonly options: WebGpuSurfacePresenterOptions,
+    private readonly options: WebGpuSurfacePresenterCoreOptions,
     adapter: WebGpuAdapter,
     resources: DeviceResources,
     canvasPx: PresenterCanvasPx,
@@ -1202,7 +1227,9 @@ async function readTexture(
 }
 
 /**
- * Create a WebGPU presenter on `canvas`.
+ * The WebGPU presenter core: create a presenter on `canvas` with the WGSL and
+ * manifest from `options.shaderSource`. `createWebGPUSurfacePresenter()` is
+ * the same with the bundled adapter wired in by default.
  *
  * Capability is checked first: a missing `navigator.gpu`, no adapter, a
  * rejected `requestDevice()`, or a canvas without a `webgpu` context reject
@@ -1211,9 +1238,9 @@ async function readTexture(
  * `-srgb` preferred format reject with {@link RendererFaultError}; they are
  * never reported as unavailability.
  */
-export async function createWebGPUSurfacePresenter(
+export async function createWebGPUSurfacePresenterCore(
   canvas: WebGpuPresenterCanvas,
-  options: WebGpuSurfacePresenterOptions,
+  options: WebGpuSurfacePresenterCoreOptions,
 ): Promise<WebGpuSurfacePresenter> {
   const gpu = options.gpu ?? defaultGpu();
   if (gpu === undefined) {
@@ -1226,7 +1253,7 @@ export async function createWebGPUSurfacePresenter(
     throw new BackendUnavailableError('webgpu', 'the canvas has no webgpu context');
   }
   try {
-    const layout = decodeBijouSurfaceShader(options.shader);
+    const layout = loadBijouSurfaceShader(options.shaderSource);
     const format = selectWebGpuCanvasFormat(gpu.getPreferredCanvasFormat());
     const canvasPx = resolvePresenterCanvasPx(
       options.size ?? { cssWidth: canvas.width, cssHeight: canvas.height, dpr: 1 },
@@ -1254,7 +1281,8 @@ export async function createWebGPUSurfacePresenter(
 export interface WebGpuRefusalReceiptInput {
   /** The refusal being recorded. A renderer fault is not a refusal. */
   readonly error: BackendUnavailableError;
-  readonly shader: BijouSurfaceShaderSource;
+  /** The shader that would have run, read and checked like the presenter's. */
+  readonly shaderSource: ShaderSourcePort;
   readonly atlas: PresenterAtlasSource;
   /** The surface that would have been presented. */
   readonly target: GpuPackedSurface;
@@ -1276,7 +1304,7 @@ export function createWebGpuRefusalReceipt(input: WebGpuRefusalReceiptInput): En
   if (!(input.error instanceof BackendUnavailableError)) {
     return shaderFault('only a BackendUnavailableError can be recorded as capability-refused');
   }
-  const layout = decodeBijouSurfaceShader(input.shader);
+  const layout = loadBijouSurfaceShader(input.shaderSource);
   const canvasPx = resolvePresenterCanvasPx(input.size);
   const state = createSurfaceDamageState();
   const packed = packSurfaceDamage(state, input.target, input.target, {
