@@ -121,9 +121,12 @@ const run = (command, args, options = {}) => {
   return { ok: failure === null, failure, stdout: result.stdout ?? '', stderr };
 };
 
+// The failure plus the process's own stderr, so a panic message or a multi-line Cargo diagnostic
+// survives. Only the last 4,000 characters are kept, so one refusal line stays readable.
 const describeFailure = (result) => {
-  const errors = result.stderr.split('\n').filter((entry) => entry.startsWith('error'));
-  return [result.failure, ...errors].join('; ');
+  const stderr = result.stderr.trim();
+  const tail = stderr.length > 4000 ? `...${stderr.slice(-4000)}` : stderr;
+  return tail === '' ? result.failure : `${result.failure}: ${tail}`;
 };
 
 const toolchain = () => {
