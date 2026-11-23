@@ -44,6 +44,14 @@
 
 ### Fixes
 
+- **`geordi-ir`, `geordi-renderer`**: scenes Lumen's `Scene::new` refuses no longer validate and
+  negotiate (flyingrobots/geordi#166). A scene with no triangle is refused with the new
+  `GEORDI_E_RT_SCENE_EMPTY`. A camera `up` whose angle to `forward` has a sine below `2^-15` is
+  refused with `GEORDI_E_RT_CAMERA_DEGENERATE`, checked exactly in 256-bit integers (the previous
+  rule refused only an exactly zero cross product). `GeordiRayTracedRuntimeProfile` gains
+  `max_film_pixels`, and `assert_ray_traced_runtime_profile` refuses a larger film; this is a
+  breaking change for code that constructs the profile. New fixtures: `failures/scene-empty`,
+  `failures/camera-up-nearly-parallel` and `negotiation/film-pixels-above-runtime-cap`.
 - **`@flyingrobots/geordi-bijou-gpu`**: the package now ships its own shaders, behind a port
   (flyingrobots/geordi#185). Before, it published only `dist`, and both GPU presenters required
   the host to pass the package's generated shader text. Now:

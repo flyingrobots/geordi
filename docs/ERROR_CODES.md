@@ -308,8 +308,8 @@ with a JSON path. Field-level detail is in
 ### `GEORDI_E_RT_CAMERA_DEGENERATE`
 
 **Severity**: Error
-**Message**: The camera `forward` or `up` is zero, or they are parallel
-**Fix**: Give non-zero `forward` and `up` that are not parallel.
+**Message**: The camera `forward` or `up` is zero, or the sine of the angle between them is below `2^-15`
+**Fix**: Give non-zero `forward` and `up` that are clearly not parallel: the sine of the angle between them must be at least `2^-15`.
 
 ### `GEORDI_E_RT_TAN_HALF_FOV_Y_OUT_OF_RANGE`
 
@@ -328,6 +328,12 @@ with a JSON path. Field-level detail is in
 **Severity**: Error
 **Message**: The total primitive count exceeds `2^32 - 1`
 **Fix**: Keep the total instanced triangle count at or below `2^32 - 1`.
+
+### `GEORDI_E_RT_SCENE_EMPTY`
+
+**Severity**: Error
+**Message**: The instances contribute no triangle
+**Fix**: Add an instance of a mesh whose `counts.triangles` is at least 1.
 
 ### `GEORDI_E_RT_LIGHT_UNSUPPORTED`
 
