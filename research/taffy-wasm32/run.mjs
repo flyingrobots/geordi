@@ -207,7 +207,10 @@ const runBrowser = async (artifact) => {
     const encoded = await page.evaluate(async (moduleBase64) => {
       const binary = Uint8Array.from(atob(moduleBase64), (character) => character.charCodeAt(0));
       const { instance } = await WebAssembly.instantiate(binary, {});
-      const view = new Uint8Array(instance.exports.memory.buffer, instance.exports.dump_ptr(), instance.exports.dump_len());
+      // Run the experiment before touching memory.buffer: it grows memory, which detaches the old buffer.
+      const length = instance.exports.dump_len();
+      const pointer = instance.exports.dump_ptr();
+      const view = new Uint8Array(instance.exports.memory.buffer, pointer, length);
       let text = '';
       for (let offset = 0; offset < view.length; offset += 0x8000) {
         text += String.fromCharCode(...view.subarray(offset, offset + 0x8000));
