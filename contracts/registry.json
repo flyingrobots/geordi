@@ -54,6 +54,11 @@
   ],
   "messageSchemaFamilies": [
     {
+      "directory": "schemas/geordi-ban-nondeterminism",
+      "status": "draft",
+      "statusEvidence": "docs/nondeterminism-rules.md does not say whether these message schemas are frozen; each declares x-schema-version 1.0.0. Recorded as draft for the maintainer to rule on."
+    },
+    {
       "directory": "schemas/geordi-bijou-shader-sources",
       "status": "draft",
       "statusEvidence": "docs/bijou-gpu-shaders.md does not say whether these message schemas are frozen; each declares x-schema-version 1.0.0. Recorded as draft for the maintainer to rule on."
