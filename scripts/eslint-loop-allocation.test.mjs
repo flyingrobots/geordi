@@ -15,6 +15,12 @@ const eslint = new ESLint({ cwd: REPO_ROOT });
 
 async function loopAllocationFindings(code, filePath) {
   const [result] = await eslint.lintText(code, { filePath });
+  const fatal = result.messages.filter((message) => message.fatal);
+  assert.deepEqual(
+    fatal.map((message) => message.message),
+    [],
+    `the fixture must parse: ${code}`,
+  );
   return result.messages.filter(
     (message) => message.ruleId === 'no-restricted-syntax' && MESSAGE_PATTERN.test(message.message),
   );
