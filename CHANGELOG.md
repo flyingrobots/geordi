@@ -30,6 +30,20 @@
 
 ### Bug Fixes
 
+- **`@flyingrobots/geordi-bijou-gpu`**: the package now ships the procedural glyph table, so the Canvas 2D
+  presenter works from the packed package alone. `createCanvas2DSurfacePresenter({ canvas, atlas })`
+  uses the bundled table. **API change:** `proceduralTable` is now optional (it was required); a supplied
+  table is verified against the pin and refused with `GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE` before a
+  context is requested. The factory is now a composition root over the new
+  `createCanvas2DSurfacePresenterCore()` (required, unverified table), as for WebGL2. New exports:
+  `loadBundledProceduralGlyphTable`, `BUNDLED_PROCEDURAL_GLYPH_TABLE_TEXT`, `verifyProceduralGlyphTable`,
+  `decodeProceduralGlyphTableText` (refuses text off `PROCEDURAL_GLYPH_TABLE_SHA256`), the subpath
+  `./procedural-glyphs` and the file `./procedural-glyphs.json` (published as `procedural/procedural-glyphs.json`).
+  `scripts/generate-bijou-gpu-shader-sources.mjs` embeds the table in
+  `bijou-procedural-glyphs.generated.ts`, keeps the published copy equal to the fixture, and its `--check`
+  gate fails on drift. Receipts and frame hashes are unchanged; the default `executedArtifactSha256` changes
+  because the hashed function is now `createCanvas2DSurfacePresenterCore`. The packed-package smoke test
+  builds the presenter from the tarball with no table (flyingrobots/geordi#205)
 - **Rust toolchain** (`rust-toolchain.toml`, `Cargo.toml`, CI): the pin now includes the
   `wasm32-unknown-unknown` target, the workspace `rust-version` is 1.96 (was 1.93), and CI installs the
   toolchain unconditionally from the file and builds `geordi-ir` for wasm32. A contract test,

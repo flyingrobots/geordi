@@ -1,6 +1,7 @@
 export * from './atlas.js';
 export * from './canvas2d-compose.js';
 export * from './canvas2d-presenter.js';
+export * from './canvas2d-presenter-default.js';
 export * from './errors.js';
 export * from './glyph-atlas.js';
 export * from './glyph-atlas-browser.js';
@@ -11,6 +12,7 @@ export * from './presenter.js';
 export * from './presenter-atlas.js';
 export * from './presenter-host.js';
 export * from './procedural.js';
+export * from './procedural-glyphs-bundled.js';
 export * from './procedural-table.js';
 export * from './receipt.js';
 export * from './reference.js';

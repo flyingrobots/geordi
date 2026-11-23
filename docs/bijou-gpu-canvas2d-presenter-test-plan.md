@@ -72,6 +72,21 @@ defaults and canvas size. "The goldens" are the frame digests in
 | BG-C2D-25 | Context restoration | One whole-canvas blit from the retained frame without a present | `repaints the retained frame when a lost 2D context is restored, without a new present` |
 | BG-C2D-26 | Grid larger than the canvas | Refused; the previous receipt is dropped; full redraw after the canvas grows | `refuses a grid larger than the canvas, drops the last receipt, and redraws fully once it fits` |
 
+## Bundled procedural table
+
+[flyingrobots/geordi#205](https://github.com/flyingrobots/geordi/issues/205). Tests are in
+`packages/bijou-gpu/src/procedural-glyphs-bundled.test.ts`, `scripts/bijou-gpu-shader-sources.test.mjs`
+and the packed-package smoke test `scripts/smoke-bijou-gpu-packed-package.mjs`.
+
+| ID | Case | Oracle | Test |
+| --- | --- | --- | --- |
+| BG-C2D-28 | No `proceduralTable` argument | Paint and erase frame digests equal the goldens, and the serialized receipts equal those of a presenter given the fixture table; in Chrome the existing paint -> erase tests run on the bundled table | `renders from only a canvas and an atlas, hashing to the suite goldens with the same receipts`; in Chrome: `presents the paint -> erase fixture bit-exactly to the CPU oracle, cell by cell and by frame hash` |
+| BG-C2D-29 | Altered supplied table | `GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE` at the first differing word; no context requested | `refuses a supplied table that is not the pinned one before it asks for a context` |
+| BG-C2D-30 | Bundled table is the pinned fixture | Text equals the fixture and hashes to `PROCEDURAL_GLYPH_TABLE_SHA256`; the published JSON copy equals it; decoded once to 128 and 32 words | `embeds the fixture byte for byte, at the digest the ABI pins`, `ships a published JSON copy equal to the fixture`, `loads to 128 box and 32 block words, once` |
+| BG-C2D-31 | Text decoding and verification | Text off the pin (extra byte, CRLF) is refused; a table with one flipped word is refused | `decodes text only at the pinned digest`, `verifies a supplied table against the pin and refuses an altered one` |
+| BG-C2D-32 | Drift gate | `--check` reports a drifted or missing published copy and writes nothing; an edited or CRLF fixture and a stale `PROCEDURAL_GLYPH_TABLE_SHA256` are refused; `--write` restores | `--check reports a drifted published table copy and a missing one, writes nothing, and --write restores it`, `refuses an edited or CRLF-converted table fixture, and a stale PROCEDURAL_GLYPH_TABLE_SHA256, writing nothing` |
+| BG-C2D-33 | From the packed tarball alone | The tarball holds `procedural/procedural-glyphs.json`; a scratch consumer resolves `./procedural-glyphs.json` and `./procedural-glyphs` by package name, gets the pinned digest, builds the presenter with no table and refuses an altered one | `node scripts/smoke-bijou-gpu-packed-package.mjs` (`procedural-table`, `canvas2d-presenter` and `canvas2d-presenter-refusal` lines) |
+
 ## Fuzz and stress
 
 | ID | Case | Oracle | Test |

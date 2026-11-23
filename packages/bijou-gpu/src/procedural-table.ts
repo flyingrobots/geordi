@@ -1,4 +1,4 @@
-import type { JsonValue } from '@flyingrobots/geordi-core';
+import { parseJsonValue, type JsonValue } from '@flyingrobots/geordi-core';
 
 import { BijouGpuValidationError } from './errors.js';
 import {
@@ -10,6 +10,7 @@ import {
   stringAt,
   type DecodeFail,
 } from './json-decode.js';
+import { sha256Hex, utf8Bytes } from './sha256.js';
 
 export const PROCEDURAL_GLYPH_TABLE_SCHEMA = 'bijou-procedural-glyphs/1';
 export const BIJOU_SURFACE_GPU_ABI = 'bijou-surface-gpu/1';
@@ -88,6 +89,25 @@ export function decodeProceduralGlyphTable(input: JsonValue): ProceduralGlyphTab
   validateBraille(input.braille);
 
   return { schemaVersion: PROCEDURAL_GLYPH_TABLE_SCHEMA, boxGlyphs, blockGlyphs };
+}
+
+/**
+ * Decode the exact text of `fixtures/bijou-gpu/procedural-glyphs.json`.
+ *
+ * The UTF-8 bytes of `text` must hash to {@link PROCEDURAL_GLYPH_TABLE_SHA256}
+ * before anything is parsed, so a table that was edited, or whose line endings
+ * were converted, is refused.
+ *
+ * @throws BijouGpuValidationError `GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE` at
+ *   `$` when the digest differs from the pin, and at the failing path when the
+ *   text is not a valid table.
+ */
+export function decodeProceduralGlyphTableText(text: string): ProceduralGlyphTable {
+  const digest = sha256Hex(utf8Bytes(text));
+  if (digest !== PROCEDURAL_GLYPH_TABLE_SHA256) {
+    return fail('$', `SHA-256 ${digest} is not the pinned ${PROCEDURAL_GLYPH_TABLE_SHA256}`);
+  }
+  return decodeProceduralGlyphTable(parseJsonValue(text));
 }
 
 function decodeSection(

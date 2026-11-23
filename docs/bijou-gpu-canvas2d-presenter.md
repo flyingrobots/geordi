@@ -44,7 +44,7 @@ canvas is never read during drawing, so repainting a partial-opacity cell cannot
 ## Creating a presenter
 
 ```ts
-createCanvas2DSurfacePresenter({ canvas, atlas, proceduralTable, defaultFg?, defaultBg?, dpr?,
+createCanvas2DSurfacePresenter({ canvas, atlas, proceduralTable?, defaultFg?, defaultBg?, dpr?,
   probePoints?, adapter?, executedArtifactSha256? })
 ```
 
@@ -54,12 +54,15 @@ The function is a synchronous `GpuSurfacePresenterFactory<Canvas2DSurfacePresent
 | --- | --- |
 | `canvas` | A `Canvas2DSurfaceCanvas`: an `HTMLCanvasElement` or `OffscreenCanvas`. Its current `width` and `height` are the physical canvas size until the first `resize()`. |
 | `atlas` | A `Canvas2DGlyphAtlas`: `bitmap`, `resolveSlot`, `atlasGeneration` and `getReceiptAssets()`. A `GlyphAtlas` satisfies it. So does a fixed atlas such as the bundled test glyph pack. The cell size is the atlas's. |
-| `proceduralTable` | From `decodeProceduralGlyphTable()` over `fixtures/bijou-gpu/procedural-glyphs.json`. |
+| `proceduralTable` | Optional. Defaults to the table the package bundles (`loadBundledProceduralGlyphTable()`), so a consumer of the packed package needs no file from this repository. A supplied table is compared word by word with the pinned table before anything is drawn, and anything else is refused. See [Procedural glyph table](#procedural-glyph-table). |
 | `defaultFg`, `defaultBg` | `uDefaultFg` and `uDefaultBg` as uppercase `#RRGGBB`. Default to `REFERENCE_DEFAULT_FG` and `REFERENCE_DEFAULT_BG`. |
 | `dpr` | The device pixel ratio recorded until the first `resize()`. Default `1`. |
 | `probePoints` | Physical pixels sampled into receipt `probes`. Default: the top-left pixel, the centre pixel, and the bottom-right pixel. |
 | `adapter` | Receipt `adapter.name` (default `canvas2d-imagedata`) and `adapter.driver` (default `navigator.userAgent`, or empty where there is none). |
 | `executedArtifactSha256` | A host-pinned digest, such as the SHA-256 of the shipped bundle. See [Executed artifact](#executed-artifact). |
+
+`createCanvas2DSurfacePresenterCore()` is the same presenter without the default and without the
+check: it requires `proceduralTable` and trusts it. Hosts call `createCanvas2DSurfacePresenter()`.
 
 The context is requested as `getContext('2d', { alpha: false, colorSpace: 'srgb',
 willReadFrequently: true })`. No other context is requested. A canvas that returns no 2D context
@@ -67,6 +70,31 @@ throws `BackendUnavailableError` with backend `canvas2d`.
 
 Every host object is typed structurally (`Canvas2DSurfaceCanvas`, `Canvas2DSurfaceContext`,
 `Canvas2DImageData`), so the package compiles without DOM typings.
+
+### Procedural glyph table
+
+The Box Drawing and Block Elements glyphs are drawn from the procedural glyph table of
+`bijou-surface-gpu/1`, `fixtures/bijou-gpu/procedural-glyphs.json`, whose SHA-256 is
+`PROCEDURAL_GLYPH_TABLE_SHA256`. The package ships it three ways, all byte-identical to the fixture:
+
+| Where | For |
+| --- | --- |
+| `loadBundledProceduralGlyphTable()` and `BUNDLED_PROCEDURAL_GLYPH_TABLE_TEXT`, from `@flyingrobots/geordi-bijou-gpu` or `@flyingrobots/geordi-bijou-gpu/procedural-glyphs` | Any runtime. The text is embedded in a generated module and checked against the pin the first time it is decoded. |
+| `@flyingrobots/geordi-bijou-gpu/procedural-glyphs.json` (the published file `procedural/procedural-glyphs.json`) | Node and native tooling. |
+| `decodeProceduralGlyphTableText(text)` | A host that holds the text itself. It refuses any text whose SHA-256 is not the pin, with `GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE` at `$`. |
+
+`renderReferenceRgba()` still takes the table as its fourth argument; pass
+`loadBundledProceduralGlyphTable()`.
+
+`proceduralTable` was required before and is now optional. Passing a table still works and is now
+verified: a table whose words differ from the pinned ones throws `BijouGpuValidationError`
+`GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE` at `options.proceduralTable.boxGlyphs[n]` (or
+`blockGlyphs[n]`) before a 2D context is requested. Receipts and frame hashes do not change. The
+default `executedArtifactSha256` does, because it hashes the source text of the executed functions,
+which now names `createCanvas2DSurfacePresenterCore`.
+
+The generator that embeds the table is `scripts/generate-bijou-gpu-shader-sources.mjs`; see
+[Bijou GPU shaders](./bijou-gpu-shaders.md#bundled-modules).
 
 ## `present(current, target, ctx)`
 
@@ -158,7 +186,7 @@ for Canvas 2D. By default it is the SHA-256 of `canvas2DExecutedArtifactSource()
 source text the engine reports through `Function.prototype.toString` for the pixel-path functions,
 joined by newlines:
 
-- `createCanvas2DSurfacePresenter`, `composeCanvas2DCell` and `fillCanvas2DRect`;
+- `createCanvas2DSurfacePresenterCore`, `composeCanvas2DCell` and `fillCanvas2DRect`;
 - `packSurfaceDamage`;
 - `lerpU8`, `divRoundEven`, `bunnyU32DivRoundEven`, `bunnyU32EllipseClassify`, `satSub`
   and `absDiff`;
@@ -190,6 +218,7 @@ made on the first present and after a canvas size change.
 | --- | --- |
 | No 2D context | `BackendUnavailableError` (`GEORDI_E_BIJOU_BACKEND_UNAVAILABLE`), backend `canvas2d` |
 | Present or resize after dispose; `createImageData` or `getImageData` returned the wrong size | `RendererFaultError` (`GEORDI_E_BIJOU_RENDERER_FAULT`) |
+| A supplied `proceduralTable` that is not the pinned table | `BijouGpuValidationError` `GEORDI_E_BIJOU_INVALID_PROCEDURAL_TABLE`, before any context is requested |
 | Bad resize input, grid larger than the canvas, bad `dpr`, `executedArtifactSha256` or `ctx.inputReceiptSha256` | `BijouGpuValidationError` `GEORDI_E_BIJOU_INVALID_SURFACE` |
 | Bad theme colour | `GEORDI_E_BIJOU_INVALID_SURFACE`, from `parseHexColor` |
 | Probe point outside the canvas | `GEORDI_E_BIJOU_INVALID_SURFACE`, from `readPixel` |

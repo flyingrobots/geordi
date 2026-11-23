@@ -2,7 +2,6 @@ import { parseJsonValue, type JsonObject } from '@flyingrobots/geordi-core';
 
 import eraseFrameText from '../../../fixtures/bijou-gpu/width1-erase.packed-bijou-cells.json?raw';
 import paintFrameText from '../../../fixtures/bijou-gpu/width1-paint.packed-bijou-cells.json?raw';
-import proceduralTableText from '../../../fixtures/bijou-gpu/procedural-glyphs.json?raw';
 import suiteText from '../../../fixtures/bijou-gpu/width1-conformance-suite.json?raw';
 import {
   assertBitExactFrameHash,
@@ -13,7 +12,7 @@ import {
   createWebGPUSurfacePresenter,
   createWebGPUSurfacePresenterWithUnpinnedShaderForTesting,
   createWebGpuRefusalReceipt,
-  decodeProceduralGlyphTable,
+  loadBundledProceduralGlyphTable,
   FrameHashMismatchError,
   GLYPH_KIND_BLOCK,
   GLYPH_KIND_BOX,
@@ -161,7 +160,7 @@ function suiteGeometry(): SuiteGeometry {
 }
 
 const GEOMETRY = suiteGeometry();
-const TABLE = decodeProceduralGlyphTable(parseJsonValue(proceduralTableText));
+const TABLE = loadBundledProceduralGlyphTable();
 const PACK = createTestGlyphPack();
 const PAINT = parsePackedBijouCellsReceipt(parseJsonValue(paintFrameText));
 const ERASE = parsePackedBijouCellsReceipt(parseJsonValue(eraseFrameText));
