@@ -15,6 +15,19 @@
 
 ### Features
 
+- **`@flyingrobots/geordi-bijou-gpu`**: browser WebGPU presenter for the `bijou-surface-gpu/1` ABI
+  (flyingrobots/geordi#175). `createWebGPUSurfacePresenter(canvas, options)` refuses a missing
+  `navigator.gpu`, adapter, device or canvas context with `BackendUnavailableError`, and reports
+  shader text that does not match the manifest digest, compile and pipeline errors and an `-srgb`
+  canvas format as `RendererFaultError`. It runs the canonical `bijou-surface.wgsl` verbatim into
+  an `rgba8uint` target and shows it through a separate `bgra8unorm` or `rgba8unorm` display pass.
+  Each present uploads the packer's dirty row spans from the retained staging buffer and the atlas
+  dirty rectangles with `queue.writeTexture`. `captureFrame()` reads the frame back with
+  `copyTextureToBuffer`, strips the 256-byte row padding and records a `gpu-probed` or
+  `software-probed` receipt; `createWebGpuRefusalReceipt()` records a refusal as
+  `capability-refused`. `device.lost` is recovered by re-uploading the staging buffer and the
+  atlas to a new device. `presenter-host.ts` adds host helpers every presenter can share. Browser
+  probes read back frames bit-identical to `renderReferenceRgba()`.
 - **`@flyingrobots/geordi-bijou-gpu`**: dynamic `GlyphAtlas` for the `bijou-surface-gpu/1` ABI
   (flyingrobots/geordi#172). `createGlyphAtlas()` caches width-1 glyphs by `(grapheme, bold)` in
   an `rgba8uint` bitmap at integer physical cell metrics, drawing each through an injected

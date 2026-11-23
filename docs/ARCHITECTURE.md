@@ -84,15 +84,22 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
   overflow and invalidation; no host API, pixels through an injected rasterizer
 - **Glyph atlas browser adapter** (`src/glyph-atlas-browser.ts`): a 2D-canvas rasterizer and a
   watcher that invalidates the atlas on font arrival and DPR change
+- **WebGPU presenter** (`src/webgpu-presenter.ts`, `src/webgpu-types.ts`):
+  `createWebGPUSurfacePresenter` runs `bijou-surface.wgsl` verbatim into an `rgba8uint` target,
+  uploads the packer's dirty rows and the atlas, reads frames back for receipts, and recovers from
+  `device.lost`; the WebGPU objects it calls are typed structurally
+- **Presenter host helpers** (`src/presenter-host.ts`): canvas size ingress, grid geometry, the
+  atlas source a presenter reads, and receipt assembly, shared by every presenter
 - **Test glyph pack** (`src/test-glyph-pack.ts`): explicit 8 x 16 bitmaps, no font
 - **Browser probe harness** (`harness/`, `e2e/`): Playwright + Vite
 
 **Key principle**: Bijou owns cell semantics and Bunny owns the integer primitives. This package
 is the CPU oracle that GPU presenters are compared against, plus the packer and glyph atlas they
-will share; it contains no presenter. References:
+share, and the browser WebGPU presenter. References:
 [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md),
-[`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md), and
-[`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md).
+[`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md),
+[`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md), and
+[`bijou-gpu-webgpu-presenter.md`](./bijou-gpu-webgpu-presenter.md).
 
 Its `shaders/` directory holds the canonical `bijou-surface.wgsl`, the GLSL ES 3.00 stages that
 `crates/geordi-bijou-shadergen` generates from it with pinned `naga`, and their implementation
