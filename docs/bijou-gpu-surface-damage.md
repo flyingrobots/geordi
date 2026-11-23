@@ -16,7 +16,8 @@ says how the packer exposes them.
 > [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173),
 > [flyingrobots/geordi#174](https://github.com/flyingrobots/geordi/issues/174), and
 > [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175). It contains no
-> glyph atlas; slots come from a callback. No timing has been measured.
+> glyph atlas; slots come from a callback, which the
+> [glyph atlas](./bijou-gpu-glyph-atlas.md) can supply. No timing has been measured.
 
 ## Exports
 

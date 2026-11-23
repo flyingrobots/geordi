@@ -15,6 +15,17 @@
 
 ### Features
 
+- **`@flyingrobots/geordi-bijou-gpu`**: dynamic `GlyphAtlas` for the `bijou-surface-gpu/1` ABI
+  (flyingrobots/geordi#172). `createGlyphAtlas()` caches width-1 glyphs by `(grapheme, bold)` in
+  an `rgba8uint` bitmap at integer physical cell metrics, drawing each through an injected
+  `GlyphRasterizer`; the core uses no browser API. Monochrome and colour-emoji slots get distinct
+  `glyph_kind` bits, decided by the divergence of alpha-weighted channel totals. `dirtyRects`
+  reports newly rasterized texels. A full atlas resets and marks everything dirty, incrementing
+  `generation`, as does `invalidate()`; `snapCellMetrics()` rounds CSS cell sizes to integer
+  pixels. An atlas can be passed to `packSurfaceDamage()` as its options. The browser adapter adds
+  `createCanvasGlyphRasterizer()` and `watchGlyphAtlasEnvironment()`, which invalidates on
+  `document.fonts.ready`, later font loads, and device pixel ratio changes. No texture upload is
+  included.
 - **Bijou GPU shader** (flyingrobots/geordi#170): `packages/bijou-gpu/shaders/bijou-surface.wgsl`
   is the canonical `bijou-surface-gpu/1` shader: one fullscreen-triangle vertex stage and one
   pure-`u32` fragment stage that reads the `rgba32uint` cell grid and the `rgba8uint` `GlyphAtlas`
@@ -27,7 +38,6 @@
   and the shared Bunny vectors through the translated GLSL and emits
   `geordi-bijou-gpu-kernel-receipt/1` receipts. Tests diff the executed shader against an Option
   E4 reference model and against the CPU reference oracle. No presenter is included.
-
 - **`@flyingrobots/geordi-bijou-gpu`**: dirty-union cell packer for the `bijou-surface-gpu/1` ABI
   (flyingrobots/geordi#171). `packSurfaceDamage(state, current, target, options)` lowers the cells
   named by `current.renderDirtyWords | target.renderDirtyWords` into a retained `Uint32Array`
