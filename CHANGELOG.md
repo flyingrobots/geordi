@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Bug Fixes
+
+- **Generated-directory writer** (`scripts/lib/atomic-generated-directory.mjs`): the `<destination>.lock`
+  file now records its owner (`geordi.generated-directory-lock/1`: pid, hostname, process start time,
+  token), and a writer removes it only when it can prove the owner is gone: same host and no such
+  process, or a running pid whose start time differs from the recorded one (a recycled pid). Malformed
+  metadata, a lock from another host, a running owner and an owner whose start time cannot be compared
+  all stay in place and the writer waits out the 10-second timeout, which now throws
+  `GeneratedDirectoryLockTimeoutError`. A lock that appears between the staleness check and its removal
+  is put back, and release removes the lock only if it still carries the writer's own token. A lock
+  directory left by the previous writer is never removed automatically; delete it by hand once no
+  writer runs (flyingrobots/geordi#54)
+
 ### CI
 
 - Pin the Rust toolchain to 1.96.0 with `rust-toolchain.toml` and install that toolchain in CI instead of floating `stable`, so new compiler lints no longer fail CI on unchanged code (flyingrobots/geordi#158)

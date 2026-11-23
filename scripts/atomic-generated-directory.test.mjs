@@ -1,5 +1,7 @@
-import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+/* eslint-disable no-restricted-syntax -- Tests write and read the writer's
+   private lock record directly, outside the JsonPort boundary. */
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
 import {
   mkdir,
   mkdtemp,
@@ -7,11 +9,11 @@ import {
   readdir,
   rm,
   writeFile,
-} from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { afterEach, test } from "node:test";
-import { replaceGeneratedDirectory } from "./lib/atomic-generated-directory.mjs";
+} from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { afterEach, test } from 'node:test';
+import { replaceGeneratedDirectory } from './lib/atomic-generated-directory.mjs';
 
 const scratchDirectories = [];
 
@@ -23,75 +25,75 @@ afterEach(async () => {
   );
 });
 
-test("replaces a generated directory as one complete inventory", async () => {
+test('replaces a generated directory as one complete inventory', async () => {
   const root = await scratchDirectory();
-  const destination = join(root, "generated");
-  await replaceGeneratedDirectory(destination, outputSet("old"));
+  const destination = join(root, 'generated');
+  await replaceGeneratedDirectory(destination, outputSet('old'));
 
   await Promise.all([
-    replaceGeneratedDirectory(destination, outputSet("first")),
-    replaceGeneratedDirectory(destination, outputSet("second")),
+    replaceGeneratedDirectory(destination, outputSet('first')),
+    replaceGeneratedDirectory(destination, outputSet('second')),
   ]);
 
   const inventory = (await readdir(destination)).toSorted();
-  assert.deepEqual(inventory, ["a.json", "b.json"]);
+  assert.deepEqual(inventory, ['a.json', 'b.json']);
   const values = await Promise.all(
-    inventory.map((name) => readFile(join(destination, name), "utf8")),
+    inventory.map((name) => readFile(join(destination, name), 'utf8')),
   );
   assert.ok(
-    values.every((value) => value === "first") ||
-      values.every((value) => value === "second"),
-    `expected one complete output set, received ${values.join(", ")}`,
+    values.every((value) => value === 'first') ||
+      values.every((value) => value === 'second'),
+    `expected one complete output set, received ${values.join(', ')}`,
   );
 });
 
-test("preserves the prior generated directory when staging fails", async () => {
+test('preserves the prior generated directory when staging fails', async () => {
   const root = await scratchDirectory();
-  const destination = join(root, "generated");
-  await replaceGeneratedDirectory(destination, outputSet("old"));
+  const destination = join(root, 'generated');
+  await replaceGeneratedDirectory(destination, outputSet('old'));
 
   await assert.rejects(
     replaceGeneratedDirectory(
       destination,
       new Map([
-        ["a.json", "new"],
-        ["missing/b.json", "new"],
+        ['a.json', 'new'],
+        ['missing/b.json', 'new'],
       ]),
     ),
   );
 
-  assert.equal(await readFile(join(destination, "a.json"), "utf8"), "old");
-  assert.equal(await readFile(join(destination, "b.json"), "utf8"), "old");
+  assert.equal(await readFile(join(destination, 'a.json'), 'utf8'), 'old');
+  assert.equal(await readFile(join(destination, 'b.json'), 'utf8'), 'old');
 });
 
 async function scratchDirectory() {
-  const path = await mkdtemp(join(tmpdir(), "geordi-generated-directory-"));
+  const path = await mkdtemp(join(tmpdir(), 'geordi-generated-directory-'));
   scratchDirectories.push(path);
   return path;
 }
 
 function outputSet(value) {
   return new Map([
-    ["a.json", value],
-    ["b.json", value],
+    ['a.json', value],
+    ['b.json', value],
   ]);
 }
 
 // --- Lock recovery -------------------------------------------------------
 
-const LOCK_SCHEMA = "geordi.generated-directory-lock/1";
+const LOCK_SCHEMA = 'geordi.generated-directory-lock/1';
 const DEAD_PID = 4_000_001;
-const LOCAL_HOST = "build-host";
+const LOCAL_HOST = 'build-host';
 
-test("records the identity of the lock owner while it holds the lock", async () => {
-  const destination = join(await scratchDirectory(), "generated");
+test('records the identity of the lock owner while it holds the lock', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
   let held;
 
-  await replaceGeneratedDirectory(destination, outputSet("new"), {
+  await replaceGeneratedDirectory(destination, outputSet('new'), {
     lock: {
       ...liveEnvironment(),
       afterAcquire: async () => {
-        held = JSON.parse(await readFile(`${destination}.lock`, "utf8"));
+        held = JSON.parse(await readFile(`${destination}.lock`, 'utf8'));
       },
     },
   });
@@ -99,66 +101,66 @@ test("records the identity of the lock owner while it holds the lock", async () 
   assert.equal(held.schema, LOCK_SCHEMA);
   assert.equal(held.pid, process.pid);
   assert.equal(held.hostname, LOCAL_HOST);
-  assert.equal(held.processStartTime, "start-of-this-process");
+  assert.equal(held.processStartTime, 'start-of-this-process');
   assert.match(held.token, /^[0-9a-f-]{36}$/u);
   await assertNoLock(destination);
 });
 
-test("recovers a lock abandoned by a writer that no longer runs", async () => {
-  const destination = join(await scratchDirectory(), "generated");
-  await replaceGeneratedDirectory(destination, outputSet("old"));
+test('recovers a lock abandoned by a writer that no longer runs', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
+  await replaceGeneratedDirectory(destination, outputSet('old'));
   await writeLock(destination, { pid: DEAD_PID });
   const clock = fakeClock();
 
-  await replaceGeneratedDirectory(destination, outputSet("new"), {
+  await replaceGeneratedDirectory(destination, outputSet('new'), {
     lock: { ...liveEnvironment(), ...clock },
   });
 
-  assert.equal(await readFile(join(destination, "a.json"), "utf8"), "new");
+  assert.equal(await readFile(join(destination, 'a.json'), 'utf8'), 'new');
   await assertNoLock(destination);
-  assert.equal(clock.elapsed(), 0, "recovery must not wait for the timeout");
+  assert.equal(clock.elapsed(), 0, 'recovery must not wait for the timeout');
 });
 
-test("recovers a lock whose process id now belongs to a different process", async () => {
-  const destination = join(await scratchDirectory(), "generated");
+test('recovers a lock whose process id now belongs to a different process', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
   await writeLock(destination, {
     pid: 777,
-    processStartTime: "start-of-the-crashed-writer",
+    processStartTime: 'start-of-the-crashed-writer',
   });
 
-  await replaceGeneratedDirectory(destination, outputSet("new"), {
+  await replaceGeneratedDirectory(destination, outputSet('new'), {
     lock: {
       ...liveEnvironment(),
       isProcessRunning: () => true,
-      processStartTime: async () => "start-of-an-unrelated-process",
+      processStartTime: async () => 'start-of-an-unrelated-process',
     },
   });
 
-  assert.equal(await readFile(join(destination, "a.json"), "utf8"), "new");
+  assert.equal(await readFile(join(destination, 'a.json'), 'utf8'), 'new');
   await assertNoLock(destination);
 });
 
-test("never removes the lock of a live writer", async () => {
-  const destination = join(await scratchDirectory(), "generated");
-  await replaceGeneratedDirectory(destination, outputSet("old"));
+test('never removes the lock of a live writer', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
+  await replaceGeneratedDirectory(destination, outputSet('old'));
   const lockBytes = await writeLock(destination, {
     pid: 777,
-    processStartTime: "start-of-the-live-writer",
+    processStartTime: 'start-of-the-live-writer',
   });
 
   await assertLockTimeout(destination, {
     ...liveEnvironment(),
     isProcessRunning: (pid) => pid === 777 || pid === process.pid,
     processStartTime: async (pid) =>
-      pid === 777 ? "start-of-the-live-writer" : "start-of-this-process",
+      pid === 777 ? 'start-of-the-live-writer' : 'start-of-this-process',
   });
 
-  assert.equal(await readFile(`${destination}.lock`, "utf8"), lockBytes);
-  assert.equal(await readFile(join(destination, "a.json"), "utf8"), "old");
+  assert.equal(await readFile(`${destination}.lock`, 'utf8'), lockBytes);
+  assert.equal(await readFile(join(destination, 'a.json'), 'utf8'), 'old');
 });
 
-test("keeps the lock when the owner is running but its start time cannot be compared", async () => {
-  const destination = join(await scratchDirectory(), "generated");
+test('keeps the lock when the owner is running but its start time cannot be compared', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
   const lockBytes = await writeLock(destination, {
     pid: 777,
     processStartTime: null,
@@ -169,48 +171,48 @@ test("keeps the lock when the owner is running but its start time cannot be comp
     isProcessRunning: () => true,
   });
 
-  assert.equal(await readFile(`${destination}.lock`, "utf8"), lockBytes);
+  assert.equal(await readFile(`${destination}.lock`, 'utf8'), lockBytes);
 });
 
-test("keeps a lock that another host owns, even when the process id is unknown here", async () => {
-  const destination = join(await scratchDirectory(), "generated");
+test('keeps a lock that another host owns, even when the process id is unknown here', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
   const lockBytes = await writeLock(destination, {
     pid: DEAD_PID,
-    hostname: "some-other-host",
+    hostname: 'some-other-host',
   });
 
   await assertLockTimeout(destination, liveEnvironment());
 
-  assert.equal(await readFile(`${destination}.lock`, "utf8"), lockBytes);
+  assert.equal(await readFile(`${destination}.lock`, 'utf8'), lockBytes);
 });
 
 for (const [label, content] of [
-  ["non-JSON text", "not json at all"],
-  ["an empty file", ""],
-  ["JSON of the wrong shape", "[]"],
-  ["an unknown schema", JSON.stringify({ schema: "other/9", pid: DEAD_PID })],
+  ['non-JSON text', 'not json at all'],
+  ['an empty file', ''],
+  ['JSON of the wrong shape', '[]'],
+  ['an unknown schema', JSON.stringify({ schema: 'other/9', pid: DEAD_PID })],
   [
-    "a non-integer process id",
-    JSON.stringify(lockRecord({ pid: "seven", token: "x" })),
+    'a non-integer process id',
+    JSON.stringify(lockRecord({ pid: 'seven', token: 'x' })),
   ],
   [
-    "a missing token",
+    'a missing token',
     JSON.stringify({ ...lockRecord({ pid: DEAD_PID }), token: undefined }),
   ],
 ]) {
   test(`keeps a lock with malformed metadata: ${label}`, async () => {
-    const destination = join(await scratchDirectory(), "generated");
+    const destination = join(await scratchDirectory(), 'generated');
     await mkdir(dirname(destination), { recursive: true });
-    await writeFile(`${destination}.lock`, content, "utf8");
+    await writeFile(`${destination}.lock`, content, 'utf8');
 
     await assertLockTimeout(destination, liveEnvironment());
 
-    assert.equal(await readFile(`${destination}.lock`, "utf8"), content);
+    assert.equal(await readFile(`${destination}.lock`, 'utf8'), content);
   });
 }
 
-test("keeps a lock directory left by a writer that predates owner metadata", async () => {
-  const destination = join(await scratchDirectory(), "generated");
+test('keeps a lock directory left by a writer that predates owner metadata', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
   await mkdir(`${destination}.lock`, { recursive: true });
 
   await assertLockTimeout(destination, liveEnvironment());
@@ -218,32 +220,32 @@ test("keeps a lock directory left by a writer that predates owner metadata", asy
   assert.deepEqual(await readdir(`${destination}.lock`), []);
 });
 
-test("two writers that find the same abandoned lock both finish with one complete output set", async () => {
-  const destination = join(await scratchDirectory(), "generated");
-  await replaceGeneratedDirectory(destination, outputSet("old"));
+test('two writers that find the same abandoned lock both finish with one complete output set', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
+  await replaceGeneratedDirectory(destination, outputSet('old'));
   await writeLock(destination, { pid: DEAD_PID });
 
   await Promise.all([
-    replaceGeneratedDirectory(destination, outputSet("first"), {
+    replaceGeneratedDirectory(destination, outputSet('first'), {
       lock: liveEnvironment(),
     }),
-    replaceGeneratedDirectory(destination, outputSet("second"), {
+    replaceGeneratedDirectory(destination, outputSet('second'), {
       lock: liveEnvironment(),
     }),
   ]);
 
   const values = await Promise.all(
-    ["a.json", "b.json"].map((name) =>
-      readFile(join(destination, name), "utf8"),
+    ['a.json', 'b.json'].map((name) =>
+      readFile(join(destination, name), 'utf8'),
     ),
   );
   assert.equal(values[0], values[1]);
-  assert.ok(["first", "second"].includes(values[0]));
+  assert.ok(['first', 'second'].includes(values[0]));
   await assertNoLock(destination);
 });
 
-test("puts back a live lock that a rival installed after the abandoned one was judged stale", async () => {
-  const destination = join(await scratchDirectory(), "generated");
+test('puts back a live lock that a rival installed after the abandoned one was judged stale', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
   await writeLock(destination, { pid: DEAD_PID });
   let rivalBytes;
 
@@ -256,14 +258,14 @@ test("puts back a live lock that a rival installed after the abandoned one was j
     },
   });
 
-  assert.equal(await readFile(`${destination}.lock`, "utf8"), rivalBytes);
+  assert.equal(await readFile(`${destination}.lock`, 'utf8'), rivalBytes);
 });
 
-test("releases only a lock that it still owns", async () => {
-  const destination = join(await scratchDirectory(), "generated");
+test('releases only a lock that it still owns', async () => {
+  const destination = join(await scratchDirectory(), 'generated');
   let rivalBytes;
 
-  await replaceGeneratedDirectory(destination, outputSet("new"), {
+  await replaceGeneratedDirectory(destination, outputSet('new'), {
     lock: {
       ...liveEnvironment(),
       afterAcquire: async () => {
@@ -273,26 +275,26 @@ test("releases only a lock that it still owns", async () => {
     },
   });
 
-  assert.equal(await readFile(`${destination}.lock`, "utf8"), rivalBytes);
+  assert.equal(await readFile(`${destination}.lock`, 'utf8'), rivalBytes);
 });
 
-test("leaves no recovery debris beside the destination", async () => {
+test('leaves no recovery debris beside the destination', async () => {
   const root = await scratchDirectory();
-  const destination = join(root, "generated");
+  const destination = join(root, 'generated');
   await writeLock(destination, { pid: DEAD_PID });
 
-  await replaceGeneratedDirectory(destination, outputSet("new"), {
+  await replaceGeneratedDirectory(destination, outputSet('new'), {
     lock: liveEnvironment(),
   });
 
-  assert.deepEqual((await readdir(root)).toSorted(), ["generated"]);
+  assert.deepEqual((await readdir(root)).toSorted(), ['generated']);
 });
 
 function liveEnvironment() {
   return {
     hostname: LOCAL_HOST,
     pid: process.pid,
-    processStartTime: async () => "start-of-this-process",
+    processStartTime: async () => 'start-of-this-process',
     isProcessRunning: (pid) => pid === process.pid,
   };
 }
@@ -314,7 +316,7 @@ function lockRecord(overrides) {
     token: randomUUID(),
     pid: process.pid,
     hostname: LOCAL_HOST,
-    processStartTime: "start-of-this-process",
+    processStartTime: 'start-of-this-process',
     ...overrides,
   };
 }
@@ -322,21 +324,21 @@ function lockRecord(overrides) {
 async function writeLock(destination, overrides) {
   await mkdir(dirname(destination), { recursive: true });
   const bytes = `${JSON.stringify(lockRecord(overrides))}\n`;
-  await writeFile(`${destination}.lock`, bytes, "utf8");
+  await writeFile(`${destination}.lock`, bytes, 'utf8');
   return bytes;
 }
 
 async function assertLockTimeout(destination, environment) {
   const clock = fakeClock();
   await assert.rejects(
-    replaceGeneratedDirectory(destination, outputSet("new"), {
+    replaceGeneratedDirectory(destination, outputSet('new'), {
       lock: { ...environment, ...clock },
     }),
-    (error) => error.name === "GeneratedDirectoryLockTimeoutError",
+    (error) => error.name === 'GeneratedDirectoryLockTimeoutError',
   );
-  assert.ok(clock.elapsed() >= 10_000, "must wait out the full timeout");
+  assert.ok(clock.elapsed() >= 10_000, 'must wait out the full timeout');
 }
 
 async function assertNoLock(destination) {
-  await assert.rejects(readFile(`${destination}.lock`), { code: "ENOENT" });
+  await assert.rejects(readFile(`${destination}.lock`), { code: 'ENOENT' });
 }
