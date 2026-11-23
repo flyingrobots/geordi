@@ -513,6 +513,13 @@ describe('captureFrame readback', () => {
     await expect(presenter.captureFrame()).rejects.toBeInstanceOf(RendererFaultError);
   });
 
+  it('turns a readback that is not opaque into RendererFaultError, not a receipt error', async () => {
+    const { presenter } = await rig();
+    presenter.present(PAINT_SURFACE, PAINT_SURFACE, {});
+    // The fake target was never drawn into: every texel is (0, 0, 0, 0).
+    await expect(presenter.captureFrame()).rejects.toBeInstanceOf(RendererFaultError);
+  });
+
   it('turns a readback validation error into RendererFaultError', async () => {
     const { device, presenter } = await rig();
     presenter.present(PAINT_SURFACE, PAINT_SURFACE, {});
@@ -760,5 +767,21 @@ describe('capability-refused receipts', () => {
         size: SUITE_SIZE,
       }),
     ).toThrow(RendererFaultError);
+  });
+});
+
+describe('error scopes', () => {
+  it('pops every scope of a frame or a readback before anything else pushes one', async () => {
+    const { device, presenter } = await rig({ device: { asyncErrorScopes: true } });
+    device.scopeLog.length = 0;
+    presenter.present(PAINT_SURFACE, PAINT_SURFACE, {});
+    device.texture('bijou-surface canonical frame').fillPattern();
+    await presenter.captureFrame();
+    presenter.present(PAINT_SURFACE, ERASE_SURFACE, {});
+    await presenter.captureFrame();
+    await settle();
+    // Scopes are a stack shared by the whole device: a frame's pops that
+    // straddle a readback's pushes would pop the readback's scopes.
+    expect(device.scopeLog.join(' ')).toBe(Array(4).fill('push push push pop pop pop').join(' '));
   });
 });

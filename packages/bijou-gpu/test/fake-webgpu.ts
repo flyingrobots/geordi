@@ -175,6 +175,11 @@ export interface FakeDeviceBehaviour {
   readonly pipelineRejections?: readonly string[];
   /** A validation error raised during the first pipeline creation. */
   readonly creationValidationError?: string;
+  /**
+   * Resolve `popErrorScope()` on a later macrotask, as a real GPU process
+   * does. The scope is still popped when the call is made.
+   */
+  readonly asyncErrorScopes?: boolean;
 }
 
 export class FakeDevice implements WebGpuDevice {
@@ -191,6 +196,8 @@ export class FakeDevice implements WebGpuDevice {
   public readonly uniformWrites: Uint32Array[] = [];
   public readonly draws: { pipeline: string; target: FakeTexture; vertexCount: number }[] = [];
   public readonly validationErrors: string[] = [];
+  /** Every `pushErrorScope` (`push`) and `popErrorScope` (`pop`) call, in call order. */
+  public readonly scopeLog: ('push' | 'pop')[] = [];
   public submits = 0;
   public destroyed = false;
   private readonly scopes: ErrorScope[] = [];
@@ -424,17 +431,27 @@ export class FakeDevice implements WebGpuDevice {
   }
 
   pushErrorScope(filter: string): undefined {
+    this.scopeLog.push('push');
     this.scopes.push({ filter, errors: [] });
     return undefined;
   }
 
   popErrorScope(): Promise<WebGpuError | null> {
+    this.scopeLog.push('pop');
     const scope = this.scopes.pop();
     if (scope === undefined) {
       return Promise.reject(new FakeWebGpuRejection('popErrorScope with an empty stack'));
     }
     const first = scope.errors.at(0);
-    return Promise.resolve(first === undefined ? null : { message: first });
+    const result = first === undefined ? null : { message: first };
+    if (this.behaviour.asyncErrorScopes === true) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(result);
+        }, 0);
+      });
+    }
+    return Promise.resolve(result);
   }
 
   destroy(): undefined {
