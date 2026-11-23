@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import type { JsonValue } from '@flyingrobots/geordi-core';
+import { parseJsonValue, stringifyCanonicalJson } from '@flyingrobots/geordi-core';
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import {
@@ -118,6 +118,23 @@ function drawOps(calls: readonly RecordedDraw[]): RecordedDraw[] {
   return calls.filter((call) => call.op !== 'getImageData');
 }
 
+/**
+ * The first byte at which two frames differ, as `index: actual != expected`, or
+ * `null` when they are identical. Exact, and fast on whole frames.
+ */
+function firstDifference(actual: Uint8Array, expected: Uint8Array): string | null {
+  if (actual.length !== expected.length) {
+    return `length ${String(actual.length)} != ${String(expected.length)}`;
+  }
+  if (Buffer.from(actual.buffer, actual.byteOffset, actual.length).equals(
+    Buffer.from(expected.buffer, expected.byteOffset, expected.length),
+  )) {
+    return null;
+  }
+  const index = actual.findIndex((byte, at) => byte !== expected[at]);
+  return `byte ${String(index)}: ${String(actual[index])} != ${String(expected[index])}`;
+}
+
 const BLANK = (width: number, height: number): LiveSurface => new LiveSurface(width, height);
 
 describe('Canvas 2D presenter contract', () => {
@@ -126,6 +143,8 @@ describe('Canvas 2D presenter contract', () => {
       GpuSurfacePresenterFactory<Canvas2DSurfacePresenterOptions>
     >();
     expectTypeOf<Canvas2DSurfacePresenter>().toExtend<GpuSurfacePresenter>();
+    // A live GlyphAtlas is accepted as the presenter's atlas without adaptation.
+    expectTypeOf<GlyphAtlas>().toExtend<Canvas2DGlyphAtlas>();
     const { presenter } = rig();
     expect(presenter).not.toBeInstanceOf(Promise);
     for (const member of ['present', 'resize', 'cellFromPoint', 'getLastReceipt', 'dispose'] as const) {
@@ -148,7 +167,7 @@ describe('Canvas 2D presenter contract', () => {
   it('refuses with BackendUnavailableError when the canvas has no 2d context', () => {
     const canvas = new RecordingCanvas(8, 16);
     canvas.refuseContext = true;
-    const create = (): unknown =>
+    const create = (): Canvas2DSurfacePresenter =>
       createCanvas2DSurfacePresenter({ canvas, atlas: testGlyphPackAtlas(pack), proceduralTable: table });
     expect(create).toThrow(BackendUnavailableError);
     try {
@@ -180,7 +199,7 @@ describe('Canvas 2D presenter golden frames', () => {
     const paint = liveFromReceipt(rendered.paintReceipt);
     presenter.present(BLANK(paint.width, paint.height), paint, {});
     const receipt = receiptOf(presenter);
-    expect(canvas.rgba()).toEqual(rendered.paint.rgba);
+    expect(firstDifference(canvas.rgba(), rendered.paint.rgba)).toBeNull();
     expect(receipt.frameRgbaSha256).toBe(suiteFrame(suite, 'paint').frameRgbaSha256);
     expect(receipt.preparedBufferSha256).toBe(suiteFrame(suite, 'paint').preparedBufferSha256);
     assertBitExactFrameHash(receipt, rendered.paint);
@@ -196,7 +215,7 @@ describe('Canvas 2D presenter golden frames', () => {
     presenter.present(paint, erase, {});
     const calls = canvas.takeCalls();
     const receipt = receiptOf(presenter);
-    expect(canvas.rgba()).toEqual(rendered.erase.rgba);
+    expect(firstDifference(canvas.rgba(), rendered.erase.rgba)).toBeNull();
     expect(receipt.frameRgbaSha256).toBe(suiteFrame(suite, 'erase').frameRgbaSha256);
     assertBitExactFrameHash(receipt, rendered.erase);
 
@@ -232,7 +251,7 @@ describe('Canvas 2D presenter receipt', () => {
     const paint = liveFromReceipt(rendered.paintReceipt);
     presenter.present(BLANK(paint.width, paint.height), paint, {});
     const receipt = receiptOf(presenter);
-    const reparsed = parseEndpointReceipt(JSON.parse(serializeEndpointReceipt(receipt)) as JsonValue);
+    const reparsed = parseEndpointReceipt(parseJsonValue(serializeEndpointReceipt(receipt)));
     expect(reparsed).toEqual(receipt);
     expect(CANVAS2D_BACKEND_PROFILE).toBe('geordi-canvas2d/1');
     expect(receipt).toMatchObject({
@@ -315,7 +334,7 @@ describe('Canvas 2D presenter receipt', () => {
     const target = paint.clone();
     live.presenter.present(BLANK(paint.width, paint.height), target, {});
     const expected = sha256Hex(
-      new Uint8Array([...target.buffer, ...utf8Bytes(JSON.stringify(target.sideTable))]),
+      new Uint8Array([...target.buffer, ...utf8Bytes(stringifyCanonicalJson(target.sideTable))]),
     );
     // The caller reuses its buffers as soon as present returns.
     target.clear();
@@ -346,7 +365,7 @@ describe('Canvas 2D presenter draw operations', () => {
     presenter.present(front, back, {});
     const calls = canvas.takeCalls();
     expect(drawOps(calls)).toEqual([{ op: 'putImageData', x: 41 * 8, y: 17 * 16, width: 8, height: 16 }]);
-    expect(canvas.rgba()).toEqual(oracleOf(back, canvas).rgba);
+    expect(firstDifference(canvas.rgba(), oracleOf(back, canvas).rgba)).toBeNull();
   });
 
   it('batches horizontally contiguous changed cells in a row into one putImageData', () => {
@@ -369,7 +388,7 @@ describe('Canvas 2D presenter draw operations', () => {
       { op: 'putImageData', x: 10 * 8, y: 5 * 16, width: 20 * 8, height: 16 },
       { op: 'putImageData', x: 70 * 8, y: 9 * 16, width: 8, height: 16 },
     ]);
-    expect(canvas.rgba()).toEqual(oracleOf(back, canvas).rgba);
+    expect(firstDifference(canvas.rgba(), oracleOf(back, canvas).rgba)).toBeNull();
   });
 
   it('issues no draw operation when nothing changed', () => {
@@ -392,7 +411,7 @@ describe('Canvas 2D presenter edges', () => {
     expect(receipt.widthCells).toBe(0);
     expect(receipt.heightCells).toBe(0);
     const oracle = oracleOf(BLANK(0, 0), canvas);
-    expect(canvas.rgba()).toEqual(oracle.rgba);
+    expect(firstDifference(canvas.rgba(), oracle.rgba)).toBeNull();
     assertBitExactFrameHash(receipt, oracle);
     expect(presenter.cellFromPoint(1, 1)).toBeNull();
   });
@@ -410,7 +429,7 @@ describe('Canvas 2D presenter edges', () => {
       front = back;
     }
     const expected = oracleOf(BLANK(4, 2).paint(1, 1, ghost), canvas);
-    expect(canvas.rgba()).toEqual(expected.rgba);
+    expect(firstDifference(canvas.rgba(), expected.rgba)).toBeNull();
     assertBitExactFrameHash(receiptOf(presenter), expected);
   });
 
@@ -459,17 +478,17 @@ describe('Canvas 2D presenter edges', () => {
 
   it('rejects non-finite or non-positive host resize input', () => {
     const { presenter } = rig();
-    for (const bad of [
+    for (const [index, bad] of [
       { cssWidth: Number.NaN, cssHeight: 10, dpr: 1 },
       { cssWidth: 10, cssHeight: 0, dpr: 1 },
       { cssWidth: 10, cssHeight: 10, dpr: Number.POSITIVE_INFINITY },
       { cssWidth: 10, cssHeight: 10, dpr: -1 },
       { cssWidth: 10, cssHeight: 10, dpr: 1, devicePixelContentBox: { width: 0, height: 4 } },
       { cssWidth: 10, cssHeight: 10, dpr: 1, devicePixelContentBox: { width: 2.5, height: 4 } },
-    ]) {
+    ].entries()) {
       expect(() => {
         presenter.resize(bad);
-      }, JSON.stringify(bad)).toThrow(BijouGpuValidationError);
+      }, `case ${String(index)}`).toThrow(BijouGpuValidationError);
     }
   });
 
@@ -496,7 +515,7 @@ describe('Canvas 2D presenter edges', () => {
       .paint(1, 0, { glyph: 'y', flags: FLAG_BOLD | FLAG_INVERSE })
       .paint(9, 2, { glyph: 'z', bg: [0, 0, 90], opacity: 11, flags: FLAG_DIM | UNDERLINE_CURLY });
     presenter.present(BLANK(10, 3), front, {});
-    expect(canvas.rgba()).toEqual(oracleOf(front, canvas, atlas).rgba);
+    expect(firstDifference(canvas.rgba(), oracleOf(front, canvas, atlas).rgba)).toBeNull();
     canvas.takeCalls();
 
     atlas.invalidate(undefined, 'font-ready');
@@ -519,13 +538,13 @@ describe('Canvas 2D presenter edges', () => {
     presenter.present(BLANK(paint.width, paint.height), paint, {});
     canvas.dispatch('contextlost');
     canvas.loseContents();
-    expect(canvas.rgba()).not.toEqual(rendered.paint.rgba);
+    expect(firstDifference(canvas.rgba(), rendered.paint.rgba)).not.toBeNull();
     canvas.takeCalls();
     canvas.dispatch('contextrestored');
     expect(drawOps(canvas.takeCalls())).toEqual([
       { op: 'putImageData', x: 0, y: 0, width: suite.canvasPxW, height: suite.canvasPxH },
     ]);
-    expect(canvas.rgba()).toEqual(rendered.paint.rgba);
+    expect(firstDifference(canvas.rgba(), rendered.paint.rgba)).toBeNull();
     assertBitExactFrameHash(receiptOf(presenter), rendered.paint);
   });
 
@@ -539,7 +558,7 @@ describe('Canvas 2D presenter edges', () => {
     canvas.takeCalls();
     presenter.present(wide, wide.clone(), {});
     expect(puts(canvas.takeCalls())).toEqual([{ op: 'putImageData', x: 0, y: 0, width: 24, height: 16 }]);
-    expect(canvas.rgba()).toEqual(oracleOf(wide, canvas).rgba);
+    expect(firstDifference(canvas.rgba(), oracleOf(wide, canvas).rgba)).toBeNull();
   });
 
   it('hit-tests with the shared zero-based cellFromPoint law over the canvas grid capacity', () => {
