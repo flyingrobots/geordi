@@ -38,6 +38,9 @@ that exists on `main`.
 
 ## Current design
 
+- [Render law: one integer rasterizer, with the frame hash as the claim](./design/2026-11-render-law.md)
+  (draft awaiting the maintainer's decision on
+  [#78](https://github.com/flyingrobots/geordi/issues/78); not yet the law)
 - [Fixed-point numeric profile and ray-traced scene profile](./design/2026-11-fixed-point-and-ray-traced-scene-profiles.md)
   (accepted; the first Rust slice, without a renderer, is described in
   [`ray-traced-scene-profile.md`](./ray-traced-scene-profile.md))

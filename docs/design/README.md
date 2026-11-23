@@ -19,6 +19,15 @@ its dependency graph in
 [SVG](./2026-07-profunctor-page-target-proof-dag.svg). The strict positioned
 glyph-run map below is complete and retained as historical execution evidence.
 
+## Draft Decision Record: Render Law (awaiting decision)
+
+[`2026-11-render-law.md`](./2026-11-render-law.md) is an analyst's draft for
+[#78](https://github.com/flyingrobots/geordi/issues/78). It compares option A (one Rust integer
+rasterizer, with the frame hash as the claim), option B (one renderer per host, pixel probes) and
+two options the analyst added, against the evidence on `main`. Nothing in it is decided: its
+Decision section is empty until the maintainer fills it in, and no other document may cite it as
+the render law before then.
+
 ## Proposed Design: Bijou Surface GPU ABI (`bijou-surface-gpu/1`)
 
 [`2026-11-bijou-surface-gpu-abi.md`](./2026-11-bijou-surface-gpu-abi.md)

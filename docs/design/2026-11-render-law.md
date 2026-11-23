@@ -224,8 +224,8 @@ Outside this repository, [flyingrobots/echo#964](https://github.com/flyingrobots
 Further downstream are the raster chain (#83 to #105, including #84 `geordi-frame-hash/1`, #85
 integer coverage accumulation, #96 the WASM ABI crate, #98 the TypeScript frame hash, #100 Firefox
 and WebKit, #105 removing Canvas 2D rasterization), the Echo renderer chain (#118 to #129), the
-Bunny proof (#72, #131 to #133), text (#108 to #112, #142) and HTML and CSS (#138 to #148, with
-#141 among them).
+Bunny proof (#72, #131 to #133), text (#108 to #112, #142) and HTML and CSS (#138 to #148, which
+include #141).
 
 ## Options and consequences
 
