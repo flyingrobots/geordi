@@ -236,7 +236,7 @@ fn fault(detail: impl Into<String>) -> ProofError {
     ProofError::new(ErrorCode::RendererFault, "", detail)
 }
 
-fn extent(width: u32, height: u32) -> wgpu::Extent3d {
+const fn extent(width: u32, height: u32) -> wgpu::Extent3d {
     wgpu::Extent3d {
         width,
         height,
@@ -396,36 +396,7 @@ fn submit_frame(
     });
     queue.write_buffer(&uniforms, 0, &uniform_bytes);
 
-    // The exact assembled module: no preprocessing, no override, top-left fragment origin.
-    let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-        label: Some("bijou-surface.wgsl"),
-        source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&shader.wgsl)),
-    });
-    let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-        label: Some("bijou-surface"),
-        layout: None,
-        vertex: wgpu::VertexState {
-            module: &module,
-            entry_point: Some("vs_main"),
-            compilation_options: wgpu::PipelineCompilationOptions::default(),
-            buffers: &[],
-        },
-        primitive: wgpu::PrimitiveState::default(),
-        depth_stencil: None,
-        multisample: wgpu::MultisampleState::default(),
-        fragment: Some(wgpu::FragmentState {
-            module: &module,
-            entry_point: Some("fs_main"),
-            compilation_options: wgpu::PipelineCompilationOptions::default(),
-            targets: &[Some(wgpu::ColorTargetState {
-                format: wgpu::TextureFormat::Rgba8Uint,
-                blend: None,
-                write_mask: wgpu::ColorWrites::ALL,
-            })],
-        }),
-        multiview_mask: None,
-        cache: None,
-    });
+    let pipeline = surface_pipeline(device, shader);
 
     let cells_view = cells.create_view(&wgpu::TextureViewDescriptor::default());
     let atlas_view = atlas.create_view(&wgpu::TextureViewDescriptor::default());
@@ -457,12 +428,74 @@ fn submit_frame(
         mapped_at_creation: false,
     });
 
+    encode_frame(
+        queue,
+        device,
+        &pipeline,
+        &bind_group,
+        &target,
+        &target_view,
+        &readback,
+        frame,
+    );
+    readback
+}
+
+/// Compiles the exact assembled module: no preprocessing, no override, top-left fragment origin.
+fn surface_pipeline(device: &wgpu::Device, shader: &ShaderBundle) -> wgpu::RenderPipeline {
+    let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        label: Some("bijou-surface.wgsl"),
+        source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&shader.wgsl)),
+    });
+    device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: Some("bijou-surface"),
+        layout: None,
+        vertex: wgpu::VertexState {
+            module: &module,
+            entry_point: Some("vs_main"),
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
+            buffers: &[],
+        },
+        primitive: wgpu::PrimitiveState::default(),
+        depth_stencil: None,
+        multisample: wgpu::MultisampleState::default(),
+        fragment: Some(wgpu::FragmentState {
+            module: &module,
+            entry_point: Some("fs_main"),
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
+            targets: &[Some(wgpu::ColorTargetState {
+                format: wgpu::TextureFormat::Rgba8Uint,
+                blend: None,
+                write_mask: wgpu::ColorWrites::ALL,
+            })],
+        }),
+        multiview_mask: None,
+        cache: None,
+    })
+}
+
+/// Draws the fullscreen triangle into `target` and schedules its copy into `readback`.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "each argument is a distinct wgpu resource of one frame"
+)]
+fn encode_frame(
+    queue: &wgpu::Queue,
+    device: &wgpu::Device,
+    pipeline: &wgpu::RenderPipeline,
+    bind_group: &wgpu::BindGroup,
+    target: &wgpu::Texture,
+    target_view: &wgpu::TextureView,
+    readback: &wgpu::Buffer,
+    frame: &FrameSpec,
+) {
+    let padded_row = padded_bytes_per_row(frame.canvas_px_w);
     let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
     {
         let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("bijou-surface"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &target_view,
+                view: target_view,
                 depth_slice: None,
                 resolve_target: None,
                 ops: wgpu::Operations {
@@ -475,22 +508,21 @@ fn submit_frame(
             occlusion_query_set: None,
             multiview_mask: None,
         });
-        pass.set_pipeline(&pipeline);
-        pass.set_bind_group(0, &bind_group, &[]);
+        pass.set_pipeline(pipeline);
+        pass.set_bind_group(0, bind_group, &[]);
         pass.draw(0..3, 0..1);
     }
     encoder.copy_texture_to_buffer(
         target.as_image_copy(),
         wgpu::TexelCopyBufferInfo {
-            buffer: &readback,
+            buffer: readback,
             layout: wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(padded_row),
                 rows_per_image: Some(frame.canvas_px_h),
             },
         },
-        extent(canvas.0, canvas.1),
+        extent(frame.canvas_px_w, frame.canvas_px_h),
     );
     let _index = queue.submit(Some(encoder.finish()));
-    readback
 }

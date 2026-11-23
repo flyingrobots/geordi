@@ -11,9 +11,9 @@ use super::error::{ErrorCode, ProofError};
 use super::frame::{DEFAULT_BG, DEFAULT_FG, FrameSpec, format_hex_color, parse_hex_color};
 use super::glyph_pack::{GLYPH_PACK_PATH, GlyphPack};
 use super::gpu::{AdapterPolicy, EvidenceLevel, RenderOutcome, render_offscreen};
-use super::intake::{MAX_INPUT_BYTES, describe, parse_packed_cells};
+use super::intake::{MAX_INPUT_BYTES, PackedCells, describe, parse_packed_cells};
 use super::json::is_sha256_hex;
-use super::prepare::prepare_cells;
+use super::prepare::{PreparedCells, prepare_cells};
 use super::profile::BACKEND_PROFILE;
 use super::receipt::{ReceiptParts, build_receipt, probe_bindings, serialize_receipt};
 use super::shader::ShaderBundle;
@@ -318,13 +318,17 @@ fn schema_lines(kinds: &[&str]) -> Vec<Value> {
 
 fn print_help(output: &mut Output<'_>) {
     let mut prose = format!("Usage: {USAGE}\n");
-    for (flag, description) in OPTIONS {
-        prose.push_str(&format!("\n  {flag}\n      {description}"));
-    }
+    let options: Vec<String> = OPTIONS
+        .iter()
+        .map(|(flag, description)| format!("\n  {flag}\n      {description}"))
+        .collect();
+    prose.push_str(&options.concat());
     prose.push_str("\n\nExit codes:");
-    for (code, meaning) in EXIT_CODES {
-        prose.push_str(&format!("\n  {code}  {meaning}"));
-    }
+    let codes: Vec<String> = EXIT_CODES
+        .iter()
+        .map(|(code, meaning)| format!("\n  {code}  {meaning}"))
+        .collect();
+    prose.push_str(&codes.concat());
     let body = json!({
         "command": "geordi-bijou-wgpu-proof",
         "summary": "Bounded offscreen wgpu proof for bijou-surface-gpu/1: validates one packed-bijou-cells/1 receipt, prepares the rgba32uint cell record, renders it with the canonical bijou-surface.wgsl into an rgba8uint target, reads the pixels back and writes a geordi-bijou-gpu-receipt/1 endpoint receipt. It opens no window.",
@@ -470,12 +474,64 @@ fn render(
     repo_root: &Path,
     output: &mut Output<'_>,
 ) -> Result<(), ProofError> {
-    let input_bytes = read_file(Path::new(&request.input), &request.input)?;
-    let pack = GlyphPack::parse(&read_file(
-        &repo_root.join(GLYPH_PACK_PATH),
-        GLYPH_PACK_PATH,
-    )?)?;
-    let cells = parse_packed_cells(&input_bytes, &pack)?;
+    let pack_bytes = read_file(&repo_root.join(GLYPH_PACK_PATH), GLYPH_PACK_PATH)?;
+    let pack = GlyphPack::parse(&pack_bytes)?;
+    let cells = parse_packed_cells(
+        &read_file(Path::new(&request.input), &request.input)?,
+        &pack,
+    )?;
+    emit_intake(request, &cells, output);
+
+    let prepared = prepare_cells(&cells, &pack)?;
+    let frame = FrameSpec::new(
+        &prepared,
+        &pack,
+        request.canvas,
+        request.default_fg,
+        request.default_bg,
+    )?;
+    let shader = ShaderBundle::load(repo_root)?;
+    emit_prepared(
+        &prepared,
+        &pack,
+        &sha256_hex(&pack_bytes),
+        &frame,
+        &shader,
+        output,
+    );
+
+    let outcome = render_offscreen(&shader, &prepared, &pack, &frame, request.policy)?;
+    let (adapter_body, adapter_prose) = adapter_message(request, &outcome);
+    output.message("adapter", adapter_body, &adapter_prose);
+
+    let parts = ReceiptParts {
+        cells: &cells,
+        prepared: &prepared,
+        pack: &pack,
+        shader: &shader,
+        frame: &frame,
+        outcome: &outcome,
+    };
+    let frame_sha256 = emit_receipt(request, &parts, output)?;
+
+    let obstruction = obstruction(&outcome);
+    if request.require_gpu
+        && let Some(error) = obstruction.clone()
+    {
+        return Err(error);
+    }
+    let frame_comparison = compare_frame(request.expect_frame_sha256.as_deref(), &frame_sha256)?;
+    emit_result(
+        outcome.evidence_level(),
+        &frame_sha256,
+        frame_comparison,
+        obstruction,
+        output,
+    );
+    Ok(())
+}
+
+fn emit_intake(request: &RenderRequest, cells: &PackedCells, output: &mut Output<'_>) {
     output.message(
         "intake",
         json!({
@@ -492,16 +548,16 @@ fn render(
             request.input, cells.width_cells, cells.height_cells, cells.input_receipt_sha256
         ),
     );
+}
 
-    let prepared = prepare_cells(&cells, &pack)?;
-    let frame = FrameSpec::new(
-        &prepared,
-        &pack,
-        request.canvas,
-        request.default_fg,
-        request.default_bg,
-    )?;
-    let shader = ShaderBundle::load(repo_root)?;
+fn emit_prepared(
+    prepared: &PreparedCells,
+    pack: &GlyphPack,
+    glyph_pack_sha256: &str,
+    frame: &FrameSpec,
+    shader: &ShaderBundle,
+    output: &mut Output<'_>,
+) {
     let atlas_uses: Vec<Value> = prepared
         .atlas_uses
         .iter()
@@ -531,7 +587,7 @@ fn render(
             "defaultFg": format_hex_color(frame.default_fg),
             "defaultBg": format_hex_color(frame.default_bg),
             "fontIdentity": pack.font_identity,
-            "glyphPackSha256": sha256_hex(&read_file(&repo_root.join(GLYPH_PACK_PATH), GLYPH_PACK_PATH)?),
+            "glyphPackSha256": glyph_pack_sha256,
             "atlasRgbaSha256": pack.atlas_rgba_sha256,
             "atlasUses": atlas_uses,
             "assembledWgslSha256": shader.assembled_wgsl_sha256,
@@ -546,20 +602,16 @@ fn render(
             shader.assembled_wgsl_sha256
         ),
     );
+}
 
-    let outcome = render_offscreen(&shader, &prepared, &pack, &frame, request.policy)?;
-    let (adapter_body, adapter_prose) = adapter_message(request, &outcome);
-    output.message("adapter", adapter_body, &adapter_prose);
-
-    let parts = ReceiptParts {
-        cells: &cells,
-        prepared: &prepared,
-        pack: &pack,
-        shader: &shader,
-        frame: &frame,
-        outcome: &outcome,
-    };
-    let receipt = build_receipt(&parts);
+/// Builds the receipt, writes it when asked, streams the receipt line, and returns the frame
+/// digest (`null` when no frame was read back).
+fn emit_receipt(
+    request: &RenderRequest,
+    parts: &ReceiptParts<'_>,
+    output: &mut Output<'_>,
+) -> Result<Value, ProofError> {
+    let receipt = build_receipt(parts);
     if let Some(path) = &request.receipt_out {
         fs::write(path, serialize_receipt(&receipt)).map_err(|error| {
             ProofError::new(
@@ -570,10 +622,9 @@ fn render(
         })?;
     }
     let frame_sha256 = receipt["frameRgbaSha256"].clone();
-    let evidence = outcome.evidence_level();
     let receipt_prose = format!(
         "receipt: {} evidence, frame sha256 {}{}",
-        evidence.name(),
+        parts.outcome.evidence_level().name(),
         frame_sha256.as_str().unwrap_or("none"),
         request
             .receipt_out
@@ -585,29 +636,35 @@ fn render(
         json!({
             "receipt": receipt,
             "receiptPath": request.receipt_out,
-            "probeBindings": probe_bindings(&parts),
+            "probeBindings": probe_bindings(parts),
         }),
         &receipt_prose,
     );
+    Ok(frame_sha256)
+}
 
-    let obstruction = obstruction(&outcome);
-    if request.require_gpu
-        && let Some(error) = obstruction.clone()
-    {
-        return Err(error);
+/// Compares the read-back digest with `--expect-frame-sha256`. A refusal has no digest, so the
+/// comparison is `not-run` rather than a pass.
+fn compare_frame(expected: Option<&str>, actual: &Value) -> Result<&'static str, ProofError> {
+    match (expected, actual.as_str()) {
+        (None, _) => Ok("not-requested"),
+        (Some(_), None) => Ok("not-run"),
+        (Some(expected), Some(actual)) if expected == actual => Ok("match"),
+        (Some(expected), Some(actual)) => Err(ProofError::new(
+            ErrorCode::FrameHashMismatch,
+            "",
+            format!("frame hashes to {actual}; expected {expected}"),
+        )),
     }
-    let frame_comparison = match (&request.expect_frame_sha256, frame_sha256.as_str()) {
-        (None, _) => "not-requested",
-        (Some(_), None) => "not-run",
-        (Some(expected), Some(actual)) if expected == actual => "match",
-        (Some(expected), Some(actual)) => {
-            return Err(ProofError::new(
-                ErrorCode::FrameHashMismatch,
-                "",
-                format!("frame hashes to {actual}; expected {expected}"),
-            ));
-        }
-    };
+}
+
+fn emit_result(
+    evidence: EvidenceLevel,
+    frame_sha256: &Value,
+    frame_comparison: &str,
+    obstruction: Option<ProofError>,
+    output: &mut Output<'_>,
+) {
     let result_prose = format!(
         "result: {}{}",
         evidence.name(),
@@ -632,7 +689,6 @@ fn render(
         }),
         &result_prose,
     );
-    Ok(())
 }
 
 /// Runs the command line and returns the process exit code.

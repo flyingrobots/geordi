@@ -347,7 +347,7 @@ fn a_denied_adapter_gives_a_capability_refused_receipt_with_no_pixels() -> TestR
     let RenderOutcome::Unavailable { detail } = &outcome else {
         return Err("a denied adapter rendered".into());
     };
-    assert!(!detail.is_empty());
+    assert!(detail.contains("denied"), "{detail}");
 
     let receipt = scene.receipt(&outcome);
     assert_eq!(receipt["evidenceLevel"], "capability-refused");
@@ -376,8 +376,9 @@ fn a_denied_adapter_gives_a_capability_refused_receipt_with_no_pixels() -> TestR
     Ok(())
 }
 
-#[test]
-fn receipts_pin_every_identity_and_serialize_canonically() -> TestResult {
+/// The paint scene with a synthetic frame from a `Cpu` adapter: the receipt code is under test,
+/// not the pixels.
+fn synthetic_cpu_frame() -> Result<(Scene, RenderOutcome, Vec<u8>), Box<dyn std::error::Error>> {
     let scene = Scene::load(PAINT, Some(SUITE_CANVAS))?;
     let adapter = crate::AdapterIdentity {
         backend: "metal".to_owned(),
@@ -388,12 +389,17 @@ fn receipts_pin_every_identity_and_serialize_canonically() -> TestResult {
         vendor: 0,
         device: 0,
     };
-    // A synthetic frame: the receipt code is under test here, not the pixels.
     let rgba: Vec<u8> = (0..67 * 117).flat_map(|_| [10, 20, 30, 255]).collect();
     let outcome = RenderOutcome::Rendered {
         rgba: rgba.clone(),
         adapter,
     };
+    Ok((scene, outcome, rgba))
+}
+
+#[test]
+fn receipts_pin_every_identity() -> TestResult {
+    let (scene, outcome, rgba) = synthetic_cpu_frame()?;
     let receipt = scene.receipt(&outcome);
 
     let fields: Vec<&str> = receipt
@@ -455,6 +461,14 @@ fn receipts_pin_every_identity_and_serialize_canonically() -> TestResult {
         );
     }
     assert_eq!(receipt["fontIdentity"], scene.pack.font_identity.as_str());
+    Ok(())
+}
+
+#[test]
+fn receipts_record_the_frame_geometry_bind_probes_to_cells_and_serialize_canonically() -> TestResult
+{
+    let (scene, outcome, _) = synthetic_cpu_frame()?;
+    let receipt = scene.receipt(&outcome);
     assert_eq!(
         receipt["atlasStats"],
         json!({ "usedSlots": 8, "capacity": 8, "monoCount": 6, "colorEmojiCount": 2 })

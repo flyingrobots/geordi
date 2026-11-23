@@ -52,8 +52,8 @@ impl FrameSpec {
         prepared: &PreparedCells,
         pack: &GlyphPack,
         canvas: Option<(u32, u32)>,
-        default_fg: [u8; 3],
-        default_bg: [u8; 3],
+        foreground: [u8; 3],
+        background: [u8; 3],
     ) -> Result<Self, ProofError> {
         let limit = ErrorCode::ResourceLimit;
         // Cell edges are at most 256 and cell counts at most 9,999, so these cannot overflow.
@@ -100,8 +100,8 @@ impl FrameSpec {
             canvas_px_w,
             canvas_px_h,
             atlas_cols: pack.atlas_cols,
-            default_fg,
-            default_bg,
+            default_fg: foreground,
+            default_bg: background,
         })
     }
 

@@ -116,8 +116,11 @@ pub(super) const RECEIPT_DIR: &str = "fixtures/bijou-gpu/native-wgpu";
 /// Canvas of the conformance suite: an 8 x 7 grid of 8 x 16 cells plus a letterboxed remainder.
 pub(super) const SUITE_CANVAS: (u32, u32) = (67, 117);
 
+/// `(receipt stem, input fixture, canvas)` of one frame with a checked-in `gpu-probed` receipt.
+pub(super) type ProvenFrame = (&'static str, &'static str, Option<(u32, u32)>);
+
 /// `(receipt stem, input fixture, canvas)` of every frame with a checked-in `gpu-probed` receipt.
-pub(super) const PROVEN_FRAMES: [(&str, &str, Option<(u32, u32)>); 3] = [
+pub(super) const PROVEN_FRAMES: [ProvenFrame; 3] = [
     ("width1-paint", PAINT, Some(SUITE_CANVAS)),
     ("width1-erase", ERASE, Some(SUITE_CANVAS)),
     ("bijou-re036", BIJOU_FIXTURE, None),
