@@ -13,13 +13,11 @@ The design record is the normative source for every equation; this page says how
 exposes them.
 
 > **Not claimed.** The kit renders on the CPU only. It is the oracle presenters are checked
-> against. The [WebGPU presenter](./bijou-gpu-webgpu-presenter.md), the
-> [Canvas 2D fallback presenter](./bijou-gpu-canvas2d-presenter.md), which also computes its
-> pixels on the CPU, and the offscreen native `wgpu` proof in
-> [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md) are checked against it; the WebGL2
-> presenter is tracked in [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173)
-> and the native host in
-> [flyingrobots/geordi#58](https://github.com/flyingrobots/geordi/issues/58). The dirty-union
+> against. The [WebGL2 presenter](./bijou-gpu-webgl2-presenter.md) and the
+> [WebGPU presenter](./bijou-gpu-webgpu-presenter.md) are the browser GPU presenters, and the offscreen native `wgpu` proof in
+> [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md) is checked against this kit as well.
+> The Canvas 2D fallback presenter, which also computes its pixels on the CPU, is described in
+> [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md). The dirty-union
 > packer and the glyph atlas that share this package are described in
 > [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md) and
 > [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md). The canonical shader is described

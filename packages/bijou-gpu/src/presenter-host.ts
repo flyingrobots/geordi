@@ -1,6 +1,5 @@
-import type { AtlasBitmap, GlyphSlotMap } from './atlas.js';
 import { BijouGpuValidationError } from './errors.js';
-import type { GlyphAtlasDirtyRect, GlyphAtlasReceiptAssets } from './glyph-atlas.js';
+import type { GlyphAtlasReceiptAssets } from './glyph-atlas.js';
 import { PACKED_BIJOU_CELL_FORMAT } from './packed-cells.js';
 import type { GpuGridGeometry, GpuSurfaceResize } from './presenter.js';
 import { BIJOU_SURFACE_GPU_ABI, PROCEDURAL_GLYPH_TABLE_SHA256 } from './procedural-table.js';
@@ -14,12 +13,11 @@ import {
   type EndpointReceiptProbe,
   type EvidenceLevel,
 } from './receipt.js';
-import { resolveSlotFromSlotMap, type ResolveGlyphSlot } from './surface-damage.js';
 
 /**
- * Host-boundary helpers every `bijou-surface-gpu/1` presenter shares: canvas
- * size ingress, grid geometry, the atlas a presenter reads, and receipt
- * assembly. Nothing here touches a graphics API.
+ * Host-boundary helpers a `bijou-surface-gpu/1` presenter can share: canvas
+ * size ingress, grid geometry, and receipt assembly. The atlas a presenter
+ * reads is in `presenter-atlas.ts`. Nothing here touches a graphics API.
  */
 
 /** Largest physical canvas edge a receipt can record. */
@@ -92,49 +90,6 @@ export function presenterGridGeometry(
     cellPxH,
     canvasPxW: canvas.canvasPxW,
     canvasPxH: canvas.canvasPxH,
-  };
-}
-
-/**
- * The atlas a presenter reads. A live `GlyphAtlas` satisfies it as is; a fixed
- * bitmap such as the test glyph pack is adapted by {@link staticAtlasSource}.
- */
-export interface PresenterAtlasSource {
-  /** The `rgba8uint` atlas texels and the cell metrics they are cut to. */
-  readonly bitmap: AtlasBitmap;
-  readonly resolveSlot: ResolveGlyphSlot;
-  /** The atlas generation; a change re-uploads the whole atlas and grid. */
-  readonly atlasGeneration: () => number;
-  /** Texel regions written since the last call, cleared by the call. */
-  takeDirtyRects(): readonly GlyphAtlasDirtyRect[];
-  getReceiptAssets(): GlyphAtlasReceiptAssets;
-}
-
-/** The fields of a fixed atlas, such as `createTestGlyphPack()` returns. */
-export interface StaticAtlasInput {
-  readonly atlasBitmap: AtlasBitmap;
-  readonly slotMap: GlyphSlotMap;
-  readonly fontIdentity: string;
-  readonly atlasStats: GlyphAtlasReceiptAssets['atlasStats'];
-  /** Receipt `atlasGeneration`. Defaults to `1`. */
-  readonly generation?: number;
-}
-
-/** Adapt a fixed atlas bitmap and slot map to a {@link PresenterAtlasSource}. */
-export function staticAtlasSource(input: StaticAtlasInput): PresenterAtlasSource {
-  const generation = input.generation ?? 1;
-  const assets: GlyphAtlasReceiptAssets = {
-    atlasGeneration: generation,
-    atlasStats: { ...input.atlasStats },
-    fontIdentity: input.fontIdentity,
-    cellPx: { width: input.atlasBitmap.cellPxW, height: input.atlasBitmap.cellPxH },
-  };
-  return {
-    bitmap: input.atlasBitmap,
-    resolveSlot: resolveSlotFromSlotMap(input.slotMap),
-    atlasGeneration: () => generation,
-    takeDirtyRects: () => [],
-    getReceiptAssets: () => assets,
   };
 }
 

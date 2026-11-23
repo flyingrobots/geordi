@@ -23,16 +23,16 @@ import {
   RendererFaultError,
   renderReferenceRgba,
   sha256Hex,
-  staticAtlasSource,
+  createStaticAtlasSource,
   utf8Bytes,
   type EndpointReceipt,
-  type GpuPackedSurface,
   type PackedBijouCellsReceipt,
   type PresenterAtlasSource,
   type ReferenceFrame,
   type ReferenceSurface,
   type WebGpuSurfacePresenter,
 } from '../src/index.js';
+import { packedSurfaceFromReference } from '../test/packed-surface.js';
 
 /**
  * Real-browser WebGPU presenter probe.
@@ -168,15 +168,12 @@ const ERASE = parsePackedBijouCellsReceipt(parseJsonValue(eraseFrameText));
 const PAINT_SHA = sha256Hex(utf8Bytes(paintFrameText));
 const ERASE_SHA = sha256Hex(utf8Bytes(eraseFrameText));
 
-function liveSurface(surface: ReferenceSurface): GpuPackedSurface {
-  const cells = surface.widthCells * surface.heightCells;
-  return {
-    width: surface.widthCells,
-    height: surface.heightCells,
-    buffer: Uint8Array.from(surface.bytes),
-    sideTable: [...surface.sideTable],
-    renderDirtyWords: new Uint32Array(Math.ceil(cells / 32)).fill(0xffffffff),
-  };
+function staticOf(input: typeof EMPTY_ATLAS | typeof PACK): PresenterAtlasSource {
+  return createStaticAtlasSource({
+    bitmap: input.atlasBitmap,
+    slotMap: input.slotMap,
+    fontIdentity: input.fontIdentity,
+  });
 }
 
 /** The receipt with every atlas glyph replaced by an empty space cell. */
@@ -286,7 +283,7 @@ async function runFixture(
   cases: readonly FixtureCase[],
 ): Promise<WebGpuProbeResult> {
   const canvas = freshCanvas();
-  const atlas: PresenterAtlasSource = staticAtlasSource(atlasInput);
+  const atlas: PresenterAtlasSource = staticOf(atlasInput);
   const shader = { wgsl: surfaceWgsl, manifest: MANIFEST };
   const size = { cssWidth: GEOMETRY.canvasPxW, cssHeight: GEOMETRY.canvasPxH, dpr: 1 };
   let presenter: WebGpuSurfacePresenter;
@@ -313,7 +310,7 @@ async function runFixture(
         error,
         shader,
         atlas,
-        target: liveSurface(first.surface),
+        target: packedSurfaceFromReference(first.surface),
         size,
         defaultFg: GEOMETRY.defaultFg,
         defaultBg: GEOMETRY.defaultBg,
@@ -323,9 +320,9 @@ async function runFixture(
   }
   try {
     const frames: WebGpuProbeFrame[] = [];
-    let current = liveSurface(cases.at(0)?.surface ?? PAINT);
+    let current = packedSurfaceFromReference(cases.at(0)?.surface ?? PAINT);
     for (const fixture of cases) {
-      const target = liveSurface(fixture.surface);
+      const target = packedSurfaceFromReference(fixture.surface);
       const expected = oracle(fixture.surface, atlasInput, GEOMETRY.canvasPxW, GEOMETRY.canvasPxH);
       presenter.present(current, target, {});
       current = target;
@@ -393,7 +390,7 @@ async function runResizeSequence(steps: number, seed: number): Promise<WebGpuRes
   try {
     presenter = await createWebGPUSurfacePresenter(canvas, {
       shader: { wgsl: surfaceWgsl, manifest: MANIFEST },
-      atlas: staticAtlasSource(PACK),
+      atlas: staticOf(PACK),
       size: { cssWidth: GEOMETRY.canvasPxW, cssHeight: GEOMETRY.canvasPxH, dpr: 1 },
       defaultFg: GEOMETRY.defaultFg,
       defaultBg: GEOMETRY.defaultBg,
@@ -407,7 +404,7 @@ async function runResizeSequence(steps: number, seed: number): Promise<WebGpuRes
   const results: WebGpuResizeStep[] = [];
   let fault: string | null = null;
   try {
-    let current = liveSurface(PAINT);
+    let current = packedSurfaceFromReference(PAINT);
     for (let step = 0; step < steps; step += 1) {
       const dpr = [1, 1.5, 2][next(3)] ?? 1;
       const cssWidth = 4 + next(160);
@@ -418,7 +415,7 @@ async function runResizeSequence(steps: number, seed: number): Promise<WebGpuRes
       const widthCells = next(Math.floor(canvasPxW / PACK.atlasBitmap.cellPxW) + 1);
       const heightCells = next(Math.floor(canvasPxH / PACK.atlasBitmap.cellPxH) + 1);
       const surface = tiledPaint(widthCells, heightCells);
-      const target = liveSurface(surface);
+      const target = packedSurfaceFromReference(surface);
       presenter.present(current, target, {});
       current = target;
       const capture = await presenter.captureFrame();
@@ -453,7 +450,7 @@ async function runShaderFault(): Promise<WebGpuFaultResult> {
   try {
     const presenter = await createWebGPUSurfacePresenter(freshCanvas(), {
       shader: { wgsl: broken, manifest },
-      atlas: staticAtlasSource(PACK),
+      atlas: staticOf(PACK),
       size: { cssWidth: GEOMETRY.canvasPxW, cssHeight: GEOMETRY.canvasPxH, dpr: 1 },
     });
     presenter.dispose();

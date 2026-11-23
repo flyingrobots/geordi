@@ -98,10 +98,12 @@ via `geordi-text-prep compare`) and receipt generation as part of the strict tex
 
 **Key principle**: Bijou owns cell semantics and Bunny owns the integer primitives. This package
 is the CPU oracle that GPU presenters are compared against, plus the packer and glyph atlas they
-share, the browser WebGPU presenter, and the Canvas 2D fallback presenter. References:
+share, the WebGL2 presenter (`src/webgl2-presenter.ts`), the WebGPU presenter
+(`src/webgpu-presenter.ts`), and the Canvas 2D fallback presenter. References:
 [`bijou-gpu-conformance-kit.md`](./bijou-gpu-conformance-kit.md),
 [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md),
 [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md),
+[`bijou-gpu-webgl2-presenter.md`](./bijou-gpu-webgl2-presenter.md),
 [`bijou-gpu-webgpu-presenter.md`](./bijou-gpu-webgpu-presenter.md), and
 [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md).
 

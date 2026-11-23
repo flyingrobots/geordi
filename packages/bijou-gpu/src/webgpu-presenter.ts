@@ -8,9 +8,9 @@ import {
   assemblePresenterReceipt,
   presenterGridGeometry,
   resolvePresenterCanvasPx,
-  type PresenterAtlasSource,
   type PresenterCanvasPx,
 } from './presenter-host.js';
+import type { PresenterAtlasSource } from './presenter-atlas.js';
 import {
   cellFromPoint,
   type GpuCellPoint,

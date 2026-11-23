@@ -15,9 +15,11 @@ the canonical [`bijou-surface.wgsl`](./bijou-gpu-shaders.md) verbatim, with cell
 [`GlyphAtlas`](./bijou-gpu-glyph-atlas.md) or a fixed atlas such as the test glyph pack. The
 design record is normative for every equation; this page says how the presenter applies them.
 
-> **Not claimed.** Positive rendering evidence comes from Chrome only: Apple Metal on a developer
-> Mac (`gpu-probed`) and, in CI, SwiftShader (`software-probed`). No other browser, operating
-> system, or GPU vendor has been tested. Device loss is tested against a fake device, not a real
+> **Not claimed.** Positive rendering evidence comes from Chrome on Apple Metal on a developer
+> Mac (`gpu-probed`), plus a local SwiftShader run on that Mac (`software-probed`). Hosted CI
+> (Linux) does not render through this presenter: its Chrome exposes no WebGPU adapter under the
+> harness flags, so the positive browser tests are skipped there as `capability-refused`. No
+> other browser, operating system, or GPU vendor has been tested. Device loss is tested against a fake device, not a real
 > lost GPU. No timing has been measured.
 
 ## Creating a presenter
@@ -244,11 +246,16 @@ The page `packages/bijou-gpu/harness/webgpu.html` runs the presenter on a real c
 shader and manifest loaded verbatim, and compares every read-back frame with
 `renderReferenceRgba()` run in the same page. It publishes `window.__geordiWebGpuProbe`.
 
-The Playwright config launches Chrome with `--enable-unsafe-webgpu --enable-unsafe-swiftshader`,
-so a host without a GPU can expose a SwiftShader adapter. Positive tests and the refusal test are
-separate:
+The Playwright config launches Chrome with `--enable-unsafe-webgpu --enable-unsafe-swiftshader`.
+On Linux it also passes `--use-angle=swiftshader` and
+`--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan`. Without them, headless Chrome on
+Linux exposes a SwiftShader adapter whose device is destroyed on the first draw into a WebGPU
+canvas. With them, Playwright's bundled Chromium 149 draws and reads back a canvas, but Chrome
+158, the browser the hosted runner uses, exposes no adapter at all. Positive tests and the
+refusal test are separate:
 
-- On a host that refuses WebGPU, the positive tests are skipped, never passed. Set
+- On a host that refuses WebGPU, the positive tests are skipped, never passed, and each skip
+  prints a `webgpu-capability-refused` JSON line with the reason. Set
   `GEORDI_BIJOU_GPU_REQUIRE_WEBGPU=1` to make that a failure.
 - The refusal test removes `navigator.gpu` on purpose and witnesses refusal only.
 

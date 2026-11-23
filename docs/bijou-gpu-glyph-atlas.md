@@ -13,10 +13,9 @@ for the slot encoding, the cell metric domain, and the full-invalidation trigger
 how the atlas exposes them.
 
 > **Not claimed.** The atlas uploads nothing: it keeps a CPU bitmap and reports which texels
-> changed. The [WebGPU presenter](./bijou-gpu-webgpu-presenter.md) uploads it to a texture, and
-> the [Canvas 2D presenter](./bijou-gpu-canvas2d-presenter.md) reads the bitmap from CPU memory;
-> the WebGL2 presenter is tracked in
-> [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173). Glyph pixels from
+> changed. The [WebGL2 presenter](./bijou-gpu-webgl2-presenter.md) and the
+> [WebGPU presenter](./bijou-gpu-webgpu-presenter.md) upload it to a texture, and the
+> [Canvas 2D presenter](./bijou-gpu-canvas2d-presenter.md) reads the bitmap from CPU memory. Glyph pixels from
 > the browser adapter depend on the host's fonts and are not reproducible across hosts; bit-exact
 > conformance frames use the [test glyph pack](./bijou-gpu-conformance-kit.md#test-glyph-pack).
 > No timing has been measured.

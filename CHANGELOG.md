@@ -26,8 +26,21 @@
   `copyTextureToBuffer`, strips the 256-byte row padding and records a `gpu-probed` or
   `software-probed` receipt; `createWebGpuRefusalReceipt()` records a refusal as
   `capability-refused`. `device.lost` is recovered by re-uploading the staging buffer and the
-  atlas to a new device. `presenter-host.ts` adds host helpers every presenter can share. Browser
+  atlas to a new device. `presenter-host.ts` adds canvas-size ingress, grid geometry and validated receipt assembly; the atlas comes through the shared `PresenterAtlasSource`. Browser
   probes read back frames bit-identical to `renderReferenceRgba()`.
+- **`@flyingrobots/geordi-bijou-gpu`**: WebGL2 presenter for the `bijou-surface-gpu/1` ABI
+  (flyingrobots/geordi#173). `createWebGL2SurfacePresenter()` compiles the checked-in
+  naga-generated GLSL ES 3.00 stages unmodified, refusing text whose SHA-256 differs from the
+  manifest pin, keeps prepared cells in an `RGBA32UI` texture and the glyph atlas in an `RGBA8UI`
+  texture (`NEAREST`, one level), uploads only the dirty row spans from `packSurfaceDamage()` and
+  the atlas dirty sub-rects, and draws one fullscreen triangle into an `RGBA8UI` canonical target
+  plus a display triangle onto the canvas. Optional canonical readback gives `software-probed`
+  or `gpu-probed` receipts, labelled from the renderer string; otherwise receipts are
+  `unit-upload`. It recovers from `webglcontextlost` / `webglcontextrestored` from the retained
+  staging buffer, implements `resize()`, `cellFromPoint()`, `dispose()` and a dirty-row
+  diagnostic overlay, and throws `BackendUnavailableError` without a WebGL2 context. Adds the
+  shared `PresenterAtlasSource` / `createStaticAtlasSource()` and
+  `GEORDI_E_BIJOU_DRAWING_BUFFER_MISMATCH` (`DrawingBufferMismatchError`).
 - **`@flyingrobots/geordi-bijou-gpu`**: Canvas 2D fallback presenter for the `bijou-surface-gpu/1`
   ABI (flyingrobots/geordi#174). `createCanvas2DSurfacePresenter()` implements
   `GpuSurfacePresenter` with no WebGL or WebGPU. It packs each frame with `packSurfaceDamage()`

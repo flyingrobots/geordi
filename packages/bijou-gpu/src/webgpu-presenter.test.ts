@@ -17,8 +17,8 @@ import {
   RendererFaultError,
 } from './errors.js';
 import type { GlyphAtlasDirtyRect } from './glyph-atlas.js';
-import type { PackedBijouCellsReceipt } from './packed-cells.js';
-import { staticAtlasSource, type PresenterAtlasSource } from './presenter-host.js';
+import { createStaticAtlasSource, type PresenterAtlasSource } from './presenter-atlas.js';
+import { packedSurfaceFromReference } from '../test/packed-surface.js';
 import type { GpuPackedSurface } from './presenter.js';
 import { preparedBufferBytes } from './prepare.js';
 import { serializeEndpointReceipt, validateEndpointReceipt } from './receipt.js';
@@ -58,19 +58,8 @@ const SUITE: RenderedSuite = renderSuite();
 const PAINT = SUITE.paint;
 const ERASE = SUITE.erase;
 
-function surfaceOf(receipt: PackedBijouCellsReceipt): GpuPackedSurface {
-  const cells = receipt.widthCells * receipt.heightCells;
-  return {
-    width: receipt.widthCells,
-    height: receipt.heightCells,
-    buffer: Uint8Array.from(receipt.bytes),
-    sideTable: [...receipt.sideTable],
-    renderDirtyWords: new Uint32Array(Math.ceil(cells / 32)).fill(0xffffffff),
-  };
-}
-
-const PAINT_SURFACE = surfaceOf(SUITE.paintReceipt);
-const ERASE_SURFACE = surfaceOf(SUITE.eraseReceipt);
+const PAINT_SURFACE = packedSurfaceFromReference(SUITE.paintReceipt);
+const ERASE_SURFACE = packedSurfaceFromReference(SUITE.eraseReceipt);
 
 /** A surface of `width x height` cells copied from the top-left of the paint frame. */
 function croppedPaint(width: number, height: number): GpuPackedSurface {
@@ -93,7 +82,11 @@ function croppedPaint(width: number, height: number): GpuPackedSurface {
 }
 
 function testAtlas(): PresenterAtlasSource {
-  return staticAtlasSource(SUITE.pack);
+  return createStaticAtlasSource({
+    bitmap: SUITE.pack.atlasBitmap,
+    slotMap: SUITE.pack.slotMap,
+    fontIdentity: SUITE.pack.fontIdentity,
+  });
 }
 
 interface Rig {
@@ -272,7 +265,7 @@ describe('dirty-row queue.writeTexture uploads', () => {
 
   it('uploads the whole grid on the first frame and only the dirty spans of paint -> erase', async () => {
     const { device, presenter } = await rig();
-    const blank = surfaceOf({ ...SUITE.eraseReceipt });
+    const blank = packedSurfaceFromReference(SUITE.eraseReceipt);
     presenter.present(blank, PAINT_SURFACE, {});
     const first = device.writesTo('bijou-surface cells');
     expect(first).toHaveLength(1);
@@ -692,7 +685,7 @@ describe('randomized resize sequences', () => {
       return seed % bound;
     };
     const { device, presenter } = await rig();
-    let current = PAINT_SURFACE;
+    let current: GpuPackedSurface = PAINT_SURFACE;
     for (let step = 0; step < 120; step += 1) {
       const dpr = [1, 1.25, 1.5, 2, 3][next(5)] ?? 1;
       const cssWidth = 8 + next(400);

@@ -15,9 +15,8 @@ and emits a `geordi-bijou-gpu-receipt/1` that the
 The design record is normative for every equation; this page says how the presenter applies them.
 
 > **Not claimed.** This presenter computes every pixel on the CPU; it is not a GPU presenter. The
-> [WebGPU presenter](./bijou-gpu-webgpu-presenter.md) is described separately, the WebGL2
-> presenter is tracked in
-> [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173), and the fallback
+> [WebGL2 presenter](./bijou-gpu-webgl2-presenter.md) and the
+> [WebGPU presenter](./bijou-gpu-webgpu-presenter.md) are described separately, and the fallback
 > selection ladder is a separate slice. Browser pixel evidence comes from Chrome only. No timing
 > has been measured. The presenter does not observe the element's size itself: the host calls
 > `resize()`.

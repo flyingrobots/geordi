@@ -120,7 +120,9 @@ BG-WGPU-41 is refusal evidence only and never closes a rendering claim.
 
 ## Not covered
 
-- Positive browser evidence is from Chrome only, on Apple Metal locally and SwiftShader in CI.
+- Positive browser evidence is from Chrome on one Mac: Apple Metal, and SwiftShader forced with
+  `--use-webgpu-adapter=swiftshader`. Hosted CI skips the positive browser tests as
+  `capability-refused`; see the browser probe section of the reference page.
 - Device loss is simulated with the fake. A real lost GPU, for example after a driver reset, is
   not tested.
 - `resize()` with an exact `devicePixelContentBox` is tested only with the fake.

@@ -17,8 +17,10 @@ export default defineConfig({
       args: [
         '--enable-unsafe-webgpu',
         '--enable-unsafe-swiftshader',
-        // Headless Chrome on Linux destroys a SwiftShader WebGPU device on the
-        // first draw into a canvas unless ANGLE also runs on SwiftShader Vulkan.
+        // Without these, headless Chrome on Linux destroys a SwiftShader WebGPU
+        // device on the first draw into a canvas. With them, Playwright's
+        // Chromium 149 draws; Chrome 158 (the hosted runner) exposes no adapter,
+        // so the WebGPU probes skip there as capability-refused.
         ...(process.platform === 'linux'
           ? ['--use-angle=swiftshader', '--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan']
           : []),

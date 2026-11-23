@@ -35,13 +35,15 @@ and [#58](https://github.com/flyingrobots/geordi/issues/58). The conformance kit
 GLSL ES 3.00 generator ([#170](https://github.com/flyingrobots/geordi/issues/170)) exist and are
 described in [`../bijou-gpu-shaders.md`](../bijou-gpu-shaders.md). The dirty-union packer
 ([#171](https://github.com/flyingrobots/geordi/issues/171)) exists and is described in
-[`../bijou-gpu-surface-damage.md`](../bijou-gpu-surface-damage.md). The Canvas 2D fallback
+[`../bijou-gpu-surface-damage.md`](../bijou-gpu-surface-damage.md). The `GlyphAtlas`
+([#172](https://github.com/flyingrobots/geordi/issues/172)) exists and is described in
+[`../bijou-gpu-glyph-atlas.md`](../bijou-gpu-glyph-atlas.md). The WebGL2 presenter
+([#173](https://github.com/flyingrobots/geordi/issues/173)) exists and is described in
+[`../bijou-gpu-webgl2-presenter.md`](../bijou-gpu-webgl2-presenter.md). The Canvas 2D fallback
 presenter ([#174](https://github.com/flyingrobots/geordi/issues/174)) exists and is described in
 [`../bijou-gpu-canvas2d-presenter.md`](../bijou-gpu-canvas2d-presenter.md). The browser WebGPU
 presenter ([#175](https://github.com/flyingrobots/geordi/issues/175)) exists and is described in
-[`../bijou-gpu-webgpu-presenter.md`](../bijou-gpu-webgpu-presenter.md). The native `wgpu` offscreen
-proof ([#58](https://github.com/flyingrobots/geordi/issues/58)) is described in
-[`../bijou-gpu-native-wgpu.md`](../bijou-gpu-native-wgpu.md). No WebGL2 or windowed native
+[`../bijou-gpu-webgpu-presenter.md`](../bijou-gpu-webgpu-presenter.md). No windowed native
 presenter is claimed as implemented yet.
 
 ## Accepted Design: Fixed-Point And Ray-Traced Scene Profiles
