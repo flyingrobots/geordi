@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-gate/record.schema.json",
+  "title": "Change record",
+  "description": "One change record added by the head, and how the gate used it. Written to stdout. `change` is null when the record is invalid.",
+  "x-schema-id": "geordi.contract_gate.record",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "path",
+    "contract",
+    "change",
+    "state"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_gate.record"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "record"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contract": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "change": {
+      "enum": [
+        "breaking",
+        "additive",
+        null
+      ]
+    },
+    "state": {
+      "enum": [
+        "matched",
+        "retroactive",
+        "stale",
+        "invalid",
+        "bootstrap"
+      ]
+    }
+  }
+}

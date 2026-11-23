@@ -33,3 +33,9 @@ yet. The scene therefore validates in Geordi but no runtime implements it.
 
 When you change the reference scene, change each failure fixture the same way and keep the
 expectations file in step; the test above reports any drift.
+
+The reference scene and the negotiation scene are the canonical examples of
+`geordi-ray-traced-scene/1` in the contract registry (`contracts/registry.json`). They validate
+against `schemas/geordi-ray-traced-scene/1/scene.schema.json`, and every shape-stage failure
+fixture does not (`scripts/ray-traced-scene-schema.test.mjs`). Changing either scene changes its
+canonical hash. The contract gate (`docs/contract-gate.md`) then requires a change record.

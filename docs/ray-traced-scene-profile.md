@@ -15,6 +15,8 @@ the runtime negotiation check. Geordi contains no ray tracer. Nothing here rende
 > changes to it are recorded in [`CHANGELOG.md`](../CHANGELOG.md) under "BREAKING CHANGES". It becomes
 > a frozen contract, after which any incompatible change requires `/2`, only when a release or a
 > consumer first pins it.
+> Every change to its schema, example hashes, diagnostic codes or public Rust items also needs a
+> change record; the [contract gate](./contract-gate.md) compares each pull request with its base.
 >
 > **Not claimed.** Geordi does not claim `geordi/ray-traced-3d/1`. The design's proof gates
 > (thread invariance, two CPU architectures agreeing, and an artifact render matching lumen's
@@ -119,6 +121,54 @@ Its top level, abridged (arrays shortened to one element):
 
 Unknown fields are rejected at every level. `towardLight` must be absent (not `null`) on a
 `uniformSky` light.
+
+### JSON Schema
+
+[`schemas/geordi-ray-traced-scene/1/scene.schema.json`](../schemas/geordi-ray-traced-scene/1/scene.schema.json)
+describes the artifact's shape. The validator is still the authority: the schema is derived from it
+and from the field rules below, and it is not the whole validator. A document can satisfy the
+schema and still be rejected.
+
+The schema expresses:
+
+- every field and its JSON type, with unknown fields refused;
+- the two light kinds, each with its own fields;
+- integers within the parse range `-(2^53 - 1)..=2^53 - 1`;
+- the constants (`sceneVersion`, `numericProfile`, kinds, integrator, layout, reconstruction,
+  output);
+- the requirement vocabulary, with no duplicates;
+- the numeric ranges of albedo, irradiance, radiance, `tanHalfFovY`, film size, seed and
+  `maxBounces`;
+- the allowed `samplesPerPixel` values;
+- the mesh hash and identity patterns;
+- non-empty ids.
+
+It does not express these rules, which only the validator enforces:
+
+- ids unique within a collection;
+- instance references to declared meshes and materials;
+- the requirements that the content implies;
+- at most one `directional` light and exactly one `uniformSky`;
+- `meshes[].path` being fixture-local;
+- `bounds.min <= bounds.max`;
+- `towardLight` normalisation;
+- camera degeneracy;
+- the trace domain;
+- the primitive count sum and the empty scene;
+- anything that reads mesh bytes.
+
+The light counts could be written with `contains`, `minContains` and `maxContains`, but the
+schema does not use those keywords.
+
+Being JSON Schema, it also cannot see how a number is written: `1.779033704e9`, `1779033704.0` and
+`-0` are integers to it.
+
+`scripts/ray-traced-scene-schema.test.mjs` pins this boundary against the fixtures:
+
+- every positive fixture validates;
+- every shape-stage failure fixture is invalid;
+- of the validate-stage failure fixtures, exactly those whose rule is listed above as expressed
+  are invalid.
 
 ## Field rules
 

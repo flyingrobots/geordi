@@ -380,6 +380,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "geordi-contract-api"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "serde_json",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "geordi-ir"
 version = "0.1.0"
 dependencies = [

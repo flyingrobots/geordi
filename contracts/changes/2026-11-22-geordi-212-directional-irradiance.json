@@ -1,0 +1,13 @@
+{
+  "$schema": "../../schemas/geordi-contract-registry/change-record.schema.json",
+  "contract": "geordi-ray-traced-scene/1",
+  "change": "breaking",
+  "summary": "A directional light's value is `irradiance`, not `radiance`; a `uniformSky` light keeps `radiance`, and the old name on a directional light is refused as an unknown field (GEORDI_E_RT_SCENE_SHAPE). GeordiRayTracedLight.radiance is replaced by GeordiRayTracedLight.value: GeordiRayTracedLightValue (Irradiance or Radiance). GEORDI_E_RT_IRRADIANCE_OUT_OF_RANGE is new; GEORDI_E_RT_RADIANCE_OUT_OF_RANGE now covers the sky only. The reference scene hash changed from sha256:3f245c019731d361dbbdd4c38362e2a2e6d0f725ba799f5d0baaa6d34f482747 to sha256:5ea6b6085b5178fcda09fc966737e44cd5c731ed311e4fcd601ddf935a480a24.",
+  "why": "From CHANGELOG.md: Geordi is pre-1.0, no consumer constructs these types yet, and a stale name inside a public error code costs more later than the break costs now; Bunny's convention is \"A directional light's value is irradiance.\" The identifier stayed geordi-ray-traced-scene/1 because the contract is not yet frozen. Recorded retroactively by flyingrobots/geordi#217: the change merged on 2026-11-22, before the contract gate existed, and is the change that prompted it.",
+  "references": [
+    "flyingrobots/geordi#212",
+    "flyingrobots/geordi#161",
+    "flyingrobots/geordi#217"
+  ],
+  "retroactive": true
+}

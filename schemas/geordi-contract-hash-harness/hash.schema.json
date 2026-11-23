@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-hash-harness/hash.schema.json",
+  "title": "Example hash",
+  "description": "The hash one encoder function of a tree's crate computed for one example document. Written to stdout by the harness that scripts/contract-gate.mjs generates and builds from each tree; the gate validates every line against this schema.",
+  "x-schema-id": "geordi.contract_hash_harness.hash",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "encoder",
+    "path",
+    "hash"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_hash_harness.hash"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "hash"
+    },
+    "encoder": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hash": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/flyingrobots/geordi/schemas/geordi-contract-api/result.schema.json",
+  "title": "Result",
+  "description": "The run succeeded. Written to stdout after the item lines.",
+  "x-schema-id": "geordi.contract_api.result",
+  "x-schema-version": "1.0.0",
+  "type": "object",
+  "required": [
+    "_schema",
+    "kind",
+    "ok",
+    "files",
+    "items"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_schema": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "geordi.contract_api.result"
+        },
+        "version": {
+          "const": "1.0.0"
+        }
+      }
+    },
+    "kind": {
+      "const": "result"
+    },
+    "ok": {
+      "const": true
+    },
+    "files": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "items": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}
