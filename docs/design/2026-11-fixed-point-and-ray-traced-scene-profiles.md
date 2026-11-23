@@ -6,7 +6,7 @@
 **Implementation issue**: [#153](https://github.com/flyingrobots/geordi/issues/153)
 **Upstream plan**: [lumen#9](https://github.com/flyingrobots/lumen/issues/9), stage
 [lumen#8](https://github.com/flyingrobots/lumen/issues/8)
-**Bunny revision read**: `origin/main` at `7467148`
+**Bunny revision read**: `origin/main` at `7467148`; decisions 10 and 11 and the identities in B5 were read at `36da048`
 
 ## Reader job
 
@@ -19,7 +19,13 @@ Each decision states the recommendation, the alternatives, and the evidence that
 The maintainer accepted the recommendations with the amendments recorded in
 [Decisions](#decisions); where the two differ, Decisions governs. Statements about what exists
 today cite the file they come from. Anything planned is labelled planned and linked to its issue.
-Nothing in this document is implemented yet.
+What exists on `main` today is described in
+the [reference page](../ray-traced-scene-profile.md): the Rust DTOs, the validator
+(`validate_geordi_ray_traced_scene` in `geordi-ir`), the runtime-profile negotiation, the receipt type,
+`RenderedImage::from_rgba8` and a fixture set. What does not exist: any renderer, rendered image or
+ray-traced output, the written definition of `geordi-rt-diffuse-path/1`, recognition of any Bunny
+sampler or tone curve identity, a TypeScript reader or validator, compiler normalization to Q32.32,
+and any run of the proof gates; the profile is not claimed.
 
 ## Terms
 
@@ -47,7 +53,7 @@ Nothing in this document is implemented yet.
 | A4 | Relation to Bunny | Same value set as Bunny's Q32.32 (decoding is `FixedQ32_32::from_raw`). Geordi's profile text defines the meaning itself and cites Bunny's constitution as the arithmetic consumers use; it does not depend on Bunny code. |
 | A5 | Coexistence with binary64 | One numeric profile per artifact, declared in `numericProfile`. No per-field mixing. Integer counts and indices are outside any scalar profile. |
 | A6 | Compiler normalization | Converting authored decimals or binary64 values to raw values is an explicit, receipted compiler step: round the exact value to the nearest raw unit, ties to even; reject out-of-range values. |
-| A7 | Non-length values | Field of view as the tangent of half the vertical angle; colours and radiance as linear-light Q32.32; reflectance as a Q32.32 ratio in `[0, 1]`; rotations as affine matrix entries. No angles in version 1. |
+| A7 | Non-length values | Field of view as the tangent of half the vertical angle; colours, the sky's radiance and a directional light's irradiance as linear-light Q32.32; reflectance as a Q32.32 ratio in `[0, 1]`; rotations as affine matrix entries. No angles in version 1. |
 | B1 | Artifact form | A separate artifact, `geordi-ray-traced-scene/1`, beside `geordi-ir/1`, as strict text did. Not a new IR version and not new `geordi-ir/1` node kinds. |
 | B2 | Scene content | Triangle meshes by content hash with a named decode layout, instances with Q32.32 affine transforms, one pinhole camera, diffuse materials, one directional light and a uniform sky. |
 | B3 | Trace-domain limit | The Geordi validator checks it conservatively from declared mesh bounds; the runtime checks it exactly after transforming vertices. Either failure is a hard rejection; nothing is clamped or dropped. |
@@ -284,7 +290,7 @@ avoid these entirely by writing linear-light values and tangents directly.
 | Rotation | Entries of an affine matrix | Bunny's `FixedAffine3` takes matrix entries. Angles would need a sine and cosine rule in the contract. |
 | Angles in general | Not in version 1 | Bunny's `FixedAngle` (binary angles, table-based sine and cosine) is a candidate encoding for a later version. |
 | Colour of a surface | Linear-light reflectance per channel, Q32.32 in `[0, 1]` | The design laws require colour interpolation to name sRGB or linear light; shading is linear. |
-| Light radiance | Linear-light radiance per channel, Q32.32, `0` to `65536` | Radiance is not bounded by 1. The cap keeps sample sums inside `i64` (see [B4](#b4-render-settings)). |
+| Directional light irradiance, sky radiance | Linear-light, per channel, Q32.32, `0` to `65536` | Neither is bounded by 1. A directional light's value is irradiance, not radiance ([Decisions](#decisions), 10). Bunny's `MAX_LIGHT_RAW` is the same cap, `2^48` raw. The cap keeps sample sums inside `i64` (see [B4](#b4-render-settings)). |
 | Ratios | Q32.32 | Same profile, field-specific bounds. |
 
 Colour primaries: linear light with sRGB (Rec. 709) primaries. The output encoding applies the
@@ -368,7 +374,7 @@ annotated in comments for the reader; comments are not valid JSON and the real a
       "kind": "directional",
       "id": "sun",
       "towardLight": [2147483648, 4294967296, 1073741824], // (0.5, 1.0, 0.25), max component 1.0
-      "radiance": [12884901888, 12884901888, 12884901888] // 3.0
+      "irradiance": [12884901888, 12884901888, 12884901888] // 3.0
     },
     { "kind": "uniformSky", "id": "sky", "radiance": [1288490189, 1717986918, 2576980378] }
   ],
@@ -420,8 +426,9 @@ triangles in total is rejected.
 length), `up`, and `tanHalfFovY`. This matches the inputs planned for `bunny-optics`
 ([bunny#138](https://github.com/flyingrobots/bunny/issues/138)) and Bunny's `-Z` view convention.
 It differs from the mesh descriptor's `eye`/`target` camera; normalization can convert one to the
-other exactly (`forward = target - eye`). Rejected: zero `forward`, zero `up`, `up` parallel to
-`forward` (checked exactly with a 128-bit cross product), and `tanHalfFovY` outside
+other exactly (`forward = target - eye`). Rejected: zero `forward`, zero `up`, an `up` whose sine with `forward` is below `2^-15`
+(parallel and near-parallel alike; the exact test and the reason for the bound are in the
+[reference page](../ray-traced-scene-profile.md#field-rules)), and `tanHalfFovY` outside
 `(0, 4]` (the upper bound is a proposal; it depends on how bunny#138 scales ray directions into the
 trace domain).
 
@@ -444,7 +451,9 @@ builders, and it is resolved there, in
 **Lights (version 1).**
 
 - `directional`: a light at infinity with no angular size, given by `towardLight` (the direction
-  from a surface to the light) and per-channel radiance. Shadows are hard. At most one directional
+  from a surface to the light) and per-channel `irradiance`: the irradiance the light delivers to a
+  surface perpendicular to it, in the convention of Bunny's "A directional light's value is
+  irradiance." ([Decisions](#decisions), 10). Shadows are hard. At most one directional
   light. `towardLight` need not be unit length, but its largest component magnitude must be
   exactly 1.0 (raw `2^32`). That makes it a valid trace direction with no runtime division, and it
   bounds shadow-ray distances: along the dominant axis a distance `t` moves exactly `t` units, and
@@ -494,19 +503,23 @@ in `film`):
 | Setting | Version 1 domain | Notes |
 | --- | --- | --- |
 | `samplesPerPixel` | A power of two, `1..=1024` | A power of two makes the mean an exact shift with a stated rounding. The 4K target uses 16. |
-| `sampler` | One Bunny sampler identity | Planned in [bunny#221](https://github.com/flyingrobots/bunny/issues/221). The sample value depends only on `(pixel, sample index, dimension, seed)`, so thread count and tile order cannot change it. |
+| `sampler` | One Bunny sampler identity | Bunny publishes `bunny-sobol-owen/1`, built on `bunny-sample-hash/1`. The sample value depends only on `(pixel, sample index, dimension, seed)`, so thread count and tile order cannot change it. |
 | `seed` | Integer `0..=2^32 - 1` | Plain integer, not a scalar. |
 | `maxBounces` | `0` or `1` | Larger values are rejected until a gate proves them. |
 | `reconstruction` | `geordi-box-filter/1` | Each sample contributes only to its own pixel with equal weight; the pixel value is the per-channel sum of sample radiance divided by `samplesPerPixel`, rounded to nearest, ties to even. |
-| `toneCurve` | One Bunny tone curve identity | Planned in [bunny#222](https://github.com/flyingrobots/bunny/issues/222): maps linear radiance to an 8-bit sRGB-encoded value with a stated rounding rule. |
+| `toneCurve` | One Bunny tone curve identity | Bunny publishes `bunny-tone-srgb/1`, followed by `bunny-unorm8/1` for the 8-bit code. |
 | `output` | `geordi-rgba8-srgb-opaque/1` | RGBA8, sRGB-encoded colour, alpha always 255. |
 
-**Why the radiance cap.** With albedo at most 1, at most one bounce and every light at most
-`65536` per channel, one sample's radiance is below `2^18` units, which is `2^50` raw. A sum of
+**Why the cap on light values.** With albedo at most 1, at most one bounce and every light value
+(a directional light's irradiance, the sky's radiance) at most `65536` per channel, one sample's
+radiance is below `2^18` units, which is `2^50` raw. Bunny states the tighter bound, below `2^17`
+units, in its order of operations. A sum of
 1024 samples stays below `2^60` raw, inside `i64`. Integer addition is then exact and associative,
 so the sum is the same in any order: tiles, threads and GPU lanes cannot change it.
 
-`film.width` and `film.height` are integers in `1..=16384`. The `viewport` argument of
+`film.width` and `film.height` are integers in `1..=16384`. The artifact does not bound their
+product; a runtime bounds the film area through its `max_film_pixels` at negotiation (see the
+[reference page](../ray-traced-scene-profile.md#runtime-profile-negotiation)). The `viewport` argument of
 `render(ir, viewport, assetPack, runtimeProfile)` must equal the film size; a runtime rejects any
 other viewport rather than scaling.
 
@@ -521,13 +534,25 @@ these produce different bytes.
 owns a short written definition of it as a composition of named Bunny functions.
 
 As much of the graphics math as possible lives in Bunny, so each step is as coarse as Bunny can own
-without learning Geordi's nouns. Bunny's `bunny-optics` (planned) owns, as pure functions with
+without learning Geordi's nouns. Bunny's `bunny-optics` owns, as pure functions with
 their own golden vectors: the sampling sequence
 ([bunny#221](https://github.com/flyingrobots/bunny/issues/221)), the hemisphere sampling and the
 diffuse shading step ([bunny#160](https://github.com/flyingrobots/bunny/issues/160)), and the
 sample accumulation and tone curve ([bunny#222](https://github.com/flyingrobots/bunny/issues/222)).
 Geordi's identity pins which of those functions are used, in which order, and at which Bunny
-contract versions. Lumen only wires them together; it adds no arithmetic of its own to a step.
+contract versions. The identities `geordi-rt-diffuse-path/1` composes are:
+
+| Bunny identity | Step |
+| --- | --- |
+| `bunny-sample-hash/1` | The random bits behind every sampler value (`PixelStream::bits`). |
+| `bunny-sobol-owen/1` | The sampler: `PixelSampler::point` and `PixelSampler::camera_sample`. |
+| `bunny-diffuse-shading/1` | Triangle normal and frame, facing, secondary-ray start point, bounce direction, the light's term and shadow ray, the sky, the diffuse reflection and the order of operations. |
+| `bunny-tone-srgb/1` | `ToneCurve::SrgbV1`. |
+| `bunny-unorm8/1` | `quantize_8`, the 8-bit code. |
+
+These names and their meaning are read from `docs/topics/optics/README.md` at Bunny `36da048`
+(sections Sampling, Diffuse Shading and Versioned Identities). The version that governs is
+Bunny's; where this text and that page differ, that page governs. Lumen only wires them together; it adds no arithmetic of its own to a step.
 
 If two runtimes disagree, the Bunny function's golden vectors are the reference for a step, and the
 Geordi identity is the reference for the composition.
@@ -542,11 +567,14 @@ The definition fixes, at minimum:
   with `t_max` of 512 units, raw `2^41`, which covers every in-domain occluder as explained in
   [B2](#b2-scene-content); camera and bounce rays use `t_max` of `i64::MAX` raw, no distance
   limit);
-- the self-intersection rule for secondary rays (proposed: exclude the primitive just hit; no
-  distance epsilon);
+- the self-intersection rule for secondary rays: Bunny's, the "Start point (the self-intersection
+  rule)" of `bunny-diffuse-shading/1` (`SurfaceHit::new`), with secondary rays "queried with a
+  minimum distance of zero and no primitive excluded" ([Decisions](#decisions), 11);
 - the facing rule for two-sided triangles (the shading normal faces the incoming ray);
-- the hemisphere sampling map and the diffuse shading step (Bunny, planned in bunny#160);
-- the sample accumulation and tone curve (Bunny, planned in bunny#222);
+- the hemisphere sampling map and the diffuse shading step (`bunny-diffuse-shading/1`:
+  `ShadingFrame::cosine_direction`, `DirectionalLight::reflected_radiance`, `Albedo::reflect`);
+- the sample accumulation and tone curve (`PixelAccumulator`, `bunny-tone-srgb/1`,
+  `bunny-unorm8/1`);
 - the order in which the Bunny steps are composed, and any rounding between them that a Bunny
   function does not already own;
 - which sampler dimensions each decision consumes.
@@ -634,11 +662,13 @@ A runtime, and the Geordi validator where it can see the fact, must reject loudl
 - a mesh file that is missing, outside the fixture root, or whose hash, layout, counts or bounds
   do not match its declaration;
 - a triangle index out of range;
+- a scene with no triangles (`GEORDI_E_RT_SCENE_EMPTY`);
 - a scene outside the trace domain ([B3](#b3-the-trace-domain-limit));
-- a degenerate camera or a `tanHalfFovY` outside its domain;
+- a degenerate camera (zero or near-parallel `up`; see [B2](#b2-scene-content)) or a `tanHalfFovY`
+  outside its domain;
 - a `towardLight` whose largest component magnitude is not exactly 1.0 (this also rejects the
   zero vector);
-- an albedo outside `[0, 1]`, a radiance outside `[0, 65536]`, more than one directional light, or
+- an albedo outside `[0, 1]`, an irradiance or a sky radiance outside `[0, 65536]`, more than one directional light, or
   not exactly one sky;
 - a `samplesPerPixel`, `seed`, `maxBounces` or film size outside its domain;
 - a viewport argument that differs from the film size;
@@ -778,7 +808,7 @@ The maintainer settled the open questions on 2026-11-13 ([#152](https://github.c
    Bunny's golden vectors are the reference for a step and the Geordi identity for the composition
    ([B5](#b5-the-integrator-identity-and-everything-else-that-affects-pixels)).
 4. **Version 1 limits.** Accepted as listed: at most one bounce, at most one directional light and
-   exactly one uniform sky, radiance at most `65536`, samples per pixel a power of two up to 1024,
+   exactly one uniform sky, light values (irradiance, sky radiance) at most `65536`, samples per pixel a power of two up to 1024,
    `tanHalfFovY` in `(0, 4]`.
 5. **Image hash.** SHA-256 over the raw RGBA8 bytes, with width, height, pixel format and encoding
    as separate receipt fields covered by the receipt's own hash. Two images of different shape with
@@ -803,6 +833,25 @@ The maintainer settled the open questions on 2026-11-13 ([#152](https://github.c
    The Rust parser reads `-0` as a float, like `-0.0`, and this profile rejects every float, so the
    implementation rejects `-0` with the same diagnostic. This is the stricter reading and it
    governs: a canonical artifact has exactly one spelling of zero.
+
+10. **A directional light's value is irradiance.** Amended 2026-11-22
+    ([#161](https://github.com/flyingrobots/geordi/issues/161)). The text above named the directional
+    light's field a radiance. Bunny's convention, read from `docs/topics/optics/README.md` at Bunny
+    `36da048` (Radiometric Convention): "A directional light's value is irradiance."
+    `DirectionalLight::new(toward_light, irradiance)` takes the irradiance the light delivers to a
+    surface perpendicular to it, and the term is `cosine * FRAC_1_PI` then `irradiance_c * weight`
+    (`DirectionalLight::reflected_radiance`). The field is named `irradiance`; the sky keeps
+    `radiance`, which is what it is. The Rust validator, the reference page, the fixtures and
+    `GEORDI_E_RT_RADIANCE_OUT_OF_RANGE` still use the old name until the rename lands, because they
+    describe what exists on the default branch; see #161 for that change.
+11. **Self-intersection follows Bunny.** Amended 2026-11-22
+    ([#161](https://github.com/flyingrobots/geordi/issues/161)). The text above proposed excluding
+    the primitive just hit with no offset. Bunny's "Alternatives not chosen" records that this
+    starts secondary rays on or behind the plane "for about four hits in ten" and still re-hits a
+    coplanar neighbour at distance zero. The integrator uses the rule of `bunny-diffuse-shading/1`:
+    the start point is moved 0 to 2 raw units along the normal's largest axis until it is strictly
+    on the arrival side of the exact plane, the lower distance limit is zero, and no primitive is
+    excluded. Geordi does not restate the rule; `SurfaceHit::new` is the reference.
 
 Decisions on the findings in [What exists today](#what-exists-today):
 
