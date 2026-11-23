@@ -98,7 +98,8 @@ resets.
 
 ## Not covered
 
-- No presenter calls the packer, so no upload of the reported rows is tested.
+- Uploads of the reported rows are tested by the WebGL2 presenter, in
+  [`bijou-gpu-webgl2-presenter-test-plan.md`](./bijou-gpu-webgl2-presenter-test-plan.md), not here.
 - The injected resolver is a test double. The real `GlyphAtlas`
   ([flyingrobots/geordi#172](https://github.com/flyingrobots/geordi/issues/172)) is not
   exercised.
