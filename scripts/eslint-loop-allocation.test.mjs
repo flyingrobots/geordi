@@ -63,7 +63,7 @@ for (const { label, filePath } of TARGETS) {
       const findings = await loopAllocationFindings(code, filePath);
       assert.ok(
         findings.length >= 1,
-        `expected a finding for: ${code}; got ${JSON.stringify(findings.all)}`,
+        `expected a finding for: ${code}; got ${findings.all.join(" | ")}`,
       );
     });
   }

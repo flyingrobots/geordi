@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@flyingrobots/geordi-compiler-core": "workspace:*",
+    "@flyingrobots/geordi-core": "workspace:*",
     "@flyingrobots/geordi-schema-graphql": "workspace:*"
   },
   "devDependencies": {
