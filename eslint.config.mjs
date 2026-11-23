@@ -72,6 +72,8 @@ export default [
       '**/coverage/**',
       '**/dist/**',
       '**/node_modules/**',
+      // Cargo build output, including the base trees the contract gate extracts there.
+      '**/target/**',
       '**/.turbo/**',
       '**/.obsidian/**',
       '**/.trash/**',
