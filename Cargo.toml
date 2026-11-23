@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/geordi-bijou-shadergen",
+  "crates/geordi-bijou-wgpu-proof",
   "crates/geordi-ir",
   "crates/geordi-mesh",
   "crates/geordi-renderer",

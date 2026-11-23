@@ -575,6 +575,42 @@ These come from `geordi-bijou-shadergen`. Each is the `code` of a
 **Message**: Checked-in generated shader files differ from a fresh generation
 **Fix**: Run `cargo run -p geordi-bijou-shadergen -- --write` and commit the regenerated files with the change that caused them.
 
+## Bijou GPU Native `wgpu` Proof
+
+These come from `geordi-bijou-wgpu-proof`. Each is the `code` of a
+`geordi.bijou_wgpu_proof.error` JSON line on stderr, or of the `obstruction` in a `result` line.
+The proof also reports the kit codes `GEORDI_E_BIJOU_INVALID_PACKED_CELLS`,
+`GEORDI_E_BIJOU_UNSUPPORTED_WIDE_GLYPH`, `GEORDI_E_BIJOU_MISSING_GLYPH_SLOT`,
+`GEORDI_E_BIJOU_INVALID_ATLAS`, `GEORDI_E_BIJOU_INVALID_CELL_METRICS`,
+`GEORDI_E_BIJOU_BACKEND_UNAVAILABLE`, `GEORDI_E_BIJOU_RENDERER_FAULT` and
+`GEORDI_E_BIJOU_FRAME_HASH_MISMATCH` with the meanings above. The tool is described in
+[`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md).
+
+### `GEORDI_E_BIJOU_WGPU_RESOURCE_LIMIT`
+
+**Message**: The grid, the atlas or the canvas would need a texture edge above 8,192 texels, or the canvas is smaller than the grid
+**Fix**: Render a smaller grid or canvas. The limit is the WebGPU default `maxTextureDimension2D`.
+
+### `GEORDI_E_BIJOU_WGPU_SHADER_IDENTITY`
+
+**Message**: `bijou-surface.wgsl`, the procedural glyph table or the Bunny pins are not the ones the implementation manifest and `geordi-bijou-shadergen` name
+**Fix**: Restore the generated files with `cargo run -p geordi-bijou-shadergen -- --write` and commit them. Never edit the shader for the native host.
+
+### `GEORDI_E_BIJOU_WGPU_HARDWARE_GPU_REQUIRED`
+
+**Message**: `--require-gpu` was given, and the frame was rendered by a `Cpu` or `Other` adapter, so it is `software-probed`
+**Fix**: Not a defect of the frame. Run on a host with a hardware adapter, or drop `--require-gpu` and report `software-probed` evidence.
+
+### `GEORDI_E_BIJOU_WGPU_IO`
+
+**Message**: An input, the glyph pack, the manifest or the shader could not be read, or the receipt could not be written
+**Fix**: Run from the repository root or pass `--repo-root`; the `path` names the file.
+
+### `GEORDI_E_BIJOU_WGPU_USAGE`
+
+**Message**: The command line is not valid
+**Fix**: Pass `--render <file>`, `--schema` or `--help`, with the flags in `--help`. Exit code 2.
+
 ## Warnings
 
 ### `GEORDI_W_UNUSED_FIELD`

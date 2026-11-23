@@ -28,6 +28,19 @@
   diagnostic overlay, and throws `BackendUnavailableError` without a WebGL2 context. Adds the
   shared `PresenterAtlasSource` / `createStaticAtlasSource()` and
   `GEORDI_E_BIJOU_DRAWING_BUFFER_MISMATCH` (`DrawingBufferMismatchError`).
+- **`geordi-bijou-wgpu-proof`** (new Rust crate): bounded offscreen native `wgpu` proof for the
+  `bijou-surface-gpu/1` ABI (flyingrobots/geordi#58). It validates one `packed-bijou-cells/1`
+  file before any GPU call, against a byte-identical import of Bijou's RE-036 fixture and the
+  conformance suite. It prepares the `rgba32uint` cell record and executes the manifest's
+  `bijou-surface.wgsl` with `wgpu =29.0.4`, the same `naga` version as `geordi-bijou-shadergen`,
+  into an `rgba8uint` offscreen target. It strips the 256-byte row padding and writes a
+  `geordi-bijou-gpu-receipt/1` receipt with per-probe cell bindings. Evidence follows the
+  adapter's device type: `Cpu` is `software-probed`, a missing adapter is `capability-refused`.
+  The command line streams schema'd JSON Lines (`schemas/geordi-bijou-wgpu-proof/`). Checked-in
+  receipts under `fixtures/bijou-gpu/native-wgpu/` come from an Apple M5 (Metal) and match the
+  CPU oracle frame hashes with zero tolerance. `native-wgpu-receipts.test.ts` checks them with the
+  kit's validator and oracle. `pnpm test:bijou-gpu:native` runs the proof in CI, where the
+  hosted runner has no adapter and records a typed refusal.
 - **`@flyingrobots/geordi-bijou-gpu`**: dynamic `GlyphAtlas` for the `bijou-surface-gpu/1` ABI
   (flyingrobots/geordi#172). `createGlyphAtlas()` caches width-1 glyphs by `(grapheme, bold)` in
   an `rgba8uint` bitmap at integer physical cell metrics, drawing each through an injected
