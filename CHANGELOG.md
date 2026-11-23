@@ -287,6 +287,8 @@
 
 ### Tests
 
+- The WebGPU presenter's randomized resize test has an explicit 60 s timeout. It takes about
+  2 s alone and exceeded the 5 s default on a loaded machine; no assertion changed.
 - **Profunctor Page target**: Pin the three upstream conformance artifacts by
   exact SHA-256 identity, verify all four generated outputs, and cover
   malformed, unsupported, stale, duplicate, dangling, ambiguous, missing, and
