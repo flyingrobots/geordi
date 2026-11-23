@@ -39,8 +39,10 @@ described in [`../bijou-gpu-shaders.md`](../bijou-gpu-shaders.md). The dirty-uni
 ([#172](https://github.com/flyingrobots/geordi/issues/172)) exists and is described in
 [`../bijou-gpu-glyph-atlas.md`](../bijou-gpu-glyph-atlas.md). The WebGL2 presenter
 ([#173](https://github.com/flyingrobots/geordi/issues/173)) exists and is described in
-[`../bijou-gpu-webgl2-presenter.md`](../bijou-gpu-webgl2-presenter.md). No Canvas 2D, WebGPU or
-native presenter is claimed as implemented yet.
+[`../bijou-gpu-webgl2-presenter.md`](../bijou-gpu-webgl2-presenter.md). The Canvas 2D fallback
+presenter ([#174](https://github.com/flyingrobots/geordi/issues/174)) exists and is described in
+[`../bijou-gpu-canvas2d-presenter.md`](../bijou-gpu-canvas2d-presenter.md). No WebGPU presenter
+is claimed as implemented yet.
 
 ## Accepted Design: Fixed-Point And Ray-Traced Scene Profiles
 

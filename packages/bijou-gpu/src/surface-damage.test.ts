@@ -1055,7 +1055,12 @@ describe('packSurfaceDamage fuzz against the brute-force full-grid packer', () =
     [1, 1],
   ] as const;
 
-  it('produces staging bytes identical to the brute-force packer over 1,000 randomized paint/erase/resize frame pairs', () => {
+  // About 2 s on a laptop and over 5 s on a loaded CI runner: deterministic work, not a hang,
+  // so it gets a budget above Vitest's 5 s default.
+  it(
+    'produces staging bytes identical to the brute-force packer over 1,000 randomized paint/erase/resize frame pairs',
+    { timeout: 60_000 },
+    () => {
     const random = mulberry32(0x171);
     const below = (bound: number): number => Math.floor(random() * bound);
     const pick = <T>(items: readonly T[]): T => items[below(items.length)];
@@ -1192,6 +1197,5 @@ describe('packSurfaceDamage fuzz against the brute-force full-grid packer', () =
     expect(seen.erasures).toBeGreaterThan(1000);
     expect(seen.forced).toBeGreaterThan(5);
     expect(seen.resets).toBeGreaterThan(10);
-    // 1,000 seeded frame pairs take about 5 s on a hosted CI runner, at vitest's default timeout.
-  }, 30_000);
+  });
 });

@@ -16,9 +16,9 @@ exposes them.
 > against. The [WebGL2 presenter](./bijou-gpu-webgl2-presenter.md) is the one browser GPU
 > presenter, and the offscreen native `wgpu` proof in
 > [`bijou-gpu-native-wgpu.md`](./bijou-gpu-native-wgpu.md) is checked against this kit as well.
-> The Canvas 2D and WebGPU presenters are tracked in
-> [flyingrobots/geordi#174](https://github.com/flyingrobots/geordi/issues/174) and
-> [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175). The dirty-union
+> The Canvas 2D fallback presenter, which also computes its pixels on the CPU, is described in
+> [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md). The WebGPU presenter is
+> tracked in [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175). The dirty-union
 > packer and the glyph atlas that share this package are described in
 > [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md) and
 > [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md). The canonical shader is described
