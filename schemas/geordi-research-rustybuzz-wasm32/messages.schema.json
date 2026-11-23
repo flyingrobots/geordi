@@ -354,7 +354,7 @@
         "kind",
         "variant",
         "perConfig",
-        "defaultDiffersFromNoKernNoLiga"
+        "defaultAdvanceDiffersFromNoKernNoLiga"
       ],
       "properties": {
         "_schema": {
@@ -385,7 +385,7 @@
             "type": "object"
           }
         },
-        "defaultDiffersFromNoKernNoLiga": {
+        "defaultAdvanceDiffersFromNoKernNoLiga": {
           "type": "integer",
           "minimum": 0
         }

@@ -266,7 +266,8 @@ const diffRun = (reference, candidate, limit) => {
 
 // Evidence that the inputs reach the features under test: per configuration, how many runs have
 // fewer glyphs than code points (ligatures and compositions), nonzero offsets (mark positioning),
-// and, for the default configuration, advances that differ from the no-kern no-liga one.
+// and the number of strings whose total advance under the default configuration differs from
+// the no-kern, no-liga one.
 const coverage = (runs, texts) => {
   const perConfig = configNames.map((name) => ({ name, runs: 0, glyphs: 0, merged: 0, offsets: 0, notdef: 0 }));
   for (const run of runs) {
@@ -284,13 +285,19 @@ const coverage = (runs, texts) => {
     }
     entry.offsets += hasOffset ? 1 : 0;
   }
-  const byKey = new Map(runs.map((run) => [`${run.config}:${run.string}`, run]));
+  const totalAdvance = (run) => {
+    let total = 0;
+    for (let glyph = 0; glyph < run.glyphCount; glyph += 1) {
+      total += run.bytes.readInt32LE(12 + glyph * wordsPerGlyph * 4 + 12);
+    }
+    return total;
+  };
+  const plainAdvance = new Map(runs.filter((run) => run.config === 1).map((run) => [run.string, totalAdvance(run)]));
   let kernedOrLigated = 0;
   for (const run of runs.filter((entry) => entry.config === 0)) {
-    const plain = byKey.get(`1:${run.string}`);
-    kernedOrLigated += plain !== undefined && !plain.bytes.subarray(8).equals(run.bytes.subarray(8)) ? 1 : 0;
+    kernedOrLigated += totalAdvance(run) === plainAdvance.get(run.string) ? 0 : 1;
   }
-  return { perConfig, defaultDiffersFromNoKernNoLiga: kernedOrLigated };
+  return { perConfig, defaultAdvanceDiffersFromNoKernNoLiga: kernedOrLigated };
 };
 
 const summarise = (bytes) => {

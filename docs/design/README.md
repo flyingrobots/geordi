@@ -46,6 +46,15 @@ presenter ([#175](https://github.com/flyingrobots/geordi/issues/175)) exists and
 [`../bijou-gpu-webgpu-presenter.md`](../bijou-gpu-webgpu-presenter.md). No windowed native
 presenter is claimed as implemented yet.
 
+## Research Findings
+
+- [rustybuzz shaping on native hosts and wasm32](./2026-11-rustybuzz-wasm32-determinism.md)
+  ([#137](https://github.com/flyingrobots/geordi/issues/137)): identical shaping output for 200
+  Latin strings with Lato Regular on aarch64 macOS, AMD x86-64 Linux, and wasm32 in Node and
+  Chromium, and no float arithmetic in that path, with the limits stated. Input to
+  [#142](https://github.com/flyingrobots/geordi/issues/142). The experiment is
+  [`../../research/rustybuzz-wasm32/`](../../research/rustybuzz-wasm32/).
+
 ## Accepted Design: Fixed-Point And Ray-Traced Scene Profiles
 
 [`2026-11-fixed-point-and-ray-traced-scene-profiles.md`](./2026-11-fixed-point-and-ray-traced-scene-profiles.md)
