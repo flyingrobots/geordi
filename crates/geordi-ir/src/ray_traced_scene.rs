@@ -11,6 +11,7 @@ use super::{
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::fs;
@@ -864,7 +865,8 @@ where
         GeordiRayTracedSceneError::single(GEORDI_E_RT_JSON_INVALID, "$", &error.to_string())
     })?;
     let mut issues = Vec::new();
-    collect_number_token_issues(&value, "$", &mut issues);
+    let integer_tokens = integer_tokens_by_path(source);
+    collect_number_token_issues(&value, "$", &integer_tokens, &mut issues);
     finish(issues)?;
     let typed = serde_json::from_str::<T>(source).map_err(|error| {
         let message = error.to_string();
@@ -881,10 +883,13 @@ where
 /// Reject every JSON number that is not an integer token in the safe range.
 ///
 /// `serde_json` reads `1.0`, `1e3` and `-0` as floating-point values and `1` as an integer, so a
-/// float-valued number here is exactly a token with a fraction, an exponent, or a negative zero.
+/// float-valued number here is a token with a fraction, an exponent, a negative zero, or an
+/// integer too large for `u64` (and too small for `i64`). `integer_tokens` holds the source text of
+/// every token written without fraction or exponent, by path, to tell the last kind from the rest.
 fn collect_number_token_issues(
     value: &Value,
     path: &str,
+    integer_tokens: &BTreeMap<String, String>,
     issues: &mut Vec<GeordiRayTracedSceneIssue>,
 ) {
     match value {
@@ -905,6 +910,16 @@ fn collect_number_token_issues(
                     path,
                     &format!("Integer {number} is outside -(2^53 - 1)..=2^53 - 1"),
                 );
+            } else if let Some(token) = integer_tokens
+                .get(path)
+                .filter(|token| token.as_str() != "-0")
+            {
+                push(
+                    issues,
+                    GEORDI_E_RT_NUMBER_OUT_OF_RANGE,
+                    path,
+                    &format!("Integer {token} is outside -(2^53 - 1)..=2^53 - 1"),
+                );
             } else {
                 push(
                     issues,
@@ -916,15 +931,107 @@ fn collect_number_token_issues(
         }
         Value::Array(items) => {
             for (index, item) in items.iter().enumerate() {
-                collect_number_token_issues(item, &format!("{path}[{index}]"), issues);
+                collect_number_token_issues(
+                    item,
+                    &format!("{path}[{index}]"),
+                    integer_tokens,
+                    issues,
+                );
             }
         }
         Value::Object(map) => {
             for (key, item) in map {
-                collect_number_token_issues(item, &format!("{path}.{key}"), issues);
+                collect_number_token_issues(item, &format!("{path}.{key}"), integer_tokens, issues);
             }
         }
         Value::Null | Value::Bool(_) | Value::String(_) => {}
+    }
+}
+
+/// The source text of every number token written without a fraction or exponent, by JSON path.
+///
+/// `source` has already been parsed as JSON, so this scan assumes well-formed input and skips
+/// nothing it cannot read. Paths follow `collect_number_token_issues`; where a key repeats, the
+/// last token wins, as it does in `serde_json::Value`.
+fn integer_tokens_by_path(source: &str) -> BTreeMap<String, String> {
+    let mut tokens = BTreeMap::new();
+    scan_integer_tokens(source, skip_whitespace(source, 0), "$", &mut tokens);
+    tokens
+}
+
+fn skip_whitespace(source: &str, mut at: usize) -> usize {
+    let bytes = source.as_bytes();
+    while at < bytes.len() && matches!(bytes[at], b' ' | b'\t' | b'\n' | b'\r') {
+        at += 1;
+    }
+    at
+}
+
+/// The index just past the string literal that starts at `at` (which holds the opening quote).
+fn end_of_string(source: &str, at: usize) -> usize {
+    let bytes = source.as_bytes();
+    let mut index = at + 1;
+    while index < bytes.len() {
+        match bytes[index] {
+            b'\\' => index += 2,
+            b'"' => return index + 1,
+            _ => index += 1,
+        }
+    }
+    bytes.len()
+}
+
+/// Scan the value starting at `at`; return the index just past it.
+fn scan_integer_tokens(
+    source: &str,
+    at: usize,
+    path: &str,
+    tokens: &mut BTreeMap<String, String>,
+) -> usize {
+    let bytes = source.as_bytes();
+    match bytes.get(at) {
+        Some(b'{') => {
+            let mut index = skip_whitespace(source, at + 1);
+            while bytes.get(index).is_some_and(|byte| *byte == b'"') {
+                let key_end = end_of_string(source, index);
+                let key =
+                    serde_json::from_str::<String>(&source[index..key_end]).unwrap_or_default();
+                let colon = skip_whitespace(source, key_end);
+                let value = skip_whitespace(source, colon + 1);
+                index = scan_integer_tokens(source, value, &format!("{path}.{key}"), tokens);
+                index = skip_whitespace(source, index);
+                if bytes.get(index) == Some(&b',') {
+                    index = skip_whitespace(source, index + 1);
+                }
+            }
+            index + 1
+        }
+        Some(b'[') => {
+            let mut index = skip_whitespace(source, at + 1);
+            let mut element = 0_usize;
+            while bytes.get(index).is_some_and(|byte| *byte != b']') {
+                index = scan_integer_tokens(source, index, &format!("{path}[{element}]"), tokens);
+                index = skip_whitespace(source, index);
+                if bytes.get(index) == Some(&b',') {
+                    index = skip_whitespace(source, index + 1);
+                }
+                element += 1;
+            }
+            index + 1
+        }
+        Some(b'"') => end_of_string(source, at),
+        Some(_) => {
+            let end = source[at..]
+                .find(|c: char| matches!(c, ',' | ']' | '}' | ' ' | '\t' | '\n' | '\r'))
+                .map_or(source.len(), |offset| at + offset);
+            let token = &source[at..end];
+            let is_number = token.starts_with(|c: char| c == '-' || c.is_ascii_digit());
+            if is_number && !token.contains(['.', 'e', 'E']) {
+                tokens.insert(path.to_owned(), token.to_owned());
+            }
+            end
+        }
+        None => at,
     }
 }
 

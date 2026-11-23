@@ -958,7 +958,13 @@ fn an_integer_token_beyond_u64_or_i64_is_out_of_range_not_a_float() -> TestResul
         );
     }
     // Tokens that are not integers stay NOT_INTEGER, however large.
-    for token in ["1e30", "1.0", "-0", "18446744073709551616.0", "18446744073709551616e0"] {
+    for token in [
+        "1e30",
+        "1.0",
+        "-0",
+        "18446744073709551616.0",
+        "18446744073709551616e0",
+    ] {
         let changed = source.replace("\"seed\": 0", &format!("\"seed\": {token}"));
         let error = parse_geordi_ray_traced_scene(&changed)
             .err()
@@ -972,5 +978,34 @@ fn an_integer_token_beyond_u64_or_i64_is_out_of_range_not_a_float() -> TestResul
             "{token}"
         );
     }
+    Ok(())
+}
+
+#[test]
+fn an_oversized_integer_token_is_found_by_path_among_strings_and_arrays() -> TestResult {
+    // The id holds a quote, a backslash and a digit run, which the token scan must not read as
+    // numbers or as the end of the string. The oversized token sits in an array inside an array
+    // element.
+    let source = reference_source()?
+        .replacen(
+            "\"ground\"",
+            r#""g\"1\\\\2\\u0041 99999999999999999999""#,
+            1,
+        )
+        .replacen(
+            "          0\n        ]\n      }\n    },",
+            "          123456789012345678901234567890\n        ]\n      }\n    },",
+            1,
+        );
+    let error = parse_geordi_ray_traced_scene(&source)
+        .err()
+        .ok_or("an out-of-range integer was accepted")?;
+    assert_eq!(
+        issue_codes(&error),
+        vec![(
+            GEORDI_E_RT_NUMBER_OUT_OF_RANGE.to_owned(),
+            "$.instances[0].worldFromMesh.translation[2]".to_owned()
+        )]
+    );
     Ok(())
 }
