@@ -200,16 +200,6 @@ documents and tests the per-occurrence uniqueness guarantee explicitly.
 
 ---
 
-### `emitReceiptArtifact` — move to artifact builder method
-**Issue**: [#3](https://github.com/flyingrobots/geordi/issues/3)
-
-`emitReceiptArtifact(input, irContent, ruleIds)` receives the IR content as a raw string,
-creating an implicit coupling between caller and callee on string type correctness. Consider
-an `ArtifactBuilder` class or builder pattern so IR content never crosses a function boundary
-as an untyped string — the builder holds the IR artifact and computes the receipt internally.
-
----
-
 ### `validateAst` — property-based fuzz tests (fast-check)
 **Issue**: [#4](https://github.com/flyingrobots/geordi/issues/4)
 

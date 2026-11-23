@@ -1,0 +1,15 @@
+{
+  // Scope of the first gate (flyingrobots/geordi#66): the changelog and docs/.
+  "globs": ["CHANGELOG.md", "docs/**/*.md"],
+  "config": {
+    "default": true,
+    // Same choices as the sibling repository bunny.
+    // Prose and tables are written as long lines on purpose.
+    "MD013": false,
+    // Changelog releases repeat "### Fixes" and "### Tests"; only duplicates under one parent are errors.
+    // A bold line directly under a heading is a deliberate tagline or label
+    // (ARCHITECTURE.md package summaries, the pronunciation guide), not a heading.
+    "MD036": false,
+    "MD024": { "siblings_only": true }
+  }
+}

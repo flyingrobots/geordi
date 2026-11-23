@@ -18,16 +18,8 @@ import { parseInputToCanonicalAst, type ParseInputDeps } from './parseInput.js';
 import { HASH_ALGORITHM } from '../canonical/hashing.js';
 import { normalizeCanonicalAst } from '../canonical/normalizeAst.js';
 import { validateCanonicalAst, VALIDATION_RULE_IDS } from './validateAst.js';
-import {
-  emitGeordiIrArtifact,
-  emitReceiptArtifact,
-  emitSourceMapArtifact,
-  IR_ARTIFACT_KEY,
-  IR_RECEIPT_KEY,
-  IR_VERSION,
-  SOURCE_MAP_ARTIFACT_KEY,
-} from './emitIr.js';
-import { emitTypesArtifact } from './emitTypes.js';
+import { ArtifactBuilder } from './artifactBuilder.js';
+import { IR_ARTIFACT_KEY, IR_VERSION } from './emitIr.js';
 
 const DEFAULT_OPTIONS: CompileOptions = {
   target: 'geordi-ir',
@@ -83,21 +75,15 @@ export async function compile(input: CompilerInput, deps?: ParseInputDeps): Prom
       });
       return finalize(false, canonicalAst, artifacts, diagnostics, input.format);
     }
-    if (options.emit.irJson && canonicalAst) {
-      const irArtifact = emitGeordiIrArtifact(canonicalAst);
-      const sourceMapArtifact = emitSourceMapArtifact(canonicalAst);
-      artifacts[IR_ARTIFACT_KEY] = irArtifact;
-      artifacts[SOURCE_MAP_ARTIFACT_KEY] = sourceMapArtifact;
-
-      artifacts[IR_RECEIPT_KEY] = emitReceiptArtifact(
-        input,
-        irArtifact.content as string,
-        sourceMapArtifact.content as string,
-        VALIDATION_RULE_IDS,
-      );
-    }
-    if (options.emit.tsTypes && canonicalAst) {
-      artifacts['types.ts'] = emitTypesArtifact(canonicalAst);
+    if (canonicalAst && (options.emit.irJson || options.emit.tsTypes)) {
+      const builder = new ArtifactBuilder(input);
+      if (options.emit.irJson) {
+        builder.buildIr(canonicalAst).buildSourceMap(canonicalAst).buildReceipt(VALIDATION_RULE_IDS);
+      }
+      if (options.emit.tsTypes) {
+        builder.buildTypes(canonicalAst);
+      }
+      Object.assign(artifacts, builder.toArtifactMap());
     }
 
     if (options.failOnWarnings && diagnostics.some((d) => d.severity === 'warning')) {
