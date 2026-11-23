@@ -15,6 +15,17 @@
 
 ### Features
 
+- **`@flyingrobots/geordi-bijou-gpu`**: Canvas 2D fallback presenter for the `bijou-surface-gpu/1`
+  ABI (flyingrobots/geordi#174). `createCanvas2DSurfacePresenter()` implements
+  `GpuSurfacePresenter` with no WebGL or WebGPU. It packs each frame with `packSurfaceDamage()`
+  and reads glyphs from a `GlyphAtlas`. Only cells whose prepared words changed are composited,
+  with the pure-integer sRGB-direct blend law and the procedural glyph geometry, into a retained
+  `ImageData`. Each horizontal run of changed cells is then blitted with one `putImageData` call.
+  No canvas drawing operation is used, so the canvas readback hashes equal to
+  `renderReferenceRgba()` with zero tolerance. `getLastReceipt()` returns a validated
+  `geordi-canvas2d/1` `software-probed` receipt with null shader digests and an
+  `executedArtifactSha256` pinned to the executed pixel-path source. `resize()`, the shared
+  0-based `cellFromPoint()`, context-restore repaint, and `dispose()` are included.
 - **`@flyingrobots/geordi-bijou-gpu`**: dynamic `GlyphAtlas` for the `bijou-surface-gpu/1` ABI
   (flyingrobots/geordi#172). `createGlyphAtlas()` caches width-1 glyphs by `(grapheme, bold)` in
   an `rgba8uint` bitmap at integer physical cell metrics, drawing each through an injected

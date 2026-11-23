@@ -25,6 +25,8 @@ that exists on `main`.
 | Find the evidence for each Bijou GPU packer requirement | [`bijou-gpu-surface-damage-test-plan.md`](./bijou-gpu-surface-damage-test-plan.md) |
 | Look up the Bijou GPU glyph atlas: slots, colour detection, dirty rects, overflow and invalidation, and the browser rasterizer and font/DPR watcher | [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md) |
 | Find the evidence for each Bijou GPU glyph atlas requirement | [`bijou-gpu-glyph-atlas-test-plan.md`](./bijou-gpu-glyph-atlas-test-plan.md) |
+| Look up the Bijou GPU Canvas 2D fallback presenter: pixel path, draw batching, full-redraw triggers and receipt | [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md) |
+| Find the evidence for each Bijou GPU Canvas 2D presenter requirement | [`bijou-gpu-canvas2d-presenter-test-plan.md`](./bijou-gpu-canvas2d-presenter-test-plan.md) |
 | Run Rust verification | [`RUST_GATES.md`](./RUST_GATES.md) |
 | Apply documentation policy | [`DOCUMENTATION_STANDARDS.md`](./DOCUMENTATION_STANDARDS.md) |
 

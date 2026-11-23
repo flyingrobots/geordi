@@ -16,7 +16,9 @@ exposes them.
 > oracle presenters are checked against, tracked in
 > [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173) through
 > [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175), and
-> [flyingrobots/geordi#58](https://github.com/flyingrobots/geordi/issues/58). The dirty-union
+> [flyingrobots/geordi#58](https://github.com/flyingrobots/geordi/issues/58). The Canvas 2D
+> fallback presenter, which also computes its pixels on the CPU, is described in
+> [`bijou-gpu-canvas2d-presenter.md`](./bijou-gpu-canvas2d-presenter.md). The dirty-union
 > packer and the glyph atlas that share this package are described in
 > [`bijou-gpu-surface-damage.md`](./bijou-gpu-surface-damage.md) and
 > [`bijou-gpu-glyph-atlas.md`](./bijou-gpu-glyph-atlas.md). The canonical shader is described

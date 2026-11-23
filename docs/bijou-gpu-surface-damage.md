@@ -11,11 +11,10 @@ This page describes the dirty-union cell packer on `main`. It turns a pair of Bi
 rows changed. The design record is normative for the cell layout and the damage law; this page
 says how the packer exposes them.
 
-> **Not claimed.** The packer uploads nothing and calls no host API. No presenter uses it yet:
-> the WebGL2, Canvas 2D, and WebGPU presenters are tracked in
-> [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173),
-> [flyingrobots/geordi#174](https://github.com/flyingrobots/geordi/issues/174), and
-> [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175). It contains no
+> **Not claimed.** The packer uploads nothing and calls no host API. The
+> [Canvas 2D presenter](./bijou-gpu-canvas2d-presenter.md) uses it; the WebGL2 and WebGPU
+> presenters are tracked in [flyingrobots/geordi#173](https://github.com/flyingrobots/geordi/issues/173)
+> and [flyingrobots/geordi#175](https://github.com/flyingrobots/geordi/issues/175). It contains no
 > glyph atlas; slots come from a callback, which the
 > [glyph atlas](./bijou-gpu-glyph-atlas.md) can supply. No timing has been measured.
 

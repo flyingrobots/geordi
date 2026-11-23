@@ -35,7 +35,9 @@ and [#58](https://github.com/flyingrobots/geordi/issues/58). The conformance kit
 GLSL ES 3.00 generator ([#170](https://github.com/flyingrobots/geordi/issues/170)) exist and are
 described in [`../bijou-gpu-shaders.md`](../bijou-gpu-shaders.md). The dirty-union packer
 ([#171](https://github.com/flyingrobots/geordi/issues/171)) exists and is described in
-[`../bijou-gpu-surface-damage.md`](../bijou-gpu-surface-damage.md). No GPU presenter or atlas is
+[`../bijou-gpu-surface-damage.md`](../bijou-gpu-surface-damage.md). The Canvas 2D fallback
+presenter ([#174](https://github.com/flyingrobots/geordi/issues/174)) exists and is described in
+[`../bijou-gpu-canvas2d-presenter.md`](../bijou-gpu-canvas2d-presenter.md). No GPU presenter is
 claimed as implemented yet.
 
 ## Accepted Design: Fixed-Point And Ray-Traced Scene Profiles
