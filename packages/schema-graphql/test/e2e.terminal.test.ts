@@ -167,6 +167,49 @@ describe('e2e: Terminal SDL fixture', () => {
     expect(zIndices).toEqual([...zIndices].sort((a: number, b: number) => a - b));
   });
 
+  it('Terminal fixture IR nodes follow declaration order because default zIndex is field order plus one', async () => {
+    const result = await compile(makeInput(TERMINAL_SDL), DEPS);
+
+    const ir = parseIr(result);
+    expect(ir.nodes.map((n) => [n.kind, n.zIndex])).toEqual([
+      ['Rect', 1],
+      ['Rect', 2],
+      ['Text', 3],
+    ]);
+  });
+
+  it('nodes with equal zIndex are ordered by kind ascending, then id ascending bytewise', async () => {
+    // Declared in a deliberately scrambled order so neither declaration order nor
+    // insertion order can produce the expected list. Expected order is written by
+    // hand from the contract (zIndex, then kind, then id, bytewise: "B" < "a").
+    const sdl = `
+      type Tied @geordi_scene(v: "1", width: 100, height: 100) {
+        f1: String @geordi_node(kind: Text, id: "b-text", zIndex: 0, props: "{\\"content\\":\\"t\\"}")
+        f2: String @geordi_node(kind: Rect, id: "z-rect", zIndex: 0, width: 10, height: 10)
+        f3: String @geordi_node(kind: Rect, id: "top", zIndex: 1, width: 10, height: 10)
+        f4: String @geordi_node(kind: Text, id: "a-text", zIndex: 0, props: "{\\"content\\":\\"t\\"}")
+        f5: String @geordi_node(kind: Rect, id: "a-rect", zIndex: 0, width: 10, height: 10)
+        f6: String @geordi_node(kind: Ellipse, id: "zz-ellipse", zIndex: 0, props: "{\\"rx\\":5,\\"ry\\":5}")
+        f7: String @geordi_node(kind: Rect, id: "B-rect", zIndex: 0, width: 10, height: 10)
+        f8: String @geordi_node(kind: Rect, id: "low", zIndex: -1, width: 10, height: 10)
+      }
+    `;
+    const result = await compile(makeInput(sdl, 'tied.graphql'), DEPS);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.ok).toBe(true);
+
+    expect(parseIr(result).nodes.map((n) => n.id)).toEqual([
+      'low',
+      'zz-ellipse',
+      'B-rect',
+      'a-rect',
+      'z-rect',
+      'a-text',
+      'b-text',
+      'top',
+    ]);
+  });
+
   it('surfaces invalid SDL as GEORDI_E_INPUT_INVALID_SDL', async () => {
     const result = await compile(makeInput('type Broken {', 'broken.graphql'), DEPS);
 
