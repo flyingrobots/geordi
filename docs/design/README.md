@@ -48,6 +48,11 @@ presenter is claimed as implemented yet.
 
 ## Research Findings
 
+- [Taffy layout on native hosts and wasm32](./2026-11-taffy-wasm32-determinism.md)
+  ([#136](https://github.com/flyingrobots/geordi/issues/136)): bit-identical block and flex layout
+  for 50 generated trees on aarch64 macOS, Intel and AMD x86-64 Linux, and wasm32 in Node and
+  Chromium, with the limits stated. Input to [#141](https://github.com/flyingrobots/geordi/issues/141). The experiment
+  is [`../../research/taffy-wasm32/`](../../research/taffy-wasm32/).
 - [rustybuzz shaping on native hosts and wasm32](./2026-11-rustybuzz-wasm32-determinism.md)
   ([#137](https://github.com/flyingrobots/geordi/issues/137)): identical shaping output for 200
   Latin strings with Lato Regular on aarch64 macOS, AMD and Intel x86-64 Linux, and wasm32 in Node
