@@ -156,11 +156,13 @@ Artifacts (scene.geordi.json, scene.geordi.map.json, types.ts, etc.)
 ```
 
 ### Phase 1: Parse
+
 - **Input**: SDL string or canonical AST JSON
 - **Output**: Canonical AST (validated structure)
 - **Errors**: Parse errors, directive errors
 
 ### Phase 2: Canonicalization
+
 - **Input**: Canonical AST
 - **Output**: Normalized Canonical AST
 - **Operations**:
@@ -170,6 +172,7 @@ Artifacts (scene.geordi.json, scene.geordi.map.json, types.ts, etc.)
   - Default value materialization
 
 ### Phase 3: Validation
+
 - **Input**: Normalized Canonical AST
 - **Output**: Diagnostics (errors/warnings)
 - **Checks**:
@@ -179,6 +182,7 @@ Artifacts (scene.geordi.json, scene.geordi.map.json, types.ts, etc.)
   - Style applicability
 
 ### Phase 4: Emit
+
 - **Input**: Validated Canonical AST
 - **Output**: ArtifactMap
 - **Emitters**:
@@ -202,6 +206,7 @@ All operations are deterministic:
 **Internal faults** → Throw `InternalCompilerError`
 
 Error codes:
+
 - `GEORDI_E_*` - Errors (compilation fails)
 - `GEORDI_W_*` - Warnings (compilation succeeds unless `failOnWarnings: true`)
 
@@ -228,11 +233,13 @@ All versions are explicit and validated. Unknown versions → hard error.
 ## Migration Path (v0.1 → v0.2)
 
 Current limitations in v0.1:
+
 - GraphQL directive args use JSON strings for complex props (ugly but pragmatic)
 - Single output target (`geordi-ir`)
 - No binary packer (`.geordib` format)
 
 Planned for v0.2:
+
 - Typed input objects for directive args
 - Multiple output targets (prove abstraction)
 - Binary packer as post-step

@@ -22,6 +22,38 @@
   plus three simultaneous recoverers, and a writer that loses its lock between a check and the rename
   after it can still end with two complete output sets, last rename wins. A lock directory left by the
   previous writer is never removed automatically; delete it by hand once no writer runs (flyingrobots/geordi#54)
+- **Bunny mesh milestone**: harden browser mesh-manifest cross-checks, reject invalid browser
+  elapsed-time inputs, reject malformed mesh playback descriptors, and tighten TypeScript/Rust PLY
+  parsers so extra element-header fields and trailing body rows fail loudly.
+- `compiler-core/parseInput`: adapter-thrown `CompilerError` diagnostics are preserved instead of being wrapped as `GEORDI_E_INTERNAL_INVARIANT`; invalid GraphQL SDL keeps its source location through `compile()`
+- `compiler-core/errors`: add `DiagnosticsError` to carry collected diagnostics across adapter boundaries without losing error codes or locations
+- `schema-graphql/adapter`: missing-scene extraction now reports `GEORDI_E_SCENE_MISSING` through `compile()` without duplicate internal-invariant diagnostics
+- `schema-graphql/directives`: replace unsafe directive argument casts with typed runtime readers for `@geordi_scene` and `@geordi_node`; wrong literal types, non-finite numeric literals, and invalid `props` JSON object payloads emit `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE`
+- `schema-graphql/directives`: `geordi_bind` and `geordi_style` now fail loudly with `GEORDI_E_FEATURE_NOT_IMPLEMENTED` instead of being silently ignored
+- `compiler-core/compile`: `emit.binaryPack: true` now fails before any artifacts are emitted, matching the hard-failure behavior of other unsupported artifact targets
+- `compiler-core/compile`: removed wall-clock `elapsedMs` from `CompileMetadata`; compile results now remain deterministic for identical inputs
+- `emitIr`: O(n²) `shift()`+re-sort queue replaced with `qi`-pointer dequeue and batch merge of newly-ready children — O(n log n) for tree-structured graphs
+- `schema-graphql/adapter`: diagnostic message now embedded in thrown `Error` when `extractScene` fails; "see diagnostics" was a lie when caller omitted the `diagnostics` array
+- `schema-graphql/extractNodes`: `knownGeordiDirs` `Set` was re-allocated inside a nested loop on every call; hoisted to module-level constant
+- `schema-graphql/extractNodes`: invalid `props` JSON argument now emits a `W_UNUSED_FIELD` warning instead of silently discarding the value
+- `identifiers`: `buildIdentifierMap` now throws immediately on duplicate source strings instead of silently producing a corrupt output `Map`
+- `test/determinism`: rotation test loop corrected to produce 4 distinct orderings, matching its description (old loop generated 4 unique rotations but iterated 10 times)
+- `emitIr`: `IR_VERSION`, `IR_ARTIFACT_KEY`, `IR_RECEIPT_KEY` exported as named constants; magic string literals removed from `compile.ts` and `emitIr.ts`
+- `identifiers`: `RESERVED.has(result.toLowerCase())` removed — PascalCase output like `'Delete'` is a valid TypeScript identifier; only exact-case match is checked
+- `parseGraphql`: SDL wrapped in `Source(sdl, filename)` so the returned `DocumentNode` carries filename metadata through to downstream diagnostics
+- `test/determinism`: shuffle fixture aligned with `BASE_INPUT` — added `visible: true` to all nodes and `units: 'px'` to scene
+- `docs/ERROR_CODES.md`: corrected `Rect` required props example — only `width` and `height` are required; `x` and `y` are optional
+- `runtime-webgl`: runtime rendering now validates IR before preparing draw-ready scenes and
+  throws custom runtime errors for invalid IR, unsupported node kinds, and invalid required node
+  props instead of silently falling back to invisible geometry or empty content.
+
+- Invalid JSON input no longer emits `GEORDI_E_INTERNAL_INVARIANT`; now correctly emits `GEORDI_E_INPUT_INVALID_JSON`
+- Invalid GraphQL SDL input now emits `GEORDI_E_INPUT_INVALID_SDL` instead of `GEORDI_E_INTERNAL_INVARIANT`
+- `NaN` scene dimensions now correctly rejected by `sceneDimensions` validation rule
+- `E_CYCLE_DETECTED` no longer spuriously triggered when duplicate node IDs are present
+- `NodeId` union in emitted TypeScript types is now sorted lexicographically for deterministic output
+- `emit.jsonSchema: true` no longer leaves partial artifacts on error — guard runs before any emission
+- `metadata.irVersion` now correctly reflects artifact presence rather than `ok` flag
 
 ### Refactoring
 
@@ -29,6 +61,7 @@
 
 ### CI
 
+- Lint `CHANGELOG.md` and `docs/**/*.md` with `markdownlint-cli2` (`pnpm lint:md`, run by `pnpm lint` and so by CI), including duplicate sibling headings (flyingrobots/geordi#66). Merge the duplicate `### Fixes` and `### Bug Fixes` sections the lint found; every entry is kept.
 - Make the toolchain ready for the open Dependabot groups (flyingrobots/geordi#73). Root cause of the failing `Test` job on the dev-tooling group: `typescript-eslint` 8.x peers on `typescript <6.1.0` and throws at load time on TypeScript 7, so `pnpm lint` fails. `.github/dependabot.yml` now ignores TypeScript major updates until typescript-eslint supports 7. The newer `typescript-eslint` also reports nine new lint findings in three test sources (`no-meaningless-void-operator`, `no-unsafe-class-instance-assignment`) are fixed without suppressions (the randomized resize test timeout was fixed separately on main)
 - Typecheck the Profunctor Page test sources: `pnpm typecheck` now also runs `tsc --noEmit -p tsconfig.test.json` in `@flyingrobots/geordi-profunctor-page`, so an invalid type in a `*.test.ts` file fails CI. The build still uses `tsconfig.json` and emits only production files. A node test (`pnpm test:profunctor-page-typecheck-gate`) proves the gate fails on an invalid test type (flyingrobots/geordi#56)
 - Pin the Rust toolchain to 1.96.0 with `rust-toolchain.toml` and install that toolchain in CI instead of floating `stable`, so new compiler lints no longer fail CI on unchanged code (flyingrobots/geordi#158)
@@ -43,16 +76,6 @@
   checked-in Project Keep `scene.geordi.map.json` and `scene.geordi.json.receipt` are regenerated;
   any consumer that persisted or compared old `action:...` IDs must re-derive them
   (flyingrobots/geordi#55)
-
-### Dependencies
-
-- **`native-render-everywhere`** (Rust): depend on `bunny-num`, `bunny-linalg` and `bunny-geom`
-  `0.7.1` from crates.io, the first Bunny dependency in the workspace (flyingrobots/geordi#154)
-- Migrate `pnpm.overrides` from deprecated `package.json` field to `pnpm-workspace.yaml`; regenerate lockfile with pnpm 10.30.0 to match CI version (resolves `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY` on ubuntu-24.04)
-- Bump `vitest` from `^1.3.0` to `^3.2.4` across all packages; add `esbuild >=0.25.0` override (CVE fix)
-
-### Fixes
-
 - **`@flyingrobots/geordi-bijou-gpu`**: the WebGPU presenter verifies the shader against a pin
   compiled into the package (flyingrobots/geordi#189). Before, it checked the WGSL against the
   digest in the manifest that the same `ShaderSourcePort` supplied, so a port could ship altered
@@ -99,6 +122,13 @@
     `pnpm test:bijou-gpu:shaders`. `.gitattributes` keeps the shaders LF.
     `scripts/smoke-bijou-gpu-packed-package.mjs`, run by `pnpm test:exports`, proves the shaders
     and every subpath export from the packed tarball.
+
+### Dependencies
+
+- **`native-render-everywhere`** (Rust): depend on `bunny-num`, `bunny-linalg` and `bunny-geom`
+  `0.7.1` from crates.io, the first Bunny dependency in the workspace (flyingrobots/geordi#154)
+- Migrate `pnpm.overrides` from deprecated `package.json` field to `pnpm-workspace.yaml`; regenerate lockfile with pnpm 10.30.0 to match CI version (resolves `ERR_PNPM_LOCKFILE_MISSING_DEPENDENCY` on ubuntu-24.04)
+- Bump `vitest` from `^1.3.0` to `^3.2.4` across all packages; add `esbuild >=0.25.0` override (CVE fix)
 
 ### Features
 
@@ -397,41 +427,6 @@
 - **Bunny mesh milestone**: Add focused browser and native gates for fixed-frame bunny metadata,
   nonblank wireframe output, native clippy, manifest validation, and sampled smoke frames `0`, `15`,
   and `60`.
-
-### Bug Fixes
-
-- **Bunny mesh milestone**: harden browser mesh-manifest cross-checks, reject invalid browser
-  elapsed-time inputs, reject malformed mesh playback descriptors, and tighten TypeScript/Rust PLY
-  parsers so extra element-header fields and trailing body rows fail loudly.
-- `compiler-core/parseInput`: adapter-thrown `CompilerError` diagnostics are preserved instead of being wrapped as `GEORDI_E_INTERNAL_INVARIANT`; invalid GraphQL SDL keeps its source location through `compile()`
-- `compiler-core/errors`: add `DiagnosticsError` to carry collected diagnostics across adapter boundaries without losing error codes or locations
-- `schema-graphql/adapter`: missing-scene extraction now reports `GEORDI_E_SCENE_MISSING` through `compile()` without duplicate internal-invariant diagnostics
-- `schema-graphql/directives`: replace unsafe directive argument casts with typed runtime readers for `@geordi_scene` and `@geordi_node`; wrong literal types, non-finite numeric literals, and invalid `props` JSON object payloads emit `GEORDI_E_DIRECTIVE_ARG_INVALID_TYPE`
-- `schema-graphql/directives`: `geordi_bind` and `geordi_style` now fail loudly with `GEORDI_E_FEATURE_NOT_IMPLEMENTED` instead of being silently ignored
-- `compiler-core/compile`: `emit.binaryPack: true` now fails before any artifacts are emitted, matching the hard-failure behavior of other unsupported artifact targets
-- `compiler-core/compile`: removed wall-clock `elapsedMs` from `CompileMetadata`; compile results now remain deterministic for identical inputs
-- `emitIr`: O(n²) `shift()`+re-sort queue replaced with `qi`-pointer dequeue and batch merge of newly-ready children — O(n log n) for tree-structured graphs
-- `schema-graphql/adapter`: diagnostic message now embedded in thrown `Error` when `extractScene` fails; "see diagnostics" was a lie when caller omitted the `diagnostics` array
-- `schema-graphql/extractNodes`: `knownGeordiDirs` `Set` was re-allocated inside a nested loop on every call; hoisted to module-level constant
-- `schema-graphql/extractNodes`: invalid `props` JSON argument now emits a `W_UNUSED_FIELD` warning instead of silently discarding the value
-- `identifiers`: `buildIdentifierMap` now throws immediately on duplicate source strings instead of silently producing a corrupt output `Map`
-- `test/determinism`: rotation test loop corrected to produce 4 distinct orderings, matching its description (old loop generated 4 unique rotations but iterated 10 times)
-- `emitIr`: `IR_VERSION`, `IR_ARTIFACT_KEY`, `IR_RECEIPT_KEY` exported as named constants; magic string literals removed from `compile.ts` and `emitIr.ts`
-- `identifiers`: `RESERVED.has(result.toLowerCase())` removed — PascalCase output like `'Delete'` is a valid TypeScript identifier; only exact-case match is checked
-- `parseGraphql`: SDL wrapped in `Source(sdl, filename)` so the returned `DocumentNode` carries filename metadata through to downstream diagnostics
-- `test/determinism`: shuffle fixture aligned with `BASE_INPUT` — added `visible: true` to all nodes and `units: 'px'` to scene
-- `docs/ERROR_CODES.md`: corrected `Rect` required props example — only `width` and `height` are required; `x` and `y` are optional
-- `runtime-webgl`: runtime rendering now validates IR before preparing draw-ready scenes and
-  throws custom runtime errors for invalid IR, unsupported node kinds, and invalid required node
-  props instead of silently falling back to invisible geometry or empty content.
-
-- Invalid JSON input no longer emits `GEORDI_E_INTERNAL_INVARIANT`; now correctly emits `GEORDI_E_INPUT_INVALID_JSON`
-- Invalid GraphQL SDL input now emits `GEORDI_E_INPUT_INVALID_SDL` instead of `GEORDI_E_INTERNAL_INVARIANT`
-- `NaN` scene dimensions now correctly rejected by `sceneDimensions` validation rule
-- `E_CYCLE_DETECTED` no longer spuriously triggered when duplicate node IDs are present
-- `NodeId` union in emitted TypeScript types is now sorted lexicographically for deterministic output
-- `emit.jsonSchema: true` no longer leaves partial artifacts on error — guard runs before any emission
-- `metadata.irVersion` now correctly reflects artifact presence rather than `ok` flag
 
 ### Documentation
 
