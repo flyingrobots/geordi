@@ -28,6 +28,7 @@ import {
   alignedBytesPerRow,
   classifyWebGpuAdapter,
   createWebGPUSurfacePresenter,
+  createWebGpuRefusalReceipt,
   decodeBijouSurfaceShader,
   planAtlasUploads,
   planCellRowUploads,
@@ -710,5 +711,50 @@ describe('randomized resize sequences', () => {
       expect(write.layout.bytesPerRow).toBe(write.texture.width * bytesPerTexel);
     }
     expect(device.validationErrors).toEqual([]);
+  });
+});
+
+describe('capability-refused receipts', () => {
+  it('records a refusal as capability-refused evidence with no frame digest and no probes', async () => {
+    const refusal = await createWebGPUSurfacePresenter(new FakeCanvas(), presenterOptions(new FakeGpu({ adapters: ['null'] }))).then(
+      () => null,
+      (error: Error) => error,
+    );
+    expect(refusal).toBeInstanceOf(BackendUnavailableError);
+    const receipt = createWebGpuRefusalReceipt({
+      error: refusal as BackendUnavailableError,
+      shader: { wgsl: WGSL, manifest: MANIFEST },
+      atlas: testAtlas(),
+      target: PAINT_SURFACE,
+      size: SUITE_SIZE,
+      defaultFg: SUITE.suite.defaultFg,
+      defaultBg: SUITE.suite.defaultBg,
+      inputReceiptSha256: SUITE.suite.frames[0]?.inputReceiptSha256,
+    });
+    expect(validateEndpointReceipt(parseJsonValue(serializeEndpointReceipt(receipt))).ok).toBe(true);
+    expect(receipt).toMatchObject({
+      evidenceLevel: 'capability-refused',
+      frameRgbaSha256: null,
+      probes: [],
+      adapter: { backend: 'webgpu', name: '', driver: '' },
+      assembledWgslSha256: MANIFEST_SURFACE_SHA,
+      shaderSha256: MANIFEST_SURFACE_SHA,
+      preparedBufferSha256: PAINT.preparedBufferSha256,
+      canvasPxW: 67,
+      canvasPxH: 117,
+    });
+  });
+
+  it('cannot be built from a renderer fault', () => {
+    expect(() =>
+      createWebGpuRefusalReceipt({
+        // A caller that ignores the types still cannot turn a fault into a refusal.
+        error: new RendererFaultError('webgpu', 'compile error') as never,
+        shader: { wgsl: WGSL, manifest: MANIFEST },
+        atlas: testAtlas(),
+        target: PAINT_SURFACE,
+        size: SUITE_SIZE,
+      }),
+    ).toThrow(RendererFaultError);
   });
 });
